@@ -108,7 +108,6 @@ bool Font_FTFont::Init (const Handle(NCollection_Buffer)& theData,
   setLoadFlag (FT_LOAD_NO_HINTING,     (theParams.FontHinting & Font_Hinting_Normal) == 0
                                     && (theParams.FontHinting & Font_Hinting_Light)  == 0);
 #endif
-
   // manage native / autohinting
   if ((theParams.FontHinting & Font_Hinting_ForceAutohint) != 0
    && (theParams.FontHinting & Font_Hinting_NoAutohint) != 0)
@@ -119,7 +118,6 @@ bool Font_FTFont::Init (const Handle(NCollection_Buffer)& theData,
   setLoadFlag (FT_LOAD_FORCE_AUTOHINT, (theParams.FontHinting & Font_Hinting_ForceAutohint) != 0);
   setLoadFlag (FT_LOAD_NO_AUTOHINT,    (theParams.FontHinting & Font_Hinting_NoAutohint) != 0);
 #endif
-
   if (!myFTLib->IsValid())
   {
     Message::SendTrace ("FreeType library is unavailable");
