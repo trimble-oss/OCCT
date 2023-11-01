@@ -14,9 +14,7 @@
 // AdvApp2Var_SysBase.cxx
 #include <assert.h>
 #include <cmath>
-#include <stdlib.h>
 #include <string.h>
-#include <AdvApp2Var_Data_f2c.hxx>
 #include <AdvApp2Var_SysBase.hxx>
 #include <AdvApp2Var_Data.hxx>
 #include <Standard.hxx>
@@ -913,10 +911,9 @@ int macrmsg_(const char *,//crout,
     /* Parameter adjustments */
   ct -= ct_len;
   (void )ct; // unused
+  (void )xt; // unused
+  (void )it; // unused
 
-  --xt;
-  --it;
-  
   /* Function Body */
   mamdlng_(cln, 3L);
   
@@ -1791,7 +1788,7 @@ int maoverf_(integer *nbentr,
     /* Loop. The upper limit is the integer value of the logarithm of base 2
      */
     /* of NBENTR/NLONGR. */
-    i__1 = (integer) (log((real) (*nbentr) / (float)63.) / log((float)2.))
+    i__1 = (integer) (std::log((real) (*nbentr) / (float)63.) / std::log((float)2.))
       ;
     for (ibid = 1; ibid <= i__1; ++ibid) {
       

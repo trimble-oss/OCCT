@@ -16,10 +16,7 @@
 
 
 #include <APIHeaderSection_MakeHeader.hxx>
-#include <gp_Pnt.hxx>
 #include <Interface_EntityIterator.hxx>
-#include <Interface_Graph.hxx>
-#include <Interface_InterfaceModel.hxx>
 #include <Interface_Static.hxx>
 #include <Quantity_Color.hxx>
 #include <StepBasic_MeasureValueMember.hxx>
@@ -27,10 +24,8 @@
 #include <STEPConstruct_Styles.hxx>
 #include <StepData_StepModel.hxx>
 #include <StepGeom_GeometricRepresentationItem.hxx>
-#include <StepRepr_HArray1OfRepresentationItem.hxx>
 #include <StepRepr_ItemDefinedTransformation.hxx>
 #include <StepRepr_ProductDefinitionShape.hxx>
-#include <StepRepr_Representation.hxx>
 #include <StepRepr_RepresentationContext.hxx>
 #include <StepRepr_RepresentationItem.hxx>
 #include <StepRepr_RepresentationRelationshipWithTransformation.hxx>
@@ -39,7 +34,6 @@
 #include <StepShape_ContextDependentShapeRepresentation.hxx>
 #include <StepShape_ShapeDefinitionRepresentation.hxx>
 #include <StepShape_ShapeRepresentation.hxx>
-#include <StepVisual_Colour.hxx>
 #include <StepVisual_ColourRgb.hxx>
 #include <StepVisual_CurveStyle.hxx>
 #include <StepVisual_DraughtingModel.hxx>
@@ -49,9 +43,6 @@
 #include <StepVisual_FillAreaStyleColour.hxx>
 #include <StepVisual_FillStyleSelect.hxx>
 #include <StepVisual_HArray1OfFillStyleSelect.hxx>
-#include <StepVisual_HArray1OfPresentationStyleAssignment.hxx>
-#include <StepVisual_HArray1OfPresentationStyleSelect.hxx>
-#include <StepVisual_HArray1OfSurfaceStyleElementSelect.hxx>
 #include <StepVisual_Invisibility.hxx>
 #include <StepVisual_InvisibleItem.hxx>
 #include <StepVisual_MechanicalDesignGeometricPresentationRepresentation.hxx>
@@ -66,20 +57,19 @@
 #include <StepVisual_SurfaceStyleBoundary.hxx>
 #include <StepVisual_SurfaceStyleElementSelect.hxx>
 #include <StepVisual_SurfaceStyleFillArea.hxx>
-#include <StepVisual_SurfaceStyleRendering.hxx>
 #include <StepVisual_SurfaceStyleRenderingWithProperties.hxx>
 #include <StepVisual_RenderingPropertiesSelect.hxx>
 #include <StepVisual_SurfaceStyleTransparent.hxx>
 #include <StepVisual_SurfaceStyleUsage.hxx>
 #include <TCollection_HAsciiString.hxx>
 #include <TColStd_HSequenceOfTransient.hxx>
-#include <TopoDS_Shape.hxx>
-#include <Transfer_Binder.hxx>
 #include <TransferBRep.hxx>
 #include <TransferBRep_ShapeMapper.hxx>
 #include <XSControl_TransferReader.hxx>
 #include <XSControl_TransferWriter.hxx>
 #include <XSControl_WorkSession.hxx>
+#include <StepVisual_ContextDependentOverRidingStyledItem.hxx>
+#include <StepShape_ShapeRepresentation.hxx>
 
 //=======================================================================
 //function : STEPConstruct_Styles
@@ -136,6 +126,26 @@ Handle(StepVisual_StyledItem) STEPConstruct_Styles::Style (const Standard_Intege
   return Handle(StepVisual_StyledItem)::DownCast ( myStyles.FindKey(i) );
 }
 
+//=======================================================================
+//function : NbRootStyles
+//purpose  : 
+//=======================================================================
+
+Standard_Integer STEPConstruct_Styles::NbRootStyles () const
+{
+  return myRootStyles.Extent();
+}
+
+//=======================================================================
+//function : RootStyle
+//purpose  : 
+//=======================================================================
+
+Handle(StepVisual_StyledItem) STEPConstruct_Styles::RootStyle (const Standard_Integer i) const
+{
+  return Handle(StepVisual_StyledItem)::DownCast ( myRootStyles.FindKey(i) );
+}
+
 
 //=======================================================================
 //function : ClearStyles
@@ -146,6 +156,7 @@ void STEPConstruct_Styles::ClearStyles ()
 {
   myStyles.Clear();
   myPSA.Clear();
+  myRootStyles.Clear();
 }
 
 
@@ -356,13 +367,15 @@ Standard_Boolean STEPConstruct_Styles::LoadStyles ()
 {
   myStyles.Clear();
   myPSA.Clear();
-  
+  myRootStyles.Clear();
+    
   // find all MDGPRs and DMs and collect all defined styles in myStyles
   Handle(Interface_InterfaceModel) model = Model();
   Standard_Integer nb = model->NbEntities();
   Handle(Standard_Type) tMDGPR = STANDARD_TYPE(StepVisual_MechanicalDesignGeometricPresentationRepresentation);
   Handle(Standard_Type) tDM = STANDARD_TYPE(StepVisual_DraughtingModel);
   Handle(Standard_Type) tSI = STANDARD_TYPE(StepVisual_StyledItem);
+  Handle(Standard_Type) tSR = STANDARD_TYPE(StepShape_ShapeRepresentation);
   for (Standard_Integer i = 1; i <= nb; i ++)
   {
     Handle(Standard_Transient) enti = model->Value(i);
@@ -376,13 +389,26 @@ Standard_Boolean STEPConstruct_Styles::LoadStyles ()
         Handle(StepVisual_StyledItem) style = 
           Handle(StepVisual_StyledItem)::DownCast ( container->ItemsValue(j) );
         if ( style.IsNull() ) continue;
-        myStyles.Add ( style );
+        auto anItem = style->ItemAP242 ().Value ();
+        if (!anItem.IsNull() && anItem->IsKind(tSR))
+        {
+          myRootStyles.Add (style);
+        }
+        else
+        {
+          myStyles.Add (style);
+        }
       }
     }
-    else if (enti->DynamicType() == tSI)
+    else if (enti->IsKind (STANDARD_TYPE(StepVisual_StyledItem)))
     {
       Handle(StepVisual_StyledItem) aStyledItem = Handle(StepVisual_StyledItem)::DownCast (enti);
-      if (!myStyles.Contains (aStyledItem))
+      auto anItem = aStyledItem->ItemAP242 ().Value ();
+      if (!anItem.IsNull() && anItem->IsKind(tSR) && !myRootStyles.Contains (aStyledItem))
+      {
+        myRootStyles.Add (aStyledItem);
+      }
+      else if (!myStyles.Contains (aStyledItem))
       {
         myStyles.Add (aStyledItem);
       }

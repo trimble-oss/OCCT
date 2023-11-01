@@ -22,7 +22,6 @@
 #include <TopoDS_Shape.hxx>
 #include <TopTools_DataMapIteratorOfDataMapOfShapeListOfShape.hxx>
 #include <TopTools_DataMapOfShapeShape.hxx>
-#include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <TopTools_ListOfShape.hxx>
 #include <TopTools_MapOfShape.hxx>
 
@@ -59,7 +58,7 @@ static void BuildBack (const TopTools_DataMapOfShapeListOfShape& M1,
 //=======================================================================
 
 static void  Replace (      TopTools_ListOfShape& L,
-		      const TopoDS_Shape          Old,
+		      const TopoDS_Shape&          Old,
 		      const TopTools_ListOfShape& New)
 {
   //-----------------------------------
@@ -151,7 +150,7 @@ static void Update (   TopTools_DataMapOfShapeListOfShape& Mod,
     if (!LIG.IsEmpty()) {
       if (ModBack.IsBound(S)) {
 	// Generation de modif  => generation du shape initial
-	TopoDS_Shape IS = ModBack(S);
+	const TopoDS_Shape& IS = ModBack(S);
 	StoreImage (Gen,IS,GenBack,LIG);
       }
       else {

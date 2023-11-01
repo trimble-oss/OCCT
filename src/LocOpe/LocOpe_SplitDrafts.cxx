@@ -30,7 +30,6 @@
 #include <Geom_Surface.hxx>
 #include <Geom_TrimmedCurve.hxx>
 #include <GeomAdaptor_Curve.hxx>
-#include <GeomAdaptor_Surface.hxx>
 #include <GeomFill_Pipe.hxx>
 #include <GeomInt_IntSS.hxx>
 #include <gp.hxx>
@@ -44,13 +43,11 @@
 #include <IntCurveSurface_IntersectionPoint.hxx>
 #include <IntCurveSurface_IntersectionSegment.hxx>
 #include <LocOpe_BuildShape.hxx>
-#include <LocOpe_FindEdges.hxx>
 #include <LocOpe_Spliter.hxx>
 #include <LocOpe_SplitShape.hxx>
 #include <LocOpe_WiresOnShape.hxx>
 #include <Precision.hxx>
 #include <Standard_ConstructionError.hxx>
-#include <Standard_NoSuchObject.hxx>
 #include <Standard_NullObject.hxx>
 #include <StdFail_NotDone.hxx>
 #include <TopExp.hxx>
@@ -61,7 +58,6 @@
 #include <TopoDS_Shape.hxx>
 #include <TopoDS_Vertex.hxx>
 #include <TopoDS_Wire.hxx>
-#include <TopTools_DataMapIteratorOfDataMapOfShapeListOfShape.hxx>
 #include <TopTools_DataMapIteratorOfDataMapOfShapeShape.hxx>
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
 
@@ -1648,7 +1644,7 @@ static TopoDS_Edge  NewEdge(const TopoDS_Edge& edg,
     Standard_Boolean rev = Standard_False;
     TopoDS_Vertex Vf = V1;
     TopoDS_Vertex Vl = V2;
-    Handle(Geom_Curve) Cimg = i2s.Line(i);
+    const Handle(Geom_Curve)& Cimg = i2s.Line(i);
     Handle(Geom2d_Curve) Cimg2d;
     if (AppS1) {
       Cimg2d = i2s.LineOnS1(i);

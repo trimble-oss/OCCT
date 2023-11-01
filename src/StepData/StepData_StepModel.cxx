@@ -17,10 +17,8 @@
 #include <Interface_EntityIterator.hxx>
 #include <Interface_GeneralLib.hxx>
 #include <Interface_GeneralModule.hxx>
-#include <Interface_InterfaceModel.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
-#include <Standard_NoSuchObject.hxx>
 #include <Standard_Transient.hxx>
 #include <Standard_Type.hxx>
 #include <StepData.hxx>
@@ -115,7 +113,7 @@ void StepData_StepModel::VerifyCheck(Handle(Interface_Check)& ach) const
   Interface_ShareTool sh(me,aHP);
   Handle(Interface_GeneralModule) module;  Standard_Integer CN;
   for (Interface_EntityIterator iter = Header(); iter.More(); iter.Next()) {
-    Handle(Standard_Transient) head = iter.Value();
+    const Handle(Standard_Transient)& head = iter.Value();
     if (!lib.Select(head,module,CN)) continue;
     module->CheckCase(CN,head,sh,ach);
   }

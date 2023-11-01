@@ -27,8 +27,6 @@ class XCAFDoc_ShapeTool;
 class TDF_Label;
 class Standard_GUID;
 class TCollection_HAsciiString;
-class TDF_Attribute;
-class TDF_RelocationTable;
 
 
 class XCAFDoc_MaterialTool;
@@ -78,7 +76,7 @@ public:
   
   //! Returns Material assigned to <MatL>
   //! Returns False if no such Material is assigned
-  Standard_EXPORT Standard_Boolean GetMaterial (const TDF_Label& MatL, Handle(TCollection_HAsciiString)& aName, Handle(TCollection_HAsciiString)& aDescription, Standard_Real& aDensity, Handle(TCollection_HAsciiString)& aDensName, Handle(TCollection_HAsciiString)& aDensValType) const;
+  Standard_EXPORT static Standard_Boolean GetMaterial (const TDF_Label& MatL, Handle(TCollection_HAsciiString)& aName, Handle(TCollection_HAsciiString)& aDescription, Standard_Real& aDensity, Handle(TCollection_HAsciiString)& aDensName, Handle(TCollection_HAsciiString)& aDensValType);
   
   //! Find referred material and return density from it
   //! if no material --> return 0

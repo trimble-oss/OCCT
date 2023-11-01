@@ -42,9 +42,7 @@
 #define TEST 1
 
 
-#include <Bnd_Box.hxx>
 #include <Bnd_Box2d.hxx>
-#include <Bnd_HArray1OfBox.hxx>
 #include <BndLib_Add2dCurve.hxx>
 #include <BndLib_Add3dCurve.hxx>
 #include <BRep_Builder.hxx>
@@ -61,45 +59,33 @@
 #include <BRepTools.hxx>
 #include <BRepTools_Quilt.hxx>
 #include <BRepTools_ReShape.hxx>
-#include <BSplCLib.hxx>
 #include <Extrema_ExtPC.hxx>
 #include <GCPnts_AbscissaPoint.hxx>
 #include <GCPnts_UniformAbscissa.hxx>
-#include <GCPnts_UniformDeflection.hxx>
-#include <Geom2d_BezierCurve.hxx>
-#include <Geom2d_BSplineCurve.hxx>
 #include <Geom2d_Curve.hxx>
 #include <Geom2d_Line.hxx>
 #include <Geom2d_TrimmedCurve.hxx>
 #include <Geom2dAdaptor_Curve.hxx>
-#include <Geom2dConvert.hxx>
-#include <Geom_BezierCurve.hxx>
-#include <Geom_BSplineCurve.hxx>
 #include <Geom_Curve.hxx>
-#include <Geom_Line.hxx>
 #include <Geom_OffsetSurface.hxx>
 #include <Geom_RectangularTrimmedSurface.hxx>
 #include <Geom_Surface.hxx>
 #include <GeomAdaptor_Curve.hxx>
-#include <GeomAdaptor_Surface.hxx>
 #include <GeomLib.hxx>
 #include <gp_Pnt.hxx>
 #include <gp_Vec.hxx>
 #include <Message_ProgressScope.hxx>
 #include <NCollection_UBTreeFiller.hxx>
 #include <Precision.hxx>
-#include <Standard_ErrorHandler.hxx>
 #include <Standard_Failure.hxx>
 #include <Standard_NoSuchObject.hxx>
 #include <Standard_OutOfRange.hxx>
 #include <Standard_Type.hxx>
 #include <TColgp_Array1OfVec.hxx>
 #include <TColgp_SequenceOfPnt.hxx>
-#include <TColStd_Array1OfInteger.hxx>
 #include <TColStd_Array1OfReal.hxx>
 #include <TColStd_Array2OfReal.hxx>
 #include <TColStd_IndexedMapOfInteger.hxx>
-#include <TColStd_ListIteratorOfListOfInteger.hxx>
 #include <TColStd_ListOfInteger.hxx>
 #include <TColStd_MapOfInteger.hxx>
 #include <TColStd_SequenceOfReal.hxx>
@@ -116,9 +102,7 @@
 #include <TopoDS_Shell.hxx>
 #include <TopoDS_Vertex.hxx>
 #include <TopoDS_Wire.hxx>
-#include <TopTools_Array1OfShape.hxx>
 #include <TopTools_DataMapOfShapeListOfShape.hxx>
-#include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <TopTools_ListOfShape.hxx>
 #include <TopTools_MapOfShape.hxx>
 #include <TopTools_SequenceOfShape.hxx>
@@ -390,7 +374,7 @@ TopoDS_Edge BRepBuilderAPI_Sewing::SameParameterEdge(const TopoDS_Shape& edge,
   for (Standard_Integer i = 1; i <= seqEdges.Length(); i++) {
 
     // Retrieve candidate section
-    TopoDS_Shape oedge2 = seqEdges(i);
+    const TopoDS_Shape& oedge2 = seqEdges(i);
 
     if (mySewing) {
 
@@ -1409,7 +1393,7 @@ void BRepBuilderAPI_Sewing::AnalysisNearestEdges(const TopTools_SequenceOfShape&
   // (they have other nearest edges belonging to the work face)
   for(Standard_Integer k = 1; k<= seqNotCandidate.Length(); k++) {
     Standard_Integer index1 = seqNotCandidate.Value(k);
-    TopoDS_Shape edge = sequenceSec.Value(index1);
+    const TopoDS_Shape& edge = sequenceSec.Value(index1);
     TopTools_SequenceOfShape tmpSeq;
     tmpSeq.Append(edge);
     for(Standard_Integer kk = 1; kk <= seqIndCandidate.Length();kk++) 
@@ -2944,7 +2928,7 @@ void BRepBuilderAPI_Sewing::VerticesAssembling(const Message_ProgressRange& theP
     for (i = 1; i <= myBoundFaces.Extent(); i++) {
       TopoDS_Shape bound = myBoundFaces.FindKey(i);
       for (TopoDS_Iterator itv(bound,Standard_False); itv.More(); itv.Next()) {
-	TopoDS_Shape node = itv.Value();
+	const TopoDS_Shape& node = itv.Value();
 	if (myNodeSections.IsBound(node))
 	  myNodeSections(node).Append(bound);
 	else {
@@ -3007,7 +2991,7 @@ static void replaceNMVertices(const TopoDS_Edge& theEdge,
       theReShape->Replace(aSeqNMVert.Value(i),theV2);
       continue;
     }
-    TopoDS_Shape aV = aSeqNMVert.Value(i);
+    const TopoDS_Shape& aV = aSeqNMVert.Value(i);
     Standard_Integer j =1;
     for( ; j <= aEdParams.Length();j++) {
       Standard_Real apar2 = aEdParams.Value(j);
@@ -3524,7 +3508,7 @@ Standard_Boolean BRepBuilderAPI_Sewing::MergedNearestEdges(const TopoDS_Shape& e
   TopTools_MapOfShape mapEdges;
   mapEdges.Add(edge);
   for (Standard_Integer i = 1; i <= mapVert1.Extent(); i++) {
-    TopoDS_Shape node1 = mapVert1.FindKey(i);
+    const TopoDS_Shape& node1 = mapVert1.FindKey(i);
     if (!myNodeSections.IsBound(node1)) continue;
     TopTools_ListIteratorOfListOfShape ilsec(myNodeSections(node1));
     for (; ilsec.More(); ilsec.Next()) {
@@ -4469,7 +4453,7 @@ void BRepBuilderAPI_Sewing::CreateCuttingNodes(const TopTools_IndexedMapOfShape&
       if (jdist < 0.0) {
         // Bind new cutting node (end vertex only)
         seqDist.SetValue(indexMin,disProj);
-        TopoDS_Shape cvertex = seqVert.Value(indexMin);
+        const TopoDS_Shape& cvertex = seqVert.Value(indexMin);
         NodeCuttingVertex.Add(node,cvertex);
       }
       else {

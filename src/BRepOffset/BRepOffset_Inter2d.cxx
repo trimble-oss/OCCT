@@ -18,16 +18,9 @@
 
 #include <BRepOffset_Inter2d.hxx>
 
-#include <Adaptor2d_Curve2d.hxx>
-#include <Adaptor3d_CurveOnSurface.hxx>
-#include <Adaptor3d_Surface.hxx>
-#include <Bnd_Box.hxx>
-#include <BndLib_Add3dCurve.hxx>
 #include <BOPTools_AlgoTools.hxx>
 #include <BRep_Builder.hxx>
-#include <BRep_CurveRepresentation.hxx>
 #include <BRep_GCurve.hxx>
-#include <BRep_ListIteratorOfListOfCurveRepresentation.hxx>
 #include <BRep_TEdge.hxx>
 #include <BRep_Tool.hxx>
 #include <BRepAdaptor_Curve.hxx>
@@ -77,8 +70,6 @@
 #include <TopoDS_Iterator.hxx>
 #include <TopoDS_Vertex.hxx>
 #include <TopoDS_Wire.hxx>
-#include <TopTools_DataMapIteratorOfDataMapOfShapeListOfShape.hxx>
-#include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <TopTools_ListOfShape.hxx>
 #include <TopTools_SequenceOfShape.hxx>
 
@@ -975,8 +966,8 @@ static void RefEdgeInter(const TopoDS_Face&              F,
 
 static Standard_Integer evaluateMaxSegment(const Adaptor3d_CurveOnSurface& aCurveOnSurface)
 {
-  Handle(Adaptor3d_Surface) aSurf   = aCurveOnSurface.GetSurface();
-  Handle(Adaptor2d_Curve2d) aCurv2d = aCurveOnSurface.GetCurve();
+  const Handle(Adaptor3d_Surface)& aSurf   = aCurveOnSurface.GetSurface();
+  const Handle(Adaptor2d_Curve2d)& aCurv2d = aCurveOnSurface.GetCurve();
 
   Standard_Real aNbSKnots = 0, aNbC2dKnots = 0;
   
@@ -1522,7 +1513,7 @@ Standard_Boolean BRepOffset_Inter2d::ExtentEdge(const TopoDS_Edge& E,TopoDS_Edge
 //purpose  : 
 //=======================================================================
 
-static Standard_Boolean  UpdateVertex(TopoDS_Vertex V,
+static Standard_Boolean  UpdateVertex(const TopoDS_Vertex& V,
                                       TopoDS_Edge&  OE,
                                       TopoDS_Edge&  NE,
                                       Standard_Real TolConf)
@@ -1969,7 +1960,7 @@ void BRepOffset_Inter2d::ConnexIntByIntInVert
       TopExp_Explorer Exp1, Exp2;
       Standard_Boolean bCoincide;
       // intersect edges generated from vertex with the edges of the face
-      TopoDS_Shape NE3 = Build(Vref);
+      const TopoDS_Shape& NE3 = Build(Vref);
       //
       for (Exp2.Init(NE3, TopAbs_EDGE); Exp2.More(); Exp2.Next()) {
         const TopoDS_Edge& aE3 = *(TopoDS_Edge*)&Exp2.Current();

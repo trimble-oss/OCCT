@@ -19,16 +19,13 @@
 #include <GccEnt_BadQualifier.hxx>
 #include <GccEnt_QualifiedCirc.hxx>
 #include <Geom2d_Circle.hxx>
-#include <Geom2dAdaptor_Curve.hxx>
 #include <Geom2dGcc_CurveTool.hxx>
-#include <Geom2dGcc_IsParallel.hxx>
 #include <Geom2dGcc_Lin2dTanObl.hxx>
 #include <Geom2dGcc_Lin2dTanOblIter.hxx>
 #include <Geom2dGcc_QCurve.hxx>
 #include <Geom2dGcc_QualifiedCurve.hxx>
 #include <gp_Lin2d.hxx>
 #include <gp_Pnt2d.hxx>
-#include <Standard_NegativeValue.hxx>
 #include <Standard_OutOfRange.hxx>
 #include <StdFail_NotDone.hxx>
 
@@ -48,7 +45,7 @@ Geom2dGcc_Lin2dTanObl::
   pararg2(1,2)
 {
   Geom2dAdaptor_Curve C1 = Qualified1.Qualified();
-  Handle(Geom2d_Curve) CC1 = C1.Curve();
+  const Handle(Geom2d_Curve)& CC1 = C1.Curve();
   GeomAbs_CurveType Type1 = C1.GetType();
 
 //=============================================================================
@@ -114,7 +111,7 @@ Geom2dGcc_Lin2dTanObl::
   pararg2(1,2)
 {
   Geom2dAdaptor_Curve C1 = Qualified1.Qualified();
-  Handle(Geom2d_Curve) CC1 = C1.Curve();
+  const Handle(Geom2d_Curve)& CC1 = C1.Curve();
   GeomAbs_CurveType Type1 = C1.GetType();
 
 //=============================================================================

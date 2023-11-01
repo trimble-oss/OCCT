@@ -24,7 +24,6 @@
 #include <BRepFill.hxx>
 #include <BRepFill_ACRLaw.hxx>
 #include <BRepFill_CompatibleWires.hxx>
-#include <BRepFill_DataMapOfShapeHArray2OfShape.hxx>
 #include <BRepFill_Edge3DLaw.hxx>
 #include <BRepFill_EdgeOnSurfLaw.hxx>
 #include <BRepFill_LocationLaw.hxx>
@@ -36,9 +35,7 @@
 #include <BRepFill_ShapeLaw.hxx>
 #include <BRepFill_Sweep.hxx>
 #include <BRepGProp.hxx>
-#include <BRepLib_MakeEdge.hxx>
 #include <BRepLib_MakeFace.hxx>
-#include <GeomAdaptor_Curve.hxx>
 #include <GeomAdaptor_Surface.hxx>
 #include <GeomFill_ConstantBiNormal.hxx>
 #include <GeomFill_CorrectedFrenet.hxx>
@@ -58,19 +55,15 @@
 #include <GProp_GProps.hxx>
 #include <IntCurveSurface_HInter.hxx>
 #include <IntCurveSurface_IntersectionPoint.hxx>
-#include <Law_Function.hxx>
 #include <Law_Interpol.hxx>
 #include <Precision.hxx>
 #include <Standard_ConstructionError.hxx>
-#include <Standard_DomainError.hxx>
 #include <Standard_NotImplemented.hxx>
 #include <Standard_Type.hxx>
 #include <StdFail_NotDone.hxx>
 #include <TColgp_HArray1OfPnt2d.hxx>
-#include <TColStd_HArray1OfReal.hxx>
 #include <TColStd_SequenceOfInteger.hxx>
 #include <TopExp.hxx>
-#include <TopLoc_Location.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Iterator.hxx>
 #include <TopoDS_Shape.hxx>
@@ -91,10 +84,8 @@ IMPLEMENT_STANDARD_RTTIEXT(BRepFill_PipeShell,Standard_Transient)
 static Standard_Boolean Affich = 0;
 #endif
 
-#include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
 #include <TopTools_DataMapOfIntegerShape.hxx>
-#include <TopoDS_Compound.hxx>
 
 
 static Standard_Boolean BuildBoundaries(const BRepFill_Sweep&               theSweep,
@@ -1125,7 +1116,7 @@ void BRepFill_PipeShell::Generated(const TopoDS_Shape&   theShape,
         for (; Explo.More(); Explo.Next())
         {
           const TopoDS_Edge& anEdge = TopoDS::Edge(Explo.Current());
-          TopTools_ListOfShape aNewEdges = Georges.GeneratedShapes(anEdge);
+          const TopTools_ListOfShape& aNewEdges = Georges.GeneratedShapes(anEdge);
           myEdgeNewEdges.Bind(anEdge, aNewEdges);
         }
       }
@@ -1177,7 +1168,7 @@ void BRepFill_PipeShell::Place(const BRepFill_Section& Sec,
 				  Sec.Vertex(),
 				  Sec.WithContact(),
 				  Sec.WithCorrection());
-  TopoDS_Wire TmpWire =  Sec.Wire();
+  const TopoDS_Wire& TmpWire =  Sec.Wire();
   aTrsf = Place.Transformation();
   //Transform the copy
   W = TopoDS::Wire(BRepBuilderAPI_Transform(TmpWire, aTrsf, Standard_True));

@@ -11,31 +11,21 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
+#include <TransferBRep.hxx>
 
 #include <BRep_Builder.hxx>
-#include <BRep_Tool.hxx>
 #include <BRepLib.hxx>
-#include <Interface_Check.hxx>
 #include <Interface_CheckIterator.hxx>
-#include <Interface_InterfaceModel.hxx>
 #include <Interface_Macros.hxx>
 #include <Message_Msg.hxx>
 #include <Message_Printer.hxx>
-#include <Standard_ErrorHandler.hxx>
-#include <Standard_Failure.hxx>
 #include <Standard_Transient.hxx>
-#include <TopExp_Explorer.hxx>
-#include <TopoDS.hxx>
-#include <TopoDS_Edge.hxx>
 #include <TopoDS_HShape.hxx>
 #include <TopoDS_Shape.hxx>
-#include <Transfer_Binder.hxx>
 #include <Transfer_FinderProcess.hxx>
 #include <Transfer_IteratorOfProcessForTransient.hxx>
 #include <Transfer_SimpleBinderOfTransient.hxx>
 #include <Transfer_TransientProcess.hxx>
-#include <TransferBRep.hxx>
-#include <TransferBRep_BinderOfShape.hxx>
 #include <TransferBRep_ShapeBinder.hxx>
 #include <TransferBRep_ShapeListBinder.hxx>
 #include <TransferBRep_ShapeMapper.hxx>
@@ -119,7 +109,7 @@ static void  ShapeAppend
     (roots ? TP->RootResult() : TP->CompleteResult());
 
   for (list.Start(); list.More(); list.Next()) {
-    Handle(Transfer_Binder) binder = list.Value();
+    const Handle(Transfer_Binder)& binder = list.Value();
     ShapeAppend (binder,shapes);
   }
   return shapes;
@@ -330,7 +320,7 @@ Interface_CheckIterator TransferBRep::BRepCheck
   nchl.SetModel(model);
   for (chl.Start(); chl.More(); chl.Next()) {
     Standard_Integer num = 0;
-    Handle(Interface_Check) ach = chl.Value();
+    const Handle(Interface_Check)& ach = chl.Value();
     if (ach->NbFails() + ach->NbWarnings() == 0) continue;
     DeclareAndCast(Transfer_Finder,starting,ach->Entity());
     Handle(Standard_Transient) ent;
@@ -349,7 +339,7 @@ Interface_CheckIterator TransferBRep::BRepCheck
 {
   Handle(TColStd_HSequenceOfTransient) ls = new TColStd_HSequenceOfTransient();
   for (chl.Start(); chl.More(); chl.Next()) {
-    const Handle(Interface_Check) ach = chl.Value();
+    const Handle(Interface_Check)& ach = chl.Value();
     if (ach->NbFails() + ach->NbWarnings() == 0) continue;
     Handle(Standard_Transient) ent = ach->Entity();
     if (ent.IsNull()) continue;
@@ -368,7 +358,7 @@ Interface_CheckIterator TransferBRep::BRepCheck
 {
   Handle(TopTools_HSequenceOfShape) ls = new TopTools_HSequenceOfShape();
   for (chl.Start(); chl.More(); chl.Next()) {
-    const Handle(Interface_Check) ach = chl.Value();
+    const Handle(Interface_Check)& ach = chl.Value();
     if (ach->NbFails() + ach->NbWarnings() == 0) continue;
     Handle(Standard_Transient) ent = ach->Entity();
     if (ent.IsNull()) continue;
@@ -395,13 +385,13 @@ Interface_CheckIterator TransferBRep::BRepCheck
   Interface_CheckIterator nchl;
 
   for (chl.Start(); chl.More(); chl.Next()) {
-    const Handle(Interface_Check) ach = chl.Value();
+    const Handle(Interface_Check)& ach = chl.Value();
     if (ach->NbFails() + ach->NbWarnings() == 0) continue;
     Handle(Standard_Transient) ent = ach->Entity();
     if (ent.IsNull()) continue;
     if (S.IsNull()) {
       if (ent == obj) {
-	Handle(Interface_Check) bch(ach);  bch->SetEntity(ent);
+	const Handle(Interface_Check)& bch(ach);  bch->SetEntity(ent);
 	nchl.Add (bch,0);
       }
     } else {
@@ -413,7 +403,7 @@ Interface_CheckIterator TransferBRep::BRepCheck
       if (!sbs.IsNull()) sh = sbs->Result();
       if (!smp.IsNull()) sh = smp->Value();
       if (sh == S) {
-	Handle(Interface_Check) bch(ach);  bch->SetEntity(ent);
+	const Handle(Interface_Check)& bch(ach);  bch->SetEntity(ent);
 	nchl.Add (bch,0);
       }
     }

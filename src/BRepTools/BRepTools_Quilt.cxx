@@ -30,11 +30,8 @@
 #include <TopoDS_Shell.hxx>
 #include <TopoDS_Vertex.hxx>
 #include <TopoDS_Wire.hxx>
-#include <TopTools_DataMapIteratorOfDataMapOfShapeShape.hxx>
 #include <TopTools_DataMapOfShapeShape.hxx>
 #include <TopTools_IndexedDataMapOfShapeShape.hxx>
-#include <TopTools_ListOfShape.hxx>
-#include <TopTools_MapIteratorOfMapOfShape.hxx>
 #include <TopTools_MapOfShape.hxx>
 
 //=======================================================================
@@ -465,7 +462,7 @@ TopoDS_Shape BRepTools_Quilt::Shells() const
 //		 itm.More(); ) {
               if(!M.IsBound(aexp.Current()))
                  continue;
-              TopoDS_Shape ae = aexp.Current();
+              const TopoDS_Shape& ae = aexp.Current();
               TopoDS_Shape as = M.Find(ae);
 	      if (as.IsSame(oldShell)) {
 		// update the orientation of free edges in SH.

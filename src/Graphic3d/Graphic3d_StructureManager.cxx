@@ -137,7 +137,7 @@ Handle(Graphic3d_Structure) Graphic3d_StructureManager::Identification (const St
   Handle(Graphic3d_Structure) SGfound;
 
   for (; it.More() && notfound; it.Next()) {
-    Handle(Graphic3d_Structure) SG = it.Key();
+    const Handle(Graphic3d_Structure)& SG = it.Key();
     if ( SG->Identification () == AId) {
       notfound  = Standard_False;
       SGfound = SG;
@@ -165,7 +165,6 @@ void Graphic3d_StructureManager::RecomputeStructures()
   NCollection_Map<Graphic3d_Structure*> aStructNetwork;
   for (Graphic3d_MapIteratorOfMapOfStructure anIter(myDisplayedStructure); anIter.More(); anIter.Next())
   {
-    Handle(Graphic3d_Structure) aStructure = anIter.Key();
     anIter.Key()->Network (anIter.Key().get(), Graphic3d_TOC_DESCENDANT, aStructNetwork);
   }
 
@@ -182,29 +181,45 @@ void Graphic3d_StructureManager::RecomputeStructures (const NCollection_Map<Grap
   }
 }
 
-Handle(Graphic3d_ViewAffinity) Graphic3d_StructureManager::RegisterObject (const Handle(Standard_Transient)& theObject)
+// ========================================================================
+// function : RegisterObject
+// purpose  :
+// ========================================================================
+void Graphic3d_StructureManager::RegisterObject (const Handle(Standard_Transient)& theObject,
+                                                 const Handle(Graphic3d_ViewAffinity)& theAffinity)
 {
   Handle(Graphic3d_ViewAffinity) aResult;
-  if (myRegisteredObjects.Find (theObject.operator->(), aResult))
+  if (myRegisteredObjects.Find (theObject.operator->(), aResult)
+   && aResult == theAffinity)
   {
-    return aResult;
+    return;
   }
 
-  aResult = new Graphic3d_ViewAffinity();
-  myRegisteredObjects.Bind (theObject.operator->(), aResult);
-  return aResult;
+  myRegisteredObjects.Bind (theObject.operator->(), theAffinity);
 }
 
+// ========================================================================
+// function : UnregisterObject
+// purpose  :
+// ========================================================================
 void Graphic3d_StructureManager::UnregisterObject (const Handle(Standard_Transient)& theObject)
 {
   myRegisteredObjects.UnBind (theObject.operator->());
 }
 
-Handle(Graphic3d_ViewAffinity) Graphic3d_StructureManager::ObjectAffinity (const Handle(Standard_Transient)& theObject) const
+// ========================================================================
+// function : ObjectAffinity
+// purpose  :
+// ========================================================================
+const Handle(Graphic3d_ViewAffinity)& Graphic3d_StructureManager::ObjectAffinity (const Handle(Standard_Transient)& theObject) const
 {
-  Handle(Graphic3d_ViewAffinity) aResult;
-  myRegisteredObjects.Find (theObject.operator->(), aResult);
-  return aResult;
+  const Handle(Graphic3d_ViewAffinity)* aResult = myRegisteredObjects.Seek (theObject.operator->());
+  if (aResult == nullptr)
+  {
+    static const Handle(Graphic3d_ViewAffinity) aDummy;
+    return aDummy;
+  }
+  return *aResult;
 }
 
 // ========================================================================
@@ -420,8 +435,8 @@ void Graphic3d_StructureManager::SetTransform (const Handle(Graphic3d_Structure)
 // purpose  :
 // ========================================================================
 void Graphic3d_StructureManager::ChangeDisplayPriority (const Handle(Graphic3d_Structure)& theStructure,
-                                                        const Standard_Integer theOldPriority,
-                                                        const Standard_Integer theNewPriority)
+                                                        const Graphic3d_DisplayPriority theOldPriority,
+                                                        const Graphic3d_DisplayPriority theNewPriority)
 {
   for (Graphic3d_IndexedMapOfView::Iterator aViewIt (myDefinedViews); aViewIt.More(); aViewIt.Next())
   {

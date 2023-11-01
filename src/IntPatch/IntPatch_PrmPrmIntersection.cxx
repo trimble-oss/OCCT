@@ -21,12 +21,7 @@
 #include <Adaptor3d_TopolTool.hxx>
 #include <gp_Dir.hxx>
 #include <gp_Pnt.hxx>
-#include <Intf_PIType.hxx>
-#include <Intf_SectionLine.hxx>
-#include <Intf_SectionPoint.hxx>
-#include <Intf_TangentZone.hxx>
 #include <IntPatch_InterferencePolyhedron.hxx>
-#include <IntPatch_Line.hxx>
 #include <IntPatch_Polyhedron.hxx>
 #include <IntPatch_PrmPrmIntersection.hxx>
 #include <IntPatch_PrmPrmIntersection_T3Bits.hxx>
@@ -40,7 +35,6 @@
 #include <Standard_OutOfRange.hxx>
 #include <StdFail_NotDone.hxx>
 #include <TColStd_Array1OfReal.hxx>
-#include <TColStd_HArray1OfReal.hxx>
 #include <TColStd_SequenceOfInteger.hxx>
 
 static void SectionPointToParameters(const Intf_SectionPoint& Sp,
@@ -2386,6 +2380,9 @@ void IntPatch_PrmPrmIntersection::Perform (const Handle(Adaptor3d_Surface)& Surf
                     //Try to extend the intersection line to the boundary,
                     //if it is possibly
                     PW.PutToBoundary(Surf1, Surf2);
+                    //
+                    if (PW.NbPoints() < 3)
+                      continue;
 
                     const Standard_Integer aMinNbPoints = 40;
                     if(PW.NbPoints() < aMinNbPoints)
@@ -3290,7 +3287,6 @@ void IntPatch_PrmPrmIntersection::PointDepart(Handle(IntSurf_LineOn2S)& LineOn2S
   M2.ResetAnd();
   //
   int newind=0;
-  long unsigned Compt=0;
   int ok=0;
   int indicepointtraite = 0;
   Standard_Integer k,nu,nv;
@@ -3308,7 +3304,7 @@ void IntPatch_PrmPrmIntersection::PointDepart(Handle(IntSurf_LineOn2S)& LineOn2S
           for(si=-1; si<= 1 && nb<LIM; si++) { 
             for(sj=-1; sj<= 1 && nb<LIM; sj++) { 
               for(sk=-1; sk<= 1 && nb<LIM; sk++) { 
-                long unsigned lu=GrilleInteger(i+si,j+sj,k+sk);
+                Standard_Integer lu = GrilleInteger(i+si,j+sj,k+sk);
                 if(M1.Val(lu) && M2.Val(lu)) { 
                   nb++;
                 }
@@ -3320,7 +3316,7 @@ void IntPatch_PrmPrmIntersection::PointDepart(Handle(IntSurf_LineOn2S)& LineOn2S
               for(sj=-1; sj<= 1; sj++) { 
                 for(sk=-1; sk<= 1; sk++) { 
                   if(si || sj || sk) { 
-                    long unsigned lu=GrilleInteger(i+si,j+sj,k+sk);
+                    Standard_Integer lu = GrilleInteger(i+si,j+sj,k+sk);
                     M1.Raz(lu);
                   }
                 }
@@ -3333,22 +3329,18 @@ void IntPatch_PrmPrmIntersection::PointDepart(Handle(IntSurf_LineOn2S)& LineOn2S
       //
       Standard_Integer nu1=-1,nu2=-1;
       Standard_Integer nv1=0, nv2=0;
-      int nbsur1 = 0;
       for(nu=0;nu1<0 && nu<SU1;nu++) { 
         for(nv=0;nu1<0 && nv<SV1;nv++) { 
           if( aIPD.xIP1(nu, nv) ==(Standard_Integer) newind )  { 
-            nbsur1++;
             aIPD.xIP1(nu, nv)=indicepointtraite;
             nu1=nu; nv1=nv;
           }
         }
       }
       if(nu1>=0) { 
-        int nbsur2 = 0;
         for(nu=0;nu2<0 && nu<SU2;nu++) { 
           for(nv=0;nu2<0 && nv<SV2;nv++) { 
             if( aIPD.xIP2(nu, nv)==(Standard_Integer) newind )  { 
-              nbsur2++;
               aIPD.xIP2(nu, nv)=indicepointtraite;
               nu2=nu; nv2=nv;
             }
@@ -3363,7 +3355,6 @@ void IntPatch_PrmPrmIntersection::PointDepart(Handle(IntSurf_LineOn2S)& LineOn2S
           S2->FirstUParameter()+nu2*du2,
           S2->FirstVParameter()+nv2*dv2);
         LineOn2S->Add(POn2S);
-        Compt++;
       }
       else { 
         //-- aucun point du triangle n a ete trouve assez proche
@@ -3441,7 +3432,6 @@ void IntPatch_PrmPrmIntersection::PointDepart(Handle(IntSurf_LineOn2S)& LineOn2S
         IntSurf_PntOn2S POn2S;
         POn2S.SetValue(P,U1_3,V1_3,U2_3,V2_3);
         LineOn2S->Add(POn2S);
-        Compt++;	
       }
     }
   }

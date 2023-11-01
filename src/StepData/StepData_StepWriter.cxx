@@ -16,16 +16,12 @@
 //                 of strings from Header Section
 
 #include <Interface_Check.hxx>
-#include <Interface_CheckIterator.hxx>
 #include <Interface_EntityIterator.hxx>
-#include <Interface_FloatWriter.hxx>
 #include <Interface_InterfaceMismatch.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ReportEntity.hxx>
-#include <Standard_NoSuchObject.hxx>
 #include <Standard_Transient.hxx>
 #include <StepData_ESDescr.hxx>
-#include <StepData_Field.hxx>
 #include <StepData_FieldList.hxx>
 #include <StepData_PDescr.hxx>
 #include <StepData_Protocol.hxx>
@@ -176,7 +172,7 @@ void StepData_StepWriter::SendModel(const Handle(StepData_Protocol)& protocol,
   Interface_EntityIterator header = themodel->Header();
   thenum = 0;
   for (header.Start(); header.More(); header.Next()) {
-    Handle(Standard_Transient) anent = header.Value();
+    const Handle(Standard_Transient)& anent = header.Value();
 
 //   Write Entity via Lib  (similaire a SendEntity)
     Handle(StepData_ReadWriteModule) module;  Standard_Integer CN;
@@ -685,7 +681,7 @@ void  StepData_StepWriter::SendList(const StepData_FieldList& list,
   for (i = 1; i <= nb; i ++) {
     Handle(StepData_PDescr) pde;
     if (!descr.IsNull()) pde  = descr->Field(i);
-    const StepData_Field fild = list.Field(i);
+    const StepData_Field& fild = list.Field(i);
     SendField (fild,pde);
   }
 // end entity  ?

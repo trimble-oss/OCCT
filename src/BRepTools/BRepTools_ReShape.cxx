@@ -17,24 +17,17 @@
 
 #include <BRep_Builder.hxx>
 #include <BRep_GCurve.hxx>
-#include <BRep_ListIteratorOfListOfCurveRepresentation.hxx>
-#include <BRep_ListOfCurveRepresentation.hxx>
 #include <BRep_TEdge.hxx>
 #include <BRep_Tool.hxx>
 #include <BRepTools_ReShape.hxx>
 #include <Geom_Surface.hxx>
 #include <NCollection_IndexedMap.hxx>
 #include <Standard_Type.hxx>
-#include <TopExp_Explorer.hxx>
 #include <TopLoc_Location.hxx>
 #include <TopoDS.hxx>
-#include <TopoDS_Compound.hxx>
-#include <TopoDS_Edge.hxx>
 #include <TopoDS_Face.hxx>
 #include <TopoDS_Iterator.hxx>
 #include <TopoDS_Shape.hxx>
-#include <TopoDS_Shell.hxx>
-#include <TopoDS_Solid.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(BRepTools_ReShape,Standard_Transient)
 
@@ -395,7 +388,7 @@ TopoDS_Shape BRepTools_ReShape::Apply (const TopoDS_Shape& shape,
   // apply recorded modifications to subshapes
   Standard_Boolean isEmpty = Standard_True;
   for ( TopoDS_Iterator it(shape,Standard_False); it.More(); it.Next() ) {
-    TopoDS_Shape sh = it.Value();
+    const TopoDS_Shape& sh = it.Value();
     newsh = Apply ( sh, until );
     if ( newsh != sh ) {
       if ( myStatus & EncodeStatus(4)) //ShapeExtend::DecodeStatus ( myStatus, ShapeExtend_DONE4 ) )
@@ -415,7 +408,7 @@ TopoDS_Shape BRepTools_ReShape::Apply (const TopoDS_Shape& shape,
     }
     Standard_Integer nitems = 0;
     for ( TopoDS_Iterator subit(newsh); subit.More(); subit.Next(), nitems++ ) {
-      TopoDS_Shape subsh = subit.Value();
+      const TopoDS_Shape& subsh = subit.Value();
       if ( subsh.ShapeType() == sh.ShapeType() ) B.Add ( result, subsh );//fix for SAMTECH bug OCC322 about abcense internal vertices after sewing.
       else locStatus |= EncodeStatus(10);//ShapeExtend::EncodeStatus ( ShapeExtend_FAIL1 );
     }

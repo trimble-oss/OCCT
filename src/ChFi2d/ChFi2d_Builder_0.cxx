@@ -42,7 +42,6 @@
 #include <Geom_Surface.hxx>
 #include <GeomAdaptor_Curve.hxx>
 #include <GeomAPI.hxx>
-#include <gp_Pln.hxx>
 #include <gp_Pnt.hxx>
 #include <gp_Pnt2d.hxx>
 #include <IntRes2d_IntersectionPoint.hxx>
@@ -682,7 +681,7 @@ gp_Pnt ComputePoint(const TopoDS_Vertex& V,const TopoDS_Edge& E,
       p = BRep_Tool::Pnt(v2);
     }     
 
-    GeomAdaptor_Curve cc = c.Curve();
+    const GeomAdaptor_Curve& cc = c.Curve();
     if (p.Distance(c.Value(first)) <= Precision::Confusion()) {
       GCPnts_AbscissaPoint computePoint(cc, D, first);
       Param = computePoint.Parameter();

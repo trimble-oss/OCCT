@@ -21,11 +21,9 @@
 #include <ElCLib.hxx>
 #include <ElSLib.hxx>
 #include <IntPatch_ArcFunction.hxx>
-#include <IntPatch_PointLine.hxx>
 #include <IntPatch_RLine.hxx>
 #include <IntPatch_RstInt.hxx>
 #include <IntPatch_SpecialPoints.hxx>
-#include <IntPatch_TheIWLineOfTheIWalking.hxx>
 #include <IntPatch_TheIWalking.hxx>
 #include <IntPatch_TheSurfFunction.hxx>
 #include <IntPatch_WLine.hxx>
@@ -1416,7 +1414,7 @@ void IntPatch_ImpPrmIntersection::Perform (const Handle(Adaptor3d_Surface)& Surf
         gp_Pnt ptpoly;
         IntSurf_PntOn2S p2s;
         Handle(IntSurf_LineOn2S) Thelin = new IntSurf_LineOn2S ();
-        Handle(Adaptor2d_Curve2d) arcsegm = thesegm.Curve();
+        const Handle(Adaptor2d_Curve2d)& arcsegm = thesegm.Curve();
         Standard_Integer nbsample = 100;
 
         if (!reversed) {

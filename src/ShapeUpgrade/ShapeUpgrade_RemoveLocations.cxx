@@ -13,9 +13,6 @@
 
 
 #include <BRep_Builder.hxx>
-#include <BRep_CurveRepresentation.hxx>
-#include <BRep_GCurve.hxx>
-#include <BRep_ListIteratorOfListOfCurveRepresentation.hxx>
 #include <BRep_TEdge.hxx>
 #include <BRep_Tool.hxx>
 #include <Geom2d_Curve.hxx>
@@ -24,15 +21,10 @@
 #include <Geom_Plane.hxx>
 #include <Geom_Surface.hxx>
 #include <gp_Pnt.hxx>
-#include <gp_Trsf.hxx>
-#include <ShapeBuild_Edge.hxx>
 #include <ShapeUpgrade_RemoveLocations.hxx>
 #include <Standard_Type.hxx>
-#include <TColStd_ListIteratorOfListOfTransient.hxx>
-#include <TColStd_ListOfTransient.hxx>
 #include <TopAbs_ShapeEnum.hxx>
 #include <TopExp.hxx>
-#include <TopExp_Explorer.hxx>
 #include <TopLoc_Location.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Edge.hxx>
@@ -40,7 +32,6 @@
 #include <TopoDS_Iterator.hxx>
 #include <TopoDS_Shape.hxx>
 #include <TopoDS_Vertex.hxx>
-#include <TopTools_DataMapOfShapeShape.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(ShapeUpgrade_RemoveLocations,Standard_Transient)
 
@@ -61,7 +52,7 @@ ShapeUpgrade_RemoveLocations::ShapeUpgrade_RemoveLocations()
 
  Standard_Boolean ShapeUpgrade_RemoveLocations::Remove(const TopoDS_Shape& theShape) 
 {
-  TopoDS_Shape aShape = theShape;
+  const TopoDS_Shape& aShape = theShape;
   myShape = aShape;
   TopAbs_ShapeEnum shtype = theShape.ShapeType();
   Standard_Boolean isRemoveLoc = ((shtype != TopAbs_COMPOUND && myLevelRemoving == TopAbs_SHAPE) || 
@@ -188,7 +179,7 @@ Standard_Boolean ShapeUpgrade_RemoveLocations::MakeNewShape(const TopoDS_Shape& 
      aNewShape= myMapNewShapes.Find(aShape);
      aNewShape.Orientation(theShape.Orientation());
      if(!theRemoveLoc && !theShape.Location().IsIdentity()) {
-       TopLoc_Location aL = theShape.Location();
+       const TopLoc_Location& aL = theShape.Location();
        aNewShape.Location(aL);
      }
      if(shtype != TopAbs_EDGE) {
@@ -265,7 +256,7 @@ Standard_Boolean ShapeUpgrade_RemoveLocations::MakeNewShape(const TopoDS_Shape& 
     aNewShape.Orientation(TopAbs_FORWARD);
     TopoDS_Iterator aIt(aShape,Standard_False,isRemoveLoc);
     for( ; aIt.More(); aIt.Next()) {
-      TopoDS_Shape subshape = aIt.Value();
+      const TopoDS_Shape& subshape = aIt.Value();
       TopoDS_Shape anewsubshape;
       Standard_Boolean isDoneSubShape = MakeNewShape(subshape,anAncShape,anewsubshape,isRemoveLoc);
       isDone = (isDone || isDoneSubShape);

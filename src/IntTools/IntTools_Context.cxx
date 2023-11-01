@@ -16,7 +16,6 @@
 #include <Bnd_Box.hxx>
 #include <Bnd_OBB.hxx>
 #include <BRep_Tool.hxx>
-#include <BRepAdaptor_Surface.hxx>
 #include <BRepBndLib.hxx>
 #include <BRepClass3d_SolidClassifier.hxx>
 #include <Extrema_LocateExtPC.hxx>
@@ -32,7 +31,6 @@
 #include <gp_Pnt.hxx>
 #include <gp_Pnt2d.hxx>
 #include <IntTools_Context.hxx>
-#include <IntTools_Curve.hxx>
 #include <IntTools_FClass2d.hxx>
 #include <IntTools_SurfaceRangeLocalizeData.hxx>
 #include <IntTools_Tools.hxx>
@@ -738,7 +736,7 @@ Standard_Boolean IntTools_Context::IsValidBlockForFace
 
   aTInterm=IntTools_Tools::IntermediatePoint(aT1, aT2);
 
-  Handle(Geom_Curve) aC3D=aC.Curve();
+  const Handle(Geom_Curve)& aC3D=aC.Curve();
   // point 3D
   aC3D->D0(aTInterm, aPInterm);
   //
@@ -823,7 +821,7 @@ Standard_Boolean IntTools_Context::IsVertexOnLine
   
   aPv=BRep_Tool::Pnt(aV);
 
-  Handle(Geom_Curve) aC3D=aC.Curve();
+  const Handle(Geom_Curve)& aC3D=aC.Curve();
   
   
   aTolSum=aTolV+aTolC;

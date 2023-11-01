@@ -16,10 +16,7 @@
 
 #include <BRep_Builder.hxx>
 #include <IFSelect_Functions.hxx>
-#include <Interface_Check.hxx>
-#include <Interface_InterfaceModel.hxx>
 #include <Interface_ShareFlags.hxx>
-#include <Interface_Static.hxx>
 #include <Message.hxx>
 #include <Message_Messenger.hxx>
 #include <Message_ProgressScope.hxx>
@@ -27,7 +24,6 @@
 #include <Standard_Transient.hxx>
 #include <TopoDS_Compound.hxx>
 #include <TopoDS_Shape.hxx>
-#include <Transfer_Binder.hxx>
 #include <Transfer_IteratorOfProcessForTransient.hxx>
 #include <Transfer_TransientProcess.hxx>
 #include <XSControl_Controller.hxx>
@@ -472,8 +468,7 @@ void XSControl_Reader::GetStatsTransfer (const Handle(TColStd_HSequenceOfTransie
   nbMapped = nbWithFail = nbWithResult = 0;
   
   for (itrp.Start(); itrp.More(); itrp.Next()) {
-    Handle(Transfer_Binder) binder = itrp.Value();
-    Handle(Standard_Transient) ent = itrp.Starting();
+    const Handle(Transfer_Binder)& binder = itrp.Value();
     nbMapped++;
     if (binder.IsNull())  nbWithFail++;
     else

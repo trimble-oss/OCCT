@@ -23,36 +23,25 @@
 #include <Draw_Interpretor.hxx>
 #include <Draw_Appli.hxx>
 
-#include <BRep_Builder.hxx>
-#include <BRep_Tool.hxx>
 #include <BRepLib.hxx>
 #include <BRepTools_Quilt.hxx>
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_MakeShell.hxx>
-#include <BRepBuilderAPI.hxx>
 #include <BRepBuilderAPI_Sewing.hxx>
 #include <BRepOffsetAPI_FindContigousEdges.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS.hxx>
-#include <TopoDS_Face.hxx>
 #include <TCollection_AsciiString.hxx>
 #include <Geom_Surface.hxx>
 #include <Geom2d_TrimmedCurve.hxx>
-#include <TopTools_ListOfShape.hxx>
 #include <TopTools_SequenceOfShape.hxx>
 #include <Precision.hxx>
 #include <Draw_ProgressIndicator.hxx>
-#include <NCollection_Vector.hxx>
 #include <BRepBuilderAPI_FastSewing.hxx>
 
 #include <GeomAPI_ProjectPointOnSurf.hxx>
 #include <Message.hxx>
-
-#ifdef _WIN32
-//#define strcasecmp strcmp Already defined
-#include <stdio.h>
-#endif
 
 //-----------------------------------------------------------------------
 // suppressarg : suppress a[d],modifie na--

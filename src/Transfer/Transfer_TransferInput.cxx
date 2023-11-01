@@ -13,11 +13,9 @@
 
 
 #include <Interface_EntityIterator.hxx>
-#include <Interface_InterfaceModel.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_Protocol.hxx>
 #include <TColStd_HSequenceOfTransient.hxx>
-#include <Transfer_Binder.hxx>
 #include <Transfer_FinderProcess.hxx>
 #include <Transfer_IteratorOfProcessForFinder.hxx>
 #include <Transfer_IteratorOfProcessForTransient.hxx>
@@ -39,7 +37,7 @@ Transfer_TransferInput::Transfer_TransferInput ()    {  }
 {
   Interface_EntityIterator iter;
   for (list.Start(); list.More(); list.Next()) {
-    Handle(Transfer_Binder) binder = list.Value();
+    const Handle(Transfer_Binder)& binder = list.Value();
     if (binder.IsNull()) continue;
     if (binder->IsKind(STANDARD_TYPE(Transfer_VoidBinder))) continue;
 

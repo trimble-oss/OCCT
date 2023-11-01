@@ -22,14 +22,12 @@
 #include <PCDM_RetrievalDriver.hxx>
 #include <PCDM_StorageDriver.hxx>
 #include <PCDM_ReaderFilter.hxx>
-#include <Plugin.hxx>
 #include <Plugin_Failure.hxx>
 #include <Resource_Manager.hxx>
 #include <Standard_DomainError.hxx>
 #include <Standard_Dump.hxx>
 #include <Standard_ErrorHandler.hxx>
 #include <Standard_NoSuchObject.hxx>
-#include <Standard_NotImplemented.hxx>
 #include <TCollection_ExtendedString.hxx>
 #include <TDocStd_Document.hxx>
 #include <TDocStd_Owner.hxx>
@@ -121,7 +119,7 @@ void TDocStd_Application::ReadingFormats(TColStd_SequenceOfAsciiString &theForma
   NCollection_IndexedDataMap<TCollection_ExtendedString, Handle(PCDM_RetrievalDriver)>::Iterator
     anIter(myReaders);
   for (; anIter.More(); anIter.Next()) {
-    Handle(PCDM_RetrievalDriver) aDriver = anIter.Value();
+    const Handle(PCDM_RetrievalDriver)& aDriver = anIter.Value();
     if (aDriver.IsNull() == Standard_False) {
       theFormats.Append(anIter.Key());
     }
@@ -140,7 +138,7 @@ void TDocStd_Application::WritingFormats(TColStd_SequenceOfAsciiString &theForma
   NCollection_IndexedDataMap<TCollection_ExtendedString, Handle(PCDM_StorageDriver)>::Iterator
     anIter(myWriters);
   for (; anIter.More(); anIter.Next()) {
-    Handle(PCDM_StorageDriver) aDriver = anIter.Value();
+    const Handle(PCDM_StorageDriver)& aDriver = anIter.Value();
     if (aDriver.IsNull() == Standard_False) {
       theFormats.Append(anIter.Key());
     }

@@ -23,17 +23,12 @@
 #include <Standard_ConstructionError.hxx>
 #include <Standard_ErrorHandler.hxx>
 #include <Standard_NotImplemented.hxx>
-#include <TColStd_Array1OfInteger.hxx>
 #include <TDF_Label.hxx>
-#include <TDF_LabelList.hxx>
-#include <TDF_LabelMap.hxx>
 #include <TDF_RelocationTable.hxx>
 #include <TDF_Tool.hxx>
 #include <TNaming.hxx>
 #include <TNaming_Builder.hxx>
 #include <TNaming_Iterator.hxx>
-#include <TNaming_ListIteratorOfListOfNamedShape.hxx>
-#include <TNaming_ListOfNamedShape.hxx>
 #include <TNaming_Name.hxx>
 #include <TNaming_NamedShape.hxx>
 #include <TNaming_Naming.hxx>
@@ -41,7 +36,6 @@
 #include <TNaming_NCollections.hxx>
 #include <TNaming_NewShapeIterator.hxx>
 #include <TNaming_ShapesSet.hxx>
-#include <TNaming_Tool.hxx>
 #include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS.hxx>
@@ -53,14 +47,9 @@
 #include <TopoDS_Shell.hxx>
 #include <TopoDS_Solid.hxx>
 #include <TopoDS_Wire.hxx>
-#include <TopTools_Array1OfShape.hxx>
-#include <TopTools_DataMapIteratorOfDataMapOfShapeListOfShape.hxx>
-#include <TopTools_DataMapOfShapeListOfShape.hxx>
 #include <TopTools_HArray2OfShape.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
-#include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <TopTools_ListOfShape.hxx>
-#include <TopTools_MapIteratorOfMapOfShape.hxx>
 #include <TopTools_MapOfShape.hxx>
 
 // mpv modifications 08.04.2002
@@ -387,7 +376,7 @@ static TopoDS_Shape MakeShape (const TopTools_IndexedMapOfShape& MS)
 //purpose  : Tries to make shape with given type from the given shape
 //=======================================================================
 
-static TopoDS_Shape ShapeWithType(const TopoDS_Shape     theShape,
+static TopoDS_Shape ShapeWithType(const TopoDS_Shape&     theShape,
 				  const TopAbs_ShapeEnum theType ) {
   if (theShape.IsNull() || theType == TopAbs_SHAPE) return theShape;
   Standard_Integer aType = theShape.ShapeType();
@@ -1362,7 +1351,7 @@ static Standard_Boolean  FilterByNeighbourgs (const TDF_Label&                L,
   //----------------------------------------
   // First argument: collection has to be filtered.
   //----------------------------------------
-  Handle(TNaming_NamedShape) Cand  = Args.First(); //collection of candidates
+  const Handle(TNaming_NamedShape)& Cand  = Args.First(); //collection of candidates
    
 #ifdef OCCT_DEBUG_FNB
   Standard_Integer i = 1;

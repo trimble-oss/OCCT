@@ -20,13 +20,11 @@
 #include <IGESData_LabelDisplayEntity.hxx>
 #include <IGESData_LevelListEntity.hxx>
 #include <IGESData_LineFontEntity.hxx>
-#include <IGESData_Protocol.hxx>
 #include <IGESData_TransfEntity.hxx>
 #include <IGESData_ViewKindEntity.hxx>
 #include <Interface_Check.hxx>
 #include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
-#include <Interface_GeneralLib.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Standard_Transient.hxx>
@@ -170,7 +168,7 @@ void  IGESData_GeneralModule::FillSharedCase
   if (enfr->NbAssociativities() != 0) {
     for (Interface_EntityIterator iter = enfr->Associativities();
 	 iter.More(); iter.Next()) {
-      Handle(Standard_Transient) anent = iter.Value();
+      const Handle(Standard_Transient)& anent = iter.Value();
       Handle(Standard_Transient) newent;
       if (TC.Search(anent,newent)) ento->AddAssociativity
 	(GetCasted(IGESData_IGESEntity,newent));

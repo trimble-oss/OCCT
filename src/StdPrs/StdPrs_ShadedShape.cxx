@@ -16,14 +16,11 @@
 
 #include <StdPrs_ShadedShape.hxx>
 
-#include <Bnd_Box.hxx>
 #include <BRepTools.hxx>
-#include <BRepBndLib.hxx>
 #include <BRep_Builder.hxx>
 #include <BRep_Tool.hxx>
 #include <Graphic3d_ArrayOfSegments.hxx>
 #include <Graphic3d_ArrayOfTriangles.hxx>
-#include <Graphic3d_AspectFillArea3d.hxx>
 #include <Graphic3d_Group.hxx>
 #include <gp_Dir.hxx>
 #include <gp_Vec.hxx>
@@ -37,7 +34,6 @@
 #include <Prs3d_LineAspect.hxx>
 #include <Prs3d_Presentation.hxx>
 #include <Prs3d_ShadingAspect.hxx>
-#include <Poly_Connect.hxx>
 #include <Poly_PolygonOnTriangulation.hxx>
 #include <Poly_Triangulation.hxx>
 #include <StdPrs_ToolTriangulatedShape.hxx>
@@ -49,9 +45,6 @@
 #include <TopoDS_Face.hxx>
 #include <TopoDS_Shape.hxx>
 #include <TColgp_Array1OfDir.hxx>
-#include <TColgp_Array1OfPnt2d.hxx>
-#include <TColgp_HArray1OfPnt.hxx>
-#include <TopTools_ListOfShape.hxx>
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
 
 namespace
@@ -282,7 +275,8 @@ namespace
                                           const gp_Pnt2d&                   theUVOrigin,
                                           const gp_Pnt2d&                   theUVRepeat,
                                           const gp_Pnt2d&                   theUVScale,
-                                          const bool                        theIsClosed)
+                                          const bool                        theIsClosed,
+                                          const Handle(Graphic3d_Group)&    theGroup = NULL)
   {
     Handle(Graphic3d_ArrayOfTriangles) aPArray = fillTriangles (theShape, theHasTexels, theUVOrigin, theUVRepeat, theUVScale);
     if (aPArray.IsNull())
@@ -290,7 +284,7 @@ namespace
       return Standard_False;
     }
 
-    Handle(Graphic3d_Group) aGroup = thePrs->NewGroup();
+    Handle(Graphic3d_Group) aGroup = !theGroup.IsNull() ? theGroup : thePrs->NewGroup();
     aGroup->SetClosed (theIsClosed);
     aGroup->SetGroupPrimitivesAspect (theDrawer->ShadingAspect()->Aspect());
     aGroup->AddPrimitiveArray (aPArray);
@@ -514,11 +508,12 @@ void StdPrs_ShadedShape::ExploreSolids (const TopoDS_Shape&    theShape,
 void StdPrs_ShadedShape::Add (const Handle(Prs3d_Presentation)& thePrs,
                               const TopoDS_Shape&               theShape,
                               const Handle(Prs3d_Drawer)&       theDrawer,
-                              const StdPrs_Volume               theVolume)
+                              const StdPrs_Volume               theVolume,
+                              const Handle(Graphic3d_Group)&    theGroup)
 {
   gp_Pnt2d aDummy;
   StdPrs_ShadedShape::Add (thePrs, theShape, theDrawer,
-                           Standard_False, aDummy, aDummy, aDummy, theVolume);
+                           Standard_False, aDummy, aDummy, aDummy, theVolume, theGroup);
 }
 
 // =======================================================================
@@ -532,7 +527,8 @@ void StdPrs_ShadedShape::Add (const Handle (Prs3d_Presentation)& thePrs,
                               const gp_Pnt2d&                    theUVOrigin,
                               const gp_Pnt2d&                    theUVRepeat,
                               const gp_Pnt2d&                    theUVScale,
-                              const StdPrs_Volume                theVolume)
+                              const StdPrs_Volume                theVolume,
+                              const Handle(Graphic3d_Group)&     theGroup)
 {
   if (theShape.IsNull())
   {
@@ -570,13 +566,13 @@ void StdPrs_ShadedShape::Add (const Handle (Prs3d_Presentation)& thePrs,
     if (aClosed.NbChildren() > 0)
     {
       shadeFromShape (aClosed, thePrs, theDrawer,
-                      theHasTexels, theUVOrigin, theUVRepeat, theUVScale, true);
+                      theHasTexels, theUVOrigin, theUVRepeat, theUVScale, true, theGroup);
     }
 
     if (anOpened.NbChildren() > 0)
     {
       shadeFromShape (anOpened, thePrs, theDrawer,
-                      theHasTexels, theUVOrigin, theUVRepeat, theUVScale, false);
+                      theHasTexels, theUVOrigin, theUVRepeat, theUVScale, false, theGroup);
     }
   }
   else
@@ -584,14 +580,14 @@ void StdPrs_ShadedShape::Add (const Handle (Prs3d_Presentation)& thePrs,
     // if the shape type is not compound, composolid or solid, use autodetection back-facing filled
     shadeFromShape (theShape, thePrs, theDrawer,
                     theHasTexels, theUVOrigin, theUVRepeat, theUVScale,
-                    theVolume == StdPrs_Volume_Closed);
+                    theVolume == StdPrs_Volume_Closed, theGroup);
   }
 
   if (theDrawer->FaceBoundaryDraw())
   {
     if (Handle(Graphic3d_ArrayOfSegments) aBndSegments = fillFaceBoundaries (theShape, theDrawer->FaceBoundaryUpperContinuity()))
     {
-      Handle(Graphic3d_Group) aPrsGrp = thePrs->NewGroup();
+      Handle(Graphic3d_Group) aPrsGrp = !theGroup.IsNull() ? theGroup : thePrs->NewGroup();
       aPrsGrp->SetGroupPrimitivesAspect (theDrawer->FaceBoundaryAspect()->Aspect());
       aPrsGrp->AddPrimitiveArray (aBndSegments);
     }

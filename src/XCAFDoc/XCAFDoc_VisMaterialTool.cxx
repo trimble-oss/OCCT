@@ -13,15 +13,12 @@
 
 #include <XCAFDoc_VisMaterialTool.hxx>
 
-#include <Standard_GUID.hxx>
 #include <TDataStd_Name.hxx>
 #include <TDataStd_TreeNode.hxx>
-#include <TDataStd_UAttribute.hxx>
 #include <TDF_Attribute.hxx>
 #include <TDF_ChildIDIterator.hxx>
 #include <TDF_Label.hxx>
 #include <TNaming_NamedShape.hxx>
-#include <TopoDS_Shape.hxx>
 #include <XCAFDoc.hxx>
 #include <XCAFDoc_VisMaterial.hxx>
 #include <XCAFDoc_DocumentTool.hxx>
@@ -82,13 +79,10 @@ const Handle(XCAFDoc_ShapeTool)& XCAFDoc_VisMaterialTool::ShapeTool()
 //function : GetMaterial
 //purpose  :
 //=======================================================================
-Handle(XCAFDoc_VisMaterial) XCAFDoc_VisMaterialTool::GetMaterial (const TDF_Label& theMatLabel) const
+Handle(XCAFDoc_VisMaterial) XCAFDoc_VisMaterialTool::GetMaterial(const TDF_Label& theMatLabel)
 {
   Handle(XCAFDoc_VisMaterial) aMatAttrib;
-  if (theMatLabel.Father() == Label())
-  {
-    theMatLabel.FindAttribute (XCAFDoc_VisMaterial::GetID(), aMatAttrib);
-  }
+  theMatLabel.FindAttribute(XCAFDoc_VisMaterial::GetID(), aMatAttrib);
   return aMatAttrib;
 }
 
@@ -217,8 +211,7 @@ Standard_Boolean XCAFDoc_VisMaterialTool::GetShapeMaterial (const TDF_Label& the
 Handle(XCAFDoc_VisMaterial) XCAFDoc_VisMaterialTool::GetShapeMaterial (const TDF_Label& theShapeLabel)
 {
   TDF_Label aMatLabel;
-  return Label().HasChild() // do not waste time on shape attributes if materials map is empty
-      && GetShapeMaterial (theShapeLabel, aMatLabel)
+  return GetShapeMaterial (theShapeLabel, aMatLabel)
        ? GetMaterial (aMatLabel)
        : Handle(XCAFDoc_VisMaterial)();
 }

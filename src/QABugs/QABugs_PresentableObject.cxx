@@ -14,15 +14,7 @@
 // commercial license or contractual agreement.
 
 
-#include <gp_Dir.hxx>
-#include <gp_Pnt.hxx>
 #include <Graphic3d_ArrayOfTriangles.hxx>
-#include <Graphic3d_AspectFillArea3d.hxx>
-#include <Graphic3d_Group.hxx>
-#include <Graphic3d_MaterialAspect.hxx>
-#include <Graphic3d_Structure.hxx>
-#include <Prs3d_Drawer.hxx>
-#include <Prs3d_Presentation.hxx>
 #include <Prs3d_ShadingAspect.hxx>
 #include <QABugs_PresentableObject.hxx>
 #include <Standard_Type.hxx>
@@ -38,7 +30,7 @@ void QABugs_PresentableObject::Compute(const Handle(PrsMgr_PresentationManager)&
 				const Handle(Prs3d_Presentation)& thePrs,
 				const Standard_Integer theMode)
 {
-  Handle(Graphic3d_Structure) aStructure (thePrs);
+  const Handle(Graphic3d_Structure)& aStructure = thePrs;
   Handle(Graphic3d_Group)     aGroup     = aStructure->NewGroup();
   Handle(Prs3d_ShadingAspect) anAspect = myDrawer->ShadingAspect();
   Graphic3d_MaterialAspect aMat = anAspect->Aspect()->FrontMaterial();

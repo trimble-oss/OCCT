@@ -16,26 +16,21 @@
 
 #include <BRepTest.hxx>
 #include <BRepTest_Objects.hxx>
-#include <TColgp_Array1OfPnt2d.hxx>
 #include <DBRep.hxx>
 #include <Draw_Interpretor.hxx>
 #include <Draw_Appli.hxx>
 #include <BRepFilletAPI_MakeFillet.hxx>
 #include <BiTgte_Blend.hxx>
 #include <TopOpeBRepBuild_HBuilder.hxx>
-#include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <TopAbs_ShapeEnum.hxx>
 #include <TopoDS_Shape.hxx>
 #include <TopoDS_Compound.hxx>
 #include <TopoDS_Edge.hxx>
-#include <TopoDS_Vertex.hxx>
 #include <TopoDS.hxx>
-#include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
 
 #include <BOPAlgo_PaveFiller.hxx>
 
-#include <BRepAlgoAPI_BooleanOperation.hxx>
 #include <BRepAlgoAPI_Fuse.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepAlgoAPI_Section.hxx>
@@ -43,20 +38,16 @@
 #include <FilletSurf_Builder.hxx>
 #include <ChFi3d_FilletShape.hxx>
 #include <Geom_TrimmedCurve.hxx>
-#include <Geom_Surface.hxx>
-#include <Geom_Curve.hxx>
-#include <Geom2d_Curve.hxx>
 #include <TopTools_ListOfShape.hxx>
 #include <FilletSurf_StatusType.hxx>
 #include <FilletSurf_ErrorTypeStatus.hxx>
-#include <TopAbs.hxx>
 #include <DrawTrSurf.hxx>
 #include <Message.hxx>
 #include <Draw_ProgressIndicator.hxx>
 
 #include <stdio.h>
 
-
+static Standard_Real tesp = 1.0e-4;
 static Standard_Real t3d = 1.e-4;
 static Standard_Real t2d = 1.e-5;
 static Standard_Real ta  = 1.e-2;
@@ -161,7 +152,7 @@ static Standard_Integer BLEND(Draw_Interpretor& di, Standard_Integer narg, const
     }
   }
   Rakk = new BRepFilletAPI_MakeFillet(V,FSh);
-  Rakk->SetParams(ta,t3d,t2d,t3d,t2d,fl);
+  Rakk->SetParams(ta, tesp, t2d, t3d, t2d, fl);
   Rakk->SetContinuity(blend_cont, tapp_angle);
   Standard_Real Rad;
   TopoDS_Edge E;
@@ -263,7 +254,7 @@ static Standard_Integer MKEVOL(Draw_Interpretor& di,
   if (narg < 3) return 1;
   TopoDS_Shape V = DBRep::Get(a[2]);
   Rake = new BRepFilletAPI_MakeFillet(V);
-  Rake->SetParams(ta,t3d,t2d,t3d,t2d,fl);
+  Rake->SetParams(ta, tesp, t2d, t3d, t2d, fl);
   Rake->SetContinuity(blend_cont, tapp_angle);
   if (narg == 4) {
     ChFi3d_FilletShape FSh = ChFi3d_Rational;
@@ -419,7 +410,7 @@ Standard_Integer boptopoblend(Draw_Interpretor& di, Standard_Integer narg, const
     const TopoDS_Shape& aSolid = Explo.Current();
 
     BRepFilletAPI_MakeFillet Blender(aSolid);
-    Blender.SetParams(ta,t3d,t2d,t3d,t2d,fl);
+    Blender.SetParams(ta, tesp, t2d, t3d, t2d, fl);
     Blender.SetContinuity( blend_cont, tapp_angle );
 
     TopExp_Explorer expsec( theSection, TopAbs_EDGE );
@@ -757,15 +748,15 @@ void  BRepTest::FilletCommands(Draw_Interpretor& theCommands)
   theCommands.Add("rollingball",
 		  "rollingball  r S radius [stopf1 ..] @ [f1 f2 ..] @ [e1 ..]",
 		  __FILE__,
-		  rollingball);
+		  rollingball, g);
 
   theCommands.Add("brollingball",
 		  "brollingball r S radius [stopf1 ..] @ [f1 f2 ..] @ [e1 ..]",
 		  __FILE__,
-		  rollingball);
+		  rollingball, g);
 
   theCommands.Add("trollingball",
 		  "trollingball r S radius [stopf1 ..] @ [f1 f2 ..] @ [e1 ..]",
 		  __FILE__,
-		  rollingball);
+		  rollingball, g);
 }

@@ -18,7 +18,6 @@
 
 #include <BRepIntCurveSurface_Inter.hxx>
 #include <gp.hxx>
-#include <gp_Lin.hxx>
 #include <gp_Ax3.hxx>
 #include <gp_Lin2d.hxx>
 #include <gp_Circ2d.hxx>
@@ -656,7 +655,7 @@ static gp_Pnt2d ValueOnFace(const Standard_Real        U,
     }
 #endif    
 
-    Geom2dAdaptor_Curve Cu1 = TheV;
+    const Geom2dAdaptor_Curve& Cu1 = TheV;
     Geom2dAdaptor_Curve Cu2( Line);
 
     Standard_Real TolConf = 0.;

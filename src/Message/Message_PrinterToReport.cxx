@@ -14,8 +14,6 @@
 #include <Message_PrinterToReport.hxx>
 
 #include <Message.hxx>
-#include <Message_AlertExtended.hxx>
-#include <Message_Attribute.hxx>
 #include <Message_AttributeMeter.hxx>
 #include <Message_AttributeObject.hxx>
 #include <Message_AttributeStream.hxx>
@@ -114,7 +112,7 @@ void Message_PrinterToReport::send (const TCollection_AsciiString& theString,
 //function : sendMetricAlert
 //purpose  :
 //=======================================================================
-void Message_PrinterToReport::sendMetricAlert (const TCollection_AsciiString theValue,
+void Message_PrinterToReport::sendMetricAlert (const TCollection_AsciiString& theValue,
                                                const Message_Gravity theGravity) const
 {
   Message_AlertExtended::AddAlert (Report(), new Message_AttributeMeter (theValue), theGravity);

@@ -19,21 +19,12 @@
 #include <Interface_Graph.hxx>
 #include <Interface_InterfaceModel.hxx>
 #include <Standard_Transient.hxx>
-#include <StepBasic_ApplicationContext.hxx>
-#include <StepBasic_DesignContext.hxx>
-#include <StepBasic_HArray1OfProductContext.hxx>
-#include <StepBasic_MechanicalContext.hxx>
-#include <StepBasic_Product.hxx>
 #include <StepBasic_ProductDefinition.hxx>
-#include <StepBasic_ProductDefinitionFormationWithSpecifiedSource.hxx>
 #include <STEPConstruct_Assembly.hxx>
 #include <StepGeom_Axis2Placement3d.hxx>
-#include <StepRepr_CharacterizedDefinition.hxx>
-#include <StepRepr_HArray1OfRepresentationItem.hxx>
 #include <StepRepr_ItemDefinedTransformation.hxx>
 #include <StepRepr_NextAssemblyUsageOccurrence.hxx>
 #include <StepRepr_ProductDefinitionShape.hxx>
-#include <StepRepr_RepresentationContext.hxx>
 #include <StepRepr_ShapeRepresentationRelationshipWithTransformation.hxx>
 #include <StepRepr_Transformation.hxx>
 #include <StepShape_ContextDependentShapeRepresentation.hxx>
@@ -204,7 +195,7 @@ Standard_Boolean STEPConstruct_Assembly::CheckSRRReversesNAUO(const Interface_Gr
   Handle(Standard_Type) tSDR = STANDARD_TYPE(StepShape_ShapeDefinitionRepresentation);
   Interface_EntityIterator anIter = theGraph.Sharings(rep1);
   for (; anIter.More() && pd1.IsNull(); anIter.Next()) {
-      Handle(Standard_Transient) enti = anIter.Value();
+      const Handle(Standard_Transient)& enti = anIter.Value();
     if (enti->DynamicType() == tSDR) {
       Handle(StepShape_ShapeDefinitionRepresentation) SDR =
         Handle(StepShape_ShapeDefinitionRepresentation)::DownCast(enti);
@@ -215,7 +206,7 @@ Standard_Boolean STEPConstruct_Assembly::CheckSRRReversesNAUO(const Interface_Gr
   
   anIter = theGraph.Sharings(rep2);
   for (; anIter.More() && pd2.IsNull(); anIter.Next()) {
-      Handle(Standard_Transient) enti = anIter.Value();
+      const Handle(Standard_Transient)& enti = anIter.Value();
     if (enti->DynamicType() == tSDR) {
       Handle(StepShape_ShapeDefinitionRepresentation) SDR =
         Handle(StepShape_ShapeDefinitionRepresentation)::DownCast(enti);

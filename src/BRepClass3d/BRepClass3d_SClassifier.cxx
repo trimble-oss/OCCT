@@ -20,7 +20,6 @@
 #include <BRepClass3d_Intersector3d.hxx>
 #include <BRepClass3d_SClassifier.hxx>
 #include <BRepClass3d_SolidExplorer.hxx>
-#include <BRepTopAdaptor_FClass2d.hxx>
 #include <ElCLib.hxx>
 #include <Geom_Surface.hxx>
 #include <gp_Lin.hxx>
@@ -28,10 +27,7 @@
 #include <gp_Vec.hxx>
 #include <IntCurvesFace_Intersector.hxx>
 #include <math_BullardGenerator.hxx>
-#include <Standard_DomainError.hxx>
 #include <TopoDS.hxx>
-#include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
-#include <TopTools_MapOfShape.hxx>
 #include <TopExp.hxx>
 #include <BRepAdaptor_Surface.hxx>
 #include <Extrema_ExtPS.hxx>
@@ -50,7 +46,7 @@ static
 
 //gets transition of line <L> passing through/near the edge <e> of faces <f1>, <f2>. <param> is
 // a parameter on the edge where the minimum distance between <l> and <e> was found
-static Standard_Integer GetTransi(const TopoDS_Face& f1, const TopoDS_Face& f2, const TopoDS_Edge e,
+static Standard_Integer GetTransi(const TopoDS_Face& f1, const TopoDS_Face& f2, const TopoDS_Edge& e,
                      Standard_Real param, const gp_Lin& L, IntCurveSurface_TransitionOnCurve& trans);
 
 static Standard_Boolean GetNormalOnFaceBound(const TopoDS_Edge& E, const TopoDS_Face& F, Standard_Real param, gp_Dir& OutDir);
@@ -611,7 +607,7 @@ static Standard_Boolean GetNormalOnFaceBound(const TopoDS_Edge& E,
 //=======================================================================
 static Standard_Integer GetTransi(const TopoDS_Face& f1,
                                   const TopoDS_Face& f2,
-                                  const TopoDS_Edge e,
+                                  const TopoDS_Edge& e,
                                   const Standard_Real param,
                                   const gp_Lin& L,
                                   IntCurveSurface_TransitionOnCurve& trans)

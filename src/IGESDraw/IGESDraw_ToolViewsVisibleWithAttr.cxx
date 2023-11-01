@@ -19,16 +19,12 @@
 #include <IGESBasic_HArray1OfLineFontEntity.hxx>
 #include <IGESData_DirChecker.hxx>
 #include <IGESData_Dump.hxx>
-#include <IGESData_HArray1OfIGESEntity.hxx>
 #include <IGESData_IGESDumper.hxx>
 #include <IGESData_IGESEntity.hxx>
 #include <IGESData_IGESReaderData.hxx>
 #include <IGESData_IGESWriter.hxx>
 #include <IGESData_LineFontEntity.hxx>
-#include <IGESData_ParamCursor.hxx>
 #include <IGESData_ParamReader.hxx>
-#include <IGESData_ViewKindEntity.hxx>
-#include <IGESDraw_HArray1OfViewKindEntity.hxx>
 #include <IGESDraw_ToolViewsVisibleWithAttr.hxx>
 #include <IGESDraw_ViewsVisibleWithAttr.hxx>
 #include <IGESGraph_Color.hxx>
@@ -313,7 +309,7 @@ void IGESDraw_ToolViewsVisibleWithAttr::OwnCheck
     if (ent->LineFontValue(i) != 0 && ent->IsFontDefinition(i)) ach->AddFail
       ("At least one Line Font Definition Mismatch (both Value and Entity");
   }
-  Handle(IGESData_ViewKindEntity) entcomp (ent);
+  const Handle(IGESData_ViewKindEntity)& entcomp = ent;
   Standard_Integer res = 0;
   nb = ent->NbDisplayedEntities();
   for (i = 1; i <= nb; i ++) {
@@ -384,7 +380,7 @@ Standard_Boolean  IGESDraw_ToolViewsVisibleWithAttr::OwnCorrect
 //  Les entites affichees doivent referencer <ent>. Elles ont priorite.
   Standard_Boolean res = Standard_False;
   Standard_Integer nb = ent->NbDisplayedEntities();
-  Handle(IGESData_ViewKindEntity) entcomp (ent);
+  const Handle(IGESData_ViewKindEntity)& entcomp = ent;
   for (Standard_Integer i = 1; i <= nb; i ++) {
     Handle(IGESData_IGESEntity) displayed = ent->DisplayedEntity(i);
     if (entcomp != displayed->View()) res = Standard_True;

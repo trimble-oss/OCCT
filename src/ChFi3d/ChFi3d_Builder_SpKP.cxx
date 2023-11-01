@@ -16,38 +16,19 @@
 
 
 #include <Adaptor2d_Curve2d.hxx>
-#include <Adaptor3d_Surface.hxx>
-#include <Adaptor3d_TopolTool.hxx>
-#include <AppBlend_Approx.hxx>
 #include <Blend_CurvPointFuncInv.hxx>
 #include <Blend_FuncInv.hxx>
-#include <Blend_Function.hxx>
-#include <Blend_RstRstFunction.hxx>
-#include <Blend_SurfCurvFuncInv.hxx>
-#include <Blend_SurfPointFuncInv.hxx>
-#include <Blend_SurfRstFunction.hxx>
-#include <BRep_Tool.hxx>
-#include <BRepAdaptor_Curve2d.hxx>
-#include <BRepAdaptor_Curve.hxx>
-#include <BRepAdaptor_Curve2d.hxx>
-#include <BRepAdaptor_Surface.hxx>
 #include <BRepBlend_Line.hxx>
 #include <BRepTopAdaptor_TopolTool.hxx>
 #include <ChFi3d_Builder.hxx>
 #include <ChFi3d_Builder_0.hxx>
 #include <ChFiDS_CommonPoint.hxx>
-#include <ChFiDS_ElSpine.hxx>
 #include <ChFiDS_Spine.hxx>
-#include <ChFiDS_Stripe.hxx>
 #include <ChFiDS_SurfData.hxx>
 #include <ChFiKPart_RstMap.hxx>
 #include <ElCLib.hxx>
 #include <ElSLib.hxx>
-#include <Geom2d_BezierCurve.hxx>
-#include <Geom2d_BSplineCurve.hxx>
 #include <Geom2d_Curve.hxx>
-#include <Geom2d_Line.hxx>
-#include <Geom2dAdaptor_Curve.hxx>
 #include <Geom2dAdaptor_Curve.hxx>
 #include <Geom2dHatch_Hatcher.hxx>
 #include <Geom2dHatch_Intersector.hxx>
@@ -55,25 +36,16 @@
 #include <Geom_Plane.hxx>
 #include <Geom_Surface.hxx>
 #include <GeomAbs_CurveType.hxx>
-#include <GeomAbs_SurfaceType.hxx>
-#include <GeomAdaptor_Curve.hxx>
 #include <GeomAdaptor_Surface.hxx>
-#include <gp.hxx>
 #include <gp_Circ.hxx>
-#include <gp_Dir2d.hxx>
 #include <gp_Pnt.hxx>
 #include <gp_Pnt2d.hxx>
 #include <HatchGen_Domain.hxx>
 #include <HatchGen_PointOnElement.hxx>
 #include <HatchGen_PointOnHatching.hxx>
 #include <Precision.hxx>
-#include <Standard_ConstructionError.hxx>
-#include <Standard_NoSuchObject.hxx>
 #include <Standard_NotImplemented.hxx>
-#include <Standard_OutOfRange.hxx>
-#include <TColgp_Array1OfPnt2d.hxx>
 #include <TColStd_Array1OfInteger.hxx>
-#include <TColStd_Array1OfReal.hxx>
 #include <TColStd_SequenceOfInteger.hxx>
 #include <TopExp.hxx>
 #include <TopoDS_Edge.hxx>
@@ -567,7 +539,7 @@ static void FillSD (TopOpeBRepDS_DataStructure& DStr,
 		    const Standard_Boolean      isFirst,
 		    const Standard_Integer      ons,
 		    const Standard_Real         pitol,
-		    const TopoDS_Vertex         bout)
+		    const TopoDS_Vertex&         bout)
      
 {  
   Standard_Integer opp = 3 - ons;
@@ -682,7 +654,7 @@ Standard_Boolean ChFi3d_Builder::SplitKPart
   
   // Cutting of tangency lines (hatching).
   Geom2dHatch_Intersector Inter(pitol,pitol);
-  Geom2dHatch_Hatcher H1(Inter,tol2d,tolesp), H2(Inter,tol2d,tolesp);
+  Geom2dHatch_Hatcher H1(Inter,tol2d,tolapp3d), H2(Inter,tol2d,tolapp3d);
   Standard_Integer ie;
   Handle(Geom2d_Curve) C1 = Data->InterferenceOnS1().PCurveOnFace(); 
   Geom2dAdaptor_Curve  ll1;

@@ -18,11 +18,9 @@
 #include <GccAna_Circ2dTanCen.hxx>
 #include <GccEnt_BadQualifier.hxx>
 #include <GccEnt_QualifiedCirc.hxx>
-#include <GccEnt_QualifiedLin.hxx>
 #include <Geom2d_Circle.hxx>
 #include <Geom2d_Line.hxx>
 #include <Geom2d_Point.hxx>
-#include <Geom2dAdaptor_Curve.hxx>
 #include <Geom2dGcc_Circ2dTanCen.hxx>
 #include <Geom2dGcc_Circ2dTanCenGeo.hxx>
 #include <Geom2dGcc_QCurve.hxx>
@@ -44,7 +42,7 @@ Geom2dGcc_Circ2dTanCen::
   pararg1(1,2)  
 {
   Geom2dAdaptor_Curve C1 = Qualified1.Qualified();
-  Handle(Geom2d_Curve) CC1 = C1.Curve();
+  const Handle(Geom2d_Curve)& CC1 = C1.Curve();
   GeomAbs_CurveType Type1 = C1.GetType();
 
 //=============================================================================

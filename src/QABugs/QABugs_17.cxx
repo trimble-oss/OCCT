@@ -29,17 +29,14 @@
 
 #include <Geom_Circle.hxx>
 #include <Geom_Ellipse.hxx>
-#include <Geom_Plane.hxx>
 #include <Geom_BSplineSurface.hxx>
 #include <gp_Pln.hxx>
 #include <Geom2d_Curve.hxx>
 #include <GeomAPI.hxx>
-#include <Geom2dAdaptor_Curve.hxx>
 #include <Geom2dGcc_QualifiedCurve.hxx>
 #include <Geom2dGcc_Lin2d2Tan.hxx>
 #include <Geom2d_Line.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
-#include <TopoDS_Edge.hxx>
 #include <Precision.hxx>
 #include <Geom2d_Circle.hxx>
 #include <Geom2dGcc_QCurve.hxx>
@@ -47,13 +44,7 @@
 #include <Geom2dGcc_Lin2d2TanIter.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <TopExp_Explorer.hxx>
-#include <TopoDS.hxx>
-#include <TopoDS_Wire.hxx>
-#include <BRep_Tool.hxx>
-#include <gp_Circ.hxx>
 #include <BRepOffsetAPI_MakePipeShell.hxx>
-#include <AIS_Trihedron.hxx>
-#include <Geom_Axis2Placement.hxx>
 #include <V3d_View.hxx>
 #include <BRepBuilderAPI_MakeVertex.hxx>
 #include <PrsDim_LengthDimension.hxx>
@@ -64,13 +55,8 @@
 #include <Geom_CartesianPoint.hxx>
 #include <Geom2d_CartesianPoint.hxx>
 #include <Geom2dGcc_Circ2d3Tan.hxx>
-#include <Aspect_Window.hxx>
 
-#include <TopoDS_Compound.hxx>
-#include <TopoDS_CompSolid.hxx>
-#include <HLRAlgo_Projector.hxx>
 #include <Standard_ErrorHandler.hxx>
-#include <Font_NameOfFont.hxx>
 
 static Standard_Integer BUC60842 (Draw_Interpretor& di, Standard_Integer /*argc*/,const char ** /*argv*/)
 {
@@ -591,6 +577,7 @@ static Standard_Integer OCC570 (Draw_Interpretor& di, Standard_Integer argc,cons
 
 #include <Law_Interpol.hxx>
 
+static Standard_Real tesp = 1.e-4;
 static Standard_Real t3d = 1.e-4;
 static Standard_Real t2d = 1.e-5;
 static Standard_Real ta  = 1.e-2;
@@ -620,7 +607,7 @@ static Standard_Integer MKEVOL(Draw_Interpretor& di,
   if (narg < 3) return 1;
   TopoDS_Shape V = DBRep::Get(a[2]);
   Rake = new BRepFilletAPI_MakeFillet(V);
-  Rake->SetParams(ta,t3d,t2d,t3d,t2d,fl);
+  Rake->SetParams(ta, tesp, t2d, t3d, t2d, fl);
   Rake->SetContinuity(blend_cont, tapp_angle);
   if (narg == 4) {
     ChFi3d_FilletShape FSh = ChFi3d_Rational;
@@ -688,7 +675,6 @@ static Standard_Integer BUILDEVOL(Draw_Interpretor& di,
   return 1;
 }
 
-#include <TColGeom_SequenceOfCurve.hxx>
 #include <Geom_TrimmedCurve.hxx>
 #include <GeomFill_NSections.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
@@ -739,7 +725,7 @@ static Standard_Integer OCC606 ( Draw_Interpretor& di, Standard_Integer n, const
       if (!result_surf1.IsNull())
       {
         BRepBuilderAPI_MakeFace b_face1(result_surf1, Precision::Confusion());
-        TopoDS_Face bsp_face1 = b_face1.Face();
+        const TopoDS_Face& bsp_face1 = b_face1.Face();
         DBRep::Set(a[1],bsp_face1);
       }
     }
@@ -900,9 +886,6 @@ static Standard_Integer OCC814 (Draw_Interpretor& di, Standard_Integer argc,cons
   return 0;
 }
 
-#include <ShapeAnalysis_Wire.hxx>
-#include <IntRes2d_SequenceOfIntersectionPoint.hxx>
-#include <TColgp_SequenceOfPnt.hxx>
 #include <ShapeFix_Wire.hxx>
 //=======================================================================
 //function : OCC884
@@ -1033,117 +1016,6 @@ static Standard_Integer OCC884 (Draw_Interpretor& di, Standard_Integer argc, con
   return 0;
 }
 
-#include <Graphic3d_MaterialAspect.hxx>
-#include <Prs3d_Drawer.hxx>
-#include <Prs3d_ShadingAspect.hxx>
-//=======================================================================
-//function : OCC1174_1
-//purpose  : 
-//=======================================================================
-static Standard_Integer OCC1174_1 (Draw_Interpretor& di, Standard_Integer argc, const char ** argv)
-{
-  if (argc != 2)
-  {
-    di << "Usage : " << argv[0] << " shape\n";
-    return 1;
-  }
-
-  Handle(AIS_InteractiveContext) anAISContext = ViewerTest::GetAISContext();
-  if(anAISContext.IsNull())
-  {
-    di << "use 'vinit' command before " << argv[0] << "\n";
-    return 1;
-  }
-
-  TopoDS_Shape aShape = DBRep::Get(argv[1]);
-
-  Handle(AIS_Shape) anAisIO = new AIS_Shape(aShape);
-
-  Quantity_Color aColF(0.0, 0.4, 0.0, Quantity_TOC_sRGB);
-  Quantity_Color aColB(0.0, 0.0, 0.6, Quantity_TOC_sRGB);
-
-  Handle(Prs3d_Drawer) aDrawer = anAisIO->Attributes();
-  Handle(Prs3d_ShadingAspect) aShadingAspect = aDrawer->ShadingAspect();
-
-  Graphic3d_MaterialAspect aFront = aShadingAspect->Material(Aspect_TOFM_FRONT_SIDE);
-  aFront.SetAmbientColor(aColF);
-  aFront.SetDiffuseColor(aColF);
-  aFront.SetSpecularColor(aColF);
-  aFront.SetEmissiveColor(Quantity_NOC_BLACK);
-  aFront.SetTransparency(0.0);
-  aShadingAspect->SetMaterial(aFront,Aspect_TOFM_FRONT_SIDE);
-
-  Graphic3d_MaterialAspect aBack = aShadingAspect->Material(Aspect_TOFM_BACK_SIDE);
-  aBack.SetAmbientColor(aColB);
-  aBack.SetDiffuseColor(aColB);
-  aBack.SetSpecularColor(aColB);
-  aBack.SetEmissiveColor(Quantity_NOC_BLACK);
-  aBack.SetTransparency(0.0);
-  aShadingAspect->SetMaterial(aBack,Aspect_TOFM_BACK_SIDE);
-
-  aDrawer->SetShadingAspect (aShadingAspect);
-
-  anAISContext->Display (anAisIO, 1, 0, Standard_True);
-
-  Standard_Real r, g, b; 
-  aShadingAspect->Color(Aspect_TOFM_FRONT_SIDE).Values(r,g,b, Quantity_TOC_sRGB);
-  di << "Info: color on front side (" << r << "," << g << "," << b << ")\n";
-  aShadingAspect->Color(Aspect_TOFM_BACK_SIDE).Values(r,g,b, Quantity_TOC_sRGB);
-  di << "Info: color on back side (" << r << "," << g << "," << b << ")\n";
-
-  return 0;
-}
-
-//=======================================================================
-//function : OCC1174_2
-//purpose  : 
-//=======================================================================
-static Standard_Integer OCC1174_2 (Draw_Interpretor& di, Standard_Integer argc, const char ** argv)
-{
-  if (argc != 2)
-  {
-    di << "Usage : " << argv[0] << " shape\n";
-    return 1;
-  }
-
-  Handle(AIS_InteractiveContext) AISContext = ViewerTest::GetAISContext();
-  if(AISContext.IsNull()) 
-  {
-    di << "use 'vinit' command before " << argv[0] << "\n";
-    return 1;
-  }
-
-  TopoDS_Shape sh = DBRep::Get(argv[1]);
-
-  Handle(AIS_Shape) ais = new AIS_Shape(sh); 
-  AISContext->Display (ais, 1, 0, Standard_False);
-  AISContext->SetMaterial (ais, Graphic3d_NameOfMaterial_ShinyPlastified, Standard_False);
-
-  Quantity_Color colf(0.0, 0.4, 0.0, Quantity_TOC_sRGB);
-  Quantity_Color colb(0.0, 0.0, 0.6, Quantity_TOC_sRGB);
-  Handle(Prs3d_ShadingAspect) sa = ais->Attributes()->ShadingAspect(); 
-
-  Graphic3d_MaterialAspect front = sa->Material(Aspect_TOFM_FRONT_SIDE); 
-  front.SetAmbientColor(colf); 
-  front.SetDiffuseColor(colf); 
-  front.SetSpecularColor(colf); 
-  front.SetEmissiveColor(Quantity_NOC_BLACK);
-  front.SetTransparency (0.4f);
-  sa->SetMaterial(front,Aspect_TOFM_FRONT_SIDE); 
-
-  Graphic3d_MaterialAspect back = sa->Material(Aspect_TOFM_BACK_SIDE); 
-  back.SetAmbientColor(colb); 
-  back.SetDiffuseColor(colb); 
-  back.SetSpecularColor(colb); 
-  back.SetEmissiveColor(Quantity_NOC_BLACK);
-  back.SetTransparency (0.2f);
-  sa->SetMaterial(back,Aspect_TOFM_BACK_SIDE); 
-
-  AISContext->Redisplay (ais, 1, 0);
-
-  return 0;
-}
-
 #include <TopoDS_Solid.hxx>
 #include <BRepFeat_MakeDPrism.hxx>
 //=======================================================================
@@ -1181,7 +1053,7 @@ static Standard_Integer OCCN1 (Draw_Interpretor& di, Standard_Integer argc, cons
   TopoDS_Wire twire = wire.Wire();
 
   BRepBuilderAPI_MakeFace face(twire);
-  TopoDS_Face tface = face.Face();
+  const TopoDS_Face& tface = face.Face();
   ////////Handle(AIS_Shape) face_ais = new AIS_Shape( tface );
   ////////aContext->Display(face_ais);
 
@@ -1502,9 +1374,6 @@ void QABugs::Commands_17(Draw_Interpretor& theCommands) {
   theCommands.Add ("OCC813", "OCC813 U V", __FILE__, OCC813, group);
   theCommands.Add ("OCC814", "OCC814", __FILE__, OCC814, group);
   theCommands.Add ("OCC884", "OCC884 result shape [toler [maxtoler]]", __FILE__, OCC884, group);
-
-  theCommands.Add ("OCC1174_1", "OCC1174_1 shape", __FILE__, OCC1174_1, group);
-  theCommands.Add ("OCC1174_2", "OCC1174_2 shape", __FILE__, OCC1174_2, group);
 
   theCommands.Add ("OCCN1", "OCCN1 angle fuse(1 for boss / 0 for slot) length", __FILE__, OCCN1, group);
   theCommands.Add ("OCCN2", "OCCN2", __FILE__, OCCN2, group);

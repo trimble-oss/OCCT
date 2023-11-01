@@ -15,7 +15,6 @@
 
 #include <DDocStd.hxx>
 #include <DBRep.hxx>
-#include <FSD_File.hxx>
 #include <FSD_CmpFile.hxx>
 #include <FSD_BinaryFile.hxx>
 #include <BRep_Builder.hxx>
@@ -156,7 +155,7 @@ static Standard_Integer DDocStd_fsdwrite(Draw_Interpretor& theDI,
   StdObjMgt_TransientPersistentMap aMap;
   for (Standard_Integer i = 1; i <= aShapes.Length(); ++i)
   {
-    TopoDS_Shape aShape = aShapes.Value(i);
+    const TopoDS_Shape& aShape = aShapes.Value(i);
 
     Handle(ShapePersistent_TopoDS::HShape) aPShape =
       ShapePersistent_TopoDS::Translate(aShape, aMap, ShapePersistent_WithTriangle);

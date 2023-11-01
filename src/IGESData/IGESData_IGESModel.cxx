@@ -16,16 +16,14 @@
 //#13 smh 13.01.2000 : Parsing long year date
 
 #include <IGESData_BasicEditor.hxx>
-#include <IGESData_GlobalSection.hxx>
 #include <IGESData_IGESEntity.hxx>
 #include <IGESData_IGESModel.hxx>
-#include <IGESData_Protocol.hxx>
 #include <Interface_Check.hxx>
-#include <Interface_InterfaceError.hxx>
 #include <Interface_InterfaceModel.hxx>
 #include <Interface_Macros.hxx>
 #include <Interface_Static.hxx>
 #include <Message_Msg.hxx>
+#include <ShapeBuild_ReShape.hxx>
 #include <Standard_Transient.hxx>
 #include <Standard_Type.hxx>
 #include <TCollection_HAsciiString.hxx>
@@ -50,6 +48,7 @@ void IGESData_VerifyDate
 IGESData_IGESModel::IGESData_IGESModel ()
 {
   thestart = new TColStd_HSequenceOfHAsciiString();
+  myReShape = new ShapeBuild_ReShape();
 //  thecheckstx = new Interface_Check;
 //  thechecksem = new Interface_Check;
 }
@@ -65,6 +64,7 @@ void IGESData_IGESModel::ClearHeader ()
   IGESData_GlobalSection newheader;  // Un peu brutal, certes
   theheader = newheader;
   thestart = new TColStd_HSequenceOfHAsciiString();
+  myReShape = new ShapeBuild_ReShape();
 }
 
 
@@ -492,7 +492,7 @@ void IGESData_VerifyDate(const Handle(TCollection_HAsciiString)& str,
   if (str.IsNull())
     {  ach->SendFail(Msg57);  return;  }
 
-  Handle(TCollection_HAsciiString) stdvar = str;
+  const Handle(TCollection_HAsciiString)& stdvar = str;
   if (strcmp(mess,"Last Change Date")==0)
     Msg57.Arg(25);
   else

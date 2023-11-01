@@ -19,36 +19,21 @@
 #include <BRep_Builder.hxx>
 #include <BRepFill_PipeShell.hxx>
 #include <BRepFill_TransitionStyle.hxx>
-#include <TopExp.hxx>
-#include <TopoDS.hxx>
-#include <TopoDS_Edge.hxx>
 #include <TopTools_ListOfShape.hxx>
 #include <BOPAlgo_Tools.hxx>
 #include <BRepLib_FindSurface.hxx>
-#include <Geom_Plane.hxx>
 #include <BRepAdaptor_Curve.hxx>
 #include <BOPAlgo_MakerVolume.hxx>
-#include <TopoDS_Iterator.hxx>
-#include <TopExp_Explorer.hxx>
 #include <BOPAlgo_PaveFiller.hxx>
-#include <math_MultipleVarFunctionWithHessian.hxx>
-#include <Adaptor3d_CurveOnSurface.hxx>
-#include <Adaptor2d_Curve2d.hxx>
 #include <Adaptor3d_Surface.hxx>
 #include <math_NewtonMinimum.hxx>
 #include <BOPTools_AlgoTools.hxx>
-#include <math_Matrix.hxx>
 #include <math_Vector.hxx>
-#include <BRepAdaptor_Surface.hxx>
 #include <BRepTools_WireExplorer.hxx>
 #include <BRepTools.hxx>
-#include <BRepTopAdaptor_FClass2d.hxx>
-#include <BOPAlgo_BuilderFace.hxx>
 #include <BOPAlgo_BuilderFace.hxx>
 #include <Geom2d_Line.hxx>
-#include <BRepBuilderAPI_Copy.hxx>
 #include <math_GlobOptMin.hxx>
-#include <Geom_ConicalSurface.hxx>
 #include <Extrema_ExtPC.hxx>
 #include <BOPDS_DS.hxx>
 #include <BRepLib.hxx>
@@ -57,9 +42,10 @@
 #include <ShapeFix_Shape.hxx>
 #include <BRepClass_FaceClassifier.hxx>
 #include <BRepGProp_Face.hxx>
-#include <BRep_ListIteratorOfListOfCurveRepresentation.hxx>
 #include <BRep_TEdge.hxx>
 #include <ShapeUpgrade_UnifySameDomain.hxx>
+#include <Bnd_Box.hxx>
+#include <BRepBndLib.hxx>
 
 #ifdef BRepFill_AdvancedEvolved_DEBUG
 #include <BinTools.hxx>
@@ -540,9 +526,14 @@ void BRepFill_AdvancedEvolved::GetLids()
     return;
   }
 
+  Standard_Real aTol = Max(aFS.Tolerance(), aFS.ToleranceReached());
+  aTol += myFuzzyValue;
+  Bnd_Box aProfBox;
+  BRepBndLib::Add(myProfile, aProfBox);
+  Standard_Real aSqDiag = aProfBox.SquareExtent();
   //Square of the default angular tolerance in
   //BOPAlgo_Tools::EdgesToWires(...) and BOPAlgo_Tools::WiresToFaces(...) methods
-  const Standard_Real aSqAnguarTol = 1.0e-16;
+  const Standard_Real aSqAnguarTol = aTol*aTol / aSqDiag;
   const gp_Dir &aNormal = aSurf->Position().Direction();
 
   // Obtain free-edges from myPipeShell. All edges must be planar
@@ -557,6 +548,7 @@ void BRepFill_AdvancedEvolved::GetLids()
   gp_Pnt aPtmp;
   gp_Vec aTan;
 
+  Standard_Real aDPMax = 0.;
   for (Standard_Integer i = 1; i <= aMapEF.Size(); i++)
   {
     TopTools_ListOfShape& aListF = aMapEF(i);
@@ -580,6 +572,8 @@ void BRepFill_AdvancedEvolved::GetLids()
       continue;
 
     const Standard_Real aDP = aTan.XYZ().Dot(aNormal.XYZ());
+    if (Abs(aDP) > aDPMax)
+      aDPMax = Abs(aDP);
     if (aDP*aDP>aSqModulus*aSqAnguarTol)
     {
       //Only planar edges are considered
@@ -610,8 +604,9 @@ void BRepFill_AdvancedEvolved::GetLids()
   aBB.MakeCompound(aCompW);
   aBB.MakeCompound(aCompF);
   aBB.MakeCompound(myTopBottom);
-  BOPAlgo_Tools::EdgesToWires(aFreeEdges, aCompW, Standard_True);
-  BOPAlgo_Tools::WiresToFaces(aCompW, aCompF);
+  Standard_Real anAngTol = Sqrt(aSqAnguarTol);
+  BOPAlgo_Tools::EdgesToWires(aFreeEdges, aCompW, Standard_True, anAngTol);
+  BOPAlgo_Tools::WiresToFaces(aCompW, aCompF, anAngTol);
 
   {
     // Check orientation

@@ -15,7 +15,6 @@
 
 
 #include <Interface_EntityIterator.hxx>
-#include <StepAP203_ApprovedItem.hxx>
 #include <StepAP203_CcDesignApproval.hxx>
 #include <StepAP203_CcDesignDateAndTimeAssignment.hxx>
 #include <StepAP203_CcDesignPersonAndOrganizationAssignment.hxx>
@@ -31,20 +30,13 @@
 #include <StepAP214_HArray1OfExternalIdentificationItem.hxx>
 #include <StepBasic_ApplicationContext.hxx>
 #include <StepBasic_ApplicationProtocolDefinition.hxx>
-#include <StepBasic_Document.hxx>
 #include <StepBasic_DocumentFile.hxx>
 #include <StepBasic_DocumentProductEquivalence.hxx>
 #include <StepBasic_DocumentRepresentationType.hxx>
 #include <StepBasic_DocumentType.hxx>
 #include <StepBasic_ExternalSource.hxx>
-#include <StepBasic_HArray1OfDocument.hxx>
-#include <StepBasic_HArray1OfProduct.hxx>
-#include <StepBasic_HArray1OfProductContext.hxx>
 #include <StepBasic_IdentificationRole.hxx>
 #include <StepBasic_ObjectRole.hxx>
-#include <StepBasic_Product.hxx>
-#include <StepBasic_ProductContext.hxx>
-#include <StepBasic_ProductDefinition.hxx>
 #include <StepBasic_ProductDefinitionContext.hxx>
 #include <StepBasic_ProductDefinitionFormation.hxx>
 #include <StepBasic_ProductDefinitionWithAssociatedDocuments.hxx>
@@ -54,9 +46,7 @@
 #include <StepBasic_SourceItem.hxx>
 #include <STEPConstruct_ExternRefs.hxx>
 #include <StepData_SelectNamed.hxx>
-#include <StepRepr_CharacterizedDefinition.hxx>
 #include <StepRepr_DescriptiveRepresentationItem.hxx>
-#include <StepRepr_HArray1OfRepresentationItem.hxx>
 #include <StepRepr_NextAssemblyUsageOccurrence.hxx>
 #include <StepRepr_ProductDefinitionShape.hxx>
 #include <StepRepr_PropertyDefinition.hxx>
@@ -239,7 +229,7 @@ Standard_Boolean STEPConstruct_ExternRefs::LoadExternRefs ()
       // for each DocumentFile, find associated with it data:
       Interface_EntityIterator subs = Graph().Sharings(DocFile);
       for (subs.Start(); subs.More(); subs.Next()) {
-        Handle(Standard_Transient) sub = subs.Value();
+        const Handle(Standard_Transient)& sub = subs.Value();
         
         // FORMAT - ???????
         //
@@ -669,7 +659,7 @@ Standard_Integer STEPConstruct_ExternRefs::AddExternRef (const Standard_CString 
 //      Handle(Standard_Transient) sub = subs.Value();
     Interface_EntityIterator subs = Graph().Sharings(PD);
     for (subs.Start(); subs.More(); subs.Next()) {
-      Handle(Standard_Transient) sub = subs.Value();
+      const Handle(Standard_Transient)& sub = subs.Value();
       if (!sub->IsKind(STANDARD_TYPE(StepRepr_ProductDefinitionShape))) continue;
       Handle(StepRepr_ProductDefinitionShape) ProdDefSh = 
         Handle(StepRepr_ProductDefinitionShape)::DownCast ( sub );
@@ -692,7 +682,7 @@ Standard_Integer STEPConstruct_ExternRefs::AddExternRef (const Standard_CString 
 //        Interface_EntityIterator subs2 = Graph().Sharings(ProdDef);
     Interface_EntityIterator subs2 = Graph().Sharings(PD);
     for (subs2.Start(); subs2.More(); subs2.Next()) {
-      Handle(Standard_Transient) sub2 = subs2.Value();
+      const Handle(Standard_Transient)& sub2 = subs2.Value();
 
       if (sub2->IsKind(STANDARD_TYPE(StepRepr_NextAssemblyUsageOccurrence))) {
         Handle(StepRepr_NextAssemblyUsageOccurrence) NAUO = 

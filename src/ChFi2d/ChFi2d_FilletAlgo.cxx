@@ -27,7 +27,6 @@
 #include <TopoDS_Iterator.hxx>
 #include <TColStd_ListIteratorOfListOfReal.hxx>
 
-#include <gp_Circ.hxx>
 #include <Geom_Circle.hxx>
 #include <Geom2d_Line.hxx>
 
@@ -181,7 +180,7 @@ static Standard_Boolean IsRadiusIntersected(const Handle(Geom2d_Curve)& theCurve
     if (gp_Vec2d(aPoint, theStart).IsOpposite(gp_Vec2d(aPoint, theEnd), Precision::Angular())) 
       return Standard_True;
   }
-  Handle(Geom2d_Curve) aCurve = theCurve;
+  const Handle(Geom2d_Curve)& aCurve = theCurve;
   for(a = anInter.NbSegments(); a > 0; a--) 
   {
     //anInter.Segment(a, aCurve); //not implemented (bug in OCC)

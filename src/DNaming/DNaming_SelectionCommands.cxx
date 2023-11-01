@@ -18,34 +18,23 @@
 
 #include <DDF.hxx>
 
-#include <TNaming_NamedShape.hxx>
-#include <TNaming_ListOfNamedShape.hxx>
-#include <TNaming_ListIteratorOfListOfNamedShape.hxx>
 #include <TNaming_Tool.hxx>
 #include <TDF_Label.hxx>
-#include <TDF_AttributeMap.hxx>
-#include <TDF_MapIteratorOfAttributeMap.hxx>
-#include <TDF_ChildIterator.hxx>
 #include <TDF_Tool.hxx>
-#include <TNaming_Name.hxx>
 #include <TNaming.hxx>
 #include <TNaming_Naming.hxx>
 #include <TNaming_NamingTool.hxx>
 #include <TNaming_MapOfNamedShape.hxx>
-#include <TNaming_MapIteratorOfMapOfNamedShape.hxx>
 #include <TDF_ChildIterator.hxx>
 #include <TNaming_Selector.hxx>
 #include <TopoDS_Shape.hxx>
 #include <TopAbs.hxx>
 #include <TCollection_AsciiString.hxx>
 #include <TDF_LabelMap.hxx>
-#include <TDF_MapIteratorOfLabelMap.hxx>
 
-#include <DBRep.hxx>
 #include <Draw_Appli.hxx>
 #include <Draw.hxx>
 #include <Draw_Interpretor.hxx>
-#include <Draw_Drawable3D.hxx>
 #include <DBRep.hxx>
 #include <DBRep_DrawableShape.hxx>
 #include <stdio.h>
@@ -161,7 +150,7 @@ Standard_Boolean FillValidMap(const TDF_Label& theLabel, TDF_LabelMap& theValidM
 #endif
 	  TDF_Tool::OutReferences(aLabel,anExtMap);
 	  for (TDF_MapIteratorOfAttributeMap attMItr(anExtMap);attMItr.More(); attMItr.Next()) {
-        Handle(TDF_Attribute) att = attMItr.Key();
+        const Handle(TDF_Attribute)& att = attMItr.Key();
 #ifdef OCCT_DEBUG_SELN
         TDF_Tool::Entry(att->Label(), entr1);
 	    std::cout<<"## References attribute dynamic type = "<<att->DynamicType()<<" at Label = "<<entr1 <<std::endl;

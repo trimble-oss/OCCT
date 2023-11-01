@@ -17,7 +17,6 @@
 #ifndef _StdPrs_ShadedShape_HeaderFile
 #define _StdPrs_ShadedShape_HeaderFile
 
-#include <GeomAbs_Shape.hxx>
 #include <Prs3d_Root.hxx>
 #include <Prs3d_Drawer.hxx>
 #include <StdPrs_Volume.hxx>
@@ -25,7 +24,6 @@
 class Graphic3d_ArrayOfSegments;
 class Graphic3d_ArrayOfTriangles;
 class TopoDS_Shape;
-class gp_Pnt2d;
 class BRep_Builder;
 class TopoDS_Compound;
 
@@ -38,13 +36,13 @@ public:
   //! @param theVolumeType defines the way how to interpret input shapes - as Closed volumes (to activate back-face
   //! culling and capping plane algorithms), as Open volumes (shells or solids with holes)
   //! or to perform Autodetection (would split input shape into two groups)
-  Standard_EXPORT static void Add (const Handle(Prs3d_Presentation)& thePresentation, const TopoDS_Shape& theShape, const Handle(Prs3d_Drawer)& theDrawer, const StdPrs_Volume theVolume = StdPrs_Volume_Autodetection);
+  Standard_EXPORT static void Add (const Handle(Prs3d_Presentation)& thePresentation, const TopoDS_Shape& theShape, const Handle(Prs3d_Drawer)& theDrawer, const StdPrs_Volume theVolume = StdPrs_Volume_Autodetection, const Handle(Graphic3d_Group)& theGroup = NULL);
   
   //! Shades <theShape> with texture coordinates.
   //! @param theVolumeType defines the way how to interpret input shapes - as Closed volumes (to activate back-face
   //! culling and capping plane algorithms), as Open volumes (shells or solids with holes)
   //! or to perform Autodetection (would split input shape into two groups)
-  Standard_EXPORT static void Add (const Handle(Prs3d_Presentation)& thePresentation, const TopoDS_Shape& theShape, const Handle(Prs3d_Drawer)& theDrawer, const Standard_Boolean theHasTexels, const gp_Pnt2d& theUVOrigin, const gp_Pnt2d& theUVRepeat, const gp_Pnt2d& theUVScale, const StdPrs_Volume theVolume = StdPrs_Volume_Autodetection);
+  Standard_EXPORT static void Add (const Handle(Prs3d_Presentation)& thePresentation, const TopoDS_Shape& theShape, const Handle(Prs3d_Drawer)& theDrawer, const Standard_Boolean theHasTexels, const gp_Pnt2d& theUVOrigin, const gp_Pnt2d& theUVRepeat, const gp_Pnt2d& theUVScale, const StdPrs_Volume theVolume = StdPrs_Volume_Autodetection, const Handle(Graphic3d_Group)& theGroup = NULL);
   
   //! Searches closed and unclosed subshapes in shape structure and puts them
   //! into two compounds for separate processing of closed and unclosed sub-shapes

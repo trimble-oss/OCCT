@@ -108,6 +108,7 @@ bool Font_FTFont::Init (const Handle(NCollection_Buffer)& theData,
   setLoadFlag (FT_LOAD_NO_HINTING,     (theParams.FontHinting & Font_Hinting_Normal) == 0
                                     && (theParams.FontHinting & Font_Hinting_Light)  == 0);
 #endif
+
   // manage native / autohinting
   if ((theParams.FontHinting & Font_Hinting_ForceAutohint) != 0
    && (theParams.FontHinting & Font_Hinting_NoAutohint) != 0)
@@ -118,6 +119,7 @@ bool Font_FTFont::Init (const Handle(NCollection_Buffer)& theData,
   setLoadFlag (FT_LOAD_FORCE_AUTOHINT, (theParams.FontHinting & Font_Hinting_ForceAutohint) != 0);
   setLoadFlag (FT_LOAD_NO_AUTOHINT,    (theParams.FontHinting & Font_Hinting_NoAutohint) != 0);
 #endif
+
   if (!myFTLib->IsValid())
   {
     Message::SendTrace ("FreeType library is unavailable");
@@ -655,7 +657,7 @@ float Font_FTFont::AdvanceY (Standard_Utf32Char theUCharNext) const
 Standard_Integer Font_FTFont::GlyphsNumber (bool theToIncludeFallback) const
 {
 #ifdef HAVE_FREETYPE
-  Standard_Integer aNbGlyphs = myFTFace->num_glyphs;
+  Standard_Integer aNbGlyphs = (Standard_Integer )myFTFace->num_glyphs;
   if (theToIncludeFallback)
   {
     for (Standard_Integer aFontIter = 0; aFontIter < Font_UnicodeSubset_NB; ++aFontIter)

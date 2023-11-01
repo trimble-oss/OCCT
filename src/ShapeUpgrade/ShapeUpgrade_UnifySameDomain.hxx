@@ -31,7 +31,6 @@
 #include <Geom_Plane.hxx>
 #include <Precision.hxx>
 class ShapeBuild_ReShape;
-class TopoDS_Shape;
 
 
 class ShapeUpgrade_UnifySameDomain;
@@ -71,6 +70,7 @@ class ShapeUpgrade_UnifySameDomain : public Standard_Transient
 public:
 
   typedef NCollection_DataMap<TopoDS_Shape, Handle(Geom_Plane), TopTools_ShapeMapHasher> DataMapOfFacePlane;
+  typedef NCollection_DataMap<TopoDS_Shape, TopTools_MapOfShape, TopTools_ShapeMapHasher> DataMapOfShapeMapOfShape;
   
   //! Empty constructor
   Standard_EXPORT ShapeUpgrade_UnifySameDomain();
@@ -169,7 +169,8 @@ protected:
   Standard_EXPORT void UnifyEdges();
 
   void IntUnifyFaces(const TopoDS_Shape& theInpShape,
-                     TopTools_IndexedDataMapOfShapeListOfShape& theGMapEdgeFaces,
+                     const TopTools_IndexedDataMapOfShapeListOfShape& theGMapEdgeFaces,
+                     const DataMapOfShapeMapOfShape& theGMapFaceShells,
                      const TopTools_MapOfShape& theFreeBoundMap);
 
   //! Splits the sequence of edges into the sequence of chains

@@ -14,12 +14,9 @@
 
 
 #include <Bnd_Box.hxx>
-#include <BRep_Builder.hxx>
-#include <BRep_Tool.hxx>
 #include <BRepAlgoAPI_Section.hxx>
 #include <BRepBndLib.hxx>
 #include <BRepFill_Generator.hxx>
-#include <BRepLib_MakeEdge.hxx>
 #include <BRepLib_MakeVertex.hxx>
 #include <BRepLib_MakeWire.hxx>
 #include <BRepProj_Projection.hxx>
@@ -33,15 +30,10 @@
 #include <Precision.hxx>
 #include <ShapeAnalysis_FreeBounds.hxx>
 #include <Standard_ConstructionError.hxx>
-#include <Standard_NoSuchObject.hxx>
 #include <Standard_NullObject.hxx>
-#include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
-#include <TopLoc_Location.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Shape.hxx>
-#include <TopTools_ListIteratorOfListOfShape.hxx>
-#include <TopTools_ListOfShape.hxx>
 
 //=======================================================================
 //function : DistanceOut
@@ -192,7 +184,7 @@ BRepProj_Projection::BRepProj_Projection(const TopoDS_Shape& Wire,
   // Note: it is necessary to create copy of wire to avoid adding new pcurves into it
   Handle(BRepTools_TrsfModification) Trsf = new BRepTools_TrsfModification(T);
   BRepTools_Modifier Modif (Wire, Trsf);
-  TopoDS_Shape WireBase = Modif.ModifiedShape(Wire);
+  const TopoDS_Shape& WireBase = Modif.ModifiedShape(Wire);
 
   // Creation of a cylindrical surface
   BRepSweep_Prism CylSurf (WireBase, Vsup, Standard_False);

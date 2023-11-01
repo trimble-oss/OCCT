@@ -16,30 +16,17 @@
 
 #include <ViewerTest.hxx>
 #include <BRepTest.hxx>
-#include <TColgp_Array1OfPnt2d.hxx>
 #include <DBRep.hxx>
 #include <Draw_Interpretor.hxx>
 #include <Draw_Appli.hxx>
 #include <BRepFilletAPI_MakeFillet.hxx>
-#include <BiTgte_Blend.hxx>
-#include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <TopAbs_ShapeEnum.hxx>
 #include <TopoDS_Shape.hxx>
-#include <TopoDS_Compound.hxx>
 #include <TopoDS_Edge.hxx>
-#include <TopoDS_Vertex.hxx>
 #include <TopoDS.hxx>
 #include <TopExp.hxx>
-#include <TopExp_Explorer.hxx>
 
-#include <FilletSurf_Builder.hxx>
 #include <ChFi3d_FilletShape.hxx>
-#include <Geom_TrimmedCurve.hxx>
-#include <TopTools_ListOfShape.hxx>
-#include <FilletSurf_StatusType.hxx>
-#include <FilletSurf_ErrorTypeStatus.hxx>
-#include <TopAbs.hxx>
-#include <DrawTrSurf.hxx>
 #include <TopTools_HArray1OfShape.hxx>
 
 #include <AIS_InteractiveContext.hxx>
@@ -47,10 +34,10 @@
 #include <AIS_Shape.hxx>
 
 #ifdef _WIN32
-//#define strcasecmp strcmp Already defined in Standard
 # include <stdio.h>
 #endif
 
+static Standard_Real tesp = 1.e-4;
 static Standard_Real t3d = 1.e-4;
 static Standard_Real t2d = 1.e-5;
 static Standard_Real ta  = 1.e-2;
@@ -100,7 +87,7 @@ static Standard_Integer VBLEND(Draw_Interpretor& di, Standard_Integer narg, cons
     }
   }
   Rakk = new BRepFilletAPI_MakeFillet(V,FSh);
-  Rakk->SetParams(ta,t3d,t2d,t3d,t2d,fl);
+  Rakk->SetParams(ta, tesp, t2d, t3d, t2d, fl);
   Rakk->SetContinuity(blend_cont, tapp_angle);
   Standard_Real Rad;
   TopoDS_Edge E;

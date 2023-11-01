@@ -14,15 +14,12 @@
 // commercial license or contractual agreement.
 
 
-#include <Adaptor3d_Curve.hxx>
 #include <BRepAdaptor_Surface.hxx>
-#include <BRepAlgoAPI_BooleanOperation.hxx>
 #include <BRepAlgoAPI_Common.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepAlgoAPI_Fuse.hxx>
 #include <BRepAlgoAPI_Section.hxx>
 #include <BRepCheck_Analyzer.hxx>
-#include <BRepCheck_ListIteratorOfListOfStatus.hxx>
 #include <BRepCheck_ListOfStatus.hxx>
 #include <BRepCheck_Result.hxx>
 #include <BRepLib.hxx>
@@ -31,11 +28,9 @@
 #include <GeomAbs_SurfaceType.hxx>
 #include <ModelDefinitions.hxx>
 #include <Precision.hxx>
-#include <Standard_GUID.hxx>
 #include <Standard_Real.hxx>
 #include <Standard_Type.hxx>
 #include <TDataStd_Integer.hxx>
-#include <TDataStd_Real.hxx>
 #include <TDF_Label.hxx>
 #include <TFunction_Function.hxx>
 #include <TFunction_Logbook.hxx>
@@ -44,13 +39,10 @@
 #include <TNaming_NamedShape.hxx>
 #include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
-#include <TopLoc_Location.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Iterator.hxx>
-#include <TopoDS_Solid.hxx>
 #include <TopoDS_Vertex.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
-#include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <TopTools_MapOfShape.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(DNaming_BooleanOperationDriver,TFunction_Driver)
@@ -459,7 +451,7 @@ void FindSPErrorEdges(const TopoDS_Shape&         theShape,
     TopExp_Explorer anExpE(theShape, TopAbs_EDGE);
     
     for(; anExpE.More(); anExpE.Next()) {
-      Handle(BRepCheck_Result) aResult = theAnalyzer.Result(anExpE.Current());
+      const Handle(BRepCheck_Result)& aResult = theAnalyzer.Result(anExpE.Current());
 
       if(aResult.IsNull() || theMap.Contains(anExpE.Current()))
 	continue;
@@ -482,7 +474,7 @@ void FindSPErrorEdges(const TopoDS_Shape&         theShape,
     }
   }
   else if(theShape.ShapeType() == TopAbs_EDGE) {
-    Handle(BRepCheck_Result) aResult = theAnalyzer.Result(theShape);
+    const Handle(BRepCheck_Result)& aResult = theAnalyzer.Result(theShape);
     itl.Initialize(aResult->Status());
     
     for(; itl.More(); itl.Next()) {
@@ -511,7 +503,7 @@ Standard_Boolean FindOtherErrors(const TopoDS_Shape&               theShape,
     if(FindOtherErrors(anIt.Value(), theAnalyzer, theMap))
       return Standard_True;
   }
-  Handle(BRepCheck_Result) aResult = theAnalyzer.Result(theShape);
+  const Handle(BRepCheck_Result)& aResult = theAnalyzer.Result(theShape);
   
   if (!aResult.IsNull()) {
 
@@ -526,7 +518,7 @@ Standard_Boolean FindOtherErrors(const TopoDS_Shape&               theShape,
 	  TopExp_Explorer anExpE(anExpF.Current(), TopAbs_EDGE);
 
 	  for(; anExpE.More(); anExpE.Next()) {
-	    Handle(BRepCheck_Result) aResultE = theAnalyzer.Result(anExpE.Current());
+	    const Handle(BRepCheck_Result)& aResultE = theAnalyzer.Result(anExpE.Current());
 
 	    if(aResultE.IsNull())
 	      continue;

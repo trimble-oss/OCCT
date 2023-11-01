@@ -19,9 +19,6 @@
 //		0.0	Mar 13 1997	Creation
 
 #include <TCollection_AsciiString.hxx>
-#include <TColStd_ListIteratorOfListOfInteger.hxx>
-#include <TColStd_ListOfInteger.hxx>
-#include <TDF_AttributeIndexedMap.hxx>
 #include <TDF_AttributeIterator.hxx>
 #include <TDF_ChildIterator.hxx>
 #include <TDF_Data.hxx>
@@ -175,7 +172,7 @@ static Standard_Boolean TDF_Tool_DescendantRef
 	   attMItr.More(); attMItr.Next()) {
 	// CLE
 	// const Handle(TDF_Attribute)& att = attMItr.Key();
-	Handle(TDF_Attribute) att = attMItr.Key();
+	const Handle(TDF_Attribute)& att = attMItr.Key();
         if (!att.IsNull() && !att->Label().IsNull())
         {
 	  // ENDCLE
@@ -245,7 +242,7 @@ static void TDF_Tool_OutReferers(const TDF_Label& aRefLabel,
 	 attMItr.More(); attMItr.Next()) {
       // CLE
       // const Handle(TDF_Attribute)& att = attMItr.Key();
-      Handle(TDF_Attribute) att = attMItr.Key();
+      const Handle(TDF_Attribute)& att = attMItr.Key();
       // ENDCLE
       if (aFilterForReferences.IsKept(att) &&
           !att->Label().IsNull() &&
@@ -319,7 +316,7 @@ static void TDF_Tool_OutReferences(const TDF_Label& aRefLabel,
     itr.Value()->References(ds);
     const TDF_AttributeMap& attMap = ds->Attributes();
     for (TDF_MapIteratorOfAttributeMap attMItr(attMap);attMItr.More();attMItr.Next()) {
-      Handle(TDF_Attribute) att = attMItr.Key();
+      const Handle(TDF_Attribute)& att = attMItr.Key();
       if (aFilterForReferences.IsKept(att) &&
           !att->Label().IsNull() &&
           !att->Label().IsDescendant(aRefLabel))

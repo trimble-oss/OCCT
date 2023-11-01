@@ -18,10 +18,8 @@
 #include <RWStepGeom_RWBSplineSurfaceWithKnots.hxx>
 #include <RWStepGeom_RWBSplineSurfaceWithKnotsAndRationalBSplineSurface.hxx>
 #include <RWStepGeom_RWRationalBSplineSurface.hxx>
-#include <StepData_Logical.hxx>
 #include <StepData_StepReaderData.hxx>
 #include <StepData_StepWriter.hxx>
-#include <StepGeom_BSplineSurfaceForm.hxx>
 #include <StepGeom_BSplineSurfaceWithKnots.hxx>
 #include <StepGeom_BSplineSurfaceWithKnotsAndRationalBSplineSurface.hxx>
 #include <StepGeom_CartesianPoint.hxx>
@@ -434,7 +432,7 @@ void RWStepGeom_RWBSplineSurfaceWithKnotsAndRationalBSplineSurface::Check
    const Interface_ShareTool& aShto,
    Handle(Interface_Check)& ach) const
 {
-  Handle(StepGeom_BSplineSurfaceWithKnotsAndRationalBSplineSurface) aRationalBSS = ent;
+  const Handle(StepGeom_BSplineSurfaceWithKnotsAndRationalBSplineSurface)& aRationalBSS = ent;
   Handle(StepGeom_BSplineSurfaceWithKnots) aBSSWK =
     aRationalBSS->BSplineSurfaceWithKnots();
   RWStepGeom_RWBSplineSurfaceWithKnots t1;

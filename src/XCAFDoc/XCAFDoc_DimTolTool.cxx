@@ -13,16 +13,12 @@
 
 #include <XCAFDoc_DimTolTool.hxx>
 
-#include <Precision.hxx>
-#include <Standard_GUID.hxx>
 #include <Standard_Type.hxx>
-#include <TCollection_HAsciiString.hxx>
 #include <TColStd_MapOfAsciiString.hxx>
 #include <TDataStd_Name.hxx>
 #include <TDataStd_TreeNode.hxx>
 #include <TDataStd_UAttribute.hxx>
 #include <TDF_Attribute.hxx>
-#include <TDF_AttributeIterator.hxx>
 #include <TDF_ChildIDIterator.hxx>
 #include <TDF_Label.hxx>
 #include <TDF_RelocationTable.hxx>
@@ -507,7 +503,7 @@ TDF_Label XCAFDoc_DimTolTool::SetDimTol(const TDF_Label& L,
 
 Standard_Boolean XCAFDoc_DimTolTool::GetRefShapeLabel(const TDF_Label& theL,
                                                       TDF_LabelSequence& theShapeLFirst,
-                                                      TDF_LabelSequence& theShapeLSecond) const
+                                                      TDF_LabelSequence& theShapeLSecond)
 {
   theShapeLFirst.Clear();
   theShapeLSecond.Clear();
@@ -859,7 +855,7 @@ Standard_Boolean XCAFDoc_DimTolTool::GetDatum(const TDF_Label& theDatumL,
 //=======================================================================
 
 Standard_Boolean XCAFDoc_DimTolTool::GetDatumOfTolerLabels(const TDF_Label& theDimTolL,
-                                                         TDF_LabelSequence& theDatums) const
+                                                         TDF_LabelSequence& theDatums)
 {
   Handle(XCAFDoc_GraphNode) aNode;
   if( !theDimTolL.FindAttribute(XCAFDoc::DatumTolRefGUID(),aNode) )
@@ -878,7 +874,7 @@ Standard_Boolean XCAFDoc_DimTolTool::GetDatumOfTolerLabels(const TDF_Label& theD
 //=======================================================================
 
 Standard_Boolean XCAFDoc_DimTolTool::GetDatumWithObjectOfTolerLabels(const TDF_Label& theDimTolL,
-                                                                     TDF_LabelSequence& theDatums) const
+                                                                     TDF_LabelSequence& theDatums)
 {
   Handle(XCAFDoc_GraphNode) aNode;
   if( !theDimTolL.FindAttribute(XCAFDoc::DatumTolRefGUID(),aNode) )

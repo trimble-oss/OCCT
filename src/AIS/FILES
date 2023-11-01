@@ -2,6 +2,8 @@ AIS.hxx
 AIS_Animation.cxx
 AIS_Animation.hxx
 AIS_AnimationTimer.hxx
+AIS_AnimationAxisRotation.cxx
+AIS_AnimationAxisRotation.hxx
 AIS_AnimationCamera.cxx
 AIS_AnimationCamera.hxx
 AIS_AnimationObject.cxx
@@ -12,13 +14,14 @@ AIS_Axis.cxx
 AIS_Axis.hxx
 AIS_BadEdgeFilter.cxx
 AIS_BadEdgeFilter.hxx
+AIS_BaseAnimationObject.cxx
+AIS_BaseAnimationObject.hxx
 AIS_C0RegularityFilter.cxx
 AIS_C0RegularityFilter.hxx
 AIS_CameraFrustum.cxx
 AIS_CameraFrustum.hxx
 AIS_Circle.cxx
 AIS_Circle.hxx
-AIS_ClearMode.hxx
 AIS_ColoredDrawer.hxx
 AIS_ColoredShape.cxx
 AIS_ColoredShape.hxx
@@ -27,13 +30,8 @@ AIS_ColorScale.cxx
 AIS_ColorScale.hxx
 AIS_ConnectedInteractive.cxx
 AIS_ConnectedInteractive.hxx
-AIS_ConnectStatus.hxx
-AIS_DataMapIteratorOfDataMapofIntegerListOfinteractive.hxx
 AIS_DataMapIteratorOfDataMapOfIOStatus.hxx
-AIS_DataMapIteratorOfDataMapOfSelStat.hxx
-AIS_DataMapofIntegerListOfinteractive.hxx
 AIS_DataMapOfIOStatus.hxx
-AIS_DataMapOfSelStat.hxx
 AIS_DisplayMode.hxx
 AIS_DisplayStatus.hxx
 AIS_DragAction.hxx
@@ -43,7 +41,6 @@ AIS_GlobalStatus.cxx
 AIS_GlobalStatus.hxx
 AIS_GraphicTool.cxx
 AIS_GraphicTool.hxx
-AIS_IndexedDataMapOfOwnerPrs.hxx
 AIS_InteractiveContext.cxx
 AIS_InteractiveContext.hxx
 AIS_InteractiveObject.cxx
@@ -60,8 +57,6 @@ AIS_Manipulator.cxx
 AIS_ManipulatorMode.hxx
 AIS_ManipulatorOwner.hxx
 AIS_ManipulatorOwner.cxx
-AIS_MapIteratorOfMapOfInteractive.hxx
-AIS_MapOfInteractive.hxx
 AIS_MediaPlayer.cxx
 AIS_MediaPlayer.hxx
 AIS_MouseGesture.hxx
@@ -86,7 +81,6 @@ AIS_Selection.hxx
 AIS_SelectStatus.hxx
 AIS_SelectionModesConcurrency.hxx
 AIS_SelectionScheme.hxx
-AIS_SequenceOfInteractive.hxx
 AIS_Shape.cxx
 AIS_Shape.hxx
 AIS_SignatureFilter.cxx

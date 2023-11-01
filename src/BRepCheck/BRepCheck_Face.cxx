@@ -23,7 +23,6 @@
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepCheck.hxx>
 #include <BRepCheck_Face.hxx>
-#include <BRepCheck_ListIteratorOfListOfStatus.hxx>
 #include <BRepCheck_ListOfStatus.hxx>
 #include <BRepClass_FaceClassifier.hxx>
 #include <BRepTopAdaptor_FClass2d.hxx>
@@ -48,9 +47,7 @@
 #include <TopoDS_Shape.hxx>
 #include <TopoDS_Vertex.hxx>
 #include <TopoDS_Wire.hxx>
-#include <TopTools_DataMapIteratorOfDataMapOfShapeListOfShape.hxx>
 #include <TopTools_DataMapOfShapeListOfShape.hxx>
-#include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <TopTools_ListOfShape.hxx>
 #include <TopTools_MapOfShape.hxx>
 #include <TopTools_OrientedShapeMapHasher.hxx>
@@ -628,7 +625,7 @@ static Standard_Boolean Intersect(const TopoDS_Wire& wir1,
     MapW1.Add( exp1.Current() );
   for (exp2.Init( wir2, TopAbs_VERTEX ); exp2.More(); exp2.Next())
     {
-      TopoDS_Shape V = exp2.Current();
+      const TopoDS_Shape& V = exp2.Current();
       if (MapW1.Contains( V ))
 	CommonVertices.Append( V );
     }

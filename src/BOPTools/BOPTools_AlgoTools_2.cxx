@@ -30,8 +30,6 @@
 #include <TopoDS_Face.hxx>
 #include <TopoDS_Iterator.hxx>
 #include <TopoDS_Shape.hxx>
-#include <TopoDS_Shell.hxx>
-#include <TopoDS_Solid.hxx>
 #include <TopoDS_Vertex.hxx>
 
 //=======================================================================
@@ -114,7 +112,7 @@ void BOPTools_AlgoTools::MakeSectEdge(const IntTools_Curve& aIC,
                                       const Standard_Real  aP2,
                                       TopoDS_Edge& aNewEdge)
 {
-  Handle(Geom_Curve) aC=aIC.Curve ();
+  const Handle(Geom_Curve)& aC=aIC.Curve ();
   
   BRepBuilderAPI_MakeEdge aMakeEdge(aC, aV1, aV2, aP1, aP2);
   

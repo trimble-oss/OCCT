@@ -19,20 +19,14 @@
 #include <ChFiDS_ErrorStatus.hxx>
 #include <ChFiDS_Spine.hxx>
 #include <Geom_Surface.hxx>
-#include <Law_Function.hxx>
-#include <Law_Interpol.hxx>
 #include <Law_Linear.hxx>
-#include <Law_S.hxx>
 #include <Precision.hxx>
-#include <Standard_NoSuchObject.hxx>
-#include <StdFail_NotDone.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Shape.hxx>
 #include <TopoDS_Vertex.hxx>
 #include <TopOpeBRepBuild_HBuilder.hxx>
 #include <TopOpeBRepDS_HDataStructure.hxx>
-#include <TopTools_ListIteratorOfListOfShape.hxx>
 
 //=======================================================================
 //function : BRepFilletAPI_MakeFillet
@@ -50,13 +44,13 @@ BRepFilletAPI_MakeFillet::BRepFilletAPI_MakeFillet(const TopoDS_Shape& S,
 //=======================================================================
 
 void BRepFilletAPI_MakeFillet::SetParams(const Standard_Real Tang, 
-					 const Standard_Real Tesp, 
-					 const Standard_Real T2d, 
-					 const Standard_Real TApp3d, 
-					 const Standard_Real TolApp2d, 
-					 const Standard_Real Fleche)
+                                         const Standard_Real Tesp, 
+                                         const Standard_Real T2d, 
+                                         const Standard_Real TApp3d,
+                                         const Standard_Real TolApp2d, 
+                                         const Standard_Real Fleche)
 {
-  myBuilder.SetParams(Tang,Tesp, T2d, TApp3d, TolApp2d, Fleche);
+  myBuilder.SetParams(Tang, Tesp, T2d, TApp3d, TolApp2d, Fleche);
 }
 
 //=======================================================================

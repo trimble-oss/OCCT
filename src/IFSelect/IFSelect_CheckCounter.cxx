@@ -13,7 +13,6 @@
 
 
 #include <IFSelect_CheckCounter.hxx>
-#include <Interface_Check.hxx>
 #include <Interface_CheckIterator.hxx>
 #include <Interface_InterfaceModel.hxx>
 #include <MoniTool_SignText.hxx>
@@ -73,7 +72,7 @@ void  IFSelect_CheckCounter::Analyse(const Interface_CheckIterator& list,
   for (list.Start(); list.More(); list.Next()) {
     num = list.Number();
     Handle(Standard_Transient) ent;
-    const Handle(Interface_Check) check = list.Value();
+    const Handle(Interface_Check)& check = list.Value();
     ent = check->Entity();
     if (ent.IsNull() && num > 0 && num <= nbe) ent = model->Value(num);
     nb = check->NbFails();

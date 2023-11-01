@@ -16,30 +16,15 @@
 
 #include <TopoDS.hxx>
 #include <TopExp.hxx>
-#include <TopExp_Explorer.hxx>
-#include <TColStd_DataMapIteratorOfDataMapOfIntegerListOfInteger.hxx>
 #include <TColStd_DataMapOfIntegerListOfInteger.hxx>
-#include <TColStd_ListIteratorOfListOfInteger.hxx>
-#include <TColStd_ListOfInteger.hxx>
-#include <BRepAdaptor_Curve.hxx>
-#include <BRepAdaptor_Surface.hxx>
-#include <BRep_Tool.hxx>
 #include <BRepClass3d_SolidClassifier.hxx>
-#include <TopoDS_Shell.hxx>
-#include <TopoDS_Solid.hxx>
 #include <gp_Vec.hxx>
-#include <Precision.hxx>
-#include <Geom_Curve.hxx>
-#include <Geom_Surface.hxx>
 #include <GeomAPI_ProjectPointOnSurf.hxx>
 #include <BRepTools.hxx>
 
-#include <TopOpeBRepTool_ShapeTool.hxx>
 #include <TopOpeBRepTool_EXPORT.hxx>
 #include <TopOpeBRepTool_TOOL.hxx>
 
-#include <TopOpeBRepDS_FaceEdgeInterference.hxx>
-#include <TopOpeBRepDS_define.hxx>
 #include <TopOpeBRepDS_ProcessInterferencesTool.hxx>
 #include <TopOpeBRepDS_FaceEdgeInterference.hxx>
 #include <TopOpeBRepDS_FaceInterferenceTool.hxx>
@@ -306,7 +291,7 @@ Standard_EXPORT void FUN_resolveFUNKNOWN
         //      to determine transition relatively solid rather then face
         //      if possible (see pb. in CFE002 C2, when SIX==13)
         Standard_Integer rankFS = BDS.AncestorRank(S1);
-        TopoDS_Shape aSRef = BDS.Shape(rankFS);
+        const TopoDS_Shape& aSRef = BDS.Shape(rankFS);
         TopExp_Explorer ex(aSRef,TopAbs_SOLID);
         if (ex.More()) {
           pClass = pClassif;

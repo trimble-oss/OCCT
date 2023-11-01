@@ -12,12 +12,8 @@
 // commercial license or contractual agreement.
 
 
-#include <Adaptor3d_CurveOnSurface.hxx>
 #include <BRep_Builder.hxx>
 #include <BRep_GCurve.hxx>
-#include <BRep_ListIteratorOfListOfCurveRepresentation.hxx>
-#include <BRep_ListIteratorOfListOfPointRepresentation.hxx>
-#include <BRep_ListOfCurveRepresentation.hxx>
 #include <BRep_ListOfPointRepresentation.hxx>
 #include <BRep_PointOnCurve.hxx>
 #include <BRep_PointOnCurveOnSurface.hxx>
@@ -34,17 +30,13 @@
 #include <Geom_Curve.hxx>
 #include <Geom_Surface.hxx>
 #include <GeomAdaptor_Curve.hxx>
-#include <GeomAdaptor_Surface.hxx>
 #include <Precision.hxx>
-#include <ShapeAnalysis.hxx>
 #include <ShapeAnalysis_Curve.hxx>
 #include <ShapeAnalysis_Edge.hxx>
 #include <ShapeAnalysis_Surface.hxx>
 #include <ShapeAnalysis_TransferParametersProj.hxx>
 #include <ShapeBuild_Edge.hxx>
 #include <Standard_Type.hxx>
-#include <TColgp_SequenceOfPnt.hxx>
-#include <TColStd_HArray1OfReal.hxx>
 #include <TopLoc_Location.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Edge.hxx>
@@ -239,7 +231,7 @@ Standard_Real ShapeAnalysis_TransferParametersProj::Perform(const Standard_Real 
 //function : CorrectParameter
 //purpose  : auxiliary
 //=======================================================================
-static Standard_Real CorrectParameter(const Handle(Geom2d_Curve) crv,
+static Standard_Real CorrectParameter(const Handle(Geom2d_Curve)& crv,
 				      const Standard_Real param)
 {
   if(crv->IsKind(STANDARD_TYPE(Geom2d_TrimmedCurve))) {
@@ -588,7 +580,7 @@ TopoDS_Vertex ShapeAnalysis_TransferParametersProj::CopyNMVertex (const TopoDS_V
   //update tolerance
   Standard_Boolean needUpdate = Standard_False;
   gp_Pnt aPV = (*((Handle(BRep_TVertex)*)&anewV.TShape()))->Pnt();
-  TopLoc_Location toLoc = toedge.Location();
+  const TopLoc_Location& toLoc = toedge.Location();
   BRep_ListIteratorOfListOfCurveRepresentation toitcr
 	((*((Handle(BRep_TEdge)*)&toedge.TShape()))->ChangeCurves());
       

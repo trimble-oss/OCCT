@@ -17,10 +17,6 @@
 // Modified by isg, Thu Mar 17 09:21:31 1994
 
 #include <BRep_Tool.hxx>
-#include <BRepAdaptor_Curve.hxx>
-#include <ChFiDS_ErrorStatus.hxx>
-#include <ChFiDS_ElSpine.hxx>
-#include <ChFiDS_ListIteratorOfListOfHElSpine.hxx>
 #include <ChFiDS_Spine.hxx>
 #include <ElCLib.hxx>
 #include <GCPnts_AbscissaPoint.hxx>
@@ -562,6 +558,17 @@ void  ChFiDS_Spine::Load()
   }
   indexofcurve =1;
   myCurve.Initialize(TopoDS::Edge(spine.Value(1)));
+
+  // Here, we should update tolesp according to curve parameter range
+  // if tolesp candidate less than default initial value.
+  const Standard_Real umin = FirstParameter();
+  const Standard_Real umax = LastParameter();
+
+  Standard_Real new_tolesp = 5.0e-5 * (umax - umin);
+  if (tolesp > new_tolesp)
+  {
+    tolesp = new_tolesp;
+  }
 }
 
 

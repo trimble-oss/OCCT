@@ -20,7 +20,6 @@
 #include <Standard_Type.hxx>
 
 #include <TDataStd_GenericEmpty.hxx>
-#include <Standard_Boolean.hxx>
 #include <TDF_LabelSequence.hxx>
 #include <TColStd_HSequenceOfExtendedString.hxx>
 class XCAFDoc_ShapeTool;
@@ -28,8 +27,6 @@ class TDF_Label;
 class Standard_GUID;
 class TCollection_ExtendedString;
 class TopoDS_Shape;
-class TDF_Attribute;
-class TDF_RelocationTable;
 
 
 class XCAFDoc_LayerTool;
@@ -138,7 +135,7 @@ public:
   Standard_EXPORT Handle(TColStd_HSequenceOfExtendedString) GetLayers (const TDF_Label& L);
   
   //! Return sequanese of shape labels that assigned with layers to <ShLabels>.
-  Standard_EXPORT void GetShapesOfLayer (const TDF_Label& layerL, TDF_LabelSequence& ShLabels) const;
+  Standard_EXPORT static void GetShapesOfLayer (const TDF_Label& theLayerL, TDF_LabelSequence& theShLabels);
   
   //! Return TRUE if layer is visible, FALSE if invisible.
   Standard_EXPORT Standard_Boolean IsVisible (const TDF_Label& layerL) const;

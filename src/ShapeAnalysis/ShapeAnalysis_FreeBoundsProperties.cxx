@@ -26,7 +26,6 @@
 #include <gp_XYZ.hxx>
 #include <Precision.hxx>
 #include <ShapeAnalysis_Edge.hxx>
-#include <ShapeAnalysis_FreeBoundData.hxx>
 #include <ShapeAnalysis_FreeBounds.hxx>
 #include <ShapeAnalysis_FreeBoundsProperties.hxx>
 #include <ShapeAnalysis_Wire.hxx>
@@ -40,7 +39,7 @@
 
 #define NbControl 23
 
-static void ContourProperties(TopoDS_Wire wire,
+static void ContourProperties(const TopoDS_Wire& wire,
 			      Standard_Real& countourArea,
 			      Standard_Real& countourLength)
 {
@@ -50,8 +49,9 @@ static void ContourProperties(TopoDS_Wire wire,
   gp_XYZ prev, cont;
   
   for (BRepTools_WireExplorer exp(wire); exp.More(); exp.Next()) {
-    TopoDS_Edge Edge = exp.Current();  nbe++;
-      
+    const TopoDS_Edge& Edge = exp.Current();
+    nbe++;
+
     Standard_Real First, Last;
     Handle(Geom_Curve) c3d;
     ShapeAnalysis_Edge sae;

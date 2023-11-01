@@ -18,10 +18,8 @@
 #include <TCollection_AsciiString.hxx>
 #include <Units.hxx>
 #include <Units_Operators.hxx>
-#include <Units_QuantitiesSequence.hxx>
 #include <Units_Quantity.hxx>
 #include <Units_Token.hxx>
-#include <Units_TokensSequence.hxx>
 #include <Units_Unit.hxx>
 #include <Units_UnitsDictionary.hxx>
 #include <Units_UnitSentence.hxx>
@@ -188,10 +186,9 @@ void Units_UnitSentence::SetUnits
   Handle(Units_Unit) unit;
   TCollection_AsciiString symbol;
 
-  Handle(Units_QuantitiesSequence) quantitiessequence = aquantitiessequence;
-
-  for(index=1; index<=quantitiessequence->Length(); index++) {
-    quantity = quantitiessequence->Value(index);
+  for(index=1; index<=aquantitiessequence->Length(); index++)
+  {
+    quantity = aquantitiessequence->Value(index);
     unitssequence=quantity->Sequence();
     for(jindex=1; jindex<=unitssequence->Length(); jindex++) {
       unit = unitssequence->Value(jindex);

@@ -13,18 +13,13 @@
 
 
 #include <Interface_EntityIterator.hxx>
-#include <Interface_GeneralLib.hxx>
-#include <Interface_GeneralModule.hxx>
-#include <Interface_Graph.hxx>
 #include <Interface_GTool.hxx>
 #include <Interface_HGraph.hxx>
 #include <Interface_InterfaceError.hxx>
 #include <Interface_InterfaceModel.hxx>
-#include <Interface_IntList.hxx>
 #include <Interface_Protocol.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Message_Messenger.hxx>
-#include <Standard_DomainError.hxx>
 #include <Standard_Transient.hxx>
 #include <TColStd_HArray1OfInteger.hxx>
 #include <TColStd_HSequenceOfTransient.hxx>
@@ -207,7 +202,7 @@ void  Interface_ShareTool::Print (const Interface_EntityIterator& iter, Standard
 {
   S << " Nb.Entities : " << iter.NbEntities() << " : ";
   for (iter.Start(); iter.More(); iter.Next()) {
-    Handle(Standard_Transient) ent = iter.Value();
+    const Handle(Standard_Transient)& ent = iter.Value();
     S << " n0/id:"; 
     Model()->Print (ent, S);
   }

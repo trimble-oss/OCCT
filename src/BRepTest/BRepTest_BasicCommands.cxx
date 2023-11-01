@@ -33,9 +33,9 @@
 #include <gp_Ax2.hxx>
 #include <gp_Mat.hxx>
 #include <gp_GTrsf.hxx>
+#include <GeomAdaptor_Surface.hxx>
 #include <BRepOffsetAPI_NormalProjection.hxx>
 #include <BRepLib.hxx>
-#include <BRep_Builder.hxx>
 #include <BRepBndLib.hxx>
 #include <Bnd_Box.hxx>
 #include <Bnd_Box2d.hxx>
@@ -45,13 +45,11 @@
 #include <BRepTools_WireExplorer.hxx>
 
 #include <GCPnts_QuasiUniformAbscissa.hxx>
-#include <Geom2dAdaptor_Curve.hxx>
 #include <GeomAdaptor_Curve.hxx>
 #include <ProjLib_ComputeApproxOnPolarSurface.hxx>
 #include <DrawTrSurf.hxx>
 #include <Geom_Plane.hxx>
 
-#include <OSD_Timer.hxx>
 #include <Draw_Segment3D.hxx>
 #include <Draw_Marker3D.hxx>
 #include <Draw_MarkerShape.hxx>
@@ -59,8 +57,6 @@
 #include <BRepTools_PurgeLocations.hxx>
 #include <BRepTools.hxx>
 #include <Standard_Dump.hxx>
-
-#include <stdio.h>
 
 Standard_IMPORT Draw_Viewer dout;
 
@@ -128,7 +124,14 @@ static Standard_Integer transform(Draw_Interpretor&,Standard_Integer n,const cha
   Standard_Boolean isBasic = Standard_False;
   Standard_Boolean isForced = Standard_False;
   Standard_Boolean isCopy = Standard_False;
+  Standard_Boolean isCopyMesh = Standard_False;
 
+  // Check "copymesh" flag.
+  if (!strcmp(a[n - 1], "-copymesh"))
+  {
+    isCopyMesh = Standard_True;
+    last = --n;
+  }
   // Check "copy" flag.
   if (!strcmp(a[n-1], "-copy")) {
     isCopy = Standard_True;
@@ -222,7 +225,7 @@ static Standard_Integer transform(Draw_Interpretor&,Standard_Integer n,const cha
         return 1;
       }
       else {
-        trf.Perform(S, isCopy);
+        trf.Perform(S, isCopy, isCopyMesh);
         if (!trf.IsDone())
           return 1;
         DBRep::Set(a[i],trf.Shape());
@@ -850,7 +853,6 @@ static Standard_Integer IsBoxesInterfered(Draw_Interpretor& theDI,
 //function : gbounding
 //purpose  : 
 //=======================================================================
-#include <GeomAdaptor_Surface.hxx>
 #include <BndLib_AddSurface.hxx>
 #include <BndLib_Add3dCurve.hxx>
 #include <BndLib_Add2dCurve.hxx>
@@ -989,7 +991,6 @@ static Standard_Integer precision(Draw_Interpretor& di,Standard_Integer n,const 
 //purpose  : 
 //=======================================================================
 #include <IntCurvesFace_ShapeIntersector.hxx>
-#include <gp_Lin.hxx>
 
 static Standard_Integer reperageshape(Draw_Interpretor& di, Standard_Integer narg , const char** a) 
 {
@@ -1225,7 +1226,7 @@ static Standard_Integer vecdc(Draw_Interpretor& di,Standard_Integer ,const char*
   Standard_Real Tol = 1.e-4;        
   Standard_Real Tol2d;
   Standard_Real MaxDistance = 1.e-3;
-  GeomAbs_Shape Continuity = GeomAbs_C2;  
+  GeomAbs_Shape Continuity = GeomAbs_C1;  
   Standard_Integer MaxDeg = 14;           
   Standard_Integer MaxSeg = 16;           
 
@@ -1259,7 +1260,7 @@ static Standard_Integer vecdc(Draw_Interpretor& di,Standard_Integer ,const char*
 
   if(n > arg) {
     if (Draw::Atoi(a[arg]) == 0) Continuity = GeomAbs_C0;
-    else if (Draw::Atoi(a[arg]) == 1) Continuity = GeomAbs_C1;
+    else if (Draw::Atoi(a[arg]) == 2) Continuity = GeomAbs_C2;
     arg++;
   }
 
@@ -1493,27 +1494,27 @@ void  BRepTest::BasicCommands(Draw_Interpretor& theCommands)
 		  transform,g);
 
   theCommands.Add("tmove",
-		  "tmove name1 name2 ... name, set location from name [-copy]",
+		  "tmove name1 name2 ... name, set location from name [-copy] [-copymesh]",
 		  __FILE__,
 		  transform,g);
 
   theCommands.Add("ttranslate",
-		  "ttranslate name1 name2 ... dx dy dz [-copy]",
+		  "ttranslate name1 name2 ... dx dy dz [-copy [-copymesh]]",
 		  __FILE__,
 		  transform,g);
 
   theCommands.Add("trotate",
-		  "trotate name1 name2 ... x y z dx dy dz angle [-copy]",
+		  "trotate name1 name2 ... x y z dx dy dz angle [-copy [-copymesh]]",
 		  __FILE__,
 		  transform,g);
 
   theCommands.Add("tmirror",
-		  "tmirror name x y z dx dy dz [-copy]",
+		  "tmirror name x y z dx dy dz [-copy] [-copymesh]",
 		  __FILE__,
 		  transform,g);
 
   theCommands.Add("tscale",
-		  "tscale name x y z scale [-copy]",
+		  "tscale name x y z scale [-copy] [-copymesh]",
 		  __FILE__,
 		  transform,g);
 

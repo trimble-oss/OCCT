@@ -16,52 +16,28 @@
 
 
 #include <Adaptor2d_Curve2d.hxx>
-#include <Adaptor3d_Surface.hxx>
-#include <Adaptor3d_TopolTool.hxx>
-#include <AppBlend_Approx.hxx>
-#include <Blend_CurvPointFuncInv.hxx>
 #include <Blend_FuncInv.hxx>
-#include <Blend_Function.hxx>
-#include <Blend_RstRstFunction.hxx>
-#include <Blend_SurfCurvFuncInv.hxx>
-#include <Blend_SurfPointFuncInv.hxx>
-#include <Blend_SurfRstFunction.hxx>
-#include <BRep_Builder.hxx>
-#include <BRep_Tool.hxx>
-#include <BRepAdaptor_Curve2d.hxx>
-#include <BRepAdaptor_Surface.hxx>
 #include <BRepBlend_Line.hxx>
 #include <BRepLib.hxx>
 #include <BRepTopAdaptor_TopolTool.hxx>
-#include <ChFi3d.hxx>
 #include <ChFi3d_Builder.hxx>
 #include <ChFi3d_Builder_0.hxx>
 #include <ChFiDS_CommonPoint.hxx>
 #include <ChFiDS_HData.hxx>
-#include <ChFiDS_ElSpine.hxx>
 #include <ChFiDS_ListIteratorOfListOfStripe.hxx>
-#include <ChFiDS_SequenceOfSurfData.hxx>
 #include <ChFiDS_Spine.hxx>
 #include <ChFiDS_Stripe.hxx>
 #include <ChFiDS_SurfData.hxx>
 #include <Geom2d_Curve.hxx>
-#include <Geom_Surface.hxx>
 #include <gp_Pnt2d.hxx>
 #include <Precision.hxx>
 #include <ShapeFix.hxx>
-#include <Standard_ConstructionError.hxx>
 #include <Standard_ErrorHandler.hxx>
 #include <Standard_Failure.hxx>
-#include <Standard_NoSuchObject.hxx>
 #include <Standard_NotImplemented.hxx>
-#include <Standard_OutOfRange.hxx>
 #include <TColStd_ListIteratorOfListOfInteger.hxx>
-#include <TColStd_MapIteratorOfMapOfInteger.hxx>
 #include <TColStd_MapOfInteger.hxx>
-#include <TopAbs.hxx>
-#include <TopAbs_Orientation.hxx>
 #include <TopAbs_ShapeEnum.hxx>
-#include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Edge.hxx>
@@ -69,7 +45,6 @@
 #include <TopoDS_Shape.hxx>
 #include <TopoDS_Vertex.hxx>
 #include <TopOpeBRepBuild_HBuilder.hxx>
-#include <TopOpeBRepDS_BuildTool.hxx>
 #include <TopOpeBRepDS_Curve.hxx>
 #include <TopOpeBRepDS_CurveExplorer.hxx>
 #include <TopOpeBRepDS_CurvePointInterference.hxx>
@@ -77,7 +52,6 @@
 #include <TopOpeBRepDS_HDataStructure.hxx>
 #include <TopOpeBRepDS_ListOfInterference.hxx>
 #include <TopOpeBRepDS_PointIterator.hxx>
-#include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <TopTools_ListOfShape.hxx>
 
 #ifdef OCCT_DEBUG
@@ -224,7 +198,8 @@ void  ChFi3d_Builder::Compute()
   ChFi3d_InitChron(cl_total);
   ChFi3d_InitChron(cl_extent);
 #endif 
-  
+  UpdateTolesp();
+
   if (myListStripe.IsEmpty())
     throw Standard_Failure("There are no suitable edges for chamfer or fillet");
   
@@ -361,7 +336,7 @@ void  ChFi3d_Builder::Compute()
       }
       // 05/02/02 akm ^^^
       Standard_Integer solidindex = st->SolidIndex();
-      ChFi3d_FilDS(solidindex,st,DStr,myRegul,tolesp,tol2d);
+      ChFi3d_FilDS(solidindex,st,DStr,myRegul,tolapp3d,tol2d);
       if (!done) break;
     }
     
@@ -451,7 +426,6 @@ void  ChFi3d_Builder::Compute()
 	    if (letype == TopAbs_SHELL){
 	      TopExp_Explorer expsh2(its.Value(),TopAbs_SHELL);
 	      const TopoDS_Shape& cursh = expsh2.Current();
-	      TopoDS_Shape tt = cursh;
 	      B1.Add(myShapeResult,cursh);
 	      its.Next();
 	    }

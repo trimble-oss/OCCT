@@ -17,13 +17,8 @@
 #include <BRepTest.hxx>
 #include <GeometryTest.hxx>
 #include <gp_Pnt2d.hxx>
-#include <gp_Pln.hxx>
-#include <gp_Ax2.hxx>
 #include <gp_Vec.hxx>
 #include <gp_Vec2d.hxx>
-#include <TColgp_HArray1OfPnt2d.hxx>
-#include <TColgp_Array1OfPnt2d.hxx>
-#include <BRepBuilderAPI.hxx>
 #include <BRepBuilderAPI_MakeVertex.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeEdge2d.hxx>
@@ -56,7 +51,6 @@
 #include <Draw_Interpretor.hxx>
 #include <Draw_Appli.hxx>
 #include <DrawTrSurf.hxx>
-#include <DrawTrSurf_BSplineCurve2d.hxx>
 #include <DrawTrSurf_Point.hxx>
 
 #include <gp.hxx>
@@ -287,9 +281,11 @@ static Standard_Integer mkedge(Draw_Interpretor& di, Standard_Integer n, const c
 
   Handle(Geom_Curve)   C   = DrawTrSurf::GetCurve(a[2]);
   Handle(Geom2d_Curve) C2d = DrawTrSurf::GetCurve2d(a[2]);
-  if (C.IsNull() && C2d.IsNull()) {
+  Handle(Poly_Polygon3D) P3d = DrawTrSurf::GetPolygon3D(a[2]);
+
+  if (C.IsNull() && C2d.IsNull() && P3d.IsNull()) {
     //std::cout << a[2] << " is not a curve" << std::endl;
-    di << a[2] << " is not a curve\n";
+    di << a[2] << " is not a curve or polygon 3d\n";
     return 1;
   }
 
@@ -297,7 +293,12 @@ static Standard_Integer mkedge(Draw_Interpretor& di, Standard_Integer n, const c
 
   if (n == 3) {
     if (!C.IsNull())   edge = BRepBuilderAPI_MakeEdge(C);
-    else               edge = BRepBuilderAPI_MakeEdge2d(C2d);
+    else  if (!C2d.IsNull())  edge = BRepBuilderAPI_MakeEdge2d(C2d);
+    else
+    {
+      BRep_Builder aBB;
+      aBB.MakeEdge(edge, P3d);
+    }
   }
   else {
     Handle(Geom_Surface) S;
@@ -1536,10 +1537,23 @@ Standard_Integer mkoffset(Draw_Interpretor& di,
   char name[100];
 
   BRepOffsetAPI_MakeOffset Paral;
+
+  Standard_Boolean ToApprox = Standard_False;
   GeomAbs_JoinType theJoinType = GeomAbs_Arc;
-  if (n >= 6 && strcmp(a[5], "i") == 0)
-    theJoinType = GeomAbs_Intersection;
-  Paral.Init(theJoinType);
+  
+  Standard_Integer anIndArg = 6;
+  if (n >= 6)
+  {
+    if (strcmp(a[5], "-approx") == 0)
+    {
+      ToApprox = Standard_True;
+      anIndArg++;
+    }
+  
+    if (n >= anIndArg && strcmp(a[anIndArg-1], "i") == 0)
+      theJoinType = GeomAbs_Intersection;
+  }
+  
   TopoDS_Shape Base = DBRep::Get(a[2],TopAbs_FACE);
 
   if ( Base.IsNull())
@@ -1559,6 +1573,7 @@ Standard_Integer mkoffset(Draw_Interpretor& di,
     Base.Orientation(TopAbs_FORWARD);
     Paral.Init(TopoDS::Face(Base), theJoinType);
   }
+  Paral.SetApprox (ToApprox);
 
   Standard_Real U, dU;
   Standard_Integer Nb;
@@ -1566,8 +1581,8 @@ Standard_Integer mkoffset(Draw_Interpretor& di,
   Nb = Draw::Atoi(a[3]);
 
   Standard_Real Alt = 0.;
-  if ( n == 7)
-    Alt = Draw::Atof(a[6]);
+  if (n > anIndArg)
+    Alt = Draw::Atof(a[anIndArg]);
 
   Standard_Integer Compt = 1;
 
@@ -1604,16 +1619,30 @@ Standard_Integer openoffset(Draw_Interpretor& di,
   char name[100];
 
   BRepOffsetAPI_MakeOffset Paral;
+  
+  Standard_Boolean ToApprox = Standard_False;
   GeomAbs_JoinType theJoinType = GeomAbs_Arc;
-  if (n == 6 && strcmp(a[5], "i") == 0)
-    theJoinType = GeomAbs_Intersection;
-  Paral.Init(theJoinType, Standard_True);
+  
+  Standard_Integer anIndArg = 6;
+  if (n >= 6)
+  {
+    if (strcmp(a[5], "-approx") == 0)
+    {
+      ToApprox = Standard_True;
+      anIndArg++;
+    }
+  
+    if (n >= anIndArg && strcmp(a[anIndArg-1], "i") == 0)
+      theJoinType = GeomAbs_Intersection;
+  }
+  
   TopoDS_Shape Base = DBRep::Get(a[2] ,TopAbs_FACE);
 
   if ( Base.IsNull())
   {
     Base = DBRep::Get(a[2], TopAbs_WIRE);
     if (Base.IsNull()) return 1;
+    Paral.Init(theJoinType, Standard_True);
     Paral.AddWire(TopoDS::Wire(Base));
   }
   else
@@ -1621,6 +1650,7 @@ Standard_Integer openoffset(Draw_Interpretor& di,
     Base.Orientation(TopAbs_FORWARD);
     Paral.Init(TopoDS::Face(Base), theJoinType, Standard_True);
   }
+  Paral.SetApprox (ToApprox);
 
   Standard_Real U, dU;
   Standard_Integer Nb;
@@ -1759,6 +1789,72 @@ Standard_Integer edgeintersector(Draw_Interpretor& di,
   //POP pour NT
   return 0;
 
+}
+
+//=================================================================================
+//function : arclinconvert
+//purpose  : Convert a single face to a face with contour made of arcs and segments
+//=================================================================================
+
+static Standard_Integer arclinconvert (Draw_Interpretor& /*dout*/, Standard_Integer n, const char** a)
+{
+  // Check the command arguments
+  if (n < 3) {
+    std::cout<<"Error: "<<a[0]<<" - invalid number of arguments"<<std::endl;
+    std::cout<<"Usage: type help "<<a[0]<<std::endl;
+    return 1; //TCL_ERROR
+  }
+
+  //read shape
+  const TopoDS_Shape aShape = DBRep::Get(a[2]);
+  if (aShape.IsNull()) {
+    std::cout<<"Error: "<<a[2]<<" is null"<<std::endl;
+    return 1; //TCL_ERROR
+  }
+
+  TopAbs_ShapeEnum aType = aShape.ShapeType();
+  if (aType != TopAbs_WIRE &&
+      aType != TopAbs_FACE)
+  {
+    std::cout<<"Error: "<<a[2]<<" is neither wire no face"<<std::endl;
+    return 1; //TCL_ERROR
+  }
+
+  //read tolerance
+  Standard_Real aTol = 0.01;
+  if (n > 3)
+    aTol = Draw::Atof(a[3]);
+  std::cout<<"Info: tolerance is set to "<<aTol<<std::endl;
+
+  TopoDS_Shape aResult;
+  
+  if (aType == TopAbs_WIRE)
+  {
+    Standard_Boolean OnlyPlane = Standard_False;
+    BRepBuilderAPI_MakeFace aFaceMaker (TopoDS::Wire(aShape), OnlyPlane);
+    if (aFaceMaker.Error() != BRepBuilderAPI_FaceDone)
+    {
+      std::cout<<"Error: failed to find a face for the wire "<<a[2]<<std::endl;
+      return 1; //TCL_ERROR
+    }
+    const TopoDS_Face& aFace = aFaceMaker.Face();
+    TopoDS_Iterator anIter (aFace);
+    TopoDS_Wire aWire = TopoDS::Wire (anIter.Value());
+    aResult = BRepAlgo::ConvertWire (aWire, aTol, aFace);
+  }
+  else if (aType == TopAbs_FACE)
+  {
+    TopoDS_Face aFace = TopoDS::Face(aShape);
+    aResult = BRepAlgo::ConvertFace (aFace, aTol);
+  }
+
+  if (aResult.IsNull()) {
+    std::cout<<"Error: could not convert "<<a[2]<<std::endl;
+    return 1; //TCL_ERROR
+  }
+
+  DBRep::Set(a[1], aResult);
+  return 0; //TCL_OK
 }
 
 //=======================================================================
@@ -1914,12 +2010,12 @@ void  BRepTest::CurveCommands(Draw_Interpretor& theCommands)
     profile2d,g);
 
   theCommands.Add("mkoffset",
-    "mkoffset result face/compound of wires  nboffset stepoffset [jointype(a/i) [alt]]",__FILE__,
-    mkoffset);
+    "mkoffset result face/compound of wires  nboffset stepoffset [-approx] [jointype(a/i) [alt]]",__FILE__,
+    mkoffset,g);
 
   theCommands.Add("openoffset",
-    "openoffset result face/wire nboffset stepoffset [jointype(a/i)]",__FILE__,
-    openoffset);
+    "openoffset result face/wire nboffset stepoffset [-approx] [jointype(a/i)]",__FILE__,
+    openoffset,g);
 
   theCommands.Add("mkedge",
     "mkedge edge curve [surface] [pfirst plast] [vfirst [pfirst] vlast [plast]] ",__FILE__,
@@ -1967,12 +2063,18 @@ void  BRepTest::CurveCommands(Draw_Interpretor& theCommands)
     edgeintersector,g);
 
   theCommands.Add("build3d",
-    "build3d S [tol]",
+    "build3d S [tol]",__FILE__,
     build3d, g);
 
   theCommands.Add("reducepcurves",
-    "reducepcurves shape1 shape2 ...",
+    "reducepcurves shape1 shape2 ...",__FILE__,
     reducepcurves, g);
+
+  theCommands.Add("arclinconvert",
+    "arclinconvert result wire/face [tol]",
+    __FILE__,
+    arclinconvert,
+    g);
 
   theCommands.Add("concatC0wire",
     "concatC0wire result wire",

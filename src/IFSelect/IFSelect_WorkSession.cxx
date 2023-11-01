@@ -16,39 +16,24 @@
 
 #include <IFGraph_SubPartsIterator.hxx>
 #include <IFSelect_CheckCounter.hxx>
-#include <IFSelect_Dispatch.hxx>
-#include <IFSelect_DispGlobal.hxx>
-#include <IFSelect_DispPerCount.hxx>
-#include <IFSelect_DispPerOne.hxx>
 #include <IFSelect_EditForm.hxx>
-#include <IFSelect_Editor.hxx>
-#include <IFSelect_GeneralModifier.hxx>
 #include <IFSelect_IntParam.hxx>
 #include <IFSelect_ModelCopier.hxx>
 #include <IFSelect_Modifier.hxx>
 #include <IFSelect_PacketList.hxx>
 #include <IFSelect_ParamEditor.hxx>
-#include <IFSelect_SelectCombine.hxx>
-#include <IFSelect_SelectControl.hxx>
-#include <IFSelect_SelectDeduct.hxx>
 #include <IFSelect_SelectDiff.hxx>
-#include <IFSelect_SelectEntityNumber.hxx>
-#include <IFSelect_SelectExtract.hxx>
 #include <IFSelect_SelectIntersection.hxx>
 #include <IFSelect_Selection.hxx>
 #include <IFSelect_SelectionIterator.hxx>
 #include <IFSelect_SelectModelEntities.hxx>
-#include <IFSelect_SelectModelRoots.hxx>
 #include <IFSelect_SelectPointed.hxx>
 #include <IFSelect_SelectSignature.hxx>
-#include <IFSelect_SelectUnion.hxx>
 #include <IFSelect_ShareOut.hxx>
 #include <IFSelect_ShareOutResult.hxx>
-#include <IFSelect_Signature.hxx>
 #include <IFSelect_SignatureList.hxx>
 #include <IFSelect_SignCounter.hxx>
 #include <IFSelect_SignValidity.hxx>
-#include <IFSelect_Transformer.hxx>
 #include <IFSelect_TransformStandard.hxx>
 #include <IFSelect_WorkLibrary.hxx>
 #include <IFSelect_WorkSession.hxx>
@@ -59,7 +44,6 @@
 #include <Interface_CopyControl.hxx>
 #include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
-#include <Interface_GeneralLib.hxx>
 #include <Interface_GeneralModule.hxx>
 #include <Interface_Graph.hxx>
 #include <Interface_GTool.hxx>
@@ -68,7 +52,6 @@
 #include <Interface_Macros.hxx>
 #include <Interface_MSG.hxx>
 #include <Interface_Protocol.hxx>
-#include <Interface_ReportEntity.hxx>
 #include <Interface_ShareFlags.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Interface_Static.hxx>
@@ -585,7 +568,7 @@ Standard_Boolean IFSelect_WorkSession::ComputeCheck
     BM.Init (Standard_False,Flag_Incorrect);
     Standard_Integer num, nb = CG.Size();
     for (checklist.Start(); checklist.More(); checklist.Next()) {
-      const Handle(Interface_Check) chk = checklist.Value();
+      const Handle(Interface_Check)& chk = checklist.Value();
       if (!chk->HasFailed()) continue;
       num = checklist.Number();
       if (num > 0 && num <= nb) BM.SetTrue (num,Flag_Incorrect);
@@ -2724,7 +2707,7 @@ void IFSelect_WorkSession::QueryCheckList (const Interface_CheckIterator& chl)
   thecheckana = TCollection_AsciiString (nb+1,' ');
   for (chl.Start(); chl.More(); chl.Next()) {
     Standard_Integer num = chl.Number();
-    const Handle(Interface_Check) ach = chl.Value();
+    const Handle(Interface_Check)& ach = chl.Value();
     if (ach->HasFailed())        thecheckana.SetValue(num,'2');
     else if (ach->HasWarnings()) thecheckana.SetValue(num,'1');
   }
@@ -3055,7 +3038,7 @@ void IFSelect_WorkSession::DumpSelection
   IFSelect_SelectionIterator iter; sel->FillIterator(iter);
   for (; iter.More(); iter.Next()) {
     nb ++; 
-    Handle(IFSelect_Selection) newsel = iter.Value();
+    const Handle(IFSelect_Selection)& newsel = iter.Value();
     sout<<" -- "<<newsel->Label()<<std::endl;
   }
   sout << " Nb Inputs:"<<nb<<std::endl;
@@ -3498,7 +3481,7 @@ void IFSelect_WorkSession::PrintCheckList (Standard_OStream& S,
 //  mode : 0  comptage   1 n0s entites   2 n0s+id ents
   if (mode == IFSelect_ItemsByEntity) checklist.Print (S,myModel,failsonly);
   else {
-    Interface_CheckIterator chks = checklist;
+    const Interface_CheckIterator& chks = checklist;
     Handle(IFSelect_CheckCounter) counter =
       new IFSelect_CheckCounter (mode>1 && mode != IFSelect_CountSummary);
     counter->Analyse (chks,myModel,Standard_True,failsonly);
@@ -3739,7 +3722,7 @@ void IFSelect_WorkSession::ListEntities
       if (!titre && mode == 0) sout<<"  Keys : R Root   ? Unknown   * Unloaded"<<std::endl;
       if (!titre && mode == 2) sout<<"(";
       titre = 1;
-      Handle(Standard_Transient) ent = iter.Value();
+      const Handle(Standard_Transient)& ent = iter.Value();
       Standard_Integer num = myModel->Number(ent);
       if (mode == 1) {
     // n0 id (root?) category validity tracetype

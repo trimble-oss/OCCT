@@ -29,49 +29,18 @@
 #include <BRepToIGESBRep_Entity.hxx>
 #include <BRepTools.hxx>
 #include <BRepTools_WireExplorer.hxx>
-#include <Geom2d_Curve.hxx>
-#include <Geom2dToIGES_Geom2dCurve.hxx>
 #include <Geom_BezierCurve.hxx>
-#include <Geom_BSplineCurve.hxx>
-#include <Geom_CartesianPoint.hxx>
-#include <Geom_Circle.hxx>
-#include <Geom_ConicalSurface.hxx>
-#include <Geom_Curve.hxx>
-#include <Geom_CylindricalSurface.hxx>
-#include <Geom_Ellipse.hxx>
-#include <Geom_Hyperbola.hxx>
-#include <Geom_Parabola.hxx>
-#include <Geom_Plane.hxx>
 #include <Geom_RectangularTrimmedSurface.hxx>
-#include <Geom_SphericalSurface.hxx>
 #include <Geom_Surface.hxx>
-#include <Geom_SurfaceOfLinearExtrusion.hxx>
-#include <Geom_SurfaceOfRevolution.hxx>
-#include <Geom_ToroidalSurface.hxx>
-#include <Geom_TrimmedCurve.hxx>
-#include <GeomToIGES_GeomCurve.hxx>
 #include <GeomToIGES_GeomSurface.hxx>
-#include <gp.hxx>
-#include <gp_Circ2d.hxx>
-#include <gp_Elips2d.hxx>
 #include <gp_Pnt.hxx>
-#include <gp_Pnt2d.hxx>
-#include <gp_Trsf.hxx>
-#include <gp_Trsf2d.hxx>
 #include <gp_XYZ.hxx>
 #include <IGESBasic_Group.hxx>
 #include <IGESBasic_HArray1OfHArray1OfIGESEntity.hxx>
 #include <IGESBasic_HArray1OfHArray1OfInteger.hxx>
 #include <IGESData_HArray1OfIGESEntity.hxx>
 #include <IGESData_IGESEntity.hxx>
-#include <IGESData_IGESModel.hxx>
-#include <IGESGeom_CompositeCurve.hxx>
-#include <IGESGeom_Point.hxx>
 #include <IGESSolid_EdgeList.hxx>
-#include <IGESSolid_Face.hxx>
-#include <IGESSolid_HArray1OfFace.hxx>
-#include <IGESSolid_HArray1OfLoop.hxx>
-#include <IGESSolid_HArray1OfShell.hxx>
 #include <IGESSolid_HArray1OfVertexList.hxx>
 #include <IGESSolid_Loop.hxx>
 #include <IGESSolid_ManifoldSolid.hxx>
@@ -90,7 +59,6 @@
 #include <TopAbs_ShapeEnum.hxx>
 #include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
-#include <TopLoc_Location.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Compound.hxx>
 #include <TopoDS_CompSolid.hxx>
@@ -102,10 +70,6 @@
 #include <TopoDS_Vertex.hxx>
 #include <TopoDS_Wire.hxx>
 #include <Transfer_FinderProcess.hxx>
-#include <Transfer_SimpleBinderOfTransient.hxx>
-#include <Transfer_TransientMapper.hxx>
-#include <TransferBRep_OrientedShapeMapper.hxx>
-#include <TransferBRep_ShapeMapper.hxx>
 
 //#include <GeomConvert.hxx>
 //#include <Geom2dConvert.hxx>
@@ -170,7 +134,7 @@ void BRepToIGESBRep_Entity::TransferVertexList()
 //=============================================================================
 Standard_Integer BRepToIGESBRep_Entity::IndexVertex(const TopoDS_Vertex& myvertex) const
 {
-  TopoDS_Shape V = myvertex;
+  const TopoDS_Shape& V = myvertex;
   return myVertices.FindIndex(V);
 }
 
@@ -184,7 +148,7 @@ Standard_Integer BRepToIGESBRep_Entity::AddVertex(const TopoDS_Vertex& myvertex)
 {
   if ( myvertex.IsNull()) return 0;
   
-  TopoDS_Shape V = myvertex;
+  const TopoDS_Shape& V = myvertex;
   Standard_Integer index = myVertices.FindIndex(V);
   if (index == 0) {
     index = myVertices.Add(V);
@@ -250,7 +214,7 @@ void BRepToIGESBRep_Entity::TransferEdgeList()
 //=============================================================================
 Standard_Integer BRepToIGESBRep_Entity::IndexEdge(const TopoDS_Edge& myedge) const
 {
-  TopoDS_Shape E = myedge;
+  const TopoDS_Shape& E = myedge;
   return myEdges.FindIndex(E);
 }
 
@@ -265,7 +229,7 @@ Standard_Integer BRepToIGESBRep_Entity::AddEdge(const TopoDS_Edge& myedge,
 {
   if ( myedge.IsNull()) return 0;
   
-  TopoDS_Shape E = myedge;
+  const TopoDS_Shape& E = myedge;
   Handle(IGESData_IGESEntity) C = mycurve3d;
   Standard_Integer index = myEdges.FindIndex(E);
   if (index == 0) {
@@ -303,7 +267,8 @@ Handle(IGESData_IGESEntity) BRepToIGESBRep_Entity::TransferShape
     TopoDS_Edge E =  TopoDS::Edge(start);
     BRepToIGES_BRWire BW(*this);
     BW.SetModel(GetModel());
-    res = BW.TransferEdge(E, Standard_False);
+    TopTools_DataMapOfShapeShape anEmptyMap;
+    res = BW.TransferEdge(E, anEmptyMap, Standard_False);
     return res;
   }  
   else if (start.ShapeType() == TopAbs_WIRE) {
@@ -357,7 +322,8 @@ Handle(IGESData_IGESEntity)  BRepToIGESBRep_Entity::TransferEdge (const TopoDS_E
 {
   BRepToIGES_BRWire BR(*this);
   BR.SetModel(GetModel());
-  return BR.TransferEdge (myedge, Standard_True);
+  TopTools_DataMapOfShapeShape anEmptyMap;
+  return BR.TransferEdge (myedge, anEmptyMap, Standard_True);
 }
 
 
@@ -375,7 +341,8 @@ Handle(IGESData_IGESEntity) BRepToIGESBRep_Entity::TransferEdge (const TopoDS_Ed
 
   BRepToIGES_BRWire BR(*this);
   BR.SetModel(GetModel());
-  ICurve2d = BR.TransferEdge (myedge, myface, Length, Standard_True);
+  TopTools_DataMapOfShapeShape anEmptyMap;
+  ICurve2d = BR.TransferEdge (myedge, myface, anEmptyMap, Length, Standard_True);
 
   // curve 3d is obligatory. If it does not exist it is created and stored in "myCurves".
   // If the edge is degenerated, there is no associated 3d. So "edge-tuple" 
@@ -417,7 +384,7 @@ Handle(IGESSolid_Loop) BRepToIGESBRep_Entity::TransferWire (const TopoDS_Wire& m
   TopExp_Explorer TE(mywire, TopAbs_VERTEX);
   if ( TE.More()) {
     for ( WE.Init(mywire,myface); WE.More(); WE.Next()) { 
-      TopoDS_Edge E = WE.Current();
+      const TopoDS_Edge& E = WE.Current();
       if (E.IsNull()) {
 	AddWarning(mywire, "an Edge is a null entity");
       }
@@ -897,7 +864,8 @@ Handle(IGESData_IGESEntity) BRepToIGESBRep_Entity::TransferCompound (const TopoD
 
     BRepToIGES_BRWire BW(*this);
     BW.SetModel(GetModel());
-    IShape = BW.TransferEdge(S, Standard_False);
+    TopTools_DataMapOfShapeShape anEmptyMap;
+    IShape = BW.TransferEdge(S, anEmptyMap, Standard_False);
     if (!IShape.IsNull()) Seq->Append(IShape);
   }
 

@@ -24,10 +24,8 @@
 #include <BRep_Tool.hxx>
 #include <BRepLib_MakeFace.hxx>
 #include <BRepLib_MakeWire.hxx>
-#include <Geom2d_BoundedCurve.hxx>
 #include <Geom2d_Curve.hxx>
 #include <Geom2dAdaptor_Curve.hxx>
-#include <Geom_BoundedCurve.hxx>
 #include <Geom_Curve.hxx>
 #include <Geom_Surface.hxx>
 #include <GeomAdaptor_Surface.hxx>
@@ -35,7 +33,6 @@
 #include <Precision.hxx>
 #include <ShapeAnalysis_Curve.hxx>
 #include <ShapeAnalysis_Edge.hxx>
-#include <ShapeAnalysis_TransferParameters.hxx>
 #include <ShapeAnalysis_TransferParametersProj.hxx>
 #include <ShapeBuild_Edge.hxx>
 #include <ShapeBuild_ReShape.hxx>
@@ -170,8 +167,8 @@ void ShapeUpgrade_WireDivide::SetSurface(const Handle(Geom_Surface)& S,
 //purpose  : 
 //=======================================================================
 
-static void CorrectSplitValues(const Handle(TColStd_HSequenceOfReal) orig3d,
-			       const Handle(TColStd_HSequenceOfReal) orig2d,
+static void CorrectSplitValues(const Handle(TColStd_HSequenceOfReal)& orig3d,
+			       const Handle(TColStd_HSequenceOfReal)& orig2d,
 			       Handle(TColStd_HSequenceOfReal) new2d,
 			       Handle(TColStd_HSequenceOfReal) new3d)
 {

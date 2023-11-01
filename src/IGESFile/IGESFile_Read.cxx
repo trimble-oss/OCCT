@@ -15,14 +15,11 @@
 
 #include <stdio.h>
 // declarations des programmes C de base :
-#include <Interface_ParamType.hxx>
 #include <IGESData_IGESReaderData.hxx>
 #include <IGESData_IGESReaderTool.hxx>
 #include <IGESData_GeneralModule.hxx>
 #include <Interface_Check.hxx>
 
-#include <Interface_FileParameter.hxx>
-#include <Interface_ParamList.hxx>
 //  Pour traiter les exceptions :
 #include <Standard_ErrorHandler.hxx>
 #include <Standard_Failure.hxx>
@@ -230,12 +227,9 @@ Standard_Integer IGESFile_Read
   char *res1, *res2, *nom, *num; char* parval;
   int *v; int typarg;
   int nbparam;
-    
 
-  Standard_Integer nn=0;
   int ns; //szv#4:S4163:12Mar99 i unused
   while ( (ns = iges_lirpart(&v,&res1,&res2,&nom,&num,&nbparam)) != 0) {
-    nn++;
     recupnp = 0;
     recupne = (ns+1)/2;  // numero entite
 //    if(recupne > IR->NbEntities()) {

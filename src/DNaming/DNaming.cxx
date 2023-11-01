@@ -14,6 +14,7 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
+#include <DNaming.hxx>
 
 #include <BRep_Tool.hxx>
 #include <BRepAlgoAPI_BooleanOperation.hxx>
@@ -21,8 +22,6 @@
 #include <BRepLib_FindSurface.hxx>
 #include <BRepTools.hxx>
 #include <DDF.hxx>
-#include <DDF_Data.hxx>
-#include <DNaming.hxx>
 #include <Draw.hxx>
 #include <Geom_Curve.hxx>
 #include <Geom_Line.hxx>
@@ -31,12 +30,8 @@
 #include <Geom_Surface.hxx>
 #include <gp_Ax1.hxx>
 #include <gp_Pln.hxx>
-#include <gp_Vec.hxx>
 #include <ModelDefinitions.hxx>
 #include <TCollection_AsciiString.hxx>
-#include <TColStd_HArray1OfInteger.hxx>
-#include <TColStd_ListIteratorOfListOfInteger.hxx>
-#include <TColStd_ListOfInteger.hxx>
 #include <TDataStd_Integer.hxx>
 #include <TDataStd_Name.hxx>
 #include <TDataStd_Real.hxx>
@@ -45,31 +40,23 @@
 #include <TDF_ChildIterator.hxx>
 #include <TDF_Data.hxx>
 #include <TDF_Label.hxx>
-#include <TDF_LabelList.hxx>
-#include <TDF_LabelMap.hxx>
 #include <TDF_Reference.hxx>
 #include <TDF_TagSource.hxx>
 #include <TDF_Tool.hxx>
 #include <TFunction_Function.hxx>
 #include <TNaming_Builder.hxx>
 #include <TNaming_Iterator.hxx>
-#include <TNaming_NamedShape.hxx>
 #include <TNaming_Tool.hxx>
 #include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS.hxx>
-#include <TopoDS_Edge.hxx>
 #include <TopoDS_Face.hxx>
 #include <TopoDS_Shape.hxx>
-#include <TopTools_DataMapIteratorOfDataMapOfShapeListOfShape.hxx>
-#include <TopTools_DataMapIteratorOfDataMapOfShapeShape.hxx>
 #include <TopTools_DataMapOfShapeListOfShape.hxx>
 #include <TopTools_DataMapOfShapeShape.hxx>
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
-#include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <TopTools_ListOfShape.hxx>
-#include <TopTools_MapIteratorOfMapOfShape.hxx>
 #include <TopTools_MapOfShape.hxx>
 
 //=======================================================================
@@ -276,13 +263,13 @@ static void LoadC0Edges(const TopoDS_Shape& S,
   TopExp_Explorer anEx(S,TopAbs_EDGE); // mpv: new explorer iterator because we need keep edges order
   for(;anEx.More();anEx.Next()) {
     Standard_Boolean aC0 = Standard_False;
-    TopoDS_Shape anEdge1 = anEx.Current();
+    const TopoDS_Shape& anEdge1 = anEx.Current();
     if (edgeNaborFaces.IsBound(anEdge1)) {
       const TopTools_ListOfShape& aList1 = edgeNaborFaces.Find(anEdge1);
       if (aList1.Extent()<2) continue; // mpv (06.09.2002): these edges already was loaded
       TopTools_DataMapIteratorOfDataMapOfShapeListOfShape itr(edgeNaborFaces);
       for (; itr.More(); itr.Next()) {
-	TopoDS_Shape anEdge2 = itr.Key();
+	const TopoDS_Shape& anEdge2 = itr.Key();
 	if(anEdgesToDelete.Contains(anEdge2)) continue;
 	if (anEdge1.IsSame(anEdge2)) continue;
 	const TopTools_ListOfShape& aList2 = itr.Value();
@@ -888,7 +875,6 @@ Standard_Boolean DNaming::ComputeSweepDir (const TopoDS_Shape& theShape,
 						   gp_Ax1& theAxis)
 {
   // Find surface
-  TopLoc_Location aLocation = theShape.Location();    
   Handle(Geom_Plane) aPlane;
 
   if (theShape.ShapeType() == TopAbs_FACE) {

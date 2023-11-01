@@ -16,46 +16,33 @@
 #include <BRep_Builder.hxx>
 #include <BRep_Tool.hxx>
 #include <BRepClass3d_SolidClassifier.hxx>
-#include <Geom_Curve.hxx>
-#include <Geom_Surface.hxx>
 #include <gp_Pnt.hxx>
 #include <Message_Msg.hxx>
 #include <Message_ProgressScope.hxx>
 #include <Precision.hxx>
-#include <ShapeAnalysis.hxx>
-#include <ShapeAnalysis_Curve.hxx>
-#include <ShapeAnalysis_Edge.hxx>
 #include <ShapeAnalysis_FreeBounds.hxx>
 #include <ShapeBuild_ReShape.hxx>
 #include <ShapeExtend.hxx>
-#include <ShapeExtend_BasicMsgRegistrator.hxx>
 #include <ShapeExtend_WireData.hxx>
 #include <ShapeFix_Shell.hxx>
 #include <ShapeFix_Solid.hxx>
 #include <Standard_ErrorHandler.hxx>
 #include <Standard_Failure.hxx>
 #include <Standard_Type.hxx>
-#include <TopAbs.hxx>
 #include <TopExp.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_CompSolid.hxx>
-#include <TopoDS_Edge.hxx>
 #include <TopoDS_Iterator.hxx>
 #include <TopoDS_Shape.hxx>
 #include <TopoDS_Shell.hxx>
 #include <TopoDS_Solid.hxx>
 #include <TopoDS_Vertex.hxx>
-#include <TopoDS_Wire.hxx>
-#include <TopTools_DataMapIteratorOfDataMapOfShapeListOfShape.hxx>
-#include <TopTools_DataMapIteratorOfDataMapOfShapeShape.hxx>
 #include <TopTools_DataMapOfShapeInteger.hxx>
 #include <TopTools_DataMapOfShapeListOfShape.hxx>
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
 #include <TopTools_IndexedDataMapOfShapeShape.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
-#include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <TopTools_ListOfShape.hxx>
-#include <TopTools_MapIteratorOfMapOfShape.hxx>
 #include <TopTools_MapOfShape.hxx>
 #include <TopTools_SequenceOfShape.hxx>
 
@@ -180,7 +167,7 @@ static void CollectSolids(const TopTools_SequenceOfShape& aSeqShells ,
       if(!st) continue;
       for ( Standard_Integer j = 1; j <= aSeqShells.Length(); j++ ) {
         if(i==j) continue;
-        TopoDS_Shape aShell2 = aSeqShells.Value(j);
+        const TopoDS_Shape& aShell2 = aSeqShells.Value(j);
         if(!BRep_Tool::IsClosed(aShell2)) continue;
         if(aMapHoles.Contains(aShell2)) continue;
         if(aMapShellHoles.IsBound(aShell2)) {
@@ -258,7 +245,7 @@ static void CollectSolids(const TopTools_SequenceOfShape& aSeqShells ,
 //purpose  : 
 //=======================================================================
 
-static Standard_Boolean CreateSolids(const TopoDS_Shape theShape,TopTools_IndexedMapOfShape& aMapSolids)
+static Standard_Boolean CreateSolids(const TopoDS_Shape& theShape,TopTools_IndexedMapOfShape& aMapSolids)
 {
   TopTools_SequenceOfShape aSeqShells;
   Standard_Boolean isDone = Standard_False;
@@ -445,8 +432,8 @@ Standard_Boolean ShapeFix_Solid::Perform(const Message_ProgressRange& theProgres
     if(aExp.More()) {
       TopoDS_Shell  aShtmp = TopoDS::Shell(aExp.Current());
       ShapeAnalysis_FreeBounds sfb(aShtmp);
-      TopoDS_Compound aC1 = sfb.GetClosedWires();
-      TopoDS_Compound aC2 = sfb.GetOpenWires();
+      const TopoDS_Compound& aC1 = sfb.GetClosedWires();
+      const TopoDS_Compound& aC2 = sfb.GetOpenWires();
       Standard_Integer numedge =0;
       TopExp_Explorer aExp1(aC1,TopAbs_EDGE); 
       for( ; aExp1.More(); aExp1.Next())
@@ -487,7 +474,7 @@ Standard_Boolean ShapeFix_Solid::Perform(const Message_ProgressRange& theProgres
     if(CreateSolids(aResShape,aMapSolids)) {
       SendWarning (Message_Msg ("FixAdvSolid.FixOrientation.MSG20"));// Orientation of shell was corrected.. 
       if(aMapSolids.Extent() ==1) {
-        TopoDS_Shape aResSol = aMapSolids.FindKey(1);
+        const TopoDS_Shape& aResSol = aMapSolids.FindKey(1);
         if(aResShape.ShapeType() == TopAbs_SHELL && myCreateOpenSolidMode) {
           TopoDS_Solid solid;
           BRep_Builder B;

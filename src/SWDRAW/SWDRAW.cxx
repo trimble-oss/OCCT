@@ -11,16 +11,13 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
+#include <SWDRAW.hxx>
 
 #include <BRep_Builder.hxx>
 #include <BRepTools.hxx>
 #include <DBRep.hxx>
-#include <Draw.hxx>
-#include <Draw_ProgressIndicator.hxx>
-#include <Draw_Window.hxx>
 #include <gp_Trsf.hxx>
 #include <ShapeProcess_OperLibrary.hxx>
-#include <SWDRAW.hxx>
 #include <SWDRAW_ShapeAnalysis.hxx>
 #include <SWDRAW_ShapeCustom.hxx>
 #include <SWDRAW_ShapeExtend.hxx>
@@ -97,7 +94,7 @@ static Standard_Integer LocDump (Draw_Interpretor& di, Standard_Integer argc, co
     return 1;
   }
 
-  TopLoc_Location L = a.Location();
+  const TopLoc_Location& L = a.Location();
   di << "Location of shape " << argv[1] << ":\n";
   di << "Results in:\n";
   gp_Trsf T = L.Transformation();
@@ -118,11 +115,6 @@ void  SWDRAW::Init (Draw_Interpretor& theCommands)
 {
   if (!dejadraw) {
     dejadraw = 1;
-//    DBRep::BasicCommands(theCommands);
-// CKY 4-AOUT-1998 : pb avec GeomFill
-//    GeometryTest::AllCommands(theCommands);
-//    BRepTest::AllCommands(theCommands);
-//    MeshTest::Commands(theCommands);
   }
 
   SWDRAW_ShapeTool::InitCommands (theCommands);

@@ -183,8 +183,19 @@ public:
   //! Cancel,on the boundaries,the denominator  first derivative
   //! in  the directions wished by the user and set its value to 1.
   Standard_EXPORT static void CancelDenominatorDerivative (Handle(Geom_BSplineSurface)& BSurf, const Standard_Boolean UDirection, const Standard_Boolean VDirection);
-  
-  Standard_EXPORT static Standard_Integer NormEstim (const Handle(Geom_Surface)& S, const gp_Pnt2d& UV, const Standard_Real Tol, gp_Dir& N);
+
+  //! Estimate surface normal at the given (U, V) point.
+  //! @param[in]  theSurf input surface
+  //! @param[in]  theUV   (U, V) point coordinates on the surface
+  //! @param[in]  theTol  estimation tolerance
+  //! @param[out] theNorm computed normal
+  //! @return 0 if normal estimated from D1,
+  //!         1 if estimated from D2 (quasysingular),
+  //!       >=2 in case of failure (undefined or infinite solutions)
+  Standard_EXPORT static Standard_Integer NormEstim (const Handle(Geom_Surface)& theSurf,
+                                                     const gp_Pnt2d& theUV,
+                                                     const Standard_Real theTol,
+                                                     gp_Dir& theNorm);
 
   //! This method defines if opposite boundaries of surface
   //! coincide with given tolerance
@@ -228,7 +239,7 @@ public:
   //! @param theParam     Line parameter.
   //! @param theIsForward Flag indicating forward parameterization on a isoline.
   //! @return Standard_True when 2d curve is a line and Standard_False otherwise.
-  Standard_EXPORT static Standard_Boolean isIsoLine (const Handle(Adaptor2d_Curve2d) theC2D,
+  Standard_EXPORT static Standard_Boolean isIsoLine (const Handle(Adaptor2d_Curve2d)& theC2D,
                                                      Standard_Boolean&                theIsU,
                                                      Standard_Real&                   theParam,
                                                      Standard_Boolean&                theIsForward);
@@ -240,8 +251,8 @@ public:
   //! @param theParam Line parameter.
   //! @param theIsForward Flag indicating forward parameterization on a isoline.
   //! @return Standard_True when 3d curve is built and Standard_False otherwise.
-  Standard_EXPORT static Handle(Geom_Curve) buildC3dOnIsoLine (const Handle(Adaptor2d_Curve2d) theC2D,
-                                                               const Handle(Adaptor3d_Surface) theSurf,
+  Standard_EXPORT static Handle(Geom_Curve) buildC3dOnIsoLine (const Handle(Adaptor2d_Curve2d)& theC2D,
+                                                               const Handle(Adaptor3d_Surface)& theSurf,
                                                                const Standard_Real              theFirst,
                                                                const Standard_Real              theLast,
                                                                const Standard_Real              theTolerance,
@@ -249,30 +260,6 @@ public:
                                                                const Standard_Real              theParam,
                                                                const Standard_Boolean           theIsForward);
 
-protected:
-
-
-private:
-
-
-
-
-friend class GeomLib_MakeCurvefromApprox;
-friend class GeomLib_Interpolate;
-friend class GeomLib_DenominatorMultiplier;
-friend class GeomLib_CheckBSplineCurve;
-friend class GeomLib_Check2dBSplineCurve;
-friend class GeomLib_IsPlanarSurface;
-friend class GeomLib_Tool;
-friend class GeomLib_PolyFunc;
-friend class GeomLib_LogSample;
-
 };
-
-
-
-
-
-
 
 #endif // _GeomLib_HeaderFile

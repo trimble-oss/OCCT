@@ -15,38 +15,23 @@
 // commercial license or contractual agreement.
 
 
-#include <Geom2d_Curve.hxx>
-#include <Geom_Curve.hxx>
-#include <gp_Pnt.hxx>
-#include <Precision.hxx>
-#include <Standard_DomainError.hxx>
-#include <Standard_ProgramError.hxx>
 #include <TopoDS.hxx>
-#include <TopoDS_Face.hxx>
 #include <TopoDS_Shape.hxx>
 #include <TopOpeBRep.hxx>
 #include <TopOpeBRep_FacesFiller.hxx>
 #include <TopOpeBRep_FacesIntersector.hxx>
 #include <TopOpeBRep_FFDumper.hxx>
-#include <TopOpeBRep_FFTransitionTool.hxx>
 #include <TopOpeBRep_LineInter.hxx>
 #include <TopOpeBRep_PointClassifier.hxx>
 #include <TopOpeBRep_PointGeomTool.hxx>
 #include <TopOpeBRep_VPointInter.hxx>
 #include <TopOpeBRep_VPointInterClassifier.hxx>
-#include <TopOpeBRep_VPointInterIterator.hxx>
-#include <TopOpeBRepDS_Config.hxx>
-#include <TopOpeBRepDS_Curve.hxx>
-#include <TopOpeBRepDS_DataStructure.hxx>
 #include <TopOpeBRepDS_define.hxx>
-#include <TopOpeBRepDS_HDataStructure.hxx>
 #include <TopOpeBRepDS_Interference.hxx>
 #include <TopOpeBRepDS_InterferenceTool.hxx>
 #include <TopOpeBRepDS_Point.hxx>
-#include <TopOpeBRepDS_PointIterator.hxx>
 #include <TopOpeBRepDS_Transition.hxx>
 #include <TopOpeBRepTool_ShapeTool.hxx>
-#include <TopTools_IndexedMapOfShape.hxx>
 
 #ifdef OCCT_DEBUG
 extern Standard_Boolean TopOpeBRep_GetcontextNEWKP();
@@ -176,7 +161,7 @@ Standard_Boolean FUNBREP_topowalki_new
   Standard_Boolean keep = Standard_True;
   if  (LITdefinie) {
 
-    Handle(TopOpeBRepDS_Interference) I = DSCIL.Last();
+    const Handle(TopOpeBRepDS_Interference)& I = DSCIL.Last();
     TopOpeBRepDS_Transition LIT = I->Transition();
     Standard_Boolean LITonsort = M_FORWARD( LIT.Orientation(TopAbs_OUT) );
     Standard_Boolean LprecIsEntrant = !LITonsort;
@@ -485,7 +470,7 @@ Standard_Boolean FUNBREP_topogline_new
 
       // we have to parametrize the found interference (parameter PIfound)
       // and next interference (parline)
-      Handle(TopOpeBRepDS_Interference) Ifound = DSCIL.First();
+      const Handle(TopOpeBRepDS_Interference)& Ifound = DSCIL.First();
       Standard_Real PIfound = TopOpeBRepDS_InterferenceTool::Parameter(Ifound);
       FUNBREP_Periodize(L,Ifound,PIfound,parline);
       TopOpeBRepDS_InterferenceTool::Parameter(Ifound,PIfound);      

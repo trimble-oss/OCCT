@@ -25,22 +25,18 @@
 #include <Interface_InterfaceModel.hxx>
 #include <Quantity_Color.hxx>
 #include <TCollection_AsciiString.hxx>
-#include <TCollection_ExtendedString.hxx>
 #include <TCollection_HAsciiString.hxx>
 #include <TDataStd_Name.hxx>
-#include <TDF_Label.hxx>
 #include <TDocStd_Document.hxx>
 #include <TopoDS_Compound.hxx>
 #include <TopoDS_Iterator.hxx>
 #include <TopoDS_Shape.hxx>
 #include <TopTools_MapOfShape.hxx>
-#include <Transfer_Binder.hxx>
 #include <Transfer_TransientProcess.hxx>
 #include <TransferBRep.hxx>
 #include <XCAFDoc_ColorTool.hxx>
 #include <XCAFDoc_DocumentTool.hxx>
 #include <XCAFDoc_LayerTool.hxx>
-#include <XCAFDoc_ShapeMapTool.hxx>
 #include <XCAFDoc_ShapeTool.hxx>
 #include <XSAlgo.hxx>
 #include <XSAlgo_AlgoContainer.hxx>
@@ -99,7 +95,7 @@ static void AddCompositeShape (const Handle(XCAFDoc_ShapeTool)& theSTool,
                                TopTools_MapOfShape& theMap)
 {
   TopoDS_Shape aShape = theShape;
-  TopLoc_Location aLoc = theShape.Location();
+  const TopLoc_Location& aLoc = theShape.Location();
   if (!theConsiderLoc && !aLoc.IsIdentity())
     aShape.Location( TopLoc_Location() );
   if (!theMap.Add (aShape)) 
@@ -151,7 +147,7 @@ static void AddCompositeShape (const Handle(XCAFDoc_ShapeTool)& theSTool,
 //function : Transfer
 //purpose  : basic working method
 //=======================================================================
-Standard_Boolean IGESCAFControl_Reader::Transfer (Handle(TDocStd_Document) &doc,
+Standard_Boolean IGESCAFControl_Reader::Transfer (const Handle(TDocStd_Document) &doc,
                                                   const Message_ProgressRange& theProgress)
 {
   // read all shapes
@@ -326,7 +322,8 @@ Standard_Boolean IGESCAFControl_Reader::Transfer (Handle(TDocStd_Document) &doc,
 
     //Checks that current entity is a subfigure
     Handle(IGESBasic_SubfigureDef) aSubfigure = Handle(IGESBasic_SubfigureDef)::DownCast (ent);
-    if (GetNameMode() && !aSubfigure.IsNull() && STool->Search (S, L, Standard_True, Standard_True))
+    if (GetNameMode() && !aSubfigure.IsNull() && !aSubfigure->Name().IsNull() &&
+        STool->Search(S, L, Standard_True, Standard_True))
     {
       //In this case we attach subfigure name to the label, instead of default "COMPOUND"
       Handle(TCollection_HAsciiString) aName = aSubfigure->Name();
@@ -353,7 +350,7 @@ Standard_Boolean IGESCAFControl_Reader::Transfer (Handle(TDocStd_Document) &doc,
 //=======================================================================
 
 Standard_Boolean IGESCAFControl_Reader::Perform (const Standard_CString filename,
-                                                 Handle(TDocStd_Document) &doc,
+                                                 const Handle(TDocStd_Document) &doc,
                                                  const Message_ProgressRange& theProgress)
 {
   if ( ReadFile ( filename ) != IFSelect_RetDone ) return Standard_False;

@@ -19,10 +19,8 @@
 #include <RWStepGeom_RWBSplineCurveWithKnots.hxx>
 #include <RWStepGeom_RWBSplineCurveWithKnotsAndRationalBSplineCurve.hxx>
 #include <RWStepGeom_RWRationalBSplineCurve.hxx>
-#include <StepData_Logical.hxx>
 #include <StepData_StepReaderData.hxx>
 #include <StepData_StepWriter.hxx>
-#include <StepGeom_BSplineCurveForm.hxx>
 #include <StepGeom_BSplineCurveWithKnots.hxx>
 #include <StepGeom_BSplineCurveWithKnotsAndRationalBSplineCurve.hxx>
 #include <StepGeom_CartesianPoint.hxx>
@@ -335,7 +333,7 @@ void RWStepGeom_RWBSplineCurveWithKnotsAndRationalBSplineCurve::Check
    const Interface_ShareTool& aShto,
    Handle(Interface_Check)& ach) const
 {
-  Handle(StepGeom_BSplineCurveWithKnotsAndRationalBSplineCurve) aRationalBSC = ent;
+  const Handle(StepGeom_BSplineCurveWithKnotsAndRationalBSplineCurve)& aRationalBSC = ent;
   Handle(StepGeom_BSplineCurveWithKnots) aBSCWK =
     aRationalBSC->BSplineCurveWithKnots();
   RWStepGeom_RWBSplineCurveWithKnots t1;

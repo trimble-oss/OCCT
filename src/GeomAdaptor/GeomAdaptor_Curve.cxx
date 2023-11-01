@@ -37,7 +37,6 @@
 #include <Geom_Parabola.hxx>
 #include <Geom_TrimmedCurve.hxx>
 #include <GeomAbs_Shape.hxx>
-#include <GeomAdaptor_Surface.hxx>
 #include <GeomEvaluator_OffsetCurve.hxx>
 #include <gp_Circ.hxx>
 #include <gp_Elips.hxx>
@@ -47,16 +46,12 @@
 #include <gp_Pnt.hxx>
 #include <gp_Vec.hxx>
 #include <Precision.hxx>
-#include <Standard_ConstructionError.hxx>
 #include <Standard_DomainError.hxx>
 #include <Standard_NoSuchObject.hxx>
 #include <Standard_NotImplemented.hxx>
-#include <Standard_NullObject.hxx>
-#include <Standard_OutOfRange.hxx>
 #include <TColgp_Array1OfPnt.hxx>
 #include <TColStd_Array1OfInteger.hxx>
 #include <TColStd_Array1OfReal.hxx>
-#include <TColStd_HArray1OfInteger.hxx>
 
 //#include <GeomConvert_BSplineCurveKnotSplitting.hxx>
 static const Standard_Real PosTol = Precision::PConfusion() / 2;
@@ -119,7 +114,7 @@ GeomAbs_Shape GeomAdaptor_Curve::LocalContinuity(const Standard_Real U1,
   if ( (myBSplineCurve->IsPeriodic()) && (Index1 == Nb) )
     Index1 = 1;
 
-  if ( Index2 - Index1 <= 0) {
+  if ((Index2 - Index1 <= 0) && (!myBSplineCurve->IsPeriodic())) {
     MultMax = 100;  // CN entre 2 Noeuds consecutifs
   }
   else {
@@ -263,104 +258,61 @@ GeomAbs_Shape GeomAdaptor_Curve::Continuity() const
 
 Standard_Integer GeomAdaptor_Curve::NbIntervals(const GeomAbs_Shape S) const
 {
-  Standard_Integer myNbIntervals = 1;
-  Standard_Integer NbSplit;
-  if (myTypeCurve == GeomAbs_BSplineCurve) {
-    Standard_Integer FirstIndex = myBSplineCurve->FirstUKnotIndex();
-    Standard_Integer LastIndex  = myBSplineCurve->LastUKnotIndex();
-    TColStd_Array1OfInteger Inter (1, LastIndex-FirstIndex+1);
-    if ( S > Continuity()) {
-      Standard_Integer Cont;
-      switch ( S) {
-      case GeomAbs_G1:
-      case GeomAbs_G2:
-        throw Standard_DomainError("GeomAdaptor_Curve::NbIntervals");
-        break;
-      case GeomAbs_C0:
-        myNbIntervals = 1;
-        break;
-      case GeomAbs_C1:
-      case GeomAbs_C2:
-      case GeomAbs_C3: 
-      case GeomAbs_CN: 
-        {
-          if      ( S == GeomAbs_C1) Cont = 1;
-          else if ( S == GeomAbs_C2) Cont = 2;
-          else if ( S == GeomAbs_C3) Cont = 3;
-          else                       Cont = myBSplineCurve->Degree();
-          Standard_Integer Degree = myBSplineCurve->Degree();
-          Standard_Integer NbKnots = myBSplineCurve->NbKnots();
-          TColStd_Array1OfInteger Mults (1, NbKnots);
-          myBSplineCurve->Multiplicities (Mults);
-          NbSplit = 1;
-          Standard_Integer Index   = FirstIndex;
-          Inter (NbSplit) = Index;
-          Index++;
-          NbSplit++;
-          while (Index < LastIndex) 
-            {
-	      if (Degree - Mults (Index) < Cont) 
-		{
-		  Inter (NbSplit) = Index;
-		  NbSplit++;
-		}
-	      Index++;
-	    }
-          Inter (NbSplit) = Index;
-
-          Standard_Integer NbInt = NbSplit-1;
-          
-          Standard_Integer Nb = myBSplineCurve->NbKnots();
-          Standard_Integer Index1 = 0;
-          Standard_Integer Index2 = 0;
-          Standard_Real newFirst, newLast;
-          const TColStd_Array1OfReal& TK = myBSplineCurve->Knots();
-          const TColStd_Array1OfInteger& TM = myBSplineCurve->Multiplicities();
-          BSplCLib::LocateParameter(myBSplineCurve->Degree(),TK,TM,myFirst,
-                                    myBSplineCurve->IsPeriodic(),
-                                    1,Nb,Index1,newFirst);
-          BSplCLib::LocateParameter(myBSplineCurve->Degree(),TK,TM,myLast,
-                                    myBSplineCurve->IsPeriodic(),
-                                    1,Nb,Index2,newLast);
-          // Protection against myFirst = UFirst - eps, which located as ULast - eps
-          if (myBSplineCurve->IsPeriodic() && (newLast - newFirst) < Precision::PConfusion())
-          {
-            if (Abs(newLast - myBSplineCurve->FirstParameter()) < Precision::PConfusion())
-              newLast += myBSplineCurve->Period();
-            else
-              newFirst -= myBSplineCurve->Period();
-          }
-          // On decale eventuellement les indices  
-          // On utilise une "petite" tolerance, la resolution ne doit 
-          // servir que pour les tres longue courbes....(PRO9248)
-          Standard_Real Eps = Min(Resolution(Precision::Confusion()),
-                                  Precision::PConfusion()); 
-          if ( Abs(newFirst-TK(Index1+1))< Eps) Index1++;
-          if ( newLast-TK(Index2)> Eps) Index2++;
-          
-          myNbIntervals = 1;
-          for ( Standard_Integer i=1; i<=NbInt; i++)
-            if (Inter(i)>Index1 && Inter(i)<Index2) myNbIntervals++;
-        }
-        break;
-      }
+  if (myTypeCurve == GeomAbs_BSplineCurve)
+  {
+    if ((!myBSplineCurve->IsPeriodic() && S <= Continuity()) || S == GeomAbs_C0)
+    {
+      return 1;
     }
+
+    Standard_Integer aDegree = myBSplineCurve->Degree();
+    Standard_Integer aCont;
+
+    switch (S)
+    {
+      case GeomAbs_C1:
+        aCont = 1;
+        break;
+      case GeomAbs_C2:
+        aCont = 2;
+        break;
+      case GeomAbs_C3:
+        aCont = 3;
+        break;
+      case GeomAbs_CN:
+        aCont = aDegree;
+        break;
+      default:
+        throw Standard_DomainError ("GeomAdaptor_Curve::NbIntervals()");
+    }
+
+    Standard_Real anEps = Min(Resolution(Precision::Confusion()), Precision::PConfusion());
+
+    return BSplCLib::Intervals(myBSplineCurve->Knots(),
+                               myBSplineCurve->Multiplicities(),
+                               aDegree,
+                               myBSplineCurve->IsPeriodic(),
+                               aCont,
+                               myFirst,
+                               myLast,
+                               anEps,
+                               nullptr);
   }
   
   else if (myTypeCurve == GeomAbs_OffsetCurve) {
+    Standard_Integer myNbIntervals = 1;
     GeomAbs_Shape BaseS=GeomAbs_C0;
     switch(S){
-    case GeomAbs_G1:
-    case GeomAbs_G2:
-      throw Standard_DomainError("GeomAdaptor_Curve::NbIntervals");
-      break;
-    case GeomAbs_C0: BaseS = GeomAbs_C1; break;
-    case GeomAbs_C1: BaseS = GeomAbs_C2; break;
-    case GeomAbs_C2: BaseS = GeomAbs_C3; break;
-    default: BaseS = GeomAbs_CN;
+      case GeomAbs_G1:
+        case GeomAbs_G2:
+          throw Standard_DomainError("GeomAdaptor_Curve::NbIntervals");
+          break;
+          case GeomAbs_C0: BaseS = GeomAbs_C1; break;
+          case GeomAbs_C1: BaseS = GeomAbs_C2; break;
+          case GeomAbs_C2: BaseS = GeomAbs_C3; break;
+          default: BaseS = GeomAbs_CN;
     }
-    GeomAdaptor_Curve C
-      (Handle(Geom_OffsetCurve)::DownCast (myCurve)->BasisCurve());
+    GeomAdaptor_Curve C (Handle(Geom_OffsetCurve)::DownCast (myCurve)->BasisCurve(), myFirst, myLast);
     // akm 05/04/02 (OCC278)  If our curve is trimmed we must recalculate 
     //                    the number of intervals obtained from the basis to
     //              vvv   reflect parameter bounds
@@ -370,12 +322,17 @@ Standard_Integer GeomAdaptor_Curve::NbIntervals(const GeomAbs_Shape S) const
       TColStd_Array1OfReal rdfInter(1,1+iNbBasisInt);
       C.Intervals(rdfInter,BaseS);
       for (iInt=1; iInt<=iNbBasisInt; iInt++)
-	if (rdfInter(iInt)>myFirst && rdfInter(iInt)<myLast)
-	  myNbIntervals++;
+        if (rdfInter(iInt)>myFirst && rdfInter(iInt)<myLast)
+          myNbIntervals++;
     }
     // akm 05/04/02 ^^^
+    return myNbIntervals;
   }
-  return myNbIntervals;
+
+  else
+  {
+    return 1;
+  }
 }
 
 //=======================================================================
@@ -383,115 +340,53 @@ Standard_Integer GeomAdaptor_Curve::NbIntervals(const GeomAbs_Shape S) const
 //purpose  : 
 //=======================================================================
 
-void GeomAdaptor_Curve::Intervals(TColStd_Array1OfReal& T,
-                                  const GeomAbs_Shape S   ) const
+void GeomAdaptor_Curve::Intervals (TColStd_Array1OfReal& T, const GeomAbs_Shape S) const
 {
-  Standard_Integer myNbIntervals = 1;
-  Standard_Integer NbSplit;
-  Standard_Real FirstParam = myFirst, LastParam = myLast;
-
-  if (myTypeCurve == GeomAbs_BSplineCurve) 
+  if (myTypeCurve == GeomAbs_BSplineCurve)
+  {
+    if ((!myBSplineCurve->IsPeriodic() && S <= Continuity()) || S == GeomAbs_C0)
     {
-      Standard_Integer FirstIndex = myBSplineCurve->FirstUKnotIndex();
-      Standard_Integer LastIndex  = myBSplineCurve->LastUKnotIndex();
-      TColStd_Array1OfInteger Inter (1, LastIndex-FirstIndex+1);
-      
-      if ( S > Continuity()) {
-	Standard_Integer Cont;
-	switch ( S) {
-	case GeomAbs_G1:
-	case GeomAbs_G2:
-	  throw Standard_DomainError("Geom2dAdaptor_Curve::NbIntervals");
-	  break;
-	case GeomAbs_C0:
-	  myNbIntervals = 1;
-	  break;
-	case GeomAbs_C1:
-	case GeomAbs_C2:
-	case GeomAbs_C3: 
-	case GeomAbs_CN: 
-	  {
-	    if      ( S == GeomAbs_C1) Cont = 1;
-	    else if ( S == GeomAbs_C2) Cont = 2;
-	    else if ( S == GeomAbs_C3) Cont = 3;
-	    else                       Cont = myBSplineCurve->Degree();
-	    Standard_Integer Degree = myBSplineCurve->Degree();
-	    Standard_Integer NbKnots = myBSplineCurve->NbKnots();
-	    TColStd_Array1OfInteger Mults (1, NbKnots);
-	    myBSplineCurve->Multiplicities (Mults);
-	    NbSplit = 1;
-	    Standard_Integer Index   = FirstIndex;
-	    Inter (NbSplit) = Index;
-	    Index++;
-	    NbSplit++;
-	    while (Index < LastIndex) 
-	      {
-		if (Degree - Mults (Index) < Cont) 
-		  {
-                    Inter (NbSplit) = Index;
-                    NbSplit++;
-		  }
-		Index++;
-	      }
-            Inter (NbSplit) = Index;
-	    Standard_Integer NbInt = NbSplit-1;
-	    //        GeomConvert_BSplineCurveKnotSplitting Convector(myBspl, Cont);
-	    //        Standard_Integer NbInt = Convector.NbSplits()-1;
-	    //        TColStd_Array1OfInteger Inter(1,NbInt+1);
-	    //        Convector.Splitting( Inter);
-	    
-	    Standard_Integer Nb = myBSplineCurve->NbKnots();
-	    Standard_Integer Index1 = 0;
-	    Standard_Integer Index2 = 0;
-	    Standard_Real newFirst, newLast;
-            const TColStd_Array1OfReal& TK = myBSplineCurve->Knots();
-            const TColStd_Array1OfInteger& TM = myBSplineCurve->Multiplicities();
-	    BSplCLib::LocateParameter(myBSplineCurve->Degree(),TK,TM,myFirst,
-				      myBSplineCurve->IsPeriodic(),
-				      1,Nb,Index1,newFirst);
-	    BSplCLib::LocateParameter(myBSplineCurve->Degree(),TK,TM,myLast,
-				      myBSplineCurve->IsPeriodic(),
-				      1,Nb,Index2,newLast);
-            FirstParam = newFirst;
-            LastParam = newLast;
-            // Protection against myFirst = UFirst - eps, which located as ULast - eps
-            if (myBSplineCurve->IsPeriodic() && (LastParam - FirstParam) < Precision::PConfusion())
-            {
-              if (Abs(LastParam - myBSplineCurve->FirstParameter()) < Precision::PConfusion())
-                LastParam += myBSplineCurve->Period();
-              else
-                FirstParam -= myBSplineCurve->Period();
-            }
-	    // On decale eventuellement les indices  
-	    // On utilise une "petite" tolerance, la resolution ne doit 
-	    // servir que pour les tres longue courbes....(PRO9248)
-	    Standard_Real Eps = Min(Resolution(Precision::Confusion()),
-				    Precision::PConfusion()); 
-	    if ( Abs(FirstParam-TK(Index1+1))< Eps) Index1++;
-	    if ( LastParam-TK(Index2)> Eps) Index2++;
-	    
-	    myNbIntervals = 1;
-
-            TColStd_Array1OfInteger aFinalIntervals(1, Inter.Upper());
-            aFinalIntervals(1) = Index1;
-	    for ( Standard_Integer i=1; i<=NbInt; i++) {
-	      if (Inter(i) > Index1 && Inter(i)<Index2 ) {
-		myNbIntervals++;
-                aFinalIntervals(myNbIntervals) = Inter(i);
-	      }
-	    }
-            aFinalIntervals(myNbIntervals + 1) = Index2;
-	    
-	    for (Standard_Integer I=1;I<=myNbIntervals+1;I++) {
-              T(I) = TK(aFinalIntervals(I));
-	    }
-	  }
-	  break;
-	}
-      }
+      T( T.Lower() ) = myFirst;
+      T( T.Lower() + 1 ) = myLast;
+      return;
     }
 
+    Standard_Integer aDegree = myBSplineCurve->Degree();
+    Standard_Integer aCont;
+
+    switch (S)
+    {
+      case GeomAbs_C1:
+        aCont = 1;
+        break;
+      case GeomAbs_C2:
+        aCont = 2;
+        break;
+      case GeomAbs_C3:
+        aCont = 3;
+        break;
+      case GeomAbs_CN:
+        aCont = aDegree;
+        break;
+      default:
+        throw Standard_DomainError ("GeomAdaptor_Curve::Intervals()");
+    }
+
+    Standard_Real anEps = Min(Resolution(Precision::Confusion()), Precision::PConfusion());
+
+    BSplCLib::Intervals(myBSplineCurve->Knots(),
+                        myBSplineCurve->Multiplicities(),
+                        aDegree,
+                        myBSplineCurve->IsPeriodic(),
+                        aCont,
+                        myFirst,
+                        myLast,
+                        anEps,
+                        &T);
+  }
+
   else if (myTypeCurve == GeomAbs_OffsetCurve){
+    Standard_Integer myNbIntervals = 1;
     GeomAbs_Shape BaseS=GeomAbs_C0;
     switch(S){
     case GeomAbs_G1:
@@ -503,8 +398,7 @@ void GeomAdaptor_Curve::Intervals(TColStd_Array1OfReal& T,
     case GeomAbs_C2: BaseS = GeomAbs_C3; break;
     default: BaseS = GeomAbs_CN;
     }
-    GeomAdaptor_Curve C
-      (Handle(Geom_OffsetCurve)::DownCast (myCurve)->BasisCurve());
+    GeomAdaptor_Curve C (Handle(Geom_OffsetCurve)::DownCast (myCurve)->BasisCurve(), myFirst, myLast);
     // akm 05/04/02 (OCC278)  If our curve is trimmed we must recalculate 
     //                    the array of intervals obtained from the basis to
     //              vvv   reflect parameter bounds
@@ -520,10 +414,15 @@ void GeomAdaptor_Curve::Intervals(TColStd_Array1OfReal& T,
     // old - myNbIntervals = C.NbIntervals(BaseS);
     // old - C.Intervals(T, BaseS);
     // akm 05/04/02 ^^^
+    T( T.Lower() ) = myFirst;
+    T( T.Lower() + myNbIntervals ) = myLast;
   }
   
-  T( T.Lower() ) = FirstParam;
-  T( T.Lower() + myNbIntervals ) = LastParam;
+  else
+  {
+    T( T.Lower() ) = myFirst;
+    T( T.Lower() + 1 ) = myLast;
+  }
 }
 
 //=======================================================================

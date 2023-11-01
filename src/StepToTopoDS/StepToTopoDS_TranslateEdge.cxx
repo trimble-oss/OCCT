@@ -21,13 +21,11 @@
 #include <BRep_Tool.hxx>
 #include <BRepLib.hxx>
 #include <BRepLib_MakeEdge.hxx>
-#include <GCPnts_AbscissaPoint.hxx>
 #include <Geom2d_Curve.hxx>
 #include <Geom_CartesianPoint.hxx>
 #include <Geom_Curve.hxx>
 #include <Geom_Line.hxx>
 #include <Geom_Surface.hxx>
-#include <GeomAbs_Shape.hxx>
 #include <GeomAdaptor_Curve.hxx>
 #include <gp_Dir.hxx>
 #include <gp_Lin.hxx>
@@ -37,13 +35,9 @@
 #include <ShapeConstruct_Curve.hxx>
 #include <StdFail_NotDone.hxx>
 #include <StepData_GlobalFactors.hxx>
-#include <StepGeom_CartesianPoint.hxx>
-#include <StepGeom_Curve.hxx>
 #include <StepGeom_Pcurve.hxx>
-#include <StepGeom_Polyline.hxx>
 #include <StepGeom_SurfaceCurve.hxx>
 #include <StepRepr_DefinitionalRepresentation.hxx>
-#include <StepShape_Edge.hxx>
 #include <StepShape_EdgeCurve.hxx>
 #include <StepShape_OrientedEdge.hxx>
 #include <StepShape_Vertex.hxx>
@@ -142,7 +136,7 @@ static void DecodeMakeEdgeError(const BRepLib_MakeEdge&   ME,
 // ============================================================================
 
 static Handle(Geom_Curve) MakeCurve
-  (const Handle(StepGeom_Curve)& C1, const Handle(Transfer_TransientProcess) TP)
+  (const Handle(StepGeom_Curve)& C1, const Handle(Transfer_TransientProcess)& TP)
 {
   Handle(Geom_Curve) C2 = Handle(Geom_Curve)::DownCast (TP->FindTransient(C1));
   if (!C2.IsNull()) return C2;

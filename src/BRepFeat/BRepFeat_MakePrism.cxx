@@ -16,11 +16,9 @@
 
 
 #include <Bnd_Box.hxx>
-#include <BRep_Tool.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepAlgoAPI_Fuse.hxx>
 #include <BRepBndLib.hxx>
-#include <BRepBuilderAPI.hxx>
 #include <BRepFeat.hxx>
 #include <BRepFeat_MakePrism.hxx>
 #include <BRepLib_MakeFace.hxx>
@@ -35,7 +33,6 @@
 #include <gp_Dir.hxx>
 #include <gp_Pln.hxx>
 #include <gp_Pnt.hxx>
-#include <gp_Pnt2d.hxx>
 #include <gp_Vec.hxx>
 #include <LocOpe.hxx>
 #include <LocOpe_CSIntersector.hxx>
@@ -45,19 +42,13 @@
 #include <Standard_ConstructionError.hxx>
 #include <TColGeom_SequenceOfCurve.hxx>
 #include <TColgp_SequenceOfPnt.hxx>
-#include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS.hxx>
-#include <TopoDS_Compound.hxx>
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Face.hxx>
 #include <TopoDS_Shape.hxx>
 #include <TopoDS_Solid.hxx>
-#include <TopTools_DataMapIteratorOfDataMapOfShapeListOfShape.hxx>
-#include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
-#include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <TopTools_ListOfShape.hxx>
-#include <TopTools_MapOfShape.hxx>
 
 #ifdef OCCT_DEBUG
 extern Standard_Boolean BRepFeat_GettraceFEAT();
@@ -77,7 +68,7 @@ static Standard_Real HeightMax(const TopoDS_Shape& theSbase,
 			       const TopoDS_Shape& theSFrom,
 			       const TopoDS_Shape& theSUntil);
 
-static Standard_Integer SensOfPrism(const Handle(Geom_Curve) C,
+static Standard_Integer SensOfPrism(const Handle(Geom_Curve)& C,
 				    const TopoDS_Shape& Until);
 
 static Handle(Geom_Curve) TestCurve(const TopoDS_Shape&,
@@ -224,7 +215,7 @@ void BRepFeat_MakePrism::Perform(const Standard_Real Length)
 //construction of prism of height Length
 
   LocOpe_Prism thePrism(myPbase,V);
-  TopoDS_Shape VraiPrism = thePrism.Shape();
+  const TopoDS_Shape& VraiPrism = thePrism.Shape();
   
 // management of descendants
   MajMap(myPbase,thePrism,myMap,myFShape,myLShape);
@@ -334,7 +325,7 @@ void BRepFeat_MakePrism::Perform(const TopoDS_Shape& Until)
 
 // construction of long prism
   LocOpe_Prism thePrism(myPbase,V);
-  TopoDS_Shape VraiPrism = thePrism.Shape();
+  const TopoDS_Shape& VraiPrism = thePrism.Shape();
 
 // in case of support of face Until
   if(!Trf) {    
@@ -375,7 +366,7 @@ void BRepFeat_MakePrism::Perform(const TopoDS_Shape& Until)
       UpdateDescendants(trP, trP.Shape(), Standard_False);
       //
       TopExp_Explorer ex(trP.Shape(), TopAbs_SOLID);
-      TopoDS_Shape Cutsh = ex.Current();
+      const TopoDS_Shape& Cutsh = ex.Current();
       if (myFuse == 1 && !myJustFeat) {
         BRepAlgoAPI_Fuse f(mySbase, Cutsh);
         myShape = f.Shape();
@@ -600,7 +591,7 @@ void BRepFeat_MakePrism::PerformUntilEnd()
   gp_Vec V(2*Height*myDir);
   
   LocOpe_Prism thePrism(myPbase,V);
-  TopoDS_Shape VraiPrism = thePrism.Shape();
+  const TopoDS_Shape& VraiPrism = thePrism.Shape();
   
   MajMap(myPbase,thePrism,myMap,myFShape,myLShape);
   
@@ -660,7 +651,7 @@ void BRepFeat_MakePrism::PerformFromEnd(const TopoDS_Shape& Until)
   gp_Vec Vtra(-3*Height*sens/2.*myDir);
   gp_Vec Vect(3*sens*Height*myDir);
   LocOpe_Prism thePrism(myPbase,Vect,Vtra);
-  TopoDS_Shape VraiPrism = thePrism.Shape();
+  const TopoDS_Shape& VraiPrism = thePrism.Shape();
   
   if(!Trf) {  // case face until 
     MajMap(myPbase,thePrism,myMap,myFShape,myLShape);
@@ -784,7 +775,7 @@ void BRepFeat_MakePrism::PerformThruAll()
   gp_Vec V(3*Height*myDir);
   gp_Vec Vtra(-3*Height/2.*myDir);
   LocOpe_Prism thePrism(myPbase,V,Vtra);
-  TopoDS_Shape VraiPrism = thePrism.Shape();
+  const TopoDS_Shape& VraiPrism = thePrism.Shape();
   MajMap(myPbase,thePrism,myMap,myFShape,myLShape);
 
   myGShape = VraiPrism;
@@ -839,7 +830,7 @@ void BRepFeat_MakePrism::PerformUntilHeight(const TopoDS_Shape& Until,
   Standard_Integer sens = SensOfPrism(C, mySUntil);
   gp_Vec V(sens*Length*myDir);
   LocOpe_Prism thePrism(myPbase,V);
-  TopoDS_Shape VraiPrism = thePrism.Shape();
+  const TopoDS_Shape& VraiPrism = thePrism.Shape();
 
   if(!Trf) {
     MajMap(myPbase,thePrism,myMap,myFShape,myLShape);
@@ -987,7 +978,7 @@ static Standard_Real HeightMax(const TopoDS_Shape& theSbase,
 //function : SensOfPrism
 //purpose  : Direction of the prism depending on the shape Until
 //=======================================================================
-Standard_Integer SensOfPrism(const Handle(Geom_Curve) C,
+Standard_Integer SensOfPrism(const Handle(Geom_Curve)& C,
 			     const TopoDS_Shape& Until)
 {
   LocOpe_CSIntersector ASI1(Until);
@@ -996,8 +987,8 @@ Standard_Integer SensOfPrism(const Handle(Geom_Curve) C,
   ASI1.Perform(scur);
   Standard_Integer sens = 1;
   if(ASI1.IsDone() && ASI1.NbPoints(1) >= 1) {
-    if(ASI1.Point(1, 1).Parameter() < 0. && 
-       ASI1.Point(1, ASI1.NbPoints(1)).Parameter() < 0.) {
+    if(ASI1.Point(1, 1).Parameter() + Precision::Confusion() < 0. &&
+       ASI1.Point(1, ASI1.NbPoints(1)).Parameter() + Precision::Confusion() < 0.) {
       sens = -1;
     }
   }

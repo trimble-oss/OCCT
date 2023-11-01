@@ -19,15 +19,11 @@
 #include <Bisector_BisecAna.hxx>
 #include <Bnd_Box2d.hxx>
 #include <BndLib_Add2dCurve.hxx>
-#include <BRep_Builder.hxx>
-#include <BRep_Tool.hxx>
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepAlgo_FaceRestrictor.hxx>
 #include <BRepAlgo_Loop.hxx>
 #include <BRepClass3d_SolidClassifier.hxx>
-#include <BRepFill_DataMapIteratorOfDataMapOfShapeDataMapOfShapeListOfShape.hxx>
 #include <BRepFill_DataMapOfNodeDataMapOfShapeShape.hxx>
-#include <BRepFill_DataMapOfShapeDataMapOfShapeListOfShape.hxx>
 #include <BRepFill_DataMapOfShapeSequenceOfPnt.hxx>
 #include <BRepFill_DataMapOfShapeSequenceOfReal.hxx>
 #include <BRepFill_Evolved.hxx>
@@ -52,13 +48,10 @@
 #include <BRepTools_Quilt.hxx>
 #include <BRepTools_TrsfModification.hxx>
 #include <BRepTools_WireExplorer.hxx>
-#include <Geom2d_CartesianPoint.hxx>
 #include <Geom2d_Circle.hxx>
 #include <Geom2d_Curve.hxx>
-#include <Geom2d_Geometry.hxx>
 #include <Geom2d_Line.hxx>
 #include <Geom2d_TrimmedCurve.hxx>
-#include <Geom2dAdaptor_Curve.hxx>
 #include <Geom2dAPI_ExtremaCurveCurve.hxx>
 #include <Geom2dInt_GInter.hxx>
 #include <Geom_Curve.hxx>
@@ -67,7 +60,6 @@
 #include <Geom_RectangularTrimmedSurface.hxx>
 #include <Geom_Surface.hxx>
 #include <Geom_TrimmedCurve.hxx>
-#include <GeomAPI.hxx>
 #include <GeomProjLib.hxx>
 #include <gp.hxx>
 #include <gp_Ax1.hxx>
@@ -106,11 +98,8 @@
 #include <TopoDS_Solid.hxx>
 #include <TopoDS_Vertex.hxx>
 #include <TopoDS_Wire.hxx>
-#include <TopTools_DataMapIteratorOfDataMapOfShapeListOfShape.hxx>
-#include <TopTools_DataMapIteratorOfDataMapOfShapeShape.hxx>
 #include <TopTools_DataMapOfShapeSequenceOfShape.hxx>
 #include <TopTools_DataMapOfShapeShape.hxx>
-#include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <TopTools_SequenceOfShape.hxx>
 
 //#define DRAW
@@ -722,7 +711,7 @@ void BRepFill_Evolved::ElementaryPerform (const TopoDS_Face&              Sp,
     for (WireExp.Init(TopoDS::Wire(FaceExp.Current())); WireExp.More(); 
       WireExp.Next()) {
 
-        TopoDS_Edge   CurrentEdge = WireExp.Current();
+        const TopoDS_Edge&   CurrentEdge = WireExp.Current();
         TopoDS_Vertex VFirst,VLast;
         EdgeVertices(CurrentEdge,VFirst,VLast);
 
@@ -781,9 +770,7 @@ void BRepFill_Evolved::ElementaryPerform (const TopoDS_Face&              Sp,
     TopTools_DataMapOfShapeSequenceOfShape MapSeqVer;
     BRepFill_DataMapOfShapeSequenceOfPnt   MapSeqPar;
 
-    Standard_Integer vv = 0;
     for(ProfExp.Init(myProfile); ProfExp.More(); ProfExp.Next()) {
-      vv++;
       //-----------------------------------------------
       // Return two faces separated by the bissectrice.
       //-----------------------------------------------
@@ -2150,7 +2137,7 @@ void BRepFill_Evolved::MakeSolid()
   B.MakeCompound(Res);
 
   for (; exp.More(); exp.Next()) {
-    TopoDS_Shape Sh = exp.Current();
+    const TopoDS_Shape& Sh = exp.Current();
     B.MakeSolid(Sol);
     B.Add(Sol,Sh);
     BRepClass3d_SolidClassifier SC(Sol);

@@ -25,13 +25,11 @@
 #include <TopExp.hxx>
 #include <BRepExtrema_DistanceSS.hxx>
 #include <TopoDS.hxx>
-#include <TopAbs.hxx>
 #include <TopoDS_Vertex.hxx>
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Face.hxx>
 #include <TopAbs_ShapeEnum.hxx>
 #include <Precision.hxx>
-#include <Bnd_SeqOfBox.hxx>
 #include <BRepExtrema_UnCompatibleShape.hxx>
 #include <BRep_Tool.hxx>
 #include <BRepClass3d_SolidClassifier.hxx>
@@ -67,8 +65,8 @@ namespace
     }
   }
 
-  inline Standard_Real DistanceInitiale(const TopoDS_Vertex V1,
-                                        const TopoDS_Vertex V2)
+  inline Standard_Real DistanceInitiale(const TopoDS_Vertex& V1,
+                                        const TopoDS_Vertex& V2)
   {
     return (BRep_Tool::Pnt(V1).Distance(BRep_Tool::Pnt(V2)));
   }

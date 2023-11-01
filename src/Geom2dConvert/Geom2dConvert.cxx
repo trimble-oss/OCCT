@@ -12,10 +12,8 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-//Jean-Claude Vauthier Novembre 1991
-//Passage sur C1 Aout 1992 et ajout transformation Bezier->BSpline
+#include <Geom2dConvert.hxx>
 
-#include <BSplCLib.hxx>
 #include <Convert_CircleToBSplineCurve.hxx>
 #include <Convert_ConicToBSplineCurve.hxx>
 #include <Convert_EllipseToBSplineCurve.hxx>
@@ -33,7 +31,6 @@
 #include <Geom2d_OffsetCurve.hxx>
 #include <Geom2d_Parabola.hxx>
 #include <Geom2d_TrimmedCurve.hxx>
-#include <Geom2dConvert.hxx>
 #include <Geom2dConvert_ApproxCurve.hxx>
 #include <Geom2dConvert_CompCurveToBSplineCurve.hxx>
 #include <GeomAbs_Shape.hxx>
@@ -42,7 +39,6 @@
 #include <gp_Dir2d.hxx>
 #include <gp_Elips2d.hxx>
 #include <gp_Hypr2d.hxx>
-#include <gp_Lin.hxx>
 #include <gp_Parab2d.hxx>
 #include <gp_Pnt2d.hxx>
 #include <gp_Trsf2d.hxx>
@@ -519,7 +515,6 @@ static Handle(Geom2d_BSplineCurve) MultNumandDenom(const Handle(Geom2d_BSplineCu
   Handle(TColStd_HArray1OfReal)      resKnots;
   Handle(TColStd_HArray1OfInteger)   resMults; 
   Standard_Real                      start_value,end_value;
-  Standard_Real                      tolerance=Precision::Confusion();
   Standard_Integer                   resNbPoles,degree,
                                      ii,jj,
 				     aStatus;
@@ -531,6 +526,7 @@ static Handle(Geom2d_BSplineCurve) MultNumandDenom(const Handle(Geom2d_BSplineCu
   BS->KnotSequence(BSFlatKnots);
   start_value = BSKnots(1);
   end_value = BSKnots(BS->NbKnots());
+  Standard_Real tolerance = 10.*Epsilon(Abs(end_value));
 
   a->Knots(aKnots);
   a->Poles(aPoles);
@@ -569,22 +565,6 @@ static Handle(Geom2d_BSplineCurve) MultNumandDenom(const Handle(Geom2d_BSplineCu
 			     degree,
 			     resDenPoles,
 			     aStatus);
-//  BSplCLib::FunctionMultiply(law_evaluator,
-//			     BS->Degree(),
-//			     BSFlatKnots,
-//			     BSPoles,
-//			     resFlatKnots,
-//			     degree,
-//			     resNumPoles,
-//			     aStatus);
-//  BSplCLib::FunctionMultiply(law_evaluator,
-//			     BS->Degree(),
-//			     BSFlatKnots,
-//			     BSWeights,
-//			     resFlatKnots,
-//			     degree,
-//			     resDenPoles,
-//			     aStatus);
   for (ii=1;ii<=resNbPoles;ii++)
     for(jj=1;jj<=2;jj++) 
       resPoles(ii).SetCoord(jj,resNumPoles(ii).Coord(jj)/resDenPoles(ii));
@@ -1343,24 +1323,22 @@ void  Geom2dConvert::ConcatC1(TColGeom2d_Array1OfBSplineCurve&           ArrayOf
 	     Curve1Poles(ii).SetCoord(jj,Curve1Poles(ii).Coord(jj)*Curve1Weights(ii));
 //POP pour NT
 	 Geom2dConvert_reparameterise_evaluator ev (aPolynomialCoefficient);
-//	 BSplCLib::FunctionReparameterise(reparameterise_evaluator,
 	 BSplCLib::FunctionReparameterise(ev,
 					  Curve1->Degree(),
 					  Curve1FlatKnots,
 					  Curve1Poles,
 					  FlatKnots,
-                                          aNewCurveDegree,
+                      aNewCurveDegree,
 					  NewPoles,
 					  aStatus
 					  );
-         TColStd_Array1OfReal NewWeights(1, FlatKnots.Length() - (aNewCurveDegree + 1));
-//	 BSplCLib::FunctionReparameterise(reparameterise_evaluator,
+     TColStd_Array1OfReal NewWeights(1, FlatKnots.Length() - (aNewCurveDegree + 1));
 	 BSplCLib::FunctionReparameterise(ev,
 					  Curve1->Degree(),
 					  Curve1FlatKnots,
 					  Curve1Weights,
 					  FlatKnots,
-                                          aNewCurveDegree,
+                      aNewCurveDegree,
 					  NewWeights,
 					  aStatus
 					  );

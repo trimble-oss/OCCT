@@ -21,7 +21,6 @@
 #include <Geom2d_Circle.hxx>
 #include <Geom2d_Line.hxx>
 #include <Geom2d_Point.hxx>
-#include <Geom2dAdaptor_Curve.hxx>
 #include <Geom2dGcc_Circ2d3Tan.hxx>
 #include <Geom2dGcc_Circ2d3TanIter.hxx>
 #include <Geom2dGcc_QCurve.hxx>
@@ -59,9 +58,9 @@ Geom2dGcc_Circ2d3Tan::
   Geom2dAdaptor_Curve C1 = Qualified1.Qualified();
   Geom2dAdaptor_Curve C2 = Qualified2.Qualified();
   Geom2dAdaptor_Curve C3 = Qualified3.Qualified();
-  Handle(Geom2d_Curve) CC1 = C1.Curve();
-  Handle(Geom2d_Curve) CC2 = C2.Curve();
-  Handle(Geom2d_Curve) CC3 = C3.Curve();
+  const Handle(Geom2d_Curve)& CC1 = C1.Curve();
+  const Handle(Geom2d_Curve)& CC2 = C2.Curve();
+  const Handle(Geom2d_Curve)& CC3 = C3.Curve();
   GeomAbs_CurveType Type1 = C1.GetType();
   GeomAbs_CurveType Type2 = C2.GetType();
   GeomAbs_CurveType Type3 = C3.GetType();
@@ -267,8 +266,8 @@ Geom2dGcc_Circ2d3Tan::
 {
   Geom2dAdaptor_Curve C1 = Qualified1.Qualified();
   Geom2dAdaptor_Curve C2 = Qualified2.Qualified();
-  Handle(Geom2d_Curve) CC1 = C1.Curve();
-  Handle(Geom2d_Curve) CC2 = C2.Curve();
+  const Handle(Geom2d_Curve)& CC1 = C1.Curve();
+  const Handle(Geom2d_Curve)& CC2 = C2.Curve();
   GeomAbs_CurveType Type1 = C1.GetType();
   GeomAbs_CurveType Type2 = C2.GetType();
 
@@ -384,7 +383,7 @@ Geom2dGcc_Circ2d3Tan::
   pararg3(1,16)  
 {
   Geom2dAdaptor_Curve C1 = Qualified1.Qualified();
-  Handle(Geom2d_Curve) CC1 = C1.Curve();
+  const Handle(Geom2d_Curve)& CC1 = C1.Curve();
   GeomAbs_CurveType Type1 = C1.GetType();
 
 //=============================================================================

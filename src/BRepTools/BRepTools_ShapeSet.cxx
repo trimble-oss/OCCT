@@ -14,23 +14,16 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-// Modified:     Portage NT 7-5-97 DPF (strcasecmp)
-
 #include <BRep_Builder.hxx>
 #include <BRep_CurveOnClosedSurface.hxx>
 #include <BRep_CurveOnSurface.hxx>
 #include <BRep_CurveRepresentation.hxx>
 #include <BRep_GCurve.hxx>
-#include <BRep_ListIteratorOfListOfCurveRepresentation.hxx>
 #include <BRep_ListIteratorOfListOfPointRepresentation.hxx>
-#include <BRep_ListOfCurveRepresentation.hxx>
 #include <BRep_PointOnCurve.hxx>
 #include <BRep_PointOnCurveOnSurface.hxx>
 #include <BRep_PointOnSurface.hxx>
 #include <BRep_Polygon3D.hxx>
-#include <BRep_PolygonOnClosedSurface.hxx>
-#include <BRep_PolygonOnClosedTriangulation.hxx>
-#include <BRep_PolygonOnSurface.hxx>
 #include <BRep_PolygonOnTriangulation.hxx>
 #include <BRep_TEdge.hxx>
 #include <BRep_TFace.hxx>
@@ -40,28 +33,15 @@
 #include <BRepTools_ShapeSet.hxx>
 #include <GeomTools.hxx>
 #include <Message_ProgressScope.hxx>
-#include <Poly.hxx>
-#include <Poly_Polygon2D.hxx>
 #include <Poly_Polygon3D.hxx>
 #include <Poly_PolygonOnTriangulation.hxx>
 #include <Poly_Triangulation.hxx>
-#include <Precision.hxx>
 #include <Standard_Stream.hxx>
-#include <TColgp_HArray1OfPnt.hxx>
-#include <TColgp_HArray1OfPnt2d.hxx>
 #include <TColStd_HArray1OfInteger.hxx>
 #include <TColStd_HArray1OfReal.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Shape.hxx>
 #include <TopoDS_Vertex.hxx>
-
-#ifdef MacOS
-#define strcasecmp(p,q) strcmp(p,q)
-#elseif _WIN32
-#define strcasecmp strcmp
-#elseif AIX
-#include <string.h>
-#endif
 
 // Modified:    02 Nov 2000: BUC60769. JMB, PTV.  In order to be able to read BRep 
 //              files that came from a platform different from where CasCade 

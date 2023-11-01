@@ -22,11 +22,6 @@
 #include <BOPDS_DS.hxx>
 #include <BOPTest.hxx>
 #include <BOPTest_Objects.hxx>
-#include <BRep_Builder.hxx>
-#include <BRepAlgoAPI_BooleanOperation.hxx>
-#include <BRepAlgoAPI_Common.hxx>
-#include <BRepAlgoAPI_Cut.hxx>
-#include <BRepAlgoAPI_Fuse.hxx>
 #include <BRepAlgoAPI_Section.hxx>
 #include <BRepTest_Objects.hxx>
 #include <DBRep.hxx>
@@ -39,7 +34,6 @@
 #include <IntTools_PntOn2Faces.hxx>
 #include <NCollection_BaseAllocator.hxx>
 #include <TCollection_AsciiString.hxx>
-#include <TopoDS_Compound.hxx>
 #include <TopoDS_Iterator.hxx>
 #include <TopoDS_Shape.hxx>
 #include <TopTools_ListOfShape.hxx>
@@ -673,7 +667,7 @@ Standard_Integer bopcurves (Draw_Interpretor& di,
     for (Standard_Integer i=1; i<=aNbCurves; i++) {
       const IntTools_Curve& anIC=aSCs(i);
 
-      Handle (Geom_Curve)  aC3D = anIC.Curve();
+      const Handle (Geom_Curve)&  aC3D = anIC.Curve();
 
       if (aC3D.IsNull()) {
         di << " has Null 3d curve# " << i << "\n";
@@ -688,8 +682,8 @@ Standard_Integer bopcurves (Draw_Interpretor& di,
       DrawTrSurf::Set(nameC, aC3D);
       di << nameC << " ";
       //
-      Handle(Geom2d_Curve) aPC1 = anIC.FirstCurve2d();
-      Handle(Geom2d_Curve) aPC2 = anIC.SecondCurve2d();
+      const Handle(Geom2d_Curve)& aPC1 = anIC.FirstCurve2d();
+      const Handle(Geom2d_Curve)& aPC2 = anIC.SecondCurve2d();
       //
       if (!aPC1.IsNull() || !aPC2.IsNull()) {
         di << "(";

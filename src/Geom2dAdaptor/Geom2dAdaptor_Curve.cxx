@@ -37,10 +37,8 @@
 #include <Geom2d_Parabola.hxx>
 #include <Geom2d_TrimmedCurve.hxx>
 #include <Geom2d_UndefinedDerivative.hxx>
-#include <Geom2d_UndefinedValue.hxx>
 #include <Geom2dEvaluator_OffsetCurve.hxx>
 #include <GeomAbs_Shape.hxx>
-#include <gp.hxx>
 #include <gp_Circ2d.hxx>
 #include <gp_Elips2d.hxx>
 #include <gp_Hypr2d.hxx>
@@ -49,16 +47,11 @@
 #include <gp_Pnt2d.hxx>
 #include <gp_Vec2d.hxx>
 #include <Precision.hxx>
-#include <Standard_ConstructionError.hxx>
 #include <Standard_DomainError.hxx>
 #include <Standard_NoSuchObject.hxx>
 #include <Standard_NotImplemented.hxx>
-#include <Standard_NullObject.hxx>
-#include <Standard_OutOfRange.hxx>
-#include <TColgp_Array1OfPnt2d.hxx>
 #include <TColStd_Array1OfInteger.hxx>
 #include <TColStd_Array1OfReal.hxx>
-#include <TColStd_HArray1OfInteger.hxx>
 
 //#include <Geom2dConvert_BSplineCurveKnotSplitting.hxx>
 static const Standard_Real PosTol = Precision::PConfusion() / 2;
@@ -122,7 +115,7 @@ GeomAbs_Shape Geom2dAdaptor_Curve::LocalContinuity(const Standard_Real U1,
        if ( myBSplineCurve->IsPeriodic() && Index1 == Nb )
 	 Index1 = 1;
 
-       if ( Index2 - Index1 <= 0) {
+       if ((Index2 - Index1 <= 0) && (!myBSplineCurve->IsPeriodic())) {
 	 MultMax = 100;  // CN entre 2 Noeuds consecutifs
        }
        else {
@@ -309,85 +302,49 @@ GeomAbs_Shape Geom2dAdaptor_Curve::Continuity() const
 
 Standard_Integer Geom2dAdaptor_Curve::NbIntervals(const GeomAbs_Shape S) const
 {
-  Standard_Integer myNbIntervals = 1;
-  Standard_Integer NbSplit;
-  if (myTypeCurve == GeomAbs_BSplineCurve) {
-    Standard_Integer FirstIndex = myBSplineCurve->FirstUKnotIndex();
-    Standard_Integer LastIndex  = myBSplineCurve->LastUKnotIndex();
-    TColStd_Array1OfInteger Inter (1, LastIndex-FirstIndex+1);
-    if ( S > Continuity()) {
-      Standard_Integer Cont;
-      switch ( S) {
-      case GeomAbs_G1:
-      case GeomAbs_G2:
-	throw Standard_DomainError("Geom2dAdaptor_Curve::NbIntervals");
-	break;
-      case GeomAbs_C0:
-	myNbIntervals = 1;
-	break;
-      case GeomAbs_C1:
-      case GeomAbs_C2:
-      case GeomAbs_C3: 
-      case GeomAbs_CN: 
-	{
-	  if      ( S == GeomAbs_C1) Cont = 1;
-	  else if ( S == GeomAbs_C2) Cont = 2;
-	  else if ( S == GeomAbs_C3) Cont = 3;
-	  else                       Cont = myBSplineCurve->Degree();
-          Standard_Integer Degree = myBSplineCurve->Degree();
-          Standard_Integer NbKnots = myBSplineCurve->NbKnots();
-          TColStd_Array1OfInteger Mults (1, NbKnots);
-          myBSplineCurve->Multiplicities (Mults);
-          NbSplit = 1;
-          Standard_Integer Index   = FirstIndex;
-          Inter (NbSplit) = Index;
-          Index++;
-          NbSplit++;
-          while (Index < LastIndex) 
-            {
-	      if (Degree - Mults (Index) < Cont) 
-		{
-		  Inter (NbSplit) = Index;
-		  NbSplit++;
-		}
-	      Index++;
-	    }
-          Inter (NbSplit) = Index;
-
-          Standard_Integer NbInt = NbSplit-1;
-	  
-	  Standard_Integer Nb = myBSplineCurve->NbKnots();
-	  Standard_Integer Index1 = 0;
-	  Standard_Integer Index2 = 0;
-	  Standard_Real newFirst, newLast;
-	  TColStd_Array1OfReal    TK(1,Nb);
-	  TColStd_Array1OfInteger TM(1,Nb);
-	  myBSplineCurve->Knots(TK);
-	  myBSplineCurve->Multiplicities(TM);
-	  BSplCLib::LocateParameter(myBSplineCurve->Degree(),TK,TM,myFirst,
-				    myBSplineCurve->IsPeriodic(),
-				    1,Nb,Index1,newFirst);
-	  BSplCLib::LocateParameter(myBSplineCurve->Degree(),TK,TM,myLast,
-				    myBSplineCurve->IsPeriodic(),
-				    1,Nb,Index2,newLast);
-
-	  // On decale eventuellement les indices  
-	  // On utilise une "petite" tolerance, la resolution ne doit 
-          // servir que pour les tres longue courbes....(PRO9248)
-          Standard_Real Eps = Min(Resolution(Precision::Confusion()),
-				  Precision::PConfusion()); 
-	  if ( Abs(newFirst-TK(Index1+1))< Eps) Index1++;
-	  if ( newLast-TK(Index2)> Eps) Index2++;
-	  
-	  myNbIntervals = 1;
-	  for ( Standard_Integer i=1; i<=NbInt; i++)
-	    if (Inter(i)>Index1 && Inter(i)<Index2) myNbIntervals++;
-        }
-	break;
-      }
+  if (myTypeCurve == GeomAbs_BSplineCurve)
+  {
+    if ((!myBSplineCurve->IsPeriodic() && S <= Continuity()) || S == GeomAbs_C0)
+    {
+      return 1;
     }
+    
+    Standard_Integer aDegree = myBSplineCurve->Degree();
+    Standard_Integer aCont;
+
+    switch (S)
+    {
+      case GeomAbs_C1:
+        aCont = 1;
+        break;
+      case GeomAbs_C2:
+        aCont = 2;
+        break;
+      case GeomAbs_C3:
+        aCont = 3;
+        break;
+      case GeomAbs_CN:
+        aCont = aDegree;
+        break;
+      default:
+        throw Standard_DomainError ("Geom2dAdaptor_Curve::NbIntervals()");
+    }
+
+    Standard_Real anEps = Min(Resolution(Precision::Confusion()), Precision::PConfusion());
+
+    return BSplCLib::Intervals(myBSplineCurve->Knots(),
+                               myBSplineCurve->Multiplicities(),
+                               aDegree,
+                               myBSplineCurve->IsPeriodic(),
+                               aCont,
+                               myFirst,
+                               myLast,
+                               anEps,
+                               nullptr);
   }
+
   else if (myTypeCurve == GeomAbs_OffsetCurve){
+    Standard_Integer myNbIntervals = 1;
     GeomAbs_Shape BaseS=GeomAbs_C0;
     switch(S){
     case GeomAbs_G1:
@@ -399,11 +356,15 @@ Standard_Integer Geom2dAdaptor_Curve::NbIntervals(const GeomAbs_Shape S) const
     case GeomAbs_C2: BaseS = GeomAbs_C3; break;
     default: BaseS = GeomAbs_CN;
     }
-    Geom2dAdaptor_Curve anAdaptor( Handle(Geom2d_OffsetCurve)::DownCast(myCurve)->BasisCurve() );
+    Geom2dAdaptor_Curve anAdaptor (Handle(Geom2d_OffsetCurve)::DownCast(myCurve)->BasisCurve(), myFirst, myLast);
     myNbIntervals = anAdaptor.NbIntervals(BaseS);
+    return myNbIntervals;
   }
 
-  return myNbIntervals;
+  else
+  {
+    return 1;
+  }
 }
 
 //=======================================================================
@@ -411,99 +372,53 @@ Standard_Integer Geom2dAdaptor_Curve::NbIntervals(const GeomAbs_Shape S) const
 //purpose  : 
 //=======================================================================
 
-void Geom2dAdaptor_Curve::Intervals(TColStd_Array1OfReal& T,
-				    const GeomAbs_Shape S   ) const 
+void Geom2dAdaptor_Curve::Intervals (TColStd_Array1OfReal& T, const GeomAbs_Shape S) const 
 {
-  Standard_Integer myNbIntervals = 1;
-  Standard_Integer NbSplit;
-  if (myTypeCurve == GeomAbs_BSplineCurve) {
-    Standard_Integer FirstIndex = myBSplineCurve->FirstUKnotIndex();
-    Standard_Integer LastIndex  = myBSplineCurve->LastUKnotIndex();
-    TColStd_Array1OfInteger Inter (1, LastIndex-FirstIndex+1);
-    if ( S > Continuity()) {
-      Standard_Integer Cont;
-      switch ( S) {
-      case GeomAbs_G1:
-      case GeomAbs_G2:
-	throw Standard_DomainError("Geom2dAdaptor_Curve::NbIntervals");
-	break;
-      case GeomAbs_C0:
-	myNbIntervals = 1;
-	break;
-      case GeomAbs_C1:
-      case GeomAbs_C2:
-      case GeomAbs_C3: 
-      case GeomAbs_CN: 
-	{
-	  if      ( S == GeomAbs_C1) Cont = 1;
-	  else if ( S == GeomAbs_C2) Cont = 2;
-	  else if ( S == GeomAbs_C3) Cont = 3;
-	  else                       Cont = myBSplineCurve->Degree();
-          Standard_Integer Degree = myBSplineCurve->Degree();
-          Standard_Integer NbKnots = myBSplineCurve->NbKnots();
-          TColStd_Array1OfInteger Mults (1, NbKnots);
-          myBSplineCurve->Multiplicities (Mults);
-          NbSplit = 1;
-          Standard_Integer Index   = FirstIndex;
-          Inter (NbSplit) = Index;
-          Index++;
-          NbSplit++;
-          while (Index < LastIndex) 
-            {
-	      if (Degree - Mults (Index) < Cont) 
-		{
-		  Inter (NbSplit) = Index;
-		  NbSplit++;
-		}
-	      Index++;
-	    }
-	  Inter (NbSplit) = Index;
-          Standard_Integer NbInt = NbSplit-1;
-	  
-	  Standard_Integer Nb = myBSplineCurve->NbKnots();
-	  Standard_Integer Index1 = 0;
-	  Standard_Integer Index2 = 0;
-	  Standard_Real newFirst, newLast;
-	  TColStd_Array1OfReal    TK(1,Nb);
-	  TColStd_Array1OfInteger TM(1,Nb);
-	  myBSplineCurve->Knots(TK);
-	  myBSplineCurve->Multiplicities(TM);
-	  BSplCLib::LocateParameter(myBSplineCurve->Degree(),TK,TM,myFirst,
-				    myBSplineCurve->IsPeriodic(),
-				    1,Nb,Index1,newFirst);
-	  BSplCLib::LocateParameter(myBSplineCurve->Degree(),TK,TM,myLast,
-				    myBSplineCurve->IsPeriodic(),
-				    1,Nb,Index2,newLast);
-
-
-	  // On decale eventuellement les indices  
-	  // On utilise une "petite" tolerance, la resolution ne doit 
-          // servir que pour les tres longue courbes....(PRO9248)
-          Standard_Real Eps = Min(Resolution(Precision::Confusion()),
-				  Precision::PConfusion()); 
-	  if ( Abs(newFirst-TK(Index1+1))< Eps) Index1++;
-	  if ( newLast-TK(Index2)> Eps) Index2++;
-	  
-	  Inter( 1) = Index1;
-	  myNbIntervals = 1;
-	  for ( Standard_Integer i=1; i<=NbInt; i++) {
-	    if (Inter(i) > Index1 && Inter(i)<Index2 ) {
-	      myNbIntervals++;
-	      Inter(myNbIntervals) = Inter(i);
-	    }
-	  }
-	  Inter(myNbIntervals+1) = Index2;
-	  
-	  Standard_Integer ii = T.Lower() - 1;
-	  for (Standard_Integer I=1;I<=myNbIntervals+1;I++) {
-	    T(ii + I) = TK(Inter(I));
-	  }
-	}
-	break;
-      }
+  if (myTypeCurve == GeomAbs_BSplineCurve)
+  {
+    if ((!myBSplineCurve->IsPeriodic() && S <= Continuity()) || S == GeomAbs_C0)
+    {
+      T( T.Lower() ) = myFirst;
+      T( T.Lower() + 1 ) = myLast;
+      return;
     }
+
+    Standard_Integer aDegree = myBSplineCurve->Degree();
+    Standard_Integer aCont;
+
+    switch (S)
+    {
+      case GeomAbs_C1:
+        aCont = 1;
+        break;
+      case GeomAbs_C2:
+        aCont = 2;
+        break;
+      case GeomAbs_C3:
+        aCont = 3;
+        break;
+      case GeomAbs_CN:
+        aCont = aDegree;
+        break;
+      default:
+        throw Standard_DomainError ("Geom2dAdaptor_Curve::Intervals()");
+    }
+
+    Standard_Real anEps = Min(Resolution(Precision::Confusion()), Precision::PConfusion());
+
+    BSplCLib::Intervals(myBSplineCurve->Knots(),
+                        myBSplineCurve->Multiplicities(),
+                        aDegree,
+                        myBSplineCurve->IsPeriodic(),
+                        aCont,
+                        myFirst,
+                        myLast,
+                        anEps,
+                        &T);
   }
+
   else if (myTypeCurve == GeomAbs_OffsetCurve){
+    Standard_Integer myNbIntervals = 1;
     GeomAbs_Shape BaseS=GeomAbs_C0;
     switch(S){
     case GeomAbs_G1:
@@ -516,13 +431,18 @@ void Geom2dAdaptor_Curve::Intervals(TColStd_Array1OfReal& T,
     default: BaseS = GeomAbs_CN;
     }
 
-    Geom2dAdaptor_Curve anAdaptor( Handle(Geom2d_OffsetCurve)::DownCast(myCurve)->BasisCurve() );
+    Geom2dAdaptor_Curve anAdaptor (Handle(Geom2d_OffsetCurve)::DownCast(myCurve)->BasisCurve(), myFirst, myLast);
     myNbIntervals = anAdaptor.NbIntervals(BaseS);
     anAdaptor.Intervals(T, BaseS);
+    T( T.Lower() ) = myFirst;
+    T( T.Lower() + myNbIntervals ) = myLast;
   }
 
-  T( T.Lower() ) = myFirst;
-  T( T.Lower() + myNbIntervals ) = myLast;
+  else
+  {
+    T( T.Lower() ) = myFirst;
+    T( T.Lower() + 1 ) = myLast;
+  }
 }
 
 //=======================================================================

@@ -16,36 +16,19 @@
 
 
 #include <gp_Pnt.hxx>
-#include <Standard_NoSuchObject.hxx>
-#include <TCollection_AsciiString.hxx>
-#include <TopoDS_Edge.hxx>
-#include <TopoDS_Face.hxx>
-#include <TopoDS_Shape.hxx>
-#include <TopoDS_Vertex.hxx>
-#include <TopOpeBRepBuild_Builder.hxx>
 #include <TopOpeBRepBuild_define.hxx>
 #include <TopOpeBRepBuild_EdgeBuilder.hxx>
-#include <TopOpeBRepBuild_FaceBuilder.hxx>
 #include <TopOpeBRepBuild_GTopo.hxx>
-#include <TopOpeBRepBuild_HBuilder.hxx>
 #include <TopOpeBRepBuild_PaveSet.hxx>
-#include <TopOpeBRepBuild_ShapeSet.hxx>
-#include <TopOpeBRepBuild_ShellFaceSet.hxx>
-#include <TopOpeBRepBuild_SolidBuilder.hxx>
-#include <TopOpeBRepBuild_WireEdgeSet.hxx>
-#include <TopOpeBRepDS_BuildTool.hxx>
 #include <TopOpeBRepDS_CurveIterator.hxx>
-#include <TopOpeBRepDS_EXPORT.hxx>
 #include <TopOpeBRepDS_HDataStructure.hxx>
 #include <TopOpeBRepDS_PointIterator.hxx>
-#include <TopOpeBRepDS_SurfaceIterator.hxx>
 #include <TopOpeBRepTool_ShapeExplorer.hxx>
 
 #ifdef DRAW
 #include <TopOpeBRepDS_DRAW.hxx>
 #endif
 
-#include <TopOpeBRepDS_EXPORT.hxx>
 #include <TopOpeBRepDS_ProcessInterferencesTool.hxx>
 #include <TopOpeBRepTool_EXPORT.hxx>
 #include <TopOpeBRepTool_TOOL.hxx>
@@ -53,7 +36,6 @@
 #include <TopOpeBRepDS.hxx>
 #include <BRep_Tool.hxx>
 #include <TopoDS.hxx>
-#include <Geom_Curve.hxx>
 #include <Geom2d_Curve.hxx>
 #include <Geom_Plane.hxx>
 #include <gp_Pnt.hxx>
@@ -61,10 +43,8 @@
 #include <ElCLib.hxx>
 #include <ElSLib.hxx>
 #include <Geom2dAdaptor_Curve.hxx>
-#include <Precision.hxx>
 #include <BRepAdaptor_Curve.hxx>
 #include <TopOpeBRepTool_2d.hxx>
-#include <TopOpeBRepDS_Dumper.hxx>
 #include <Standard_ProgramError.hxx>
 #include <TopOpeBRepDS_EdgeVertexInterference.hxx>
 
@@ -523,9 +503,8 @@ void TopOpeBRepBuild_Builder::GFillPointTopologyPVS(const TopoDS_Shape& E,
     if (kp3) l2dFEcur.First()->Transition().Orientation(TopAbs_IN);
 
 
-    TopOpeBRepDS_PointIterator itCur(LICur); Standard_Integer iICur=0;
+    TopOpeBRepDS_PointIterator itCur(LICur);
     while ( itCur.More() ) {
-      iICur++;
       const Handle(TopOpeBRepDS_Interference)& I1=itCur.Value();
       const TopOpeBRepDS_Transition& T1=I1->Transition();
       T1.Orientation(TopAbs_IN);
@@ -568,7 +547,7 @@ void TopOpeBRepBuild_Builder::GFillPointTopologyPVS(const TopoDS_Shape& E,
 	  }
 	} // split 2d
 	else { // split 3d
-	  keepinterf1 = (ST1 == TopOpeBRepDS_FACE); // (iICur == 1);
+	  keepinterf1 = (ST1 == TopOpeBRepDS_FACE);
 	}
       }
       if ( keepinterf1 ) {

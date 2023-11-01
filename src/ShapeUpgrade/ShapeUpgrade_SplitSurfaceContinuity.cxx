@@ -15,22 +15,17 @@
 // commercial license or contractual agreement.
 
 
-#include <Geom_BSplineSurface.hxx>
 #include <Geom_OffsetSurface.hxx>
 #include <Geom_RectangularTrimmedSurface.hxx>
 #include <Geom_SurfaceOfLinearExtrusion.hxx>
 #include <Geom_SurfaceOfRevolution.hxx>
 #include <Geom_SweptSurface.hxx>
-#include <gp_Ax1.hxx>
 #include <Precision.hxx>
 #include <ShapeExtend.hxx>
 #include <ShapeUpgrade.hxx>
 #include <ShapeUpgrade_SplitCurve3dContinuity.hxx>
 #include <ShapeUpgrade_SplitSurfaceContinuity.hxx>
 #include <Standard_Type.hxx>
-#include <TColGeom_HArray1OfCurve.hxx>
-#include <TColGeom_HArray2OfSurface.hxx>
-#include <TColStd_HArray1OfInteger.hxx>
 #include <TColStd_HSequenceOfReal.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(ShapeUpgrade_SplitSurfaceContinuity,ShapeUpgrade_SplitSurface)
@@ -143,7 +138,7 @@ ShapeUpgrade_SplitSurfaceContinuity::ShapeUpgrade_SplitSurfaceContinuity()
       myStatus |= ShapeExtend::EncodeStatus ( ShapeExtend_DONE2 );
     if ( spc.Status ( ShapeExtend_DONE3 ) ) {
       myStatus |= ShapeExtend::EncodeStatus ( ShapeExtend_DONE3 );
-      Handle(Geom_Curve) aNewBascurve = spc.GetCurve();
+      const Handle(Geom_Curve)& aNewBascurve = spc.GetCurve();
       Surface->SetBasisCurve(aNewBascurve);
     }
     return;

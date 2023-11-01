@@ -18,18 +18,14 @@
 #include <BRep_Builder.hxx>
 #include <BRep_Tool.hxx>
 #include <gp_Pnt.hxx>
-#include <gp_Pnt2d.hxx>
 #include <Precision.hxx>
-#include <Standard_ProgramError.hxx>
 #include <TopAbs_Orientation.hxx>
 #include <TopExp.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Compound.hxx>
-#include <TopoDS_Edge.hxx>
 #include <TopoDS_Face.hxx>
 #include <TopoDS_Shape.hxx>
 #include <TopoDS_Vertex.hxx>
-#include <TopOpeBRepBuild_BlockBuilder.hxx>
 #include <TopOpeBRepBuild_define.hxx>
 #include <TopOpeBRepBuild_FaceBuilder.hxx>
 #include <TopOpeBRepBuild_Loop.hxx>
@@ -38,9 +34,6 @@
 #include <TopOpeBRepBuild_WireEdgeClassifier.hxx>
 #include <TopOpeBRepBuild_WireEdgeSet.hxx>
 #include <TopOpeBRepDS_BuildTool.hxx>
-#include <TopTools_Array1OfShape.hxx>
-#include <TopTools_DataMapOfShapeInteger.hxx>
-#include <TopTools_DataMapOfShapeListOfShape.hxx>
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
 #include <TopTools_IndexedDataMapOfShapeShape.hxx>
 #include <TopTools_IndexedMapOfOrientedShape.hxx>
@@ -247,17 +240,17 @@ void TopOpeBRepBuild_FaceBuilder::DetectUnclosedWire(TopTools_IndexedDataMapOfSh
   TopTools_IndexedDataMapOfShapeShape mapVon1EdgeDRAW,mapVVsameGDRAW;
   Standard_Boolean trc = TopOpeBRepBuild_GettracePURGE();
   if (trc) std::cout<<std::endl<<"* DetectUnclosedWire :"<<std::endl<<std::endl;
+  Standard_Integer iiwi = 0; // DEB
 #endif
 
-  Standard_Integer iiwi = 0; // DEB
 
   InitFace();
   for (;MoreFace();NextFace()) {
    InitWire();
     for (;MoreWire();NextWire()) { 
-      iiwi++;
       Standard_Boolean isold = IsOldWire();
 #ifdef DRAW
+      iiwi++;
       if ( trc && isold ) std::cout<<"wire "<<iiwi<<" is old wire => closed"<<std::endl;
 #endif
       if (isold) continue;

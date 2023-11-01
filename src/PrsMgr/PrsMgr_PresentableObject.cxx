@@ -45,6 +45,7 @@ const gp_Trsf& PrsMgr_PresentableObject::getIdentityTrsf()
 //=======================================================================
 PrsMgr_PresentableObject::PrsMgr_PresentableObject (const PrsMgr_TypeOfPresentation3d theType)
 : myParent (NULL),
+  myViewAffinity (new Graphic3d_ViewAffinity()),
   myDrawer (new Prs3d_Drawer()),
   myTypeOfPresentation3d (theType),
   myDisplayStatus (PrsMgr_DisplayStatus_None),
@@ -345,7 +346,7 @@ void PrsMgr_PresentableObject::SetTransformPersistence (const Handle(Graphic3d_T
 //=======================================================================
 void PrsMgr_PresentableObject::AddChild (const Handle(PrsMgr_PresentableObject)& theObject)
 {
-  Handle(PrsMgr_PresentableObject) aHandleGuard = theObject;
+  const Handle(PrsMgr_PresentableObject)& aHandleGuard = theObject;
   if (theObject->myParent != NULL)
   {
     theObject->myParent->RemoveChild (aHandleGuard);

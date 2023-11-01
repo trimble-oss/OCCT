@@ -19,7 +19,6 @@
 #include <Interface_Check.hxx>
 #include <Interface_CheckIterator.hxx>
 #include <Interface_EntityIterator.hxx>
-#include <Interface_GeneralLib.hxx>
 #include <Interface_GeneralModule.hxx>
 #include <Interface_GTool.hxx>
 #include <Interface_InterfaceMismatch.hxx>
@@ -27,12 +26,9 @@
 #include <Interface_Protocol.hxx>
 #include <Interface_ReportEntity.hxx>
 #include <Interface_SignType.hxx>
-#include <Standard_NoSuchObject.hxx>
-#include <Standard_OutOfRange.hxx>
 #include <Standard_Transient.hxx>
 #include <Standard_Type.hxx>
 #include <TCollection_HAsciiString.hxx>
-#include <TColStd_Array1OfInteger.hxx>
 #include <TColStd_Array1OfTransient.hxx>
 #include <TColStd_DataMapIteratorOfDataMapOfIntegerTransient.hxx>
 
@@ -502,7 +498,7 @@ void Interface_InterfaceModel::FillSemanticChecks
   for (checks.Start(); checks.More(); checks.Next())  nb ++;
   therepch.ReSize (therepch.Extent() + nb + 2);
   for (checks.Start(); checks.More(); checks.Next()) {
-    const Handle(Interface_Check) ach = checks.Value();
+    const Handle(Interface_Check)& ach = checks.Value();
     Standard_Integer num = checks.Number();
 //    global check : ok si MEME MODELE
     if (num == 0) thechecksem->GetMessages(ach);
@@ -760,7 +756,8 @@ void Interface_InterfaceModel::GetFromTransfer
 {
   theentities.Clear();  theentities.ReSize (aniter.NbEntities());
   for (aniter.Start(); aniter.More(); aniter.Next()) {
-    Handle(Standard_Transient) ent = aniter.Value();    AddEntity(ent);
+    const Handle(Standard_Transient)& ent = aniter.Value();
+    AddEntity(ent);
   }
 }
 

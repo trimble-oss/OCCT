@@ -12,11 +12,9 @@
 // commercial license or contractual agreement.
 
 
-#include <Interface_EntityIterator.hxx>
 #include <Interface_Graph.hxx>
 #include <Interface_GraphContent.hxx>
 #include <Interface_InterfaceModel.hxx>
-#include <Interface_IntList.hxx>
 #include <Standard_Transient.hxx>
 
 Interface_GraphContent::Interface_GraphContent ()    {  }
@@ -36,7 +34,7 @@ Interface_GraphContent::Interface_GraphContent ()    {  }
   Standard_Integer nb = list.NbEntities();
   if (nb == 0) return;                             // Liste redefinie a VIDE
   for( ; list.More(); list.Next()) {
-    Handle(Standard_Transient) curent = list.Value();
+    const Handle(Standard_Transient)& curent = list.Value();
     if (agraph.IsPresent(agraph.EntityNumber(curent))) 
       GetOneItem (curent);
   }

@@ -16,34 +16,20 @@
 
 
 #include <Adaptor2d_Curve2d.hxx>
-#include <Adaptor3d_Surface.hxx>
-#include <Adaptor3d_TopolTool.hxx>
 #include <AppBlend_Approx.hxx>
 #include <Blend_CurvPointFuncInv.hxx>
 #include <Blend_FuncInv.hxx>
-#include <Blend_Function.hxx>
 #include <Blend_RstRstFunction.hxx>
-#include <Blend_SurfCurvFuncInv.hxx>
-#include <Blend_SurfPointFuncInv.hxx>
-#include <Blend_SurfRstFunction.hxx>
-#include <BRep_Tool.hxx>
-#include <BRepAdaptor_Curve.hxx>
-#include <BRepAdaptor_Curve2d.hxx>
-#include <BRepAdaptor_Surface.hxx>
 #include <BRepBlend_Line.hxx>
 #include <BRepLProp_SLProps.hxx>
 #include <BRepTopAdaptor_TopolTool.hxx>
 #include <ChFi3d.hxx>
 #include <ChFi3d_Builder.hxx>
 #include <ChFi3d_Builder_0.hxx>
-#include <ChFiDS_CommonPoint.hxx>
 #include <ChFiDS_ErrorStatus.hxx>
 #include <ChFiDS_FilSpine.hxx>
 #include <ChFiDS_HData.hxx>
-#include <ChFiDS_ElSpine.hxx>
 #include <ChFiDS_ListIteratorOfListOfStripe.hxx>
-#include <ChFiDS_ListIteratorOfRegularities.hxx>
-#include <ChFiDS_Regul.hxx>
 #include <ChFiDS_Spine.hxx>
 #include <ChFiDS_State.hxx>
 #include <ChFiDS_Stripe.hxx>
@@ -59,12 +45,10 @@
 #include <gp_Pnt.hxx>
 #include <gp_Pnt2d.hxx>
 #include <gp_Vec.hxx>
-#include <LocalAnalysis_SurfaceContinuity.hxx>
 #include <Precision.hxx>
 #include <Standard_ConstructionError.hxx>
 #include <Standard_NoSuchObject.hxx>
 #include <Standard_OutOfRange.hxx>
-#include <TopAbs.hxx>
 #include <TopAbs_Orientation.hxx>
 #include <TopAbs_ShapeEnum.hxx>
 #include <TopExp.hxx>
@@ -76,8 +60,6 @@
 #include <TopOpeBRepBuild_HBuilder.hxx>
 #include <TopOpeBRepDS_HDataStructure.hxx>
 #include <TopOpeBRepDS_Surface.hxx>
-#include <TopOpeBRepTool_TOOL.hxx>
-#include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <BRepLib_MakeEdge.hxx>
 
 #ifdef OCCT_DEBUG
@@ -169,8 +151,8 @@ static TopoDS_Edge MakeOffsetEdge(const TopoDS_Edge&         theEdge,
 {
   TopoDS_Edge OffsetEdge;
   
-  TopoDS_Face F1 = S1.Face();
-  TopoDS_Face F2 = S2.Face();
+  const TopoDS_Face& F1 = S1.Face();
+  const TopoDS_Face& F2 = S2.Face();
   Handle(Geom_Surface) GS1 = BRep_Tool::Surface(F1);
   Handle(Geom_Surface) TrGS1 =
     new Geom_RectangularTrimmedSurface(GS1,
@@ -343,7 +325,7 @@ ChFi3d_Builder::ChFi3d_Builder(const TopoDS_Shape& S,
   myEShMap.Fill(S,TopAbs_EDGE,TopAbs_SHELL);
   myVFMap.Fill(S,TopAbs_VERTEX,TopAbs_FACE);
   myVEMap.Fill(S,TopAbs_VERTEX,TopAbs_EDGE);
-  SetParams(Ta,1.e-4,1.e-5,1.e-4,1.e-5,1.e-3);
+  SetParams(Ta, 1.0e-4, 1.e-5, 1.e-4, 1.e-5, 1.e-3);
   SetContinuity(GeomAbs_C1, Ta);
 }
 
@@ -354,7 +336,7 @@ ChFi3d_Builder::ChFi3d_Builder(const TopoDS_Shape& S,
 
 void ChFi3d_Builder::SetParams(const Standard_Real Tang, 
 			       const Standard_Real Tesp, 
-			       const Standard_Real T2d, 
+             const Standard_Real T2d, 
 			       const Standard_Real TApp3d, 
 			       const Standard_Real TolApp2d, 
 			       const Standard_Real Fleche)
@@ -710,7 +692,6 @@ void ChFi3d_Builder::PerformExtremity (const Handle(ChFiDS_Spine)& Spine)
     else{
       sst = Spine->LastStatus(); 
       iedge = Spine->NbEdges();
-      E[0] = Spine->Edges(iedge);
       V = Spine->LastVertex();
     }
     //Before all it is checked if the tangency is not dead.
@@ -721,6 +702,7 @@ void ChFi3d_Builder::PerformExtremity (const Handle(ChFiDS_Spine)& Spine)
     }
 
     if(sst == ChFiDS_BreakPoint){
+      Standard_Integer aLocNbG1Connections = 0;
       TopTools_ListIteratorOfListOfShape It;//,Jt;
       Standard_Boolean sommetpourri = Standard_False;
       TopTools_IndexedMapOfOrientedShape EdgesOfV;
@@ -738,7 +720,10 @@ void ChFi3d_Builder::PerformExtremity (const Handle(ChFiDS_Spine)& Spine)
         if (!F2.IsNull() && ChFi3d::IsTangentFaces(anEdge, F1, F2, GeomAbs_G2)) //smooth edge
         {
           if (!F1.IsSame(F2))
+          {
             NbG1Connections++;
+            aLocNbG1Connections++;
+          }
           continue;
         }
         
@@ -777,7 +762,7 @@ void ChFi3d_Builder::PerformExtremity (const Handle(ChFiDS_Spine)& Spine)
       if (EdgesOfV.Extent() != 3)
         sommetpourri = Standard_True;
       
-      if(!sommetpourri){
+      if(!sommetpourri && aLocNbG1Connections < 4){
 	sst = ChFi3d_EdgeState(E,myEFMap);
       }
       if(ii==1)Spine->SetFirstStatus(sst);

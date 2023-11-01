@@ -14,26 +14,15 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#include <Draw.hxx>
 #include <DBRep.hxx>
 #include <Draw_Interpretor.hxx>
 #include <QADNaming.hxx>
-#include <BRepTools.hxx>
-#include <TopoDS_Face.hxx>
-#include <TopLoc_Location.hxx>
 #include <BRep_Builder.hxx>
-#include <gp_Pnt.hxx>
-#include <gp_Trsf.hxx>
 #include <BRepTools.hxx>
 #include <TCollection_AsciiString.hxx>
 #include <TNaming_Translator.hxx>
-#include <TopTools_DataMapIteratorOfDataMapOfShapeShape.hxx>
-#include <DNaming_DataMapOfShapeOfName.hxx>
 #include <DNaming_DataMapIteratorOfDataMapOfShapeOfName.hxx>
-#include <TCollection_AsciiString.hxx>
-#include <TopAbs.hxx>
 #include <TopExp_Explorer.hxx>
-#include <TopTools_MapOfShape.hxx>
 #include <TopTools_MapIteratorOfMapOfShape.hxx>
 
 
@@ -136,7 +125,7 @@ static Standard_Integer QADNaming_TCopyShape (Draw_Interpretor& di,
 
     DNaming_DataMapIteratorOfDataMapOfShapeOfName itrn(aDMapOfShapeOfName);
     for(;itrn.More();itrn.Next()) {
-      TCollection_AsciiString name = itrn.Value();
+      const TCollection_AsciiString& name = itrn.Value();
       const TopoDS_Shape Result = TR.Copied(itrn.Key());
       DBRep::Set(name.ToCString(), Result);
       di.AppendElement(name.ToCString());

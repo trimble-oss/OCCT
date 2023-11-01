@@ -19,7 +19,6 @@
 //    svv  10.01.00 porting on DEC
 
 #include <Bnd_Box2d.hxx>
-#include <BndLib_Add2dCurve.hxx>
 #include <BRep_Builder.hxx>
 #include <BRep_Tool.hxx>
 #include <BRepTools.hxx>
@@ -31,7 +30,6 @@
 #include <Geom2dInt_GInter.hxx>
 #include <Geom_Curve.hxx>
 #include <Geom_ElementarySurface.hxx>
-#include <GeomAdaptor_Surface.hxx>
 #include <gp_Dir2d.hxx>
 #include <gp_Lin2d.hxx>
 #include <gp_Pnt.hxx>
@@ -44,15 +42,12 @@
 #include <ShapeAnalysis_Curve.hxx>
 #include <ShapeAnalysis_Edge.hxx>
 #include <ShapeAnalysis_Surface.hxx>
-#include <ShapeAnalysis_TransferParameters.hxx>
 #include <ShapeAnalysis_TransferParametersProj.hxx>
 #include <ShapeAnalysis_WireOrder.hxx>
 #include <ShapeBuild_Edge.hxx>
 #include <ShapeBuild_ReShape.hxx>
 #include <ShapeBuild_Vertex.hxx>
-#include <ShapeExtend.hxx>
 #include <ShapeExtend_CompositeSurface.hxx>
-#include <ShapeExtend_WireData.hxx>
 #include <ShapeFix_ComposeShell.hxx>
 #include <ShapeFix_Edge.hxx>
 #include <ShapeFix_Face.hxx>
@@ -726,7 +721,7 @@ Standard_Integer ShapeFix_ComposeShell::ComputeCode (const Handle(ShapeExtend_Wi
 // After applying context to (seam) edge, distribute its indices on new edges,
 // according to their parameters on that edge
 static void DistributeSplitPoints (const Handle(ShapeExtend_WireData) &sbwd,
-                                   const TopoDS_Face myFace,
+                                   const TopoDS_Face& myFace,
                                    const Standard_Integer index,
                                    const Standard_Integer nsplit,
                                    TColStd_SequenceOfInteger& indexes,
@@ -790,7 +785,7 @@ static void DefinePatch (ShapeFix_WireSegment &wire, const Standard_Integer code
 //function : GetGridResolution
 //purpose  : auxiliary
 //=======================================================================
-static Standard_Real GetGridResolution(const Handle(TColStd_HArray1OfReal) SplitValues,
+static Standard_Real GetGridResolution(const Handle(TColStd_HArray1OfReal)& SplitValues,
                                        const Standard_Integer cutIndex)
 {
   Standard_Integer nb = SplitValues->Length();
@@ -1874,7 +1869,7 @@ void ShapeFix_ComposeShell::BreakWires (ShapeFix_SequenceOfWireSegment &seqw)
     ShapeFix_WireSegment wire = seqw(i);
     if(wire.IsVertex())
       continue;
-    Handle(ShapeExtend_WireData) sbwd = wire.WireData();
+    const Handle(ShapeExtend_WireData)& sbwd = wire.WireData();
 
     // find first vertex for split
     Standard_Integer j; // svv #1
@@ -1938,7 +1933,7 @@ void ShapeFix_ComposeShell::BreakWires (ShapeFix_SequenceOfWireSegment &seqw)
 // -1 - short in 3d but not in 2d (to be checked after algo and atteching to 
 //      another wire if alone)
 static Standard_Integer IsShortSegment (const ShapeFix_WireSegment &seg,
-                                        const TopoDS_Face myFace,
+                                        const TopoDS_Face& myFace,
                                         const Handle(Geom_Surface)& myGrid,
                                         const TopLoc_Location &myLoc,
                                         const Standard_Real UResolution,
@@ -1953,7 +1948,7 @@ static Standard_Integer IsShortSegment (const ShapeFix_WireSegment &seg,
 
   Standard_Integer code = 1;
   ShapeAnalysis_Edge sae;
-  Handle(ShapeExtend_WireData) sbwd = seg.WireData();
+  const Handle(ShapeExtend_WireData)& sbwd = seg.WireData();
   for ( Standard_Integer i=1; i <= sbwd->NbEdges(); i++ ) {
     TopoDS_Edge edge = sbwd->Edge ( i );
     if ( ! Vf.IsSame ( sae.LastVertex ( edge ) ) ) return 0;
@@ -1978,14 +1973,14 @@ static Standard_Integer IsShortSegment (const ShapeFix_WireSegment &seg,
 //function : IsSamePatch
 //purpose  : auxiliary
 //=======================================================================
-static Standard_Boolean IsSamePatch (const ShapeFix_WireSegment wire,
-                                     const Standard_Integer NU,
-                                     const Standard_Integer NV,
-                                     Standard_Integer &iumin,
-                                     Standard_Integer &iumax,
-                                     Standard_Integer &ivmin,
-                                     Standard_Integer &ivmax,
-                                     const Standard_Boolean extend=Standard_False)
+static Standard_Boolean IsSamePatch (const ShapeFix_WireSegment& wire,
+                                     const Standard_Integer      NU,
+                                     const Standard_Integer      NV,
+                                     Standard_Integer&           iumin,
+                                     Standard_Integer&           iumax,
+                                     Standard_Integer&           ivmin,
+                                     Standard_Integer&           ivmax,
+                                     const Standard_Boolean      extend=Standard_False)
 {
   // get patch indices for current segment
   Standard_Integer jumin, jumax, jvmin, jvmax;
@@ -2070,7 +2065,7 @@ void ShapeFix_ComposeShell::CollectWires (ShapeFix_SequenceOfWireSegment &wires,
 
     // find next segment to connect (or first if sbwd is NULL)
     for ( i = 1; i <= seqw.Length(); i++ ) {
-      ShapeFix_WireSegment seg = seqw.Value(i);
+      const ShapeFix_WireSegment& seg = seqw.Value(i);
       if(seg.IsVertex())
         continue;
       TopAbs_Orientation anOr = seg.Orientation();
@@ -2106,7 +2101,7 @@ void ShapeFix_ComposeShell::CollectWires (ShapeFix_SequenceOfWireSegment &wires,
       // distance                  2
       // short                     auto
       // angle ->> PI              1
-      Handle(ShapeExtend_WireData) wire = seg.WireData();
+      const Handle(ShapeExtend_WireData)& wire = seg.WireData();
       for ( Standard_Integer j=0; j <2; j++ ) {
         if ( ! endV.IsSame ( j ? seg.LastVertex() : seg.FirstVertex() ) ) continue;
 
@@ -2333,8 +2328,8 @@ void ShapeFix_ComposeShell::CollectWires (ShapeFix_SequenceOfWireSegment &wires,
 //purpose  : 
 //=======================================================================
 
-static gp_Pnt2d GetMiddlePoint (const ShapeFix_WireSegment wire,
-                                const TopoDS_Face face)
+static gp_Pnt2d GetMiddlePoint (const ShapeFix_WireSegment& wire,
+                                const TopoDS_Face&          face)
 {
   if(wire.IsVertex()) {
     TopoDS_Vertex aV = wire.GetVertex();
@@ -2346,7 +2341,7 @@ static gp_Pnt2d GetMiddlePoint (const ShapeFix_WireSegment wire,
   Bnd_Box2d box;
   ShapeAnalysis_Edge sae;
   ShapeAnalysis_Curve sac;
-  Handle(ShapeExtend_WireData) wd = wire.WireData();
+  const Handle(ShapeExtend_WireData)& wd = wire.WireData();
   for(Standard_Integer i = 1; i <= wd->NbEdges(); i++) {
     TopoDS_Edge E = wd->Edge (i);
     Standard_Real cf,cl;
@@ -2379,7 +2374,7 @@ void ShapeFix_ComposeShell::MakeFacesOnPatch (TopTools_SequenceOfShape &faces,
   if ( loops.Length() == 1 ) {
     TopoDS_Face newFace;
     B.MakeFace ( newFace, surf, myLoc, ::Precision::Confusion() );
-    TopoDS_Shape aSH = loops.Value(1);
+    const TopoDS_Shape& aSH = loops.Value(1);
     if( aSH.ShapeType() != TopAbs_WIRE)
       return;
     TopoDS_Wire wire = TopoDS::Wire ( loops.Value(1) );
@@ -2809,7 +2804,7 @@ void ShapeFix_ComposeShell::DispatchWires (TopTools_SequenceOfShape &faces,
           loops.Append(wires(i).GetVertex());
       }
       else {
-        Handle(ShapeExtend_WireData) aWD = aSeg.WireData();
+        const Handle(ShapeExtend_WireData)& aWD = aSeg.WireData();
         if(!aWD.IsNull())
           loops.Append ( aWD->Wire() );
       }

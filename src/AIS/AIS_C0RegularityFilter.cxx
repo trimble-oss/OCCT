@@ -18,7 +18,6 @@
 #include <AIS_C0RegularityFilter.hxx>
 #include <BRep_Tool.hxx>
 #include <GeomAbs_Shape.hxx>
-#include <SelectMgr_EntityOwner.hxx>
 #include <Standard_Type.hxx>
 #include <StdSelect_BRepOwner.hxx>
 #include <TopExp.hxx>
@@ -57,7 +56,7 @@ AIS_C0RegularityFilter::AIS_C0RegularityFilter(const TopoDS_Shape& aShape)
       }
     }
     if (Ok) {
-      TopoDS_Shape curEdge = SubShapes.FindKey( i );
+      const TopoDS_Shape& curEdge = SubShapes.FindKey( i );
       myMapOfEdges.Add(curEdge);
     }
   }

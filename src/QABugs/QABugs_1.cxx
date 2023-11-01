@@ -17,17 +17,13 @@
 
 #include <Draw_Interpretor.hxx>
 #include <DBRep.hxx>
-#include <DrawTrSurf.hxx>
-#include <AIS_InteractiveContext.hxx>
 #include <ViewerTest.hxx>
 #include <AIS_Shape.hxx>
 #include <TopoDS_Shape.hxx>
 
 #include <ViewerTest_DoubleMapOfInteractiveAndName.hxx>
-#include <TColStd_ListIteratorOfListOfInteger.hxx>
 #include <TColStd_MapOfInteger.hxx>
 
-#include <TDocStd_Document.hxx>
 #include <TDocStd_Application.hxx>
 #include <DDocStd.hxx>
 #include <TDocStd_Owner.hxx>
@@ -47,7 +43,6 @@ Standard_IMPORT Draw_Viewer dout;
 
 #include <BRep_Builder.hxx>
 #include <BRepTools.hxx>
-#include <TopoDS_Wire.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <TopoDS.hxx>
 
@@ -58,9 +53,7 @@ Standard_EXPORT ViewerTest_DoubleMapOfInteractiveAndName& GetMapOfAIS();
 #endif
 
 #include <AIS_PlaneTrihedron.hxx>
-#include <TopoDS_Face.hxx>
 #include <TopExp_Explorer.hxx>
-#include <TopoDS_Edge.hxx>
 #include <BRepAdaptor_Curve.hxx>
 #include <GC_MakePlane.hxx>
 
@@ -250,7 +243,7 @@ static Standard_Integer OCC10bug (Draw_Interpretor& di, Standard_Integer argc, c
     }
     // Construction du Geom_Plane
     GC_MakePlane MkPlane(A,B,C);
-    Handle(Geom_Plane) theGeomPlane=MkPlane.Value();
+    const Handle(Geom_Plane)& theGeomPlane=MkPlane.Value();
     
     // on le display & bind
     theAISPlaneTri= new AIS_PlaneTrihedron(theGeomPlane );
@@ -343,7 +336,6 @@ static Standard_Integer OCC74bug_get (Draw_Interpretor& di, Standard_Integer arg
 }
 
 #include <BRepPrimAPI_MakeBox.hxx>
-#include <TDF_Data.hxx>
 #include <TNaming_Builder.hxx>
 #include <TNaming_NamedShape.hxx>
 #include <AIS_InteractiveObject.hxx>
@@ -391,16 +383,15 @@ static Standard_Integer OCC361bug (Draw_Interpretor& di, Standard_Integer nb, co
 #include <Image_AlienPixMap.hxx>
 #include <OSD_FileSystem.hxx>
 #include <Prs3d_ShadingAspect.hxx>
-#include <Standard_ArrayStreamBuffer.hxx>
 //=======================================================================
 //function : OCC30182
 //purpose  : Testing different interfaces of Image_AlienPixMap::Load()
 //=======================================================================
-static Standard_Integer OCC30182 (Draw_Interpretor& , Standard_Integer theNbArgs, const char** theArgVec)
+static Standard_Integer OCC30182 (Draw_Interpretor& di, Standard_Integer theNbArgs, const char** theArgVec)
 {
   if (ViewerTest::CurrentView().IsNull())
   {
-    std::cout << "Error: no active view\n";
+    di << "Error: no active view\n";
     return 1;
   }
 
@@ -439,13 +430,13 @@ static Standard_Integer OCC30182 (Draw_Interpretor& , Standard_Integer theNbArgs
     }
     else
     {
-      std::cout << "Syntax error at '" << anArg << "'\n";
+      di << "Syntax error at '" << anArg << "'\n";
       return 1;
     }
   }
   if (anImgPath.IsEmpty())
   {
-    std::cout << "Syntax error: wrong number of arguments\n";
+    di << "Syntax error: wrong number of arguments\n";
     return 1;
   }
 
@@ -460,10 +451,10 @@ static Standard_Integer OCC30182 (Draw_Interpretor& , Standard_Integer theNbArgs
   else
   {
     const Handle(OSD_FileSystem)& aFileSystem = OSD_FileSystem::DefaultFileSystem();
-    opencascade::std::shared_ptr<std::istream> aFile = aFileSystem->OpenIStream (anImgPath, std::ios::in | std::ios::binary);
+    std::shared_ptr<std::istream> aFile = aFileSystem->OpenIStream (anImgPath, std::ios::in | std::ios::binary);
     if (aFile.get() == NULL)
     {
-      std::cout << "Syntax error: image file '" << anImgPath << "' cannot be found\n";
+      di << "Syntax error: image file '" << anImgPath << "' cannot be found\n";
       return 1;
     }
     if (anOffset != 0)
@@ -478,13 +469,13 @@ static Standard_Integer OCC30182 (Draw_Interpretor& , Standard_Integer theNbArgs
       aFile->seekg (anOffset);
       if (aLen <= 0)
       {
-        std::cout << "Syntax error: wrong offset\n";
+        di << "Syntax error: wrong offset\n";
         return 1;
       }
       NCollection_Array1<Standard_Byte> aBuff (1, aLen);
       if (!aFile->read ((char* )&aBuff.ChangeFirst(), aBuff.Size()))
       {
-        std::cout << "Error: unable to read file\n";
+        di << "Error: unable to read file\n";
         return 1;
       }
       if (!anImage->Load (&aBuff.ChangeFirst(), aBuff.Size(), anImgPath))
@@ -508,11 +499,112 @@ static Standard_Integer OCC30182 (Draw_Interpretor& , Standard_Integer theNbArgs
   const Handle(Graphic3d_AspectFillArea3d)& anAspect = aPrs->Attributes()->ShadingAspect()->Aspect();
   anAspect->SetShadingModel (Graphic3d_TypeOfShadingModel_Unlit);
   anAspect->SetTextureMapOn (true);
-  anAspect->SetTextureMap (new Graphic3d_Texture2Dmanual (anImage));
+  anAspect->SetTextureMap (new Graphic3d_Texture2D (anImage));
   if (anImage->IsTopDown())
   {
     anAspect->TextureMap()->GetParams()->SetTranslation(Graphic3d_Vec2 (0.0f, -1.0f));
     anAspect->TextureMap()->GetParams()->SetScale      (Graphic3d_Vec2 (1.0f, -1.0f));
+  }
+
+  ViewerTest::Display (aPrsName, aPrs, true, true);
+  return 0;
+}
+
+//=======================================================================
+//function : OCC31956
+//purpose  : Testing Image_AlienPixMap::Save() overload for saving into a memory buffer or stream
+//=======================================================================
+static Standard_Integer OCC31956 (Draw_Interpretor& di, Standard_Integer theNbArgs, const char** theArgVec)
+{
+  if (ViewerTest::CurrentView().IsNull())
+  {
+    di << "Error: no active view\n";
+    return 1;
+  }
+  if (theNbArgs != 3 && theNbArgs != 5)
+  {
+    di << "Syntax error: wrong number of arguments\n";
+    return 1;
+  }
+
+  bool useStream = false;
+  TCollection_AsciiString aTempImgPath;
+  if (theNbArgs == 5)
+  {
+    TCollection_AsciiString anArg (theArgVec[3]);
+    anArg.LowerCase();
+    if (anArg == "-stream")
+    {
+      useStream = true;
+      aTempImgPath = theArgVec[4];
+    }
+    else
+    {
+      di << "Syntax error at '" << anArg << "'\n";
+      return 1;
+    }
+  }
+
+  TCollection_AsciiString aPrsName, anImgPath;
+  aPrsName = theArgVec[1];
+  anImgPath = theArgVec[2];
+  Handle(Image_AlienPixMap) anImage = new Image_AlienPixMap();
+  const Handle(OSD_FileSystem)& aFileSystem = OSD_FileSystem::DefaultFileSystem();
+  opencascade::std::shared_ptr<std::istream> aFile = aFileSystem->OpenIStream (anImgPath, std::ios::in | std::ios::binary);
+  if (aFile.get() == NULL)
+  {
+    di << "Syntax error: image file '" << anImgPath << "' cannot be found\n";
+    return 1;
+  }
+
+  aFile->seekg (0, std::ios::end);
+  Standard_Integer aLen = (Standard_Integer )aFile->tellg();
+  aFile->seekg (0);
+  if (!anImage->Load (*aFile, anImgPath))
+  {
+    return 0;
+  }
+
+  Handle(Image_AlienPixMap) aControlImg = new Image_AlienPixMap();
+  if (useStream)
+  {
+    opencascade::std::shared_ptr<std::ostream> aTempFile = aFileSystem->OpenOStream (aTempImgPath, std::ios::out | std::ios::binary);
+    if (aTempFile.get() == NULL)
+    {
+      di << "Error: image file '" << aTempImgPath << "' cannot be open\n";
+      return 0;
+    }
+    if (!anImage->Save (*aTempFile, aTempImgPath))
+    {
+      di << "Error: failed saving file using stream '" << aTempImgPath << "'\n";
+      return 0;
+    }
+    aTempFile.reset();
+    aControlImg->Load (aTempImgPath);
+  }
+  else
+  {
+    NCollection_Array1<Standard_Byte> aBuff (1, aLen + 2048);
+    if (!anImage->Save (&aBuff.ChangeFirst(), aBuff.Size(), anImgPath))
+    {
+      di << "Error: failed saving file using buffer'" << anImgPath << "'\n";
+      return 0;
+    }
+    aControlImg->Load (&aBuff.ChangeFirst(), aBuff.Size(), anImgPath);
+  }
+
+  TopoDS_Shape aShape = BRepPrimAPI_MakeBox (100.0 * aControlImg->Ratio(), 100.0, 1.0).Shape();
+  Handle(AIS_Shape) aPrs = new AIS_Shape (aShape);
+  aPrs->SetDisplayMode (AIS_Shaded);
+  aPrs->Attributes()->SetupOwnShadingAspect();
+  const Handle(Graphic3d_AspectFillArea3d)& anAspect = aPrs->Attributes()->ShadingAspect()->Aspect();
+  anAspect->SetShadingModel (Graphic3d_TOSM_UNLIT);
+  anAspect->SetTextureMapOn (true);
+  anAspect->SetTextureMap (new Graphic3d_Texture2D(aControlImg));
+  if (aControlImg->IsTopDown())
+  {
+    anAspect->TextureMap()->GetParams()->SetTranslation (Graphic3d_Vec2 (0.0f, -1.0f));
+    anAspect->TextureMap()->GetParams()->SetScale       (Graphic3d_Vec2 (1.0f, -1.0f));
   }
 
   ViewerTest::Display (aPrsName, aPrs, true, true);
@@ -536,5 +628,7 @@ void QABugs::Commands_1(Draw_Interpretor& theCommands) {
   theCommands.Add ("OCC30182",
                    "OCC30182 name image [-offset Start] [-fileName] [-stream] [-memory]\n"
                    "Decodes image either by passing file name, file stream or memory stream", __FILE__, OCC30182, group);
+  theCommands.Add ("OCC31956", "OCC31956 name image [-stream tempImage]\n"
+                   "Loads image and saves it into memory buffer or stream then loads it back", __FILE__, OCC31956, group);
   return;
 }

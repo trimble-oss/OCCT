@@ -19,34 +19,17 @@
 #include <BRep_Tool.hxx>
 #include <BRepAdaptor_Surface.hxx>
 #include <ElCLib.hxx>
-#include <Extrema_ExtPC.hxx>
-#include <Extrema_POnCurv.hxx>
-#include <Geom2d_BezierCurve.hxx>
 #include <Geom2d_BSplineCurve.hxx>
-#include <Geom2d_Circle.hxx>
 #include <Geom2d_Conic.hxx>
 #include <Geom2d_Curve.hxx>
-#include <Geom2d_Ellipse.hxx>
-#include <Geom2d_Hyperbola.hxx>
 #include <Geom2d_Line.hxx>
 #include <Geom2d_OffsetCurve.hxx>
-#include <Geom2d_Parabola.hxx>
-#include <Geom2d_TrimmedCurve.hxx>
-#include <Geom_BezierCurve.hxx>
 #include <Geom_BSplineCurve.hxx>
-#include <Geom_Circle.hxx>
-#include <Geom_Conic.hxx>
 #include <Geom_Curve.hxx>
-#include <Geom_Ellipse.hxx>
-#include <Geom_Hyperbola.hxx>
-#include <Geom_Line.hxx>
-#include <Geom_OffsetCurve.hxx>
-#include <Geom_Parabola.hxx>
 #include <Geom_Plane.hxx>
 #include <Geom_SphericalSurface.hxx>
 #include <Geom_Surface.hxx>
 #include <Geom_TrimmedCurve.hxx>
-#include <GeomAdaptor_Curve.hxx>
 #include <GeomAPI_ProjectPointOnCurve.hxx>
 #include <GeomAPI_ProjectPointOnSurf.hxx>
 #include <gp.hxx>
@@ -54,10 +37,7 @@
 #include <gp_Pnt2d.hxx>
 #include <gp_Vec2d.hxx>
 #include <Precision.hxx>
-#include <Standard_NotImplemented.hxx>
 #include <Standard_ProgramError.hxx>
-#include <TCollection_AsciiString.hxx>
-#include <TopAbs.hxx>
 #include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopLoc_Location.hxx>
@@ -66,8 +46,6 @@
 #include <TopoDS_Face.hxx>
 #include <TopoDS_Shape.hxx>
 #include <TopoDS_Vertex.hxx>
-#include <TopOpeBRepDS_Curve.hxx>
-#include <TopOpeBRepDS_DataStructure.hxx>
 #include <TopOpeBRepDS_Dumper.hxx>
 #include <TopOpeBRepDS_HDataStructure.hxx>
 #include <TopOpeBRepDS_Point.hxx>
@@ -272,7 +250,7 @@ void  TopOpeBRepDS_BuildTool::MakeEdge
     
     // Creation d'une arete avec PCurve connectee a la BDS Curve 
     // JYL 22-09-94
-    Handle(TopOpeBRepDS_Interference) I = C.GetSCI1();
+    const Handle(TopOpeBRepDS_Interference)& I = C.GetSCI1();
     Handle(TopOpeBRepDS_SurfaceCurveInterference) SCI;
     SCI=Handle(TopOpeBRepDS_SurfaceCurveInterference)::DownCast(I);
     Standard_Integer iS = SCI->Support();
@@ -591,8 +569,8 @@ void  TopOpeBRepDS_BuildTool::ApproxCurves
 //purpose  : 
 //=======================================================================
 Standard_Boolean FUN_getUV
-(const Handle(Geom_Surface) surf,
- const Handle(Geom_Curve) C3D,
+(const Handle(Geom_Surface)& surf,
+ const Handle(Geom_Curve)& C3D,
  const Standard_Real par3d,
  Standard_Real& u0,
  Standard_Real& v0)
@@ -631,7 +609,7 @@ Standard_Boolean FUN_reversePC
 }
 Standard_Boolean FUN_makeUisoLineOnSphe
 (const TopoDS_Face& F, // with geometry the spherical surface
- const Handle(Geom_Curve) C3D, 
+ const Handle(Geom_Curve)& C3D, 
  Handle(Geom2d_Curve) PCnew,
  const Standard_Real tol3d)
 {
@@ -765,13 +743,13 @@ void  TopOpeBRepDS_BuildTool::PutPCurves
 {
 
   TopoDS_Face& F1 = *((TopoDS_Face*)(void*)&(TopoDS::Face(newC.Shape1())));
-  Handle(Geom2d_Curve) PC1 = newC.Curve1();
+  const Handle(Geom2d_Curve)& PC1 = newC.Curve1();
   if (!PC1.IsNull() && comppc1) {
     PCurve(F1,E,PC1);
   }
   
   TopoDS_Face& F2 = *((TopoDS_Face*)(void*)&(TopoDS::Face(newC.Shape2())));
-  Handle(Geom2d_Curve) PC2 = newC.Curve2();
+  const Handle(Geom2d_Curve)& PC2 = newC.Curve2();
   if (!PC2.IsNull() && comppc2) {
     PCurve(F2,E,PC2);
   }
@@ -1213,7 +1191,7 @@ void  TopOpeBRepDS_BuildTool::PCurve(TopoDS_Shape& F,
     TopoDS_Face FF = TopoDS::Face(F);
     TopoDS_Edge EE = TopoDS::Edge(E);
 
-    Handle(Geom2d_Curve) PCT = PC;
+    const Handle(Geom2d_Curve)& PCT = PC;
     Standard_Real    CDSmin,CDSmax;
     Standard_Boolean rangedef = CDS.Range(CDSmin,CDSmax);
 

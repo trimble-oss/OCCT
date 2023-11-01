@@ -16,24 +16,18 @@
 
 
 #include <BRep_Builder.hxx>
-#include <BRepTools.hxx>
 #include <Message_ProgressScope.hxx>
-#include <Precision.hxx>
 #include <ShapeBuild_ReShape.hxx>
-#include <ShapeExtend_BasicMsgRegistrator.hxx>
 #include <ShapeFix.hxx>
 #include <ShapeFix_Edge.hxx>
-#include <ShapeFix_Face.hxx>
 #include <ShapeFix_Shape.hxx>
 #include <ShapeFix_Shell.hxx>
 #include <ShapeFix_Solid.hxx>
 #include <ShapeFix_Wire.hxx>
 #include <Standard_Type.hxx>
-#include <TopAbs.hxx>
 #include <TopAbs_ShapeEnum.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS.hxx>
-#include <TopoDS_Edge.hxx>
 #include <TopoDS_Face.hxx>
 #include <TopoDS_Iterator.hxx>
 #include <TopoDS_Shape.hxx>
@@ -118,18 +112,20 @@ Standard_Boolean ShapeFix_Shape::Perform(const Message_ProgressRange& theProgres
   TopLoc_Location nullLoc,L;
   L = myShape.Location();
   TopoDS_Shape aShapeNullLoc = myShape;
+  const Standard_Boolean aIsRecorded = Context()->IsNewShape(myShape);
   aShapeNullLoc.Location(nullLoc);
-  if(myMapFixingShape.Contains(aShapeNullLoc)) {
+  if(aIsRecorded || myMapFixingShape.Contains(aShapeNullLoc))
+  {
     myShape.Location(L, Standard_False);
     myResult = Context()->Apply(myShape);
     status = Standard_True;
     return status;
   }
-  else myMapFixingShape.Add(aShapeNullLoc);
+  myMapFixingShape.Add(aShapeNullLoc);
   //---------------------------------------
   myShape.Location(L, Standard_False);
   TopoDS_Shape S = Context()->Apply(myShape);
-  if ( NeedFix (  myFixVertexPositionMode ) )
+  if (NeedFix(myFixVertexPositionMode))
     ShapeFix::FixVertexPosition(S,Precision(),Context());
 
   st = S.ShapeType();

@@ -16,8 +16,6 @@
 
 #include <Geom_BSplineCurve.hxx>
 #include <Geom_BSplineSurface.hxx>
-#include <Draw.hxx>
-#include <Draw_Interpretor.hxx>
 #include <DrawTrSurf.hxx>
 #include <Draw_Appli.hxx>
 #include <GeometryTest.hxx>
@@ -31,7 +29,6 @@
 #include <GeomAPI_PointsToBSplineSurface.hxx>
 #include <Geom_Line.hxx>
 #include <Geom_TrimmedCurve.hxx>
-#include <Draw_Segment3D.hxx>
 #include <Draw_Marker3D.hxx>
 #include <Draw_Color.hxx>
 #include <Draw_MarkerShape.hxx>
@@ -366,7 +363,7 @@ static Standard_Integer surfapp(Draw_Interpretor& di, Standard_Integer n, const 
 
   if (anApprox.IsDone())
   {
-    Handle(Geom_BSplineSurface) S = anApprox.Surface();
+    const Handle(Geom_BSplineSurface)& S = anApprox.Surface();
     DrawTrSurf::Set(a[1], S);
     di << a[1];
   }
@@ -448,7 +445,7 @@ static Standard_Integer surfint(Draw_Interpretor& di, Standard_Integer n, const 
   }
   if (anApprox.IsDone())
   {
-    Handle(Geom_BSplineSurface) S = anApprox.Surface();
+    const Handle(Geom_BSplineSurface)& S = anApprox.Surface();
     DrawTrSurf::Set(a[1], S);
     di << a[1];
   }

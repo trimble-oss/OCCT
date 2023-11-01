@@ -20,7 +20,6 @@
 
 #include <TObj_Common.hxx>
 #include <TColStd_SequenceOfTransient.hxx>
-#include <TColStd_SequenceOfAsciiString.hxx>
 #include <TColStd_IndexedMapOfTransient.hxx>
 
 class TObj_Model;
@@ -46,7 +45,7 @@ public:
 
   //! Binds model to the map
   static Standard_EXPORT void
-    BindModel     (const Handle(TObj_Model) theModel);
+    BindModel     (const Handle(TObj_Model)& theModel);
 
   //! Clears all records from the model map
   static Standard_EXPORT void

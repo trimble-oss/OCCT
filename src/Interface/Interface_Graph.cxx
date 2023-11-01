@@ -14,7 +14,6 @@
 
 #include <Interface_BitMap.hxx>
 #include <Interface_EntityIterator.hxx>
-#include <Interface_GeneralLib.hxx>
 #include <Interface_GeneralModule.hxx>
 #include <Interface_Graph.hxx>
 #include <Interface_GTool.hxx>
@@ -25,7 +24,6 @@
 #include <Standard_DomainError.hxx>
 #include <Standard_Transient.hxx>
 #include <TCollection_HAsciiString.hxx>
-#include <TColStd_Array1OfInteger.hxx>
 #include <TColStd_HSequenceOfTransient.hxx>
 #include <TColStd_ListIteratorOfListOfInteger.hxx>
 
@@ -160,7 +158,7 @@ void Interface_Graph::Evaluate()
     //    Mise en forme : liste d entiers
     for (iter.Start(); iter.More(); iter.Next()) {
       //    num = 0 -> on sort du Model de depart, le noter "Error" et passer
-      Handle(Standard_Transient) entshare = iter.Value();
+      const Handle(Standard_Transient)& entshare = iter.Value();
       if(entshare == ent)
         continue;
 
@@ -351,7 +349,7 @@ void  Interface_Graph::GetFromIter
    if(thestats.IsNull())
     return;
   for (iter.Start(); iter.More(); iter.Next()) {
-    Handle(Standard_Transient) ent = iter.Value();
+    const Handle(Standard_Transient)& ent = iter.Value();
     Standard_Integer num = EntityNumber(ent);
     if (!num) 
       continue;
@@ -370,7 +368,7 @@ void  Interface_Graph::GetFromIter
   if(thestats.IsNull())
     return;
   for (iter.Start(); iter.More(); iter.Next()) {
-    Handle(Standard_Transient) ent = iter.Value();
+    const Handle(Standard_Transient)& ent = iter.Value();
     Standard_Integer num   = EntityNumber(ent);
     if (!num) 
       continue;

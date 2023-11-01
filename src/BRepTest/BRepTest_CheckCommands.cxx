@@ -19,15 +19,9 @@
 #include <BRepCheck_Analyzer.hxx>
 #include <BRepCheck_Result.hxx>
 #include <BRepCheck_ListIteratorOfListOfStatus.hxx>
-#include <TopoDS_Iterator.hxx>
 #include <TopExp_Explorer.hxx>
-#include <TopTools_DataMapOfShapeListOfShape.hxx>
-#include <TopTools_DataMapIteratorOfDataMapOfShapeListOfShape.hxx>
-#include <TopTools_DataMapIteratorOfDataMapOfIntegerListOfShape.hxx>
 #include <TopTools_ListOfShape.hxx>
-#include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <DBRep_DrawableShape.hxx>
-#include <Draw_SequenceOfDrawable3D.hxx>
 #include <BRepCheck.hxx>
 #include <BRepCheck_Edge.hxx>
 #include <Draw_Interpretor.hxx>
@@ -35,27 +29,20 @@
 #include <Draw.hxx>
 #include <DBRep.hxx>
 #include <BRepTest.hxx>
-#include <GeometryTest.hxx>
-#include <Precision.hxx>
-#include <LocalAnalysis.hxx>
 #include <LocalAnalysis_SurfaceContinuity.hxx>
 #include <Geom_SphericalSurface.hxx>
 #include <Geom_Surface.hxx>
-#include <Geom_Curve.hxx>
 #include <Geom2d_TrimmedCurve.hxx>
 #include <Geom2d_Curve.hxx>
 #include <DrawTrSurf.hxx>
 #include <GeomAbs_Shape.hxx>
 #include <TCollection_AsciiString.hxx>
-#include <TopoDS.hxx>
 #include <TopExp.hxx>
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
 #include <TopTools_MapOfShape.hxx>
-#include <TopTools_MapIteratorOfMapOfShape.hxx>
 #include <TopoDS_Shape.hxx>
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Face.hxx>
-#include <BRep_Tool.hxx>
 
 #include <TopOpeBRepTool_PurgeInternalEdges.hxx>
 //#include <TopOpeBRepTool_FuseEdges.hxx>
@@ -855,19 +842,20 @@ static Standard_Integer checkshape (Draw_Interpretor& theCommands,
   if (narg == 1)
   {
     theCommands << "\n";
-    theCommands << "Usage : checkshape [-top] shape [result] [-short] [-parallel]\n";
+    theCommands << "Usage : checkshape [-top] shape [result] [-short] [-parallel] [-exact]\n";
     theCommands << "\n";
     theCommands << "Where :\n";
-    theCommands << "   -top   - check topology only.\n";
-    theCommands << "   shape  - the name of the shape to test.\n";
-    theCommands << "   result - the prefix of the output shape names. If it is used, structural\n";
-    theCommands << "            output style will be used. Otherwise - contextual one.\n";
-    theCommands << "   -short - short description of check.\n";
+    theCommands << "   -top      - check topology only.\n";
+    theCommands << "   shape     - the name of the shape to test.\n";
+    theCommands << "   result    - the prefix of the output shape names. If it is used, structural\n";
+    theCommands << "               output style will be used. Otherwise - contextual one.\n";
+    theCommands << "   -short    - short description of check.\n";
     theCommands << "   -parallel - run check in parallel.\n";
+    theCommands << "   -exact    - run check using exact method.\n";
     return 0;
   }
 
-  if (narg > 6)
+  if (narg > 7)
   {
     theCommands << "Invalid number of args!!!\n";
     theCommands << "No args to have help.\n";
@@ -901,6 +889,7 @@ static Standard_Integer checkshape (Draw_Interpretor& theCommands,
   Standard_Boolean IsShortDump = Standard_False;
   Standard_Boolean IsContextDump = Standard_True;
   Standard_Boolean IsParallel = Standard_False;
+  Standard_Boolean IsExact = Standard_False;
   Standard_CString aPref(NULL);
   if (aCurInd < narg && strncmp(a[aCurInd], "-", 1))
   {
@@ -921,6 +910,10 @@ static Standard_Integer checkshape (Draw_Interpretor& theCommands,
     {
       IsParallel = Standard_True;
     }
+    else if (anArg == "-exact")
+    {
+      IsExact = Standard_True;
+    }
     else
     {
       theCommands << "Syntax error at '" << anArg << "'";
@@ -931,7 +924,7 @@ static Standard_Integer checkshape (Draw_Interpretor& theCommands,
   try 
   {
     OCC_CATCH_SIGNALS
-    BRepCheck_Analyzer anAna (aShape, aGeomCtrl, IsParallel);
+    BRepCheck_Analyzer anAna (aShape, aGeomCtrl, IsParallel, IsExact);
     Standard_Boolean   isValid = anAna.IsValid();
 
     if (isValid)

@@ -13,9 +13,6 @@
 
 #include <XCAFDoc_ColorTool.hxx>
 
-#include <Quantity_Color.hxx>
-#include <Standard_Dump.hxx>
-#include <Standard_GUID.hxx>
 #include <Standard_Type.hxx>
 #include <TDataStd_Name.hxx>
 #include <TDataStd_TreeNode.hxx>
@@ -25,8 +22,6 @@
 #include <TDF_Label.hxx>
 #include <TDF_RelocationTable.hxx>
 #include <TDF_Tool.hxx>
-#include <TNaming_NamedShape.hxx>
-#include <TopoDS_Shape.hxx>
 #include <XCAFDoc.hxx>
 #include <XCAFDoc_Color.hxx>
 #include <XCAFDoc_DocumentTool.hxx>
@@ -94,7 +89,7 @@ Standard_Boolean XCAFDoc_ColorTool::IsColor (const TDF_Label& lab) const
 //=======================================================================
 
 Standard_Boolean XCAFDoc_ColorTool::GetColor (const TDF_Label& lab,
-					       Quantity_Color& col) const
+					       Quantity_Color& col)
 {
   Quantity_ColorRGBA aCol;
   Standard_Boolean isDone = GetColor(lab, aCol);
@@ -109,10 +104,8 @@ Standard_Boolean XCAFDoc_ColorTool::GetColor (const TDF_Label& lab,
 //=======================================================================
 
 Standard_Boolean XCAFDoc_ColorTool::GetColor(const TDF_Label& lab,
-  Quantity_ColorRGBA& col) const
+  Quantity_ColorRGBA& col)
 {
-  if (lab.Father() != Label()) return Standard_False;
-
   Handle(XCAFDoc_Color) ColorAttribute;
   if (!lab.FindAttribute(XCAFDoc_Color::GetID(), ColorAttribute))
     return Standard_False;
@@ -519,7 +512,7 @@ XCAFDoc_ColorTool::XCAFDoc_ColorTool()
 //purpose  : 
 //=======================================================================
 
-Standard_Boolean XCAFDoc_ColorTool::IsVisible (const TDF_Label& L) const
+Standard_Boolean XCAFDoc_ColorTool::IsVisible (const TDF_Label& L)
 {
   Handle(TDataStd_UAttribute) aUAttr;
   return (!L.FindAttribute(XCAFDoc::InvisibleGUID(), aUAttr));

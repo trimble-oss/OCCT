@@ -13,8 +13,6 @@
 
 
 #include <BRepLib.hxx>
-#include <IGESData_GlobalSection.hxx>
-#include <IGESData_IGESEntity.hxx>
 #include <IGESData_IGESModel.hxx>
 #include <IGESToBRep.hxx>
 #include <IGESToBRep_Actor.hxx>
@@ -32,7 +30,6 @@
 #include <TopoDS_Shape.hxx>
 #include <Transfer_Binder.hxx>
 #include <Transfer_TransientProcess.hxx>
-#include <TransferBRep.hxx>
 #include <TransferBRep_ShapeBinder.hxx>
 #include <XSAlgo.hxx>
 #include <XSAlgo_AlgoContainer.hxx>
@@ -134,8 +131,6 @@ static void TrimTolerances (const TopoDS_Shape& shape,
   }
 }
 
-
-
 //=======================================================================
 //function : Transfer
 //purpose  : 
@@ -199,10 +194,11 @@ Handle(Transfer_Binder) IGESToBRep_Actor::Transfer
     
     // fixing shape
     Handle(Standard_Transient) info;
-    shape = XSAlgo::AlgoContainer()->ProcessShape( shape, theeps, CAS.GetMaxTol(), 
-                                                   "read.iges.resource.name", 
-                                                   "read.iges.sequence", info,
-                                                   aPS.Next());
+    shape = XSAlgo::AlgoContainer()->ProcessShape(shape, theeps, CAS.GetMaxTol(),
+                                                  "read.iges.resource.name",
+                                                  "read.iges.sequence",
+                                                  info, mymodel->ReShape(),
+                                                  aPS.Next());
     XSAlgo::AlgoContainer()->MergeTransferInfo(TP, info, nbTPitems);
   }
 

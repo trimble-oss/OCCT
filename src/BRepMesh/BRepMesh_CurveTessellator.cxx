@@ -15,7 +15,6 @@
 
 #include <BRepMesh_CurveTessellator.hxx>
 #include <gp_Pnt.hxx>
-#include <BRep_Tool.hxx>
 #include <TopoDS_Edge.hxx>
 #include <IMeshData_Edge.hxx>
 #include <IMeshData_PCurve.hxx>
@@ -36,11 +35,13 @@ IMPLEMENT_STANDARD_RTTIEXT(BRepMesh_CurveTessellator, IMeshTools_CurveTessellato
 //=======================================================================
 BRepMesh_CurveTessellator::BRepMesh_CurveTessellator(
   const IMeshData::IEdgeHandle& theEdge,
-  const IMeshTools_Parameters&  theParameters)
+  const IMeshTools_Parameters&  theParameters,
+  const Standard_Integer        theMinPointsNb)
   : myDEdge(theEdge),
     myParameters(theParameters),
     myEdge(theEdge->GetEdge()),
-    myCurve(myEdge)
+    myCurve(myEdge),
+    myMinPointsNb (theMinPointsNb)
 {
   init();
 }
@@ -53,11 +54,13 @@ BRepMesh_CurveTessellator::BRepMesh_CurveTessellator (
   const IMeshData::IEdgeHandle& theEdge,
   const TopAbs_Orientation      theOrientation,
   const IMeshData::IFaceHandle& theFace,
-  const IMeshTools_Parameters&  theParameters)
+  const IMeshTools_Parameters&  theParameters,
+  const Standard_Integer        theMinPointsNb)
   : myDEdge(theEdge),
     myParameters(theParameters),
     myEdge(TopoDS::Edge(theEdge->GetEdge().Oriented(theOrientation))),
-    myCurve(myEdge, theFace->GetFace())
+    myCurve(myEdge, theFace->GetFace()),
+    myMinPointsNb (theMinPointsNb)
 {
   init();
 }
@@ -98,8 +101,21 @@ void BRepMesh_CurveTessellator::init()
   myEdgeSqTol  = BRep_Tool::Tolerance (myEdge);
   myEdgeSqTol *= myEdgeSqTol;
 
-  const Standard_Integer aMinPntNb = (myCurve.GetType() == GeomAbs_Circle) ? 4 : 2; //OCC287
+  Standard_Integer aMinPntThreshold = 2;
+  switch (myCurve.GetType())
+  {
+    case GeomAbs_Circle:
+    case GeomAbs_Ellipse:
+    case GeomAbs_Parabola:
+    case GeomAbs_Hyperbola:
+      aMinPntThreshold = 4;
+      break;
 
+    default:
+      break;
+  }
+
+  const Standard_Integer aMinPntNb = Max (myMinPointsNb, aMinPntThreshold); //OCC287
   myDiscretTool.Initialize (myCurve,
                             myCurve.FirstParameter(), myCurve.LastParameter(),
                             aPreciseAngDef, aPreciseLinDef, aMinPntNb,

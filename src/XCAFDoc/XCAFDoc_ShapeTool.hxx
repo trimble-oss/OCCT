@@ -17,7 +17,6 @@
 #define _XCAFDoc_ShapeTool_HeaderFile
 
 #include <Standard.hxx>
-#include <Standard_Type.hxx>
 
 #include <XCAFDoc_DataMapOfShapeLabel.hxx>
 #include <Standard_Boolean.hxx>
@@ -34,8 +33,6 @@ class Standard_GUID;
 class TDF_Label;
 class TopoDS_Shape;
 class TopLoc_Location;
-class TDF_Attribute;
-class TDF_RelocationTable;
 class XCAFDoc_GraphNode;
 
 
@@ -199,6 +196,15 @@ public:
   //! For component, returns new shape with correct location
   //! Returns Null shape if label does not contain shape
   Standard_EXPORT static TopoDS_Shape GetShape (const TDF_Label& L);
+
+  //! Gets shape from a sequence of shape's labels
+  //! @param[in] theLabels a sequence of labels to get shapes from
+  //! @return original shape in case of one label and a compound of shapes in case of more
+  Standard_EXPORT static TopoDS_Shape GetOneShape(const TDF_LabelSequence& theLabels);
+
+  //! Gets shape from a sequence of all top-level shapes which are free
+  //! @return original shape in case of one label and a compound of shapes in case of more
+  Standard_EXPORT TopoDS_Shape GetOneShape() const;
   
   //! Creates new (empty) top-level shape.
   //! Initially it holds empty TopoDS_Compound
@@ -404,6 +410,15 @@ public:
   //! from upper_usage component to next_usage
   //! Returns null attribute if no SHUO found
   Standard_EXPORT static Standard_Boolean FindSHUO (const TDF_LabelSequence& Labels, Handle(XCAFDoc_GraphNode)& theSHUOAttr);
+
+  //! Sets location to the shape label
+  //! If label is reference -> changes location attribute
+  //! If label is free shape -> creates reference with location to it
+  //! @param[in] theShapeLabel the shape label to change location
+  //! @param[in] theLoc location to set
+  //! @param[out] theRefLabel the reference label with new location
+  //! @return TRUE if new location was set
+  Standard_EXPORT Standard_Boolean SetLocation (const TDF_Label& theShapeLabel, const TopLoc_Location& theLoc, TDF_Label& theRefLabel);
   
   //! Convert Shape (compound/compsolid/shell/wire) to assembly
   Standard_EXPORT Standard_Boolean Expand (const TDF_Label& Shape);

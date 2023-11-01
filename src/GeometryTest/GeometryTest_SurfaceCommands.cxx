@@ -26,27 +26,15 @@
 #include <Draw_Appli.hxx>
 #include <Draw_Display.hxx>
 
-#include <GeomAbs_SurfaceType.hxx>
-#include <GeomAbs_IsoType.hxx>
 #include <GeomAbs_Shape.hxx>
 
 #include <Geom_BSplineSurface.hxx>
-#include <Geom_BSplineCurve.hxx>
 #include <GeomConvert.hxx>
 
 
 #include <GeomAdaptor_Surface.hxx>
 #include <GeomAdaptor_Curve.hxx>
 #include <Geom2dAdaptor_Curve.hxx>
-
-#include <TColgp_Array1OfPnt.hxx>
-#include <TColgp_Array2OfPnt.hxx>
-#include <TColStd_Array1OfReal.hxx>
-#include <TColStd_Array2OfReal.hxx>
-#include <TColStd_Array1OfInteger.hxx>
-#include <TColStd_HArray1OfReal.hxx>
-#include <TColStd_HArray2OfReal.hxx>
-#include <TColGeom_SequenceOfCurve.hxx>
 
 #include <Precision.hxx>
 
@@ -58,12 +46,8 @@
 #include <GeomFill_AppSurf.hxx>
 
 
-#include <DrawTrSurf_BezierSurface.hxx>
-#include <DrawTrSurf_BSplineSurface.hxx>
-
 #ifdef _MSC_VER
 #include <stdio.h>
-//#define strcasecmp strcmp Already defined
 #endif
 
 #ifdef _WIN32
@@ -237,8 +221,8 @@ static Standard_Integer tuyau (Draw_Interpretor& di,
 
   Pipe.Perform(1.e-4, Standard_False,  Cont);
   if (!Pipe.IsDone()) {
-    di << "GeomFill_Pipe cannot make a surface\n";
-    return 1;
+    di << "Error: GeomFill_Pipe cannot make a surface\n";
+    return 0;
   }
 
   Standard_Real Accuracy = Pipe.ErrorOnSurf();
