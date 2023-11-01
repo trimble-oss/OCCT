@@ -5,7 +5,7 @@ set start=%time%
 cd ..
 
 RMDIR /S /Q BuildDll-142
-C:\Tools\cmake-3.18.4-win64-x64\bin\cmake.exe -C CMakeCache-Tekla.txt -G "Visual Studio 16 2019" -A x64 -S . -B BuildDll-142 -DCMAKE_INSTALL_PREFIX="."  -DBUILD_LIBRARY_TYPE="Shared"
+C:\Tools\cmake-3.27.7-windows-x86_64\bin\cmake.exe -C CMakeCache-Tekla.txt -G "Visual Studio 17 2022" -T "v142" -A x64 -S . -B BuildDll-142 -DCMAKE_INSTALL_PREFIX="."  -DBUILD_LIBRARY_TYPE="Shared"
 
 cd Nugetter
 

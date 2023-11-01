@@ -16,7 +16,7 @@
   <files>
     <file src="OpenCascade-Tekla.targets" target="\build\native\" />
 
-    <file src="..\inc\**\*" target="\build\native\include\" />
+    <file src="..\BuildDll-142\inc\**\*" target="\build\native\include\" />
     <file src="..\BuildDll-142\win64\vc14\libi\*.lib" target="\build\native\lib\x64\v142\" />
     <file src="..\BuildDll-142\win64\vc14\libd\*.lib" target="\build\native\lib\x64\v142\DebugCRT\" />
   </files>
