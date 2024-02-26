@@ -18,6 +18,7 @@ set /a Build=%Build%+1
 echo %Build%>ver.txt
 
 c:/tools/nuget/nuget.exe pack -Version 0.0.%Build% OpenCascade-Tekla.redist.nuspec
+c:/tools/nuget/nuget.exe pack -Version 0.0.%Build% OpenCascade-Tekla.symbols.nuspec
 c:/tools/nuget/nuget.exe pack -Version 0.0.%Build% OpenCascade-Tekla.nuspec
 
 REM SHOW USED TIME
