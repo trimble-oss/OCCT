@@ -378,13 +378,32 @@ class OpenCascadeConan(ConanFile):
                 "OCCT_INCLUDE_CMAKE_FILE (\"adm/cmake/draco\")",
                 "find_package(draco REQUIRED)",
             )
-        ## opengl
-        #replace_in_file(
-        #    self,
-        #    occt_csf_cmake,
-        #    "set (CSF_OpenGlLibs ",
-        #    "find_package(OpenGL)\n# set (CSF_OpenGlLibs ",
-        #)
+        # opengl, jhl mods to prevent use of OpenGL.
+        replace_in_file(
+            self,
+            occt_toolkit_cmake,
+            "-DHAVE_OPENGL",
+            "-DHAVE_OPENGL_NOT_REALLY",
+        )
+        replace_in_file(
+            self,
+            occt_toolkit_cmake,
+            "-DHAVE_GLES2",
+            "-DHAVE_GLES2_NOT_REALLY",
+        )
+        replace_in_file(
+            self,
+            occt_csf_cmake,
+            "CSF_OpenGlLibs",
+            "CSF_OpenGlLibs_NoReally",
+        )
+        replace_in_file(
+            self,
+            occt_csf_cmake,
+            "(CSF_OpenGlesLibs",
+            "(CSF_OpenGlesLibs_NoReally",
+        )
+
         if self._link_opengl:
             deps_targets.append("OpenGL::GL")
 
@@ -500,13 +519,14 @@ class OpenCascadeConan(ConanFile):
             "CSF_fontconfig": {},
             "CSF_FREETYPE": {},
             "CSF_OpenGlesLibs": {},
+            "CSF_OpenGlLibs" : {},
             # Mandatory dependencies
             #"CSF_FREETYPE": {"externals": ["freetype::freetype"]},
             "CSF_TclLibs": {"externals": ["tcl::tcl"]},
             #"CSF_fontconfig": {"externals": ["fontconfig::fontconfig"] if self._is_linux else []},
             #"CSF_XwLibs": {"externals": ["xorg::xorg"] if self._is_linux else []},
             # Optional dependencies
-            "CSF_OpenGlLibs": {"externals": ["opengl::opengl"] if self._link_opengl else []},
+            #"CSF_OpenGlLibs": {"externals": ["opengl::opengl"] if self._link_opengl else []},
             "CSF_TclTkLibs": {"externals": ["tk::tk"] if self._link_tk else []},
             "CSF_FFmpeg": {"externals": ["ffmpeg::ffmpeg"] if self.options.with_ffmpeg else []},
             "CSF_FreeImagePlus": {"externals": ["freeimage::freeimage"] if self.options.with_freeimage else []},
