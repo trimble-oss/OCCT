@@ -5,7 +5,7 @@ set start=%time%
 cd ..
 
 RMDIR /S /Q BuildDll-142
-C:\Tools\cmake-3.27.7-windows-x86_64\bin\cmake.exe -C CMakeCache-Tekla.txt -G "Visual Studio 17 2022" -T "v142" -A x64 -S . -B BuildDll-142 -DCMAKE_INSTALL_PREFIX="."  -DBUILD_LIBRARY_TYPE="Shared"
+"C:\Program Files\CMake\bin\cmake.exe" -C CMakeCache-Tekla.txt -G "Visual Studio 17 2022" -T "v142" -A x64 -S . -B BuildDll-142 -DCMAKE_INSTALL_PREFIX="."  -DBUILD_LIBRARY_TYPE="Shared"
 
 cd Nugetter
 
@@ -17,9 +17,9 @@ set /p Build=<ver.txt
 set /a Build=%Build%+1
 echo %Build%>ver.txt
 
-c:/tools/nuget/nuget.exe pack -Version 0.0.%Build% OpenCascade-Tekla.redist.nuspec
-c:/tools/nuget/nuget.exe pack -Version 0.0.%Build% OpenCascade-Tekla.symbols.nuspec
-c:/tools/nuget/nuget.exe pack -Version 0.0.%Build% OpenCascade-Tekla.nuspec
+c:/tools/nuget/nuget.exe pack -Version 0.0.%Build% -OutputDirectory c:/Nuget-Local OpenCascade-Tekla.redist.nuspec
+c:/tools/nuget/nuget.exe pack -Version 0.0.%Build% -OutputDirectory c:/Nuget-Local OpenCascade-Tekla.symbols.nuspec
+c:/tools/nuget/nuget.exe pack -Version 0.0.%Build% -OutputDirectory c:/Nuget-Local OpenCascade-Tekla.nuspec
 
 REM SHOW USED TIME
 set end=%time%

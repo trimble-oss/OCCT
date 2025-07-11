@@ -5,7 +5,7 @@ set start=%time%
 cd ..
 
 RMDIR /S /Q BuildStatic-142
-C:\Tools\cmake-3.18.4-win64-x64\bin\cmake.exe -C CMakeCache-Tekla.txt -G "Visual Studio 16 2019" -A x64 -S . -B BuildStatic-142 -DCMAKE_INSTALL_PREFIX="." -DBUILD_LIBRARY_TYPE="Static"
+"C:\Program Files\CMake\bin\cmake.exe" -C CMakeCache-Tekla.txt -G "Visual Studio 16 2019" -A x64 -S . -B BuildStatic-142 -DCMAKE_INSTALL_PREFIX="." -DBUILD_LIBRARY_TYPE="Static"
 
 cd Nugetter
 
@@ -17,7 +17,7 @@ set /p Build=<ver.txt
 set /a Build=%Build%+1
 echo %Build%>ver.txt
 
-c:/tools/nuget/nuget.exe pack -Version 0.0.%Build% OpenCascade-Tekla.Static.nuspec
+c:/tools/nuget/nuget.exe pack -Version 0.0.%Build% -OutputDirectory c:/Nuget-Local OpenCascade-Tekla.Static.nuspec
 
 REM SHOW USED TIME
 set end=%time%
