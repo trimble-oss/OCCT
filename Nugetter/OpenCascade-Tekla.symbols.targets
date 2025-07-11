@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" >
+  <ItemGroup Label="v142 Release" Condition="$(Configuration.ToLower().IndexOf('debugcrt')) == -1">
+    <OpenCascadeTeklaSymbolFiles Include="$(MSBuildThisFileDirectory)\bin\$(Platform)\v142\*" />
+  </ItemGroup>
+  <ItemGroup Label="v142 DebugCRT" Condition="$(Configuration.ToLower().IndexOf('debugcrt')) &gt; -1">
+    <OpenCascadeTeklaSymbolFiles Include="$(MSBuildThisFileDirectory)\bin\$(Platform)\v142\DebugCRT\*" />
+  </ItemGroup>
+  <Target Name="OpenCascadeTeklaSymbolFiles_AfterBuild" AfterTargets="AfterBuild" >
+    <Copy SourceFiles="@(OpenCascadeTeklaSymbolFiles)" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

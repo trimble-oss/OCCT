@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package>
+  <metadata>
+    <id>OpenCascade-Tekla.symbols</id>
+    <version>7.8.0.0</version>
+    <authors>OPEN CASCADE S.A.S.</authors>
+    <owners>OPEN CASCADE S.A.S.</owners>
+    <licenseUrl>http://www.opencascade.org/</licenseUrl>
+    <projectUrl>http://www.opencascade.org/</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Symbols (.pdb) for package 'OpenCascade-Tekla.redist'.</description>
+    <copyright>Copyright 2019 OPEN CASCADE SAS</copyright>
+    <title>OpenCascade (Tekla build) Symbols</title>
+    <tags>OpenCascade  native</tags>
+  </metadata>
+  <files>
+    <file src="OpenCascade-Tekla.symbols.targets" target="\build\native\" />
+
+    <file src="..\BuildDll-142\win64\vc14\bini\*.pdb" target="\build\native\bin\x64\v142\" />
+    <file src="..\BuildDll-142\win64\vc14\bind\*.pdb" target="\build\native\bin\x64\v142\DebugCRT\" />
+  </files>
+</package>

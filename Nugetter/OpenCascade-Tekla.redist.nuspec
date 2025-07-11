@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package>
+  <metadata>
+    <id>OpenCascade-Tekla.redist</id>
+    <version>7.8.0.0</version>
+    <authors>OPEN CASCADE S.A.S.</authors>
+    <owners>OPEN CASCADE S.A.S.</owners>
+    <licenseUrl>http://www.opencascade.org/</licenseUrl>
+    <projectUrl>http://www.opencascade.org/</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Redistributable components for package 'OpenCascade-Tekla'.</description>
+    <copyright>Copyright 2019 OPEN CASCADE SAS</copyright>
+    <title>OpenCascade (Tekla build) Redist</title>
+    <tags>OpenCascade  native</tags>
+  </metadata>
+  <files>
+    <file src="OpenCascade-Tekla.redist.targets" target="\build\native\" />
+
+    <file src="..\BuildDll-142\win64\vc14\bini\*.dll" target="\build\native\bin\x64\v142\" />
+    <file src="..\BuildDll-142\win64\vc14\bind\*.dll" target="\build\native\bin\x64\v142\DebugCRT\" />
+  </files>
+</package>

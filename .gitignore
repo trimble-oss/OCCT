@@ -56,3 +56,12 @@ win64
 /build*
 /install*
 /tools/build*
+
+
+# CMake builds (trimble-technology)
+Build/
+BuildDll-142/
+BuildStatic-142/
+android-arm64/
+android-x86/
+/.vs
