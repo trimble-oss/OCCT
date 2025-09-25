@@ -2,14 +2,14 @@
 <package>
   <metadata>
     <id>OpenCascade-Tekla.redist</id>
-    <version>7.8.0.0</version>
+    <version>7.9.1.0</version>
     <authors>OPEN CASCADE S.A.S.</authors>
     <owners>OPEN CASCADE S.A.S.</owners>
     <licenseUrl>http://www.opencascade.org/</licenseUrl>
     <projectUrl>http://www.opencascade.org/</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Redistributable components for package 'OpenCascade-Tekla'.</description>
-    <copyright>Copyright 2019 OPEN CASCADE SAS</copyright>
+    <copyright>Copyright 2025 OPEN CASCADE SAS</copyright>
     <title>OpenCascade (Tekla build) Redist</title>
     <tags>OpenCascade  native</tags>
   </metadata>

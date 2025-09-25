@@ -2,14 +2,14 @@
 <package>
   <metadata>
     <id>OpenCascade-Tekla.symbols</id>
-    <version>7.8.0.0</version>
+    <version>7.9.1.0</version>
     <authors>OPEN CASCADE S.A.S.</authors>
     <owners>OPEN CASCADE S.A.S.</owners>
     <licenseUrl>http://www.opencascade.org/</licenseUrl>
     <projectUrl>http://www.opencascade.org/</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Symbols (.pdb) for package 'OpenCascade-Tekla.redist'.</description>
-    <copyright>Copyright 2019 OPEN CASCADE SAS</copyright>
+    <copyright>Copyright 2025 OPEN CASCADE SAS</copyright>
     <title>OpenCascade (Tekla build) Symbols</title>
     <tags>OpenCascade  native</tags>
   </metadata>
