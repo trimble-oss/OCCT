@@ -381,6 +381,12 @@ class OpenCascadeConan(ConanFile):
         # opengl, jhl mods to prevent use of OpenGL.
         replace_in_file(
             self,
+            cmakelists,
+            "set (USE_GLES2 ON)",
+            "set (USE_GLES2 OFF)",
+        )
+        replace_in_file(
+            self,
             occt_toolkit_cmake,
             "-DHAVE_OPENGL",
             "-DHAVE_OPENGL_NOT_REALLY",
