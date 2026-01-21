@@ -56,6 +56,7 @@
 #include <ShapeFix_Face.hxx>
 #include <ShapeFix_Shell.hxx>
 #include <ShapeFix_Wire.hxx>
+#include <Standard_NullValue.hxx>
 #include <Standard_Type.hxx>
 #include <TColGeom2d_Array1OfBSplineCurve.hxx>
 #include <TColGeom2d_HArray1OfBSplineCurve.hxx>
@@ -282,26 +283,40 @@ static Standard_Boolean TryMakeLine(const Handle(Geom2d_Curve)& thePCurve,
   return Standard_True;
 }
 
-static void RemoveEdgeFromMap(const TopoDS_Edge&                         theEdge,
-                              TopTools_IndexedDataMapOfShapeListOfShape& theVEmap)
+// Removes the specified edge from the vertex to edge map.
+// @param theEdge The edge to remove.
+// @param theVertexToEdges The map of vertices to edges.
+// @return True if the edge was removed, false otherwise.
+static bool RemoveEdgeFromMap(const TopoDS_Edge&                         theEdge,
+                              TopTools_IndexedDataMapOfShapeListOfShape& theVertexToEdges)
 {
-  TopoDS_Vertex VV[2];
-  TopExp::Vertices(theEdge, VV[0], VV[1]);
-  for (Standard_Integer i = 0; i < 2; i++)
+  bool          anIsRemoved = false;
+  TopoDS_Vertex aFirstVertex;
+  TopoDS_Vertex aLastVertex;
+  TopExp::Vertices(theEdge, aFirstVertex, aLastVertex);
+  for (const auto& aVertex : {aFirstVertex, aLastVertex})
   {
-    if (!theVEmap.Contains(VV[i]))
-      continue;
-    TopTools_ListOfShape&              Elist = theVEmap.ChangeFromKey(VV[i]);
-    TopTools_ListIteratorOfListOfShape itl(Elist);
-    while (itl.More())
+    if (!theVertexToEdges.Contains(aVertex))
     {
-      const TopoDS_Shape& anEdge = itl.Value();
+      continue;
+    }
+    TopTools_ListOfShape&              aVertexEdges = theVertexToEdges.ChangeFromKey(aVertex);
+    TopTools_ListIteratorOfListOfShape anEdgesIter(aVertexEdges);
+    while (anEdgesIter.More())
+    {
+      const TopoDS_Shape& anEdge = anEdgesIter.Value();
       if (anEdge.IsSame(theEdge))
-        Elist.Remove(itl);
+      {
+        anIsRemoved = true;
+        aVertexEdges.Remove(anEdgesIter);
+      }
       else
-        itl.Next();
+      {
+        anEdgesIter.Next();
+      }
     }
   }
+  return anIsRemoved;
 }
 
 static Standard_Real ComputeMinEdgeSize(const TopTools_SequenceOfShape& theEdges,
@@ -317,9 +332,14 @@ static Standard_Real ComputeMinEdgeSize(const TopTools_SequenceOfShape& theEdges
     TopoDS_Vertex V1, V2;
     TopExp::Vertices(anEdge, V1, V2);
     BRepAdaptor_Curve2d BAcurve2d(anEdge, theRefFace);
-    gp_Pnt2d            FirstP2d = BAcurve2d.Value(BAcurve2d.FirstParameter());
-    gp_Pnt2d            LastP2d  = BAcurve2d.Value(BAcurve2d.LastParameter());
-    Standard_Real       aSqDist;
+    if (BAcurve2d.Curve().IsNull())
+    {
+      continue;
+    }
+
+    const gp_Pnt2d FirstP2d = BAcurve2d.Value(BAcurve2d.FirstParameter());
+    const gp_Pnt2d LastP2d  = BAcurve2d.Value(BAcurve2d.LastParameter());
+    Standard_Real  aSqDist;
     if (V1.IsSame(V2) && !BRep_Tool::Degenerated(anEdge))
     {
       gp_Pnt2d MidP2d =
@@ -327,9 +347,11 @@ static Standard_Real ComputeMinEdgeSize(const TopTools_SequenceOfShape& theEdges
       aSqDist = FirstP2d.SquareDistance(MidP2d);
     }
     else
+    {
       aSqDist = FirstP2d.SquareDistance(LastP2d);
-    if (aSqDist < MinSize)
-      MinSize = aSqDist;
+    }
+
+    MinSize = std::min(MinSize, aSqDist);
   }
   MinSize = Sqrt(MinSize);
   return MinSize;
@@ -451,6 +473,32 @@ static Standard_Boolean FindCoordBounds(const TopTools_SequenceOfShape&         
   return Standard_True;
 }
 
+//==================================================================================================
+
+// Returns the start and end points of the edge in parametric space of the face.
+// The orientation of the edge is taken into account, so the start and end points
+// will be swapped if the edge has a reversed orientation.
+// @param theEdge The edge to get the points from.
+// @param theRefFace The reference face to get the parametric points.
+// @return A pair of points representing the start and end points of the edge in parametric space.
+static std::pair<gp_Pnt2d, gp_Pnt2d> getCurveParams(const TopoDS_Edge& theEdge,
+                                                    const TopoDS_Face& theRefFace)
+{
+  BRepAdaptor_Curve2d aCurveAdaptor(theEdge, theRefFace);
+  Standard_Real       aFirstParam = aCurveAdaptor.FirstParameter();
+  Standard_Real       aLastParam  = aCurveAdaptor.LastParameter();
+  if (theEdge.Orientation() != TopAbs_FORWARD)
+  {
+    std::swap(aFirstParam, aLastParam);
+  }
+
+  const gp_Pnt2d aFirstPoint = aCurveAdaptor.Value(aFirstParam);
+  const gp_Pnt2d aLastPoint  = aCurveAdaptor.Value(aLastParam);
+  return {aFirstPoint, aLastPoint};
+}
+
+//==================================================================================================
+
 static void RelocatePCurvesToNewUorigin(
   const TopTools_SequenceOfShape&                          theEdges,
   const TopoDS_Shape&                                      theFirstFace,
@@ -462,141 +510,129 @@ static void RelocatePCurvesToNewUorigin(
   NCollection_DataMap<TopoDS_Shape, Handle(Geom2d_Curve)>& theEdgeNewPCurve,
   TopTools_MapOfShape&                                     theUsedEdges)
 {
-  TopTools_MapOfShape EdgesOfFirstFace;
-  TopExp::MapShapes(theFirstFace, EdgesOfFirstFace);
+  TopTools_MapOfShape anEdgesOfFirstFace;
+  TopExp::MapShapes(theFirstFace, anEdgesOfFirstFace);
 
   for (;;) // walk by contours
   {
     // try to find the start edge that:
     // 1. belongs to outer edges of first face;
     // 2. has minimum U-coord of its start point
-    TopoDS_Edge        StartEdge;
-    TopAbs_Orientation anOr      = TopAbs_FORWARD;
-    Standard_Real      aCoordMin = RealLast();
-    for (Standard_Integer ii = 1; ii <= theEdges.Length(); ii++)
+    TopoDS_Edge        aStartEdge;
+    TopAbs_Orientation anOrientation = TopAbs_FORWARD;
+    Standard_Real      aCoordMin     = RealLast();
+    for (Standard_Integer anEdgeIndex = 1; anEdgeIndex <= theEdges.Length(); ++anEdgeIndex)
     {
-      const TopoDS_Edge& anEdge = TopoDS::Edge(theEdges(ii));
+      const TopoDS_Edge& anEdge = TopoDS::Edge(theEdges(anEdgeIndex));
       if (theUsedEdges.Contains(anEdge))
-        continue;
-      if (EdgesOfFirstFace.Contains(anEdge))
       {
-        if (StartEdge.IsNull())
+        continue;
+      }
+
+      if (!anEdgesOfFirstFace.Contains(anEdge))
+      {
+        continue;
+      }
+
+      if (aStartEdge.IsNull())
+      {
+        aStartEdge                             = anEdge;
+        const auto&& [aFirstPoint, aLastPoint] = getCurveParams(anEdge, theRefFace);
+        if (aFirstPoint.Coord(theIndCoord) < aLastPoint.Coord(theIndCoord))
         {
-          StartEdge = anEdge;
-          BRepAdaptor_Curve2d StartBAcurve(StartEdge, theRefFace);
-          Standard_Real       aFirstParam, aLastParam;
-          if (StartEdge.Orientation() == TopAbs_FORWARD)
-          {
-            aFirstParam = StartBAcurve.FirstParameter();
-            aLastParam  = StartBAcurve.LastParameter();
-          }
-          else
-          {
-            aFirstParam = StartBAcurve.LastParameter();
-            aLastParam  = StartBAcurve.FirstParameter();
-          }
-          gp_Pnt2d aFirstPoint = StartBAcurve.Value(aFirstParam);
-          gp_Pnt2d aLastPoint  = StartBAcurve.Value(aLastParam);
-          if (aFirstPoint.Coord(theIndCoord) < aLastPoint.Coord(theIndCoord))
-          {
-            aCoordMin = aFirstPoint.Coord(theIndCoord);
-            anOr      = TopAbs_FORWARD;
-          }
-          else
-          {
-            aCoordMin = aLastPoint.Coord(theIndCoord);
-            anOr      = TopAbs_REVERSED;
-          }
+          aCoordMin     = aFirstPoint.Coord(theIndCoord);
+          anOrientation = TopAbs_FORWARD;
         }
         else
         {
-          BRepAdaptor_Curve2d aBAcurve(anEdge, theRefFace);
-          Standard_Real       aFirstParam, aLastParam;
-          if (anEdge.Orientation() == TopAbs_FORWARD)
-          {
-            aFirstParam = aBAcurve.FirstParameter();
-            aLastParam  = aBAcurve.LastParameter();
-          }
-          else
-          {
-            aFirstParam = aBAcurve.LastParameter();
-            aLastParam  = aBAcurve.FirstParameter();
-          }
-          gp_Pnt2d aFirstPoint = aBAcurve.Value(aFirstParam);
-          gp_Pnt2d aLastPoint  = aBAcurve.Value(aLastParam);
-          if (aFirstPoint.Coord(theIndCoord) < aCoordMin)
-          {
-            StartEdge = anEdge;
-            aCoordMin = aFirstPoint.Coord(theIndCoord);
-            anOr      = TopAbs_FORWARD;
-          }
-          if (aLastPoint.Coord(theIndCoord) < aCoordMin)
-          {
-            StartEdge = anEdge;
-            aCoordMin = aLastPoint.Coord(theIndCoord);
-            anOr      = TopAbs_REVERSED;
-          }
+          aCoordMin     = aLastPoint.Coord(theIndCoord);
+          anOrientation = TopAbs_REVERSED;
         }
-      } // if (EdgesOfFirstFace.Contains(anEdge))
-    } // for (Standard_Integer ii = 1; ii <= edges.Length(); ii++)
-
-    if (StartEdge.IsNull()) // all contours are passed
-      break;
-
-    TopoDS_Vertex        StartVertex = (anOr == TopAbs_FORWARD)
-                                         ? TopExp::FirstVertex(StartEdge, Standard_True)
-                                         : TopExp::LastVertex(StartEdge, Standard_True);
-    TopoDS_Edge          CurEdge     = StartEdge;
-    Standard_Real        fpar, lpar;
-    Handle(Geom2d_Curve) CurPCurve = BRep_Tool::CurveOnSurface(CurEdge, theRefFace, fpar, lpar);
-    CurPCurve                      = new Geom2d_TrimmedCurve(CurPCurve, fpar, lpar);
-    theEdgeNewPCurve.Bind(CurEdge, CurPCurve);
-    if (CurEdge.Orientation() == TopAbs_REVERSED)
-    {
-      Standard_Real tmp = fpar;
-      fpar              = lpar;
-      lpar              = tmp;
+      }
+      else
+      {
+        const auto&& [aFirstPoint, aLastPoint] = getCurveParams(anEdge, theRefFace);
+        if (aFirstPoint.Coord(theIndCoord) < aCoordMin)
+        {
+          aStartEdge    = anEdge;
+          aCoordMin     = aFirstPoint.Coord(theIndCoord);
+          anOrientation = TopAbs_FORWARD;
+        }
+        if (aLastPoint.Coord(theIndCoord) < aCoordMin)
+        {
+          aStartEdge    = anEdge;
+          aCoordMin     = aLastPoint.Coord(theIndCoord);
+          anOrientation = TopAbs_REVERSED;
+        }
+      }
     }
-    Standard_Real CurParam = (anOr == TopAbs_FORWARD) ? lpar : fpar;
+
+    if (aStartEdge.IsNull()) // all contours are passed
+    {
+      break;
+    }
+
+    TopoDS_Edge          aCurrentEdge = aStartEdge;
+    Standard_Real        anEdgeStartParam, anEdgeEndParam;
+    Handle(Geom2d_Curve) CurPCurve =
+      BRep_Tool::CurveOnSurface(aCurrentEdge, theRefFace, anEdgeStartParam, anEdgeEndParam);
+    CurPCurve = new Geom2d_TrimmedCurve(CurPCurve, anEdgeStartParam, anEdgeEndParam);
+    theEdgeNewPCurve.Bind(aCurrentEdge, CurPCurve);
+    if (aCurrentEdge.Orientation() == TopAbs_REVERSED)
+    {
+      std::swap(anEdgeStartParam, anEdgeEndParam);
+    }
+    Standard_Real CurParam = (anOrientation == TopAbs_FORWARD) ? anEdgeEndParam : anEdgeStartParam;
     gp_Pnt2d      CurPoint = CurPCurve->Value(CurParam);
 
     for (;;) // collect pcurves of a contour
     {
-      RemoveEdgeFromMap(CurEdge, theVEmap);
-      theUsedEdges.Add(CurEdge);
-      TopoDS_Vertex CurVertex = (anOr == TopAbs_FORWARD)
-                                  ? TopExp::LastVertex(CurEdge, Standard_True)
-                                  : TopExp::FirstVertex(CurEdge, Standard_True);
+      if (!RemoveEdgeFromMap(aCurrentEdge, theVEmap))
+      {
+        break; // end of contour in 2d
+      }
+      theUsedEdges.Add(aCurrentEdge);
+      TopoDS_Vertex CurVertex = (anOrientation == TopAbs_FORWARD)
+                                  ? TopExp::LastVertex(aCurrentEdge, Standard_True)
+                                  : TopExp::FirstVertex(aCurrentEdge, Standard_True);
 
       const TopTools_ListOfShape& Elist = theVEmap.FindFromKey(CurVertex);
       if (Elist.IsEmpty())
+      {
         break; // end of contour in 3d
+      }
 
-      TopTools_ListIteratorOfListOfShape itl(Elist);
-      for (; itl.More(); itl.Next())
+      for (TopTools_ListIteratorOfListOfShape itl(Elist); itl.More(); itl.Next())
       {
         const TopoDS_Edge& anEdge = TopoDS::Edge(itl.Value());
-        if (anEdge.IsSame(CurEdge))
+        if (anEdge.IsSame(aCurrentEdge))
+        {
           continue;
-        TopoDS_Vertex aFirstVertex = (anOr == TopAbs_FORWARD)
+        }
+
+        TopoDS_Vertex aFirstVertex = (anOrientation == TopAbs_FORWARD)
                                        ? TopExp::FirstVertex(anEdge, Standard_True)
                                        : TopExp::LastVertex(anEdge, Standard_True);
         if (!aFirstVertex.IsSame(CurVertex)) // may be if CurVertex is deg.vertex
+        {
           continue;
+        }
 
-        Handle(Geom2d_Curve) aPCurve = BRep_Tool::CurveOnSurface(anEdge, theRefFace, fpar, lpar);
-        aPCurve                      = new Geom2d_TrimmedCurve(aPCurve, fpar, lpar);
+        Handle(Geom2d_Curve) aPCurve =
+          BRep_Tool::CurveOnSurface(anEdge, theRefFace, anEdgeStartParam, anEdgeEndParam);
+        aPCurve = new Geom2d_TrimmedCurve(aPCurve, anEdgeStartParam, anEdgeEndParam);
         if (anEdge.Orientation() == TopAbs_REVERSED)
         {
-          Standard_Real tmp = fpar;
-          fpar              = lpar;
-          lpar              = tmp;
+          std::swap(anEdgeStartParam, anEdgeEndParam);
         }
-        Standard_Real aParam   = (anOr == TopAbs_FORWARD) ? fpar : lpar;
+        Standard_Real aParam =
+          (anOrientation == TopAbs_FORWARD) ? anEdgeStartParam : anEdgeEndParam;
         gp_Pnt2d      aPoint   = aPCurve->Value(aParam);
         Standard_Real anOffset = CurPoint.Coord(theIndCoord) - aPoint.Coord(theIndCoord);
         if (!(Abs(anOffset) < theCoordTol || Abs(Abs(anOffset) - thePeriod) < theCoordTol))
+        {
           continue; // may be if CurVertex is deg.vertex
+        }
 
         if (Abs(anOffset) > thePeriod / 2)
         {
@@ -611,8 +647,8 @@ static void RelocatePCurvesToNewUorigin(
           aPCurve = aNewPCurve;
         }
         theEdgeNewPCurve.Bind(anEdge, aPCurve);
-        CurEdge                  = anEdge;
-        TopAbs_Orientation CurOr = TopAbs::Compose(anOr, CurEdge.Orientation());
+        aCurrentEdge             = anEdge;
+        TopAbs_Orientation CurOr = TopAbs::Compose(anOrientation, aCurrentEdge.Orientation());
         CurParam = (CurOr == TopAbs_FORWARD) ? aPCurve->LastParameter() : aPCurve->FirstParameter();
         CurPoint = aPCurve->Value(CurParam);
         break;
@@ -1297,13 +1333,9 @@ static Standard_Boolean getCylinder(Handle(Geom_Surface)& theInSurface, gp_Cylin
 
 static Handle(Geom_Surface) ClearRts(const Handle(Geom_Surface)& aSurface)
 {
-  if (aSurface->IsKind(STANDARD_TYPE(Geom_RectangularTrimmedSurface)))
-  {
-    Handle(Geom_RectangularTrimmedSurface) rts =
-      Handle(Geom_RectangularTrimmedSurface)::DownCast(aSurface);
-    return rts->BasisSurface();
-  }
-  return aSurface;
+  const Handle(Geom_RectangularTrimmedSurface) aRTS =
+    Handle(Geom_RectangularTrimmedSurface)::DownCast(aSurface);
+  return aRTS.IsNull() ? aSurface : aRTS->BasisSurface();
 }
 
 //=======================================================================
@@ -2979,11 +3011,18 @@ void ShapeUpgrade_UnifySameDomain::IntUnifyFaces(
   TopExp_Explorer exp;
   for (exp.Init(theInpShape, TopAbs_FACE); exp.More(); exp.Next())
   {
-
-    TopoDS_Face aFace = TopoDS::Face(exp.Current());
-
+    const TopoDS_Face aFace = TopoDS::Face(exp.Current());
     if (aProcessed.Contains(aFace))
+    {
       continue;
+    }
+
+    const Handle(Geom_Surface) aBaseSurface = ClearRts(BRep_Tool::Surface(aFace));
+    // Bug 33894: Prevent crash when face has no surface
+    if (aBaseSurface.IsNull())
+    {
+      continue;
+    }
 
     // Boundary edges for the new face
     TopTools_SequenceOfShape edges;
@@ -2999,9 +3038,7 @@ void ShapeUpgrade_UnifySameDomain::IntUnifyFaces(
     faces.Append(aFace);
 
     // surface and location to construct result
-    TopLoc_Location      aBaseLocation;
-    Handle(Geom_Surface) aBaseSurface     = BRep_Tool::Surface(aFace);
-    aBaseSurface                          = ClearRts(aBaseSurface);
+    TopLoc_Location    aBaseLocation;
     TopAbs_Orientation RefFaceOrientation = aFace.Orientation();
 
     // Take original surface
@@ -3538,8 +3575,13 @@ void ShapeUpgrade_UnifySameDomain::IntUnifyFaces(
       {
         const TopoDS_Edge&  anEdge = TopoDS::Edge(edges(ii));
         BRepAdaptor_Curve2d aBAcurve(anEdge, F_RefFace);
-        gp_Pnt2d            aFirstPoint = aBAcurve.Value(aBAcurve.FirstParameter());
-        gp_Pnt2d            aLastPoint  = aBAcurve.Value(aBAcurve.LastParameter());
+        if (aBAcurve.Curve().IsNull())
+        {
+          continue;
+        }
+
+        gp_Pnt2d aFirstPoint = aBAcurve.Value(aBAcurve.FirstParameter());
+        gp_Pnt2d aLastPoint  = aBAcurve.Value(aBAcurve.LastParameter());
 
         if (aFirstPoint.X() < FaceUmin)
           FaceUmin = aFirstPoint.X();
@@ -3574,6 +3616,11 @@ void ShapeUpgrade_UnifySameDomain::IntUnifyFaces(
         Standard_Real        fpar, lpar;
         Handle(Geom2d_Curve) StartPCurve =
           BRep_Tool::CurveOnSurface(StartEdge, F_RefFace, fpar, lpar);
+        if (StartPCurve.IsNull())
+        {
+          edges.Remove(istart);
+          continue;
+        }
         TopoDS_Vertex StartVertex, CurVertex;
         TopExp::Vertices(StartEdge, StartVertex, CurVertex, Standard_True); // with orientation
         Standard_Real StartParam, CurParam;
