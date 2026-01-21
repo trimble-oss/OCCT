@@ -14,6 +14,7 @@
 #include <DEPLY_Provider.hxx>
 
 #include <BRep_Builder.hxx>
+#include <DE_ValidationUtils.hxx>
 #include <DEPLY_ConfigurationNode.hxx>
 #include <DE_Wrapper.hxx>
 #include <Message.hxx>
@@ -29,21 +30,21 @@ IMPLEMENT_STANDARD_RTTIEXT(DEPLY_Provider, DE_Provider)
 
 //=================================================================================================
 
-DEPLY_Provider::DEPLY_Provider() {}
+DEPLY_Provider::DEPLY_Provider() = default;
 
 //=================================================================================================
 
-DEPLY_Provider::DEPLY_Provider(const Handle(DE_ConfigurationNode)& theNode)
+DEPLY_Provider::DEPLY_Provider(const occ::handle<DE_ConfigurationNode>& theNode)
     : DE_Provider(theNode)
 {
 }
 
 //=================================================================================================
 
-bool DEPLY_Provider::Write(const TCollection_AsciiString&  thePath,
-                           const Handle(TDocStd_Document)& theDocument,
-                           Handle(XSControl_WorkSession)&  theWS,
-                           const Message_ProgressRange&    theProgress)
+bool DEPLY_Provider::Write(const TCollection_AsciiString&       thePath,
+                           const occ::handle<TDocStd_Document>& theDocument,
+                           occ::handle<XSControl_WorkSession>&  theWS,
+                           const Message_ProgressRange&         theProgress)
 {
   (void)theWS;
   return Write(thePath, theDocument, theProgress);
@@ -51,27 +52,28 @@ bool DEPLY_Provider::Write(const TCollection_AsciiString&  thePath,
 
 //=================================================================================================
 
-bool DEPLY_Provider::Write(const TCollection_AsciiString&  thePath,
-                           const Handle(TDocStd_Document)& theDocument,
-                           const Message_ProgressRange&    theProgress)
+bool DEPLY_Provider::Write(const TCollection_AsciiString&       thePath,
+                           const occ::handle<TDocStd_Document>& theDocument,
+                           const Message_ProgressRange&         theProgress)
 {
-  if (GetNode().IsNull() || !GetNode()->IsKind(STANDARD_TYPE(DEPLY_ConfigurationNode)))
+  TCollection_AsciiString aContext = TCollection_AsciiString("writing the file ") + thePath;
+  if (!DE_ValidationUtils::ValidateConfigurationNode(GetNode(),
+                                                     STANDARD_TYPE(DEPLY_ConfigurationNode),
+                                                     aContext))
   {
-    Message::SendFail() << "Error in the DEPLY_Provider during writing the file " << thePath
-                        << "\t: Incorrect or empty Configuration Node";
     return false;
   }
-  Handle(DEPLY_ConfigurationNode) aNode = Handle(DEPLY_ConfigurationNode)::DownCast(GetNode());
+  occ::handle<DEPLY_ConfigurationNode> aNode = occ::down_cast<DEPLY_ConfigurationNode>(GetNode());
 
-  TDF_LabelSequence         aRootLabels;
-  Handle(XCAFDoc_ShapeTool) aShapeTool = XCAFDoc_DocumentTool::ShapeTool(theDocument->Main());
+  NCollection_Sequence<TDF_Label> aRootLabels;
+  occ::handle<XCAFDoc_ShapeTool>  aShapeTool = XCAFDoc_DocumentTool::ShapeTool(theDocument->Main());
   aShapeTool->GetFreeShapes(aRootLabels);
   if (aRootLabels.IsEmpty())
   {
-    return Standard_True;
+    return true;
   }
 
-  TColStd_IndexedDataMapOfStringString aFileInfo;
+  NCollection_IndexedDataMap<TCollection_AsciiString, TCollection_AsciiString> aFileInfo;
   if (!aNode->InternalParameters.WriteAuthor.IsEmpty())
   {
     aFileInfo.Add("Author", aNode->InternalParameters.WriteAuthor);
@@ -81,7 +83,7 @@ bool DEPLY_Provider::Write(const TCollection_AsciiString&  thePath,
     aFileInfo.Add("Comments", aNode->InternalParameters.WriteComment);
   }
   RWMesh_CoordinateSystemConverter aConverter;
-  Standard_Real                    aScaleFactorM = 1.;
+  double                           aScaleFactorM = 1.;
   if (XCAFDoc_DocumentTool::GetLengthUnit(theDocument, aScaleFactorM))
   {
     aConverter.SetInputLengthUnit(aScaleFactorM);
@@ -115,10 +117,10 @@ bool DEPLY_Provider::Write(const TCollection_AsciiString&  thePath,
 
 //=================================================================================================
 
-bool DEPLY_Provider::Write(const TCollection_AsciiString& thePath,
-                           const TopoDS_Shape&            theShape,
-                           Handle(XSControl_WorkSession)& theWS,
-                           const Message_ProgressRange&   theProgress)
+bool DEPLY_Provider::Write(const TCollection_AsciiString&      thePath,
+                           const TopoDS_Shape&                 theShape,
+                           occ::handle<XSControl_WorkSession>& theWS,
+                           const Message_ProgressRange&        theProgress)
 {
   (void)theWS;
   return Write(thePath, theShape, theProgress);
@@ -130,8 +132,8 @@ bool DEPLY_Provider::Write(const TCollection_AsciiString& thePath,
                            const TopoDS_Shape&            theShape,
                            const Message_ProgressRange&   theProgress)
 {
-  Handle(TDocStd_Document)  aDoc    = new TDocStd_Document("BinXCAF");
-  Handle(XCAFDoc_ShapeTool) aShTool = XCAFDoc_DocumentTool::ShapeTool(aDoc->Main());
+  occ::handle<TDocStd_Document>  aDoc    = new TDocStd_Document("BinXCAF");
+  occ::handle<XCAFDoc_ShapeTool> aShTool = XCAFDoc_DocumentTool::ShapeTool(aDoc->Main());
   aShTool->AddShape(theShape);
   return Write(thePath, aDoc, theProgress);
 }

@@ -25,7 +25,7 @@
 #include <math_Recipes.hxx>
 
 math_Jacobi::math_Jacobi(const math_Matrix& A)
-    : Done(Standard_False),
+    : Done(false),
       AA(1, A.RowNumber(), 1, A.RowNumber()),
       NbRotations(0),
       EigenValues(1, A.RowNumber()),
@@ -34,16 +34,9 @@ math_Jacobi::math_Jacobi(const math_Matrix& A)
 
   math_NotSquare_Raise_if(A.RowNumber() != A.ColNumber(), " ");
 
-  AA                     = A;
-  Standard_Integer Error = Jacobi(AA, EigenValues, EigenVectors, NbRotations);
-  if (!Error)
-  {
-    Done = Standard_True;
-  }
-  else
-  {
-    Done = Standard_False;
-  }
+  AA        = A;
+  int Error = Jacobi(AA, EigenValues, EigenVectors, NbRotations);
+  Done      = Error == 0;
 }
 
 void math_Jacobi::Dump(Standard_OStream& o) const

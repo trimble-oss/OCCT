@@ -114,21 +114,21 @@ void TopOpeBRepDS_Transition::After(const TopAbs_State S, const TopAbs_ShapeEnum
 
 //=================================================================================================
 
-void TopOpeBRepDS_Transition::Index(const Standard_Integer I)
+void TopOpeBRepDS_Transition::Index(const int I)
 {
   myIndexBefore = myIndexAfter = I;
 }
 
 //=================================================================================================
 
-void TopOpeBRepDS_Transition::IndexBefore(const Standard_Integer I)
+void TopOpeBRepDS_Transition::IndexBefore(const int I)
 {
   myIndexBefore = I;
 }
 
 //=================================================================================================
 
-void TopOpeBRepDS_Transition::IndexAfter(const Standard_Integer I)
+void TopOpeBRepDS_Transition::IndexAfter(const int I)
 {
   myIndexAfter = I;
 }
@@ -177,7 +177,7 @@ TopAbs_ShapeEnum TopOpeBRepDS_Transition::ShapeAfter() const
 
 //=================================================================================================
 
-Standard_Integer TopOpeBRepDS_Transition::Index() const
+int TopOpeBRepDS_Transition::Index() const
 {
   if (myIndexAfter != myIndexBefore)
     throw Standard_Failure("Transition::Index() on different shapes");
@@ -186,14 +186,14 @@ Standard_Integer TopOpeBRepDS_Transition::Index() const
 
 //=================================================================================================
 
-Standard_Integer TopOpeBRepDS_Transition::IndexBefore() const
+int TopOpeBRepDS_Transition::IndexBefore() const
 {
   return myIndexBefore;
 }
 
 //=================================================================================================
 
-Standard_Integer TopOpeBRepDS_Transition::IndexAfter() const
+int TopOpeBRepDS_Transition::IndexAfter() const
 {
   return myIndexAfter;
 }
@@ -263,11 +263,6 @@ TopAbs_Orientation TopOpeBRepDS_Transition::OrientationON(const TopAbs_State S,
 
   if (myStateBefore == TopAbs_ON && myStateAfter == TopAbs_ON)
   {
-#if 0
-    if      ( S == TopAbs_IN )  result = TopAbs_FORWARD;
-    else if ( S == TopAbs_OUT ) result = TopAbs_REVERSED;
-    else if ( S == TopAbs_ON )  result = TopAbs_INTERNAL;
-#endif
     if (S == TopAbs_IN)
       result = TopAbs_INTERNAL;
     else if (S == TopAbs_OUT)
@@ -331,7 +326,7 @@ TopOpeBRepDS_Transition TopOpeBRepDS_Transition::Complement() const
 
 //=================================================================================================
 
-Standard_Boolean TopOpeBRepDS_Transition::IsUnknown() const
+bool TopOpeBRepDS_Transition::IsUnknown() const
 {
   return (myStateBefore == TopAbs_UNKNOWN) && (myStateAfter == TopAbs_UNKNOWN);
 }

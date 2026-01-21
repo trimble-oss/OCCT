@@ -71,19 +71,20 @@
 #include <TopoDS_Shell.hxx>
 #include <TopoDS_Vertex.hxx>
 #include <TopoDS_Wire.hxx>
-#include <TopTools_Array1OfShape.hxx>
-#include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
-#include <TopTools_IndexedMapOfShape.hxx>
-#include <TopTools_ListOfShape.hxx>
-#include <TopTools_SequenceOfShape.hxx>
+#include <NCollection_Array1.hxx>
+#include <NCollection_List.hxx>
+#include <TopTools_ShapeMapHasher.hxx>
+#include <NCollection_IndexedDataMap.hxx>
+#include <NCollection_IndexedMap.hxx>
+#include <NCollection_Sequence.hxx>
 
-static void MakeWire(const TopTools_Array1OfShape& Edges,
-                     const Standard_Integer        rangdeb,
-                     const Standard_Boolean        forward,
-                     TopoDS_Wire&                  newwire)
+static void MakeWire(const NCollection_Array1<TopoDS_Shape>& Edges,
+                     const int                               rangdeb,
+                     const bool                              forward,
+                     TopoDS_Wire&                            newwire)
 {
-  BRep_Builder     BW;
-  Standard_Integer rang, nbEdges = Edges.Length();
+  BRep_Builder BW;
+  int          rang, nbEdges = Edges.Length();
   BW.MakeWire(newwire);
   if (forward)
   {
@@ -112,19 +113,19 @@ static void MakeWire(const TopTools_Array1OfShape& Edges,
     }
   }
   newwire.Orientation(TopAbs_FORWARD);
-  newwire.Closed(Standard_True);
+  newwire.Closed(true);
 }
 
 static void CutEdge(const TopoDS_Edge&   CurrentEdge,
-                    const Standard_Real& Param,
+                    const double&        Param,
                     TopoDS_Edge&         E1,
                     TopoDS_Edge&         E2,
                     const TopoDS_Vertex& VRef)
 {
-  BRep_Builder       B;
-  Standard_Real      first, last;
-  Handle(Geom_Curve) C = BRep_Tool::Curve(CurrentEdge, first, last);
-  TopoDS_Vertex      Vf, Vl, Vi;
+  BRep_Builder            B;
+  double                  first, last;
+  occ::handle<Geom_Curve> C = BRep_Tool::Curve(CurrentEdge, first, last);
+  TopoDS_Vertex           Vf, Vl, Vi;
   B.MakeVertex(Vi, C->Value(Param), Precision::Confusion());
   TopExp::Vertices(CurrentEdge, Vf, Vl);
   if (VRef.IsSame(Vf))
@@ -139,18 +140,18 @@ static void CutEdge(const TopoDS_Edge&   CurrentEdge,
   }
 }
 
-static void TrimEdge(const TopoDS_Edge&            CurrentEdge,
-                     const TColStd_SequenceOfReal& CutValues,
-                     const Standard_Real           t0,
-                     const Standard_Real           t1,
-                     const Standard_Boolean        SeqOrder,
-                     TopTools_SequenceOfShape&     S)
+static void TrimEdge(const TopoDS_Edge&                  CurrentEdge,
+                     const NCollection_Sequence<double>& CutValues,
+                     const double                        t0,
+                     const double                        t1,
+                     const bool                          SeqOrder,
+                     NCollection_Sequence<TopoDS_Shape>& S)
 
 {
   S.Clear();
-  Standard_Integer   j, ndec = CutValues.Length();
-  Standard_Real      first, last, m0, m1;
-  Handle(Geom_Curve) C = BRep_Tool::Curve(CurrentEdge, first, last);
+  int                     j, ndec = CutValues.Length();
+  double                  first, last, m0, m1;
+  occ::handle<Geom_Curve> C = BRep_Tool::Curve(CurrentEdge, first, last);
 
   TopoDS_Vertex      Vf, Vl, Vbid, V0, V1;
   TopAbs_Orientation CurrentOrient = CurrentEdge.Orientation();
@@ -216,20 +217,20 @@ TopoDS_Face BRepFill::Face(const TopoDS_Edge& Edge1, const TopoDS_Edge& Edge2)
   //  BRep_Tool BT;
 
   TopLoc_Location L, L1, L2;
-  Standard_Real   f1, f2, l1, l2, Tol;
+  double          f1, f2, l1, l2, Tol;
 
-  //  Handle(Geom_Curve) C1 = BT.Curve(Edge1,L1,f1,l1);
-  Handle(Geom_Curve) C1 = BRep_Tool::Curve(Edge1, L1, f1, l1);
-  //  Handle(Geom_Curve) C2 = BT.Curve(Edge2,L2,f2,l2);
-  Handle(Geom_Curve) C2 = BRep_Tool::Curve(Edge2, L2, f2, l2);
+  //  occ::handle<Geom_Curve> C1 = BT.Curve(Edge1,L1,f1,l1);
+  occ::handle<Geom_Curve> C1 = BRep_Tool::Curve(Edge1, L1, f1, l1);
+  //  occ::handle<Geom_Curve> C2 = BT.Curve(Edge2,L2,f2,l2);
+  occ::handle<Geom_Curve> C2 = BRep_Tool::Curve(Edge2, L2, f2, l2);
 
   // compute the location
-  Standard_Boolean SameLoc = Standard_False;
+  bool SameLoc = false;
   if (L1 == L2)
   {
     L  = L1;
     L1 = L2 = TopLoc_Location();
-    SameLoc = Standard_True;
+    SameLoc = true;
   }
 
   // transform and trim the curves
@@ -237,14 +238,14 @@ TopoDS_Face BRepFill::Face(const TopoDS_Edge& Edge1, const TopoDS_Edge& Edge2)
   TopoDS_Vertex V1f, V1l, V2f, V2l;
 
   // create a new Handle
-  if (Abs(f1 - C1->FirstParameter()) > Precision::PConfusion()
-      || Abs(l1 - C1->LastParameter()) > Precision::PConfusion())
+  if (std::abs(f1 - C1->FirstParameter()) > Precision::PConfusion()
+      || std::abs(l1 - C1->LastParameter()) > Precision::PConfusion())
   {
     C1 = new Geom_TrimmedCurve(C1, f1, l1);
   }
   else
   {
-    C1 = Handle(Geom_Curve)::DownCast(C1->Copy());
+    C1 = occ::down_cast<Geom_Curve>(C1->Copy());
   }
   // eventually the curve is concerned
   if (!SameLoc)
@@ -263,14 +264,14 @@ TopoDS_Face BRepFill::Face(const TopoDS_Edge& Edge1, const TopoDS_Edge& Edge2)
   }
 
   // a new Handle is created
-  if (Abs(f2 - C2->FirstParameter()) > Precision::PConfusion()
-      || Abs(l2 - C2->LastParameter()) > Precision::PConfusion())
+  if (std::abs(f2 - C2->FirstParameter()) > Precision::PConfusion()
+      || std::abs(l2 - C2->LastParameter()) > Precision::PConfusion())
   {
     C2 = new Geom_TrimmedCurve(C2, f2, l2);
   }
   else
   {
-    C2 = Handle(Geom_Curve)::DownCast(C2->Copy());
+    C2 = occ::down_cast<Geom_Curve>(C2->Copy());
   }
   // eventually the curve is concerned
   if (!SameLoc)
@@ -289,15 +290,15 @@ TopoDS_Face BRepFill::Face(const TopoDS_Edge& Edge1, const TopoDS_Edge& Edge2)
   }
 
   // Are they closed edges?
-  Standard_Boolean Closed = V1f.IsSame(V1l) && V2f.IsSame(V2l);
+  bool Closed = V1f.IsSame(V1l) && V2f.IsSame(V2l);
 
   GeomFill_Generator Generator;
   Generator.AddCurve(C1);
   Generator.AddCurve(C2);
   Generator.Perform(Precision::PConfusion());
 
-  Handle(Geom_Surface) Surf = Generator.Surface();
-  Handle(Geom_Curve)   Iso;
+  occ::handle<Geom_Surface> Surf = Generator.Surface();
+  occ::handle<Geom_Curve>   Iso;
 
   B.MakeFace(Face, Surf, Precision::Confusion());
 
@@ -307,7 +308,7 @@ TopoDS_Face BRepFill::Face(const TopoDS_Edge& Edge1, const TopoDS_Edge& Edge2)
   TopoDS_Edge Edge3, Edge4;
 
   Iso = Surf->UIso(f1);
-  Tol = Max(BRep_Tool::Tolerance(V1f), BRep_Tool::Tolerance(V2f));
+  Tol = std::max(BRep_Tool::Tolerance(V1f), BRep_Tool::Tolerance(V2f));
   if (Iso->Value(f2).Distance(Iso->Value(l2)) > Tol)
   {
     B.MakeEdge(Edge3, Iso, Precision::Confusion());
@@ -315,7 +316,7 @@ TopoDS_Face BRepFill::Face(const TopoDS_Edge& Edge1, const TopoDS_Edge& Edge2)
   else
   {
     B.MakeEdge(Edge3);
-    B.Degenerated(Edge3, Standard_True);
+    B.Degenerated(Edge3, true);
   }
   V1f.Orientation(TopAbs_FORWARD);
   B.Add(Edge3, V1f);
@@ -330,7 +331,7 @@ TopoDS_Face BRepFill::Face(const TopoDS_Edge& Edge1, const TopoDS_Edge& Edge2)
   else
   {
     Iso = Surf->UIso(l1);
-    Tol = Max(BRep_Tool::Tolerance(V1l), BRep_Tool::Tolerance(V2l));
+    Tol = std::max(BRep_Tool::Tolerance(V1l), BRep_Tool::Tolerance(V2l));
     if (Iso->Value(l2).Distance(Iso->Value(f2)) > Tol)
     {
       B.MakeEdge(Edge4, Iso, Precision::Confusion());
@@ -338,7 +339,7 @@ TopoDS_Face BRepFill::Face(const TopoDS_Edge& Edge1, const TopoDS_Edge& Edge2)
     else
     {
       B.MakeEdge(Edge4);
-      B.Degenerated(Edge4, Standard_True);
+      B.Degenerated(Edge4, true);
     }
     V1l.Orientation(TopAbs_FORWARD);
     B.Add(Edge4, V1l);
@@ -357,59 +358,59 @@ TopoDS_Face BRepFill::Face(const TopoDS_Edge& Edge1, const TopoDS_Edge& Edge2)
   B.Add(W, Edge4);
   B.Add(W, Edge2.Reversed());
   B.Add(W, Edge3);
-  W.Closed(Standard_True);
+  W.Closed(true);
 
   B.Add(Face, W);
 
   // set the pcurves
 
-  Standard_Real T = Precision::Confusion();
+  double T = Precision::Confusion();
 
   if (Edge1.Orientation() == TopAbs_REVERSED)
   {
-    B.UpdateEdge(Edge1, new Geom2d_Line(gp_Pnt2d(0, f2), gp_Dir2d(-1, 0)), Face, T);
+    B.UpdateEdge(Edge1, new Geom2d_Line(gp_Pnt2d(0, f2), gp_Dir2d(gp_Dir2d::D::NX)), Face, T);
     B.Range(Edge1, Face, -l1, -f1);
   }
   else
   {
-    B.UpdateEdge(Edge1, new Geom2d_Line(gp_Pnt2d(0, f2), gp_Dir2d(1, 0)), Face, T);
+    B.UpdateEdge(Edge1, new Geom2d_Line(gp_Pnt2d(0, f2), gp_Dir2d(gp_Dir2d::D::X)), Face, T);
     B.Range(Edge1, Face, f1, l1);
   }
 
   if (Edge2.Orientation() == TopAbs_REVERSED)
   {
-    B.UpdateEdge(Edge2, new Geom2d_Line(gp_Pnt2d(0, l2), gp_Dir2d(-1, 0)), Face, T);
+    B.UpdateEdge(Edge2, new Geom2d_Line(gp_Pnt2d(0, l2), gp_Dir2d(gp_Dir2d::D::NX)), Face, T);
     B.Range(Edge2, Face, -l1, -f1);
   }
   else
   {
-    B.UpdateEdge(Edge2, new Geom2d_Line(gp_Pnt2d(0, l2), gp_Dir2d(1, 0)), Face, T);
+    B.UpdateEdge(Edge2, new Geom2d_Line(gp_Pnt2d(0, l2), gp_Dir2d(gp_Dir2d::D::X)), Face, T);
     B.Range(Edge2, Face, f1, l1);
   }
 
   if (Closed)
   {
     B.UpdateEdge(Edge3,
-                 new Geom2d_Line(gp_Pnt2d(l1, 0), gp_Dir2d(0, 1)),
-                 new Geom2d_Line(gp_Pnt2d(f1, 0), gp_Dir2d(0, 1)),
+                 new Geom2d_Line(gp_Pnt2d(l1, 0), gp_Dir2d(gp_Dir2d::D::Y)),
+                 new Geom2d_Line(gp_Pnt2d(f1, 0), gp_Dir2d(gp_Dir2d::D::Y)),
                  Face,
                  T);
   }
   else
   {
-    B.UpdateEdge(Edge3, new Geom2d_Line(gp_Pnt2d(f1, 0), gp_Dir2d(0, 1)), Face, T);
-    B.UpdateEdge(Edge4, new Geom2d_Line(gp_Pnt2d(l1, 0), gp_Dir2d(0, 1)), Face, T);
+    B.UpdateEdge(Edge3, new Geom2d_Line(gp_Pnt2d(f1, 0), gp_Dir2d(gp_Dir2d::D::Y)), Face, T);
+    B.UpdateEdge(Edge4, new Geom2d_Line(gp_Pnt2d(l1, 0), gp_Dir2d(gp_Dir2d::D::Y)), Face, T);
   }
 
   // Set the non parameter flag;
-  B.SameParameter(Edge1, Standard_False);
-  B.SameParameter(Edge2, Standard_False);
-  B.SameParameter(Edge3, Standard_False);
-  B.SameParameter(Edge4, Standard_False);
-  B.SameRange(Edge1, Standard_False);
-  B.SameRange(Edge2, Standard_False);
-  B.SameRange(Edge3, Standard_False);
-  B.SameRange(Edge4, Standard_False);
+  B.SameParameter(Edge1, false);
+  B.SameParameter(Edge2, false);
+  B.SameParameter(Edge3, false);
+  B.SameParameter(Edge4, false);
+  B.SameRange(Edge1, false);
+  B.SameRange(Edge2, false);
+  B.SameRange(Edge3, false);
+  B.SameRange(Edge4, false);
 
   BRepLib::SameParameter(Face);
 
@@ -435,9 +436,9 @@ TopoDS_Shell BRepFill::Shell(const TopoDS_Wire& Wire1, const TopoDS_Wire& Wire2)
   TopExp_Explorer ex1;
   TopExp_Explorer ex2;
 
-  Standard_Boolean Closed = Wire1.Closed() && Wire2.Closed();
+  bool Closed = Wire1.Closed() && Wire2.Closed();
 
-  Standard_Boolean thefirst = Standard_True;
+  bool thefirst = true;
 
   ex1.Init(Wire1, TopAbs_EDGE);
   ex2.Init(Wire2, TopAbs_EDGE);
@@ -448,38 +449,38 @@ TopoDS_Shell BRepFill::Shell(const TopoDS_Wire& Wire1, const TopoDS_Wire& Wire2)
     Edge1 = TopoDS::Edge(ex1.Current());
     Edge2 = TopoDS::Edge(ex2.Current());
 
-    Standard_Boolean Periodic = BRep_Tool::IsClosed(Edge1) && BRep_Tool::IsClosed(Edge2);
+    bool Periodic = BRep_Tool::IsClosed(Edge1) && BRep_Tool::IsClosed(Edge2);
 
     ex1.Next();
     ex2.Next();
 
     TopLoc_Location L, L1, L2;
-    Standard_Real   f1, l1, f2, l2, Tol;
+    double          f1, l1, f2, l2, Tol;
 
-    Handle(Geom_Curve) C1 = BRep_Tool::Curve(Edge1, L1, f1, l1);
-    Handle(Geom_Curve) C2 = BRep_Tool::Curve(Edge2, L2, f2, l2);
+    occ::handle<Geom_Curve> C1 = BRep_Tool::Curve(Edge1, L1, f1, l1);
+    occ::handle<Geom_Curve> C2 = BRep_Tool::Curve(Edge2, L2, f2, l2);
 
     // compute the location
-    Standard_Boolean SameLoc = Standard_False;
+    bool SameLoc = false;
     if (L1 == L2)
     {
       L  = L1;
       L1 = L2 = TopLoc_Location();
-      SameLoc = Standard_True;
+      SameLoc = true;
     }
 
     // transform and trim the curves
 
     TopoDS_Vertex V1f, V1l, V2f, V2l;
 
-    if (Abs(f1 - C1->FirstParameter()) > Precision::PConfusion()
-        || Abs(l1 - C1->LastParameter()) > Precision::PConfusion())
+    if (std::abs(f1 - C1->FirstParameter()) > Precision::PConfusion()
+        || std::abs(l1 - C1->LastParameter()) > Precision::PConfusion())
     {
       C1 = new Geom_TrimmedCurve(C1, f1, l1);
     }
     else
     {
-      C1 = Handle(Geom_Curve)::DownCast(C1->Copy());
+      C1 = occ::down_cast<Geom_Curve>(C1->Copy());
     }
     if (!SameLoc)
     {
@@ -493,14 +494,14 @@ TopoDS_Shell BRepFill::Shell(const TopoDS_Wire& Wire1, const TopoDS_Wire& Wire2)
     else
       TopExp::Vertices(Edge1, V1f, V1l);
 
-    if (Abs(f2 - C2->FirstParameter()) > Precision::PConfusion()
-        || Abs(l2 - C2->LastParameter()) > Precision::PConfusion())
+    if (std::abs(f2 - C2->FirstParameter()) > Precision::PConfusion()
+        || std::abs(l2 - C2->LastParameter()) > Precision::PConfusion())
     {
       C2 = new Geom_TrimmedCurve(C2, f2, l2);
     }
     else
     {
-      C2 = Handle(Geom_Curve)::DownCast(C2->Copy());
+      C2 = occ::down_cast<Geom_Curve>(C2->Copy());
     }
     if (!SameLoc)
     {
@@ -519,8 +520,8 @@ TopoDS_Shell BRepFill::Shell(const TopoDS_Wire& Wire1, const TopoDS_Wire& Wire2)
     Generator.AddCurve(C2);
     Generator.Perform(Precision::PConfusion());
 
-    Handle(Geom_Surface) Surf = Generator.Surface();
-    Handle(Geom_Curve)   Iso;
+    occ::handle<Geom_Surface> Surf = Generator.Surface();
+    occ::handle<Geom_Curve>   Iso;
 
     B.MakeFace(Face, Surf, Precision::Confusion());
 
@@ -530,8 +531,8 @@ TopoDS_Shell BRepFill::Shell(const TopoDS_Wire& Wire1, const TopoDS_Wire& Wire2)
     if (thefirst)
     {
       Iso = Surf->UIso(f1);
-      //      Tol = Max(BT.Tolerance(V1f), BT.Tolerance(V2f));
-      Tol = Max(BRep_Tool::Tolerance(V1f), BRep_Tool::Tolerance(V2f));
+      //      Tol = std::max(BT.Tolerance(V1f), BT.Tolerance(V2f));
+      Tol = std::max(BRep_Tool::Tolerance(V1f), BRep_Tool::Tolerance(V2f));
       if (Iso->Value(f2).Distance(Iso->Value(l2)) > Tol)
       {
         B.MakeEdge(Edge3, Iso, Precision::Confusion());
@@ -539,7 +540,7 @@ TopoDS_Shell BRepFill::Shell(const TopoDS_Wire& Wire1, const TopoDS_Wire& Wire2)
       else
       {
         B.MakeEdge(Edge3);
-        B.Degenerated(Edge3, Standard_True);
+        B.Degenerated(Edge3, true);
       }
       V1f.Orientation(TopAbs_FORWARD);
       B.Add(Edge3, V1f);
@@ -551,7 +552,7 @@ TopoDS_Shell BRepFill::Shell(const TopoDS_Wire& Wire1, const TopoDS_Wire& Wire2)
         Couture = Edge3;
       }
       Edge3.Reverse();
-      thefirst = Standard_False;
+      thefirst = false;
     }
     else
     {
@@ -566,8 +567,8 @@ TopoDS_Shell BRepFill::Shell(const TopoDS_Wire& Wire1, const TopoDS_Wire& Wire2)
     else
     {
       Iso = Surf->UIso(l1);
-      //      Tol = Max(BT.Tolerance(V1l), BT.Tolerance(V2l));
-      Tol = Max(BRep_Tool::Tolerance(V1l), BRep_Tool::Tolerance(V2l));
+      //      Tol = std::max(BT.Tolerance(V1l), BT.Tolerance(V2l));
+      Tol = std::max(BRep_Tool::Tolerance(V1l), BRep_Tool::Tolerance(V2l));
       if (Iso->Value(l2).Distance(Iso->Value(f2)) > Tol)
       {
         B.MakeEdge(Edge4, Iso, Precision::Confusion());
@@ -575,7 +576,7 @@ TopoDS_Shell BRepFill::Shell(const TopoDS_Wire& Wire1, const TopoDS_Wire& Wire2)
       else
       {
         B.MakeEdge(Edge4);
-        B.Degenerated(Edge4, Standard_True);
+        B.Degenerated(Edge4, true);
       }
       V1l.Orientation(TopAbs_FORWARD);
       B.Add(Edge4, V1l);
@@ -593,7 +594,7 @@ TopoDS_Shell BRepFill::Shell(const TopoDS_Wire& Wire1, const TopoDS_Wire& Wire2)
     B.Add(W, Edge4);
     B.Add(W, Edge2.Reversed());
     B.Add(W, Edge3);
-    W.Closed(Standard_True);
+    W.Closed(true);
 
     B.Add(Face, W);
 
@@ -604,53 +605,53 @@ TopoDS_Shell BRepFill::Shell(const TopoDS_Wire& Wire1, const TopoDS_Wire& Wire2)
 
     // set the pcurves
 
-    Standard_Real T = Precision::Confusion();
+    double T = Precision::Confusion();
 
     if (Edge1.Orientation() == TopAbs_REVERSED)
     {
-      B.UpdateEdge(Edge1, new Geom2d_Line(gp_Pnt2d(0, f2), gp_Dir2d(-1, 0)), Face, T);
+      B.UpdateEdge(Edge1, new Geom2d_Line(gp_Pnt2d(0, f2), gp_Dir2d(gp_Dir2d::D::NX)), Face, T);
       B.Range(Edge1, Face, -l1, -f1);
     }
     else
     {
-      B.UpdateEdge(Edge1, new Geom2d_Line(gp_Pnt2d(0, f2), gp_Dir2d(1, 0)), Face, T);
+      B.UpdateEdge(Edge1, new Geom2d_Line(gp_Pnt2d(0, f2), gp_Dir2d(gp_Dir2d::D::X)), Face, T);
       B.Range(Edge1, Face, f1, l1);
     }
 
     if (Edge2.Orientation() == TopAbs_REVERSED)
     {
-      B.UpdateEdge(Edge2, new Geom2d_Line(gp_Pnt2d(0, l2), gp_Dir2d(-1, 0)), Face, T);
+      B.UpdateEdge(Edge2, new Geom2d_Line(gp_Pnt2d(0, l2), gp_Dir2d(gp_Dir2d::D::NX)), Face, T);
       B.Range(Edge2, Face, -l1, -f1);
     }
     else
     {
-      B.UpdateEdge(Edge2, new Geom2d_Line(gp_Pnt2d(0, l2), gp_Dir2d(1, 0)), Face, T);
+      B.UpdateEdge(Edge2, new Geom2d_Line(gp_Pnt2d(0, l2), gp_Dir2d(gp_Dir2d::D::X)), Face, T);
       B.Range(Edge2, Face, f1, l1);
     }
 
     if (Periodic)
     {
       B.UpdateEdge(Edge3,
-                   new Geom2d_Line(gp_Pnt2d(l1, 0), gp_Dir2d(0, 1)),
-                   new Geom2d_Line(gp_Pnt2d(f1, 0), gp_Dir2d(0, 1)),
+                   new Geom2d_Line(gp_Pnt2d(l1, 0), gp_Dir2d(gp_Dir2d::D::Y)),
+                   new Geom2d_Line(gp_Pnt2d(f1, 0), gp_Dir2d(gp_Dir2d::D::Y)),
                    Face,
                    T);
     }
     else
     {
-      B.UpdateEdge(Edge3, new Geom2d_Line(gp_Pnt2d(f1, 0), gp_Dir2d(0, 1)), Face, T);
-      B.UpdateEdge(Edge4, new Geom2d_Line(gp_Pnt2d(l1, 0), gp_Dir2d(0, 1)), Face, T);
+      B.UpdateEdge(Edge3, new Geom2d_Line(gp_Pnt2d(f1, 0), gp_Dir2d(gp_Dir2d::D::Y)), Face, T);
+      B.UpdateEdge(Edge4, new Geom2d_Line(gp_Pnt2d(l1, 0), gp_Dir2d(gp_Dir2d::D::Y)), Face, T);
     }
 
     // Set the non parameter flag;
-    B.SameParameter(Edge1, Standard_False);
-    B.SameParameter(Edge2, Standard_False);
-    B.SameParameter(Edge3, Standard_False);
-    B.SameParameter(Edge4, Standard_False);
-    B.SameRange(Edge1, Standard_False);
-    B.SameRange(Edge2, Standard_False);
-    B.SameRange(Edge3, Standard_False);
-    B.SameRange(Edge4, Standard_False);
+    B.SameParameter(Edge1, false);
+    B.SameParameter(Edge2, false);
+    B.SameParameter(Edge3, false);
+    B.SameParameter(Edge4, false);
+    B.SameRange(Edge1, false);
+    B.SameRange(Edge2, false);
+    B.SameRange(Edge3, false);
+    B.SameRange(Edge4, false);
   }
 
   Shell.Closed(BRep_Tool::IsClosed(Shell));
@@ -663,14 +664,14 @@ TopoDS_Shell BRepFill::Shell(const TopoDS_Wire& Wire1, const TopoDS_Wire& Wire2)
 void BRepFill::Axe(const TopoDS_Shape& Spine,
                    const TopoDS_Wire&  Profile,
                    gp_Ax3&             AxeProf,
-                   Standard_Boolean&   ProfOnSpine,
-                   const Standard_Real Tol)
+                   bool&               ProfOnSpine,
+                   const double        Tol)
 {
   gp_Pnt Loc, Loc1, Loc2;
   gp_Vec Tang, Tang1, Tang2, Normal;
 
-  Handle(Geom_Surface) S;
-  TopLoc_Location      L;
+  occ::handle<Geom_Surface> S;
+  TopLoc_Location           L;
 
   TopoDS_Face aFace;
 
@@ -681,7 +682,7 @@ void BRepFill::Axe(const TopoDS_Shape& Spine,
     S     = BRep_Tool::Surface(TopoDS::Face(Spine), L);
     if (!S->IsKind(STANDARD_TYPE(Geom_Plane)))
     {
-      BRepLib_FindSurface FS(TopoDS::Face(Spine), -1, Standard_True);
+      BRepLib_FindSurface FS(TopoDS::Face(Spine), -1, true);
       if (FS.Found())
       {
         S = FS.Surface();
@@ -695,7 +696,7 @@ void BRepFill::Axe(const TopoDS_Shape& Spine,
   }
   else if (Spine.ShapeType() == TopAbs_WIRE)
   {
-    aFace = BRepLib_MakeFace(TopoDS::Wire(Spine), Standard_True);
+    aFace = BRepLib_MakeFace(TopoDS::Wire(Spine), true);
     S     = BRep_Tool::Surface(aFace, L);
   }
 
@@ -703,23 +704,23 @@ void BRepFill::Axe(const TopoDS_Shape& Spine,
     throw Standard_DomainError("BRepFill_Evolved::Axe");
 
   if (!L.IsIdentity())
-    S = Handle(Geom_Surface)::DownCast(S->Transformed(L.Transformation()));
+    S = occ::down_cast<Geom_Surface>(S->Transformed(L.Transformation()));
 
-  Normal = Handle(Geom_Plane)::DownCast(S)->Pln().Axis().Direction();
+  Normal = occ::down_cast<Geom_Plane>(S)->Pln().Axis().Direction();
 
   // Find vertex of the profile closest to the spine.
-  Standard_Real DistMin = Precision::Infinite();
-  Standard_Real Dist;
-  //  Standard_Real     Tol2 = Tol*Tol;
-  Standard_Real     Tol2 = 1.e-10;
+  double DistMin = Precision::Infinite();
+  double Dist;
+  //  double     Tol2 = Tol*Tol;
+  double            Tol2 = 1.e-10;
   TopExp_Explorer   PE, SE;
   BRepExtrema_ExtPC BE;
-  Standard_Real     Par = 0., f, l;
-  //  Standard_Real     D1,D2;
+  double            Par = 0., f, l;
+  //  double     D1,D2;
   gp_Pnt P1, P2;
 
   // First check if there is contact Vertex Vertex.
-  Standard_Boolean IsOnVertex = Standard_False;
+  bool IsOnVertex = false;
   SE.Init(aFace.Oriented(TopAbs_FORWARD), TopAbs_VERTEX);
   //  modified by NIZHNY-EAP Wed Feb 23 12:31:52 2000 ___BEGIN___
   //  for (;SE.More() && !IsOnVertex ; SE.Next()) {
@@ -730,9 +731,9 @@ void BRepFill::Axe(const TopoDS_Shape& Spine,
     PE.Init(Profile, TopAbs_VERTEX);
     for (; PE.More(); PE.Next())
     {
-      P2                     = BRep_Tool::Pnt(TopoDS::Vertex(PE.Current()));
-      Standard_Real DistP1P2 = P1.SquareDistance(P2);
-      IsOnVertex             = (DistP1P2 <= Tol2);
+      P2              = BRep_Tool::Pnt(TopoDS::Vertex(PE.Current()));
+      double DistP1P2 = P1.SquareDistance(P2);
+      IsOnVertex      = (DistP1P2 <= Tol2);
       if (IsOnVertex)
         break;
     }
@@ -747,16 +748,19 @@ void BRepFill::Axe(const TopoDS_Shape& Spine,
     // try to find on which edge which shared this vertex,
     // the profile must be considered.
     // E1, E2 : those two edges.
-    TopTools_IndexedDataMapOfShapeListOfShape Map;
+    NCollection_IndexedDataMap<TopoDS_Shape,
+                               NCollection_List<TopoDS_Shape>,
+                               TopTools_ShapeMapHasher>
+      Map;
     TopExp::MapShapesAndAncestors(aFace.Oriented(TopAbs_FORWARD), TopAbs_VERTEX, TopAbs_EDGE, Map);
 
-    const TopoDS_Vertex&        VonF = TopoDS::Vertex(SE.Current());
-    const TopTools_ListOfShape& List = Map.FindFromKey(VonF);
-    const TopoDS_Edge&          E1   = TopoDS::Edge(List.First());
-    const TopoDS_Edge&          E2   = TopoDS::Edge(List.Last());
+    const TopoDS_Vertex&                  VonF = TopoDS::Vertex(SE.Current());
+    const NCollection_List<TopoDS_Shape>& List = Map.FindFromKey(VonF);
+    const TopoDS_Edge&                    E1   = TopoDS::Edge(List.First());
+    const TopoDS_Edge&                    E2   = TopoDS::Edge(List.Last());
 
-    Handle(Geom_Curve) CE1  = BRep_Tool::Curve(E1, L, f, l);
-    Standard_Real      Par1 = BRep_Tool::Parameter(VonF, E1, aFace);
+    occ::handle<Geom_Curve> CE1  = BRep_Tool::Curve(E1, L, f, l);
+    double                  Par1 = BRep_Tool::Parameter(VonF, E1, aFace);
     CE1->D1(Par1, Loc1, Tang1);
     if (!L.IsIdentity())
     {
@@ -766,8 +770,8 @@ void BRepFill::Axe(const TopoDS_Shape& Spine,
     if (E1.Orientation() == TopAbs_REVERSED)
       Tang1.Reverse();
 
-    Handle(Geom_Curve) CE2  = BRep_Tool::Curve(E2, L, f, l);
-    Standard_Real      Par2 = BRep_Tool::Parameter(VonF, E2, aFace);
+    occ::handle<Geom_Curve> CE2  = BRep_Tool::Curve(E2, L, f, l);
+    double                  Par2 = BRep_Tool::Parameter(VonF, E2, aFace);
     CE2->D1(Par2, Loc2, Tang2);
     if (!L.IsIdentity())
     {
@@ -780,7 +784,7 @@ void BRepFill::Axe(const TopoDS_Shape& Spine,
     //  modified by NIZHNY-EAP Wed Feb  2 15:38:41 2000 ___BEGIN___
     Tang1.Normalize();
     Tang2.Normalize();
-    Standard_Real sca1 = 0., sca2 = 0.;
+    double        sca1 = 0., sca2 = 0.;
     TopoDS_Vertex V1, V2;
     TopoDS_Edge   E;
     for (PE.Init(Profile, TopAbs_EDGE); PE.More(); PE.Next())
@@ -790,12 +794,12 @@ void BRepFill::Axe(const TopoDS_Shape& Spine,
       P1 = BRep_Tool::Pnt(V1);
       P2 = BRep_Tool::Pnt(V2);
       gp_Vec vec(P1, P2);
-      sca1 += Abs(Tang1.Dot(vec));
-      sca2 += Abs(Tang2.Dot(vec));
+      sca1 += std::abs(Tang1.Dot(vec));
+      sca2 += std::abs(Tang2.Dot(vec));
     }
     //  modified by NIZHNY-EAP Wed Feb  2 15:38:44 2000 ___END___
 
-    if (Abs(sca1) < Abs(sca2))
+    if (std::abs(sca1) < std::abs(sca2))
     {
       Loc  = Loc1;
       Tang = Tang1;
@@ -822,7 +826,7 @@ void BRepFill::Axe(const TopoDS_Shape& Spine,
         if (BE.IsDone())
         {
           // extrema.
-          for (Standard_Integer i = 1; i <= BE.NbExt(); i++)
+          for (int i = 1; i <= BE.NbExt(); i++)
           {
             if (BE.IsMin(i))
             {
@@ -856,19 +860,16 @@ void BRepFill::Axe(const TopoDS_Shape& Spine,
 // purpose  : Cut and orientate a closed wire.
 //=======================================================================
 
-void BRepFill::SearchOrigin(TopoDS_Wire&        W,
-                            const gp_Pnt&       P,
-                            const gp_Vec&       Dir,
-                            const Standard_Real Tol)
+void BRepFill::SearchOrigin(TopoDS_Wire& W, const gp_Pnt& P, const gp_Vec& Dir, const double Tol)
 {
   if (!W.Closed())
-    Standard_NoSuchObject::Raise("BRepFill::SearchOrigin : the wire must be closed");
+    throw Standard_NoSuchObject("BRepFill::SearchOrigin : the wire must be closed");
 
-  Standard_Boolean NewVertex = Standard_False;
-  Standard_Real    theparam  = 1.e101, angle;
-  TopoDS_Vertex    V;
-  TopoDS_Edge      E, Eref;
-  BRep_Builder     B;
+  bool          NewVertex = false;
+  double        theparam  = 1.e101, angle;
+  TopoDS_Vertex V;
+  TopoDS_Edge   E, Eref;
+  BRep_Builder  B;
   // Class BRep_Tool without fields and without Constructor :
   //  BRep_Tool BT;
 
@@ -879,9 +880,9 @@ void BRepFill::SearchOrigin(TopoDS_Wire&        W,
   BRepExtrema_DistShapeShape DSS(V, W);
   if (DSS.IsDone())
   {
-    Standard_Integer isol = 1;
-    Standard_Real    dss  = P.Distance(DSS.PointOnShape2(isol));
-    for (Standard_Integer iss = 2; iss <= DSS.NbSolution(); iss++)
+    int    isol = 1;
+    double dss  = P.Distance(DSS.PointOnShape2(isol));
+    for (int iss = 2; iss <= DSS.NbSolution(); iss++)
       if (dss > P.Distance(DSS.PointOnShape2(iss)))
       {
         dss  = P.Distance(DSS.PointOnShape2(iss));
@@ -895,7 +896,7 @@ void BRepFill::SearchOrigin(TopoDS_Wire&        W,
     else
     {
       TopoDS_Vertex Vf, Vl;
-      Standard_Real d, dist;
+      double        d, dist;
       E = TopoDS::Edge(supp);
       TopExp::Vertices(E, Vf, Vl);
       //      dist = P.Distance(BT.Pnt(Vf));
@@ -925,8 +926,8 @@ void BRepFill::SearchOrigin(TopoDS_Wire&        W,
   }
 #endif
 
-  Standard_Integer       ii, rangdeb = 0, NbEdges = 0;
-  Standard_Boolean       forward;
+  int                    ii, rangdeb = 0, NbEdges = 0;
+  bool                   forward;
   BRepTools_WireExplorer exp;
 
   // Calculate the number of edges
@@ -939,7 +940,7 @@ void BRepFill::SearchOrigin(TopoDS_Wire&        W,
   }
 
   // Construct the Table and calculate rangdeb
-  TopTools_Array1OfShape Edges(1, NbEdges);
+  NCollection_Array1<TopoDS_Shape> Edges(1, NbEdges);
   for (exp.Init(W), ii = 1; exp.More(); exp.Next(), ii++)
   {
     E = exp.Current();
@@ -986,16 +987,16 @@ void BRepFill::SearchOrigin(TopoDS_Wire&        W,
 
   // Reconstruction
   MakeWire(Edges, rangdeb, forward, W);
-  W.Closed(Standard_True);
+  W.Closed(true);
 }
 
 //=================================================================================================
 
-void BRepFill::ComputeACR(const TopoDS_Wire& wire, TColStd_Array1OfReal& ACR)
+void BRepFill::ComputeACR(const TopoDS_Wire& wire, NCollection_Array1<double>& ACR)
 {
   // calculate the reduced curvilinear abscisses and the length of the wire
   BRepTools_WireExplorer anExp;
-  Standard_Integer       nbEdges = 0, i;
+  int                    nbEdges = 0, i;
 
   // cumulated lengths
   ACR.Init(0);
@@ -1031,25 +1032,25 @@ void BRepFill::ComputeACR(const TopoDS_Wire& wire, TColStd_Array1OfReal& ACR)
 
 //=================================================================================================
 
-TopoDS_Wire BRepFill::InsertACR(const TopoDS_Wire&          wire,
-                                const TColStd_Array1OfReal& ACRcuts,
-                                const Standard_Real         prec)
+TopoDS_Wire BRepFill::InsertACR(const TopoDS_Wire&                wire,
+                                const NCollection_Array1<double>& ACRcuts,
+                                const double                      prec)
 {
   // calculate ACR of the wire to be cut
   BRepTools_WireExplorer anExp;
-  Standard_Integer       nbEdges = 0;
+  int                    nbEdges = 0;
   for (anExp.Init(wire); anExp.More(); anExp.Next())
   {
     nbEdges++;
   }
-  TColStd_Array1OfReal ACRwire(0, nbEdges);
+  NCollection_Array1<double> ACRwire(0, nbEdges);
   ComputeACR(wire, ACRwire);
 
-  Standard_Integer     i, j, nmax = ACRcuts.Length();
-  TColStd_Array1OfReal paradec(1, nmax);
-  BRepLib_MakeWire     MW;
+  int                        i, j, nmax = ACRcuts.Length();
+  NCollection_Array1<double> paradec(1, nmax);
+  BRepLib_MakeWire           MW;
 
-  Standard_Real t0, t1 = 0;
+  double t0, t1 = 0;
   nbEdges = 0;
 
   // processing edge by edge
@@ -1060,7 +1061,7 @@ TopoDS_Wire BRepFill::InsertACR(const TopoDS_Wire&          wire,
     t1 = ACRwire(nbEdges);
 
     // parameters of cut on this edge
-    Standard_Integer ndec = 0;
+    int ndec = 0;
     for (i = 1; i <= ACRcuts.Length(); i++)
     {
       if (t0 + prec < ACRcuts(i) && ACRcuts(i) < t1 - prec)
@@ -1082,10 +1083,10 @@ TopoDS_Wire BRepFill::InsertACR(const TopoDS_Wire&          wire,
     {
       // it is necessary to cut the edge
       // following the direction of parsing of the wire
-      Standard_Boolean         SO = (V.IsSame(TopExp::FirstVertex(E)));
-      TopTools_SequenceOfShape SE;
+      bool                               SO = (V.IsSame(TopExp::FirstVertex(E)));
+      NCollection_Sequence<TopoDS_Shape> SE;
       SE.Clear();
-      TColStd_SequenceOfReal SR;
+      NCollection_Sequence<double> SR;
       SR.Clear();
       // the wire is always FORWARD
       // it is necessary to modify the parameter of cut6 if the edge is REVERSED

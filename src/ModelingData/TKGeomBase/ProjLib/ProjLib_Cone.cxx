@@ -27,7 +27,7 @@
 
 //=================================================================================================
 
-ProjLib_Cone::ProjLib_Cone() {}
+ProjLib_Cone::ProjLib_Cone() = default;
 
 //=================================================================================================
 
@@ -58,8 +58,8 @@ void ProjLib_Cone::Init(const gp_Cone& Co)
 {
   myType       = GeomAbs_OtherCurve;
   myCone       = Co;
-  myIsPeriodic = Standard_False;
-  isDone       = Standard_False;
+  myIsPeriodic = false;
+  isDone       = false;
 }
 
 //=================================================================================================
@@ -68,9 +68,9 @@ void ProjLib_Cone::Project(const gp_Lin& L)
 {
   gp_Pnt aPnt = L.Location(), anApex = myCone.Apex();
 
-  Standard_Real aDeltaV = 0.0;
+  double aDeltaV = 0.0;
 
-  Standard_Real U, V;
+  double U, V;
   if (aPnt.IsEqual(anApex, Precision::Confusion()))
   {
     // Take another point in the line L, which does not coincide with the cone apex.
@@ -91,13 +91,13 @@ void ProjLib_Cone::Project(const gp_Lin& L)
     // L is parallel to U-isoline of the cone.
     myType = GeomAbs_Line;
 
-    const Standard_Real aSign = Sign(1.0, L.Direction().Dot(Dv));
-    gp_Pnt2d            P2d(U, V - aDeltaV * aSign);
-    gp_Dir2d            D2d(0., aSign);
+    const double aSign = std::copysign(1.0, L.Direction().Dot(Dv));
+    gp_Pnt2d     P2d(U, V - aDeltaV * aSign);
+    gp_Dir2d     D2d(0., aSign);
 
     myLin = gp_Lin2d(P2d, D2d);
 
-    isDone = Standard_True;
+    isDone = true;
   }
 }
 
@@ -112,36 +112,36 @@ void ProjLib_Cone::Project(const gp_Circ& C)
   //
   if (!ConePos.Direction().IsParallel(CircPos.Direction(), Precision::Angular()))
   {
-    isDone = Standard_False;
+    isDone = false;
     return;
   }
   //
   gp_Dir ZCone = ConePos.XDirection().Crossed(ConePos.YDirection());
   gp_Dir ZCir  = CircPos.XDirection().Crossed(CircPos.YDirection());
 
-  Standard_Real U, V;
-  Standard_Real x = ConePos.XDirection().Dot(CircPos.XDirection());
-  Standard_Real y = ConePos.YDirection().Dot(CircPos.XDirection());
-  Standard_Real z = gp_Vec(myCone.Location(), C.Location()).Dot(ConePos.Direction());
+  double U, V;
+  double x = ConePos.XDirection().Dot(CircPos.XDirection());
+  double y = ConePos.YDirection().Dot(CircPos.XDirection());
+  double z = gp_Vec(myCone.Location(), C.Location()).Dot(ConePos.Direction());
 
-  // pour trouver le point U V, on reprend le code de ElSLib
-  // sans appliquer la Trsf au point ( aller retour inutile).
+  // to find point U V, we use the code from ElSLib
+  // without applying the Trsf to the point (unnecessary round trip).
   if (x == 0.0 && y == 0.0)
   {
     U = 0.;
   }
-  else if (-myCone.RefRadius() > z * Tan(myCone.SemiAngle()))
+  else if (-myCone.RefRadius() > z * std::tan(myCone.SemiAngle()))
   {
-    U = ATan2(-y, -x);
+    U = std::atan2(-y, -x);
   }
   else
   {
-    U = ATan2(y, x);
+    U = std::atan2(y, x);
   }
   if (U < 0.)
     U += 2 * M_PI;
 
-  V = z / Cos(myCone.SemiAngle());
+  V = z / std::cos(myCone.SemiAngle());
 
   gp_Pnt2d P2d1(U, V);
   gp_Dir2d D2d;
@@ -151,7 +151,7 @@ void ProjLib_Cone::Project(const gp_Circ& C)
     D2d.SetCoord(-1., 0.);
 
   myLin  = gp_Lin2d(P2d1, D2d);
-  isDone = Standard_True;
+  isDone = true;
 }
 
 void ProjLib_Cone::Project(const gp_Elips& E)

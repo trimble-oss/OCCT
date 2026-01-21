@@ -4,7 +4,7 @@ set(OCCT_math_FILES_LOCATION "${CMAKE_CURRENT_LIST_DIR}")
 set(OCCT_math_FILES
   math.cxx
   math.hxx
-  math_Array1OfValueAndWeight.hxx
+
   math_BFGS.cxx
   math_BFGS.hxx
   math_BFGS.lxx
@@ -30,7 +30,6 @@ set(OCCT_math_FILES
   math_Crout.lxx
   math_DirectPolynomialRoots.cxx
   math_DirectPolynomialRoots.hxx
-  math_DirectPolynomialRoots.lxx
   math_DoubleTab.hxx
   math_EigenValuesSearcher.cxx
   math_EigenValuesSearcher.hxx

@@ -15,7 +15,6 @@
 
 #include <DEBREP_Provider.hxx>
 #include <DE_ConfigurationContext.hxx>
-#include <DE_PluginHolder.hxx>
 #include <NCollection_Buffer.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(DEBREP_ConfigurationNode, DE_ConfigurationNode)
@@ -28,20 +27,18 @@ static const TCollection_AsciiString& THE_CONFIGURATION_SCOPE()
   return aScope;
 }
 
-// Wrapper to auto-load DE component
-DE_PluginHolder<DEBREP_ConfigurationNode> THE_OCCT_BREP_COMPONENT_PLUGIN;
 } // namespace
 
 //=================================================================================================
 
 DEBREP_ConfigurationNode::DEBREP_ConfigurationNode()
-    : DE_ConfigurationNode()
-{
-}
+
+  = default;
 
 //=================================================================================================
 
-DEBREP_ConfigurationNode::DEBREP_ConfigurationNode(const Handle(DEBREP_ConfigurationNode)& theNode)
+DEBREP_ConfigurationNode::DEBREP_ConfigurationNode(
+  const occ::handle<DEBREP_ConfigurationNode>& theNode)
     : DE_ConfigurationNode(theNode)
 {
   InternalParameters = theNode->InternalParameters;
@@ -49,7 +46,7 @@ DEBREP_ConfigurationNode::DEBREP_ConfigurationNode(const Handle(DEBREP_Configura
 
 //=================================================================================================
 
-bool DEBREP_ConfigurationNode::Load(const Handle(DE_ConfigurationContext)& theResource)
+bool DEBREP_ConfigurationNode::Load(const occ::handle<DE_ConfigurationContext>& theResource)
 {
   TCollection_AsciiString aScope =
     THE_CONFIGURATION_SCOPE() + "." + GetFormat() + "." + GetVendor();
@@ -122,14 +119,14 @@ TCollection_AsciiString DEBREP_ConfigurationNode::Save() const
 
 //=================================================================================================
 
-Handle(DE_ConfigurationNode) DEBREP_ConfigurationNode::Copy() const
+occ::handle<DE_ConfigurationNode> DEBREP_ConfigurationNode::Copy() const
 {
   return new DEBREP_ConfigurationNode(*this);
 }
 
 //=================================================================================================
 
-Handle(DE_Provider) DEBREP_ConfigurationNode::BuildProvider()
+occ::handle<DE_Provider> DEBREP_ConfigurationNode::BuildProvider()
 {
   return new DEBREP_Provider(this);
 }
@@ -164,26 +161,22 @@ TCollection_AsciiString DEBREP_ConfigurationNode::GetVendor() const
 
 //=================================================================================================
 
-TColStd_ListOfAsciiString DEBREP_ConfigurationNode::GetExtensions() const
+NCollection_List<TCollection_AsciiString> DEBREP_ConfigurationNode::GetExtensions() const
 {
-  TColStd_ListOfAsciiString anExt;
+  NCollection_List<TCollection_AsciiString> anExt;
   anExt.Append("brep");
   return anExt;
 }
 
 //=================================================================================================
 
-bool DEBREP_ConfigurationNode::CheckContent(const Handle(NCollection_Buffer)& theBuffer) const
+bool DEBREP_ConfigurationNode::CheckContent(const occ::handle<NCollection_Buffer>& theBuffer) const
 {
   if (theBuffer.IsNull() || theBuffer->Size() < 20)
   {
     return false;
   }
   const char* aBytes = (const char*)theBuffer->Data();
-  if (::strstr(aBytes, "DBRep_DrawableShape") || ::strstr(aBytes, "CASCADE Topology V1")
-      || ::strstr(aBytes, "CASCADE Topology V3"))
-  {
-    return true;
-  }
-  return false;
+  return ::strstr(aBytes, "DBRep_DrawableShape") || ::strstr(aBytes, "CASCADE Topology V1")
+         || ::strstr(aBytes, "CASCADE Topology V3");
 }

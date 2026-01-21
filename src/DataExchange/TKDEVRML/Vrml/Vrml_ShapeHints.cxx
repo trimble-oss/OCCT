@@ -16,7 +16,7 @@
 Vrml_ShapeHints::Vrml_ShapeHints(const Vrml_VertexOrdering aVertexOrdering,
                                  const Vrml_ShapeType      aShapeType,
                                  const Vrml_FaceType       aFaceType,
-                                 const Standard_Real       aAngle)
+                                 const double              aAngle)
 {
   myVertexOrdering = aVertexOrdering;
   myShapeType      = aShapeType;
@@ -54,12 +54,12 @@ Vrml_FaceType Vrml_ShapeHints::FaceType() const
   return myFaceType;
 }
 
-void Vrml_ShapeHints::SetAngle(const Standard_Real aAngle)
+void Vrml_ShapeHints::SetAngle(const double aAngle)
 {
   myAngle = aAngle;
 }
 
-Standard_Real Vrml_ShapeHints::Angle() const
+double Vrml_ShapeHints::Angle() const
 {
   return myAngle;
 }
@@ -98,7 +98,7 @@ Standard_OStream& Vrml_ShapeHints::Print(Standard_OStream& anOStream) const
       break; // anOStream  << "    faceType\t\tCONVEX";
   }
 
-  if (Abs(myAngle - 0.5) > 0.0001)
+  if (std::abs(myAngle - 0.5) > 0.0001)
   {
     anOStream << "    creaseAngle\t\t" << myAngle << "\n";
   }

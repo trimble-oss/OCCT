@@ -37,7 +37,7 @@ public:
   using reference         = typename std::conditional<IsConstant, const ItemType&, ItemType&>::type;
 
   //! Default constructor
-  NCollection_StlIterator() {}
+  NCollection_StlIterator() = default;
 
   //! Constructor from NCollection iterator
   NCollection_StlIterator(const BaseIterator& theIterator)
@@ -61,10 +61,10 @@ public:
   }
 
   //! Access to NCollection iterator instance
-  const BaseIterator& Iterator() const { return myIterator; }
+  const BaseIterator& Iterator() const noexcept { return myIterator; }
 
   //! Access to NCollection iterator instance
-  BaseIterator& ChangeIterator() { return myIterator; }
+  BaseIterator& ChangeIterator() noexcept { return myIterator; }
 
 protected: //! @name methods related to forward STL iterator
   // Note: Here we use SFINAE (Substitution failure is not an error) to choose

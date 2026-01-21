@@ -19,26 +19,29 @@
 #include <Message.hxx>
 #include <Message_Messenger.hxx>
 #include <OSD_OpenFile.hxx>
-#include <Standard_Stream.hxx>
+#include <Standard_Macro.hxx>
+#include <iostream>
+#include <iomanip>
+#include <fstream>
 #include <Standard_Transient.hxx>
 #include <Standard_Type.hxx>
 #include <TCollection_AsciiString.hxx>
-#include <TColStd_HSequenceOfAsciiString.hxx>
+#include <NCollection_Sequence.hxx>
+#include <NCollection_HSequence.hxx>
 
-#include <stdio.h>
+#include <cstdio>
 IMPLEMENT_STANDARD_RTTIEXT(IFSelect_SessionPilot, IFSelect_Activator)
 
 #define MAXWORDS 200
 #define MAXCARS 1000
 
-static int                     THE_IFSelect_SessionPilot_initactor = 0;
-static TCollection_AsciiString nulword;
+static int THE_IFSelect_SessionPilot_initactor = 0;
 
 // #define DEBUG_TRACE
 
-// Nb Maxi de words : cf thewords et method SetCommandLine
+// Max Nb of words : cf thewords and method SetCommandLine
 
-IFSelect_SessionPilot::IFSelect_SessionPilot(const Standard_CString prompt)
+IFSelect_SessionPilot::IFSelect_SessionPilot(const char* prompt)
     : theprompt(prompt),
       thewords(0, MAXWORDS - 1),
       thewordeb(0, MAXWORDS - 1)
@@ -47,7 +50,7 @@ IFSelect_SessionPilot::IFSelect_SessionPilot(const Standard_CString prompt)
   {
     theprompt.AssignCat("Test-XSTEP>");
   }
-  therecord  = Standard_False;
+  therecord  = false;
   thenbwords = 0;
   if (THE_IFSelect_SessionPilot_initactor)
   {
@@ -65,42 +68,42 @@ IFSelect_SessionPilot::IFSelect_SessionPilot(const Standard_CString prompt)
   Add(6, "xnew");
 }
 
-Handle(IFSelect_WorkSession) IFSelect_SessionPilot::Session() const
+occ::handle<IFSelect_WorkSession> IFSelect_SessionPilot::Session() const
 {
   return thesession;
 }
 
-Handle(IFSelect_WorkLibrary) IFSelect_SessionPilot::Library() const
+occ::handle<IFSelect_WorkLibrary> IFSelect_SessionPilot::Library() const
 {
   return thesession->WorkLibrary();
 }
 
-Standard_Boolean IFSelect_SessionPilot::RecordMode() const
+bool IFSelect_SessionPilot::RecordMode() const
 {
   return therecord;
 }
 
-void IFSelect_SessionPilot::SetSession(const Handle(IFSelect_WorkSession)& WS)
+void IFSelect_SessionPilot::SetSession(const occ::handle<IFSelect_WorkSession>& WS)
 {
   thesession = WS;
 }
 
-void IFSelect_SessionPilot::SetLibrary(const Handle(IFSelect_WorkLibrary)& WL)
+void IFSelect_SessionPilot::SetLibrary(const occ::handle<IFSelect_WorkLibrary>& WL)
 {
   if (!thesession.IsNull())
     thesession->SetLibrary(WL);
 }
 
-void IFSelect_SessionPilot::SetRecordMode(const Standard_Boolean mode)
+void IFSelect_SessionPilot::SetRecordMode(const bool mode)
 {
   therecord = mode;
 }
 
 void IFSelect_SessionPilot::SetCommandLine(const TCollection_AsciiString& command)
 {
-  Standard_Integer lc = command.Length();
+  int lc = command.Length();
   if (lc > 200)
-    std::cout << " Commande TRES LONGUE : " << lc << " caracteres :" << std::endl
+    std::cout << " VERY LONG Command : " << lc << " characters :" << std::endl
               << command.ToCString() << std::endl;
   thecommand = command;
   if (thecommand.Value(lc) <= ' ')
@@ -109,8 +112,8 @@ void IFSelect_SessionPilot::SetCommandLine(const TCollection_AsciiString& comman
     lc--;
   }
   thenbwords = 0;
-  Standard_Integer i, nc = 0;
-  char             unarg[MAXCARS];
+  int  i, nc = 0;
+  char unarg[MAXCARS];
   for (i = 1; i <= lc; i++)
   {
     char val = command.Value(i);
@@ -151,12 +154,12 @@ void IFSelect_SessionPilot::SetCommandLine(const TCollection_AsciiString& comman
     thewords(thenbwords).AssignCat(unarg);
 #ifdef DEBUG_TRACE
     std::cout << "thewords(" << thenbwords << ")=" << unarg << std::endl
-              << " .. Fin avec thenbwords=" << thenbwords + 1 << std::endl;
+              << " .. End with thenbwords=" << thenbwords + 1 << std::endl;
 #endif
     thenbwords++;
   }
   /*
-      aligner sur MAXWORDS
+      align on MAXWORDS
     char l0[80],l1[80],l2[80],l3[80],l4[80],l5[80],l6[80],l7[80],l8[80],l9[80];
     char m0[80],m1[80],m2[80],m3[80],m4[80],m5[80],m6[80],m7[80],m8[80],m9[80];
     thenbwords = sscanf
@@ -164,7 +167,7 @@ void IFSelect_SessionPilot::SetCommandLine(const TCollection_AsciiString& comman
        l0,l1,l2,l3,l4,l5,l6,l7,l8,l9,m0,m1,m2,m3,m4,m5,m6,m7,m8,m9);
     if (thenbwords <  0) thenbwords = 0;
     if (thenbwords > MAXWORDS) thenbwords = MAXWORDS;
-    Standard_Integer nb = thewords.Upper();
+    int nb = thewords.Upper();
     for (i = 0; i <= nb; i ++) thewords(i).Clear();
     switch (thenbwords) {
       case 20 : thewords(19).AssignCat(m9);
@@ -199,7 +202,7 @@ const TCollection_AsciiString& IFSelect_SessionPilot::CommandLine() const
   return thecommand;
 }
 
-Standard_CString IFSelect_SessionPilot::CommandPart(const Standard_Integer numarg) const
+const char* IFSelect_SessionPilot::CommandPart(const int numarg) const
 {
   if (numarg <= 0)
     return thecommand.ToCString();
@@ -208,28 +211,28 @@ Standard_CString IFSelect_SessionPilot::CommandPart(const Standard_Integer numar
   return &(thecommand.ToCString())[thewordeb(numarg) - 1];
 }
 
-Standard_Integer IFSelect_SessionPilot::NbWords() const
+int IFSelect_SessionPilot::NbWords() const
 {
   return thenbwords;
 }
 
-const TCollection_AsciiString& IFSelect_SessionPilot::Word(const Standard_Integer num) const
+const TCollection_AsciiString& IFSelect_SessionPilot::Word(const int num) const
 {
   if (num < thenbwords)
     return thewords(num);
-  return nulword;
+  return TCollection_AsciiString::EmptyString();
 }
 
-Standard_CString IFSelect_SessionPilot::Arg(const Standard_Integer num) const
+const char* IFSelect_SessionPilot::Arg(const int num) const
 {
   return Word(num).ToCString();
 }
 
-Standard_Boolean IFSelect_SessionPilot::RemoveWord(const Standard_Integer num)
+bool IFSelect_SessionPilot::RemoveWord(const int num)
 {
   if (num < 0 || num > thenbwords)
-    return Standard_False;
-  Standard_Integer i; // svv Jan11 2000 : porting on DEC
+    return false;
+  int i; // svv Jan11 2000 : porting on DEC
   for (i = num; i < thenbwords; i++)
   {
     thewords(i).Clear();
@@ -237,14 +240,14 @@ Standard_Boolean IFSelect_SessionPilot::RemoveWord(const Standard_Integer num)
   }
   thewords(thenbwords).Clear();
   thenbwords--;
-  //  Et refaire thecommand. Si num = 0, on supprime le debut (facile)
+  //  And redo thecommand. If num = 0, we remove the beginning (easy)
   if (num == 0)
   {
     thecommand.Remove(1, thewordeb(1));
   }
   else
   {
-    //   Sinon, reconstituer, a partir des words
+    //   Otherwise, reconstitute, from the words
     thecommand.Clear();
     for (i = 0; i < thenbwords; i++)
     {
@@ -254,26 +257,26 @@ Standard_Boolean IFSelect_SessionPilot::RemoveWord(const Standard_Integer num)
     }
   }
 
-  return Standard_True;
+  return true;
 }
 
-Standard_Integer IFSelect_SessionPilot::NbCommands() const
+int IFSelect_SessionPilot::NbCommands() const
 {
   return thecomlist.Length();
 }
 
-const TCollection_AsciiString& IFSelect_SessionPilot::Command(const Standard_Integer num) const
+const TCollection_AsciiString& IFSelect_SessionPilot::Command(const int num) const
 {
   return thecomlist(num);
 }
 
-IFSelect_ReturnStatus IFSelect_SessionPilot::RecordItem(const Handle(Standard_Transient)& item)
+IFSelect_ReturnStatus IFSelect_SessionPilot::RecordItem(const occ::handle<Standard_Transient>& item)
 {
   theobjrec = item;
   return (item.IsNull() ? IFSelect_RetFail : IFSelect_RetDone);
 }
 
-Handle(Standard_Transient) IFSelect_SessionPilot::RecordedItem() const
+occ::handle<Standard_Transient> IFSelect_SessionPilot::RecordedItem() const
 {
   return theobjrec;
 }
@@ -284,13 +287,13 @@ void IFSelect_SessionPilot::Clear()
 }
 
 //  #######################################################################
-//  ########        CONTROLE D EXECUTION
+//  ########        EXECUTION CONTROL
 
-IFSelect_ReturnStatus IFSelect_SessionPilot::ReadScript(const Standard_CString file)
+IFSelect_ReturnStatus IFSelect_SessionPilot::ReadScript(const char* file)
 {
   FILE* fic;
   int   lefic = 0;
-  if (file != NULL && file[0] != '\0')
+  if (file != nullptr && file[0] != '\0')
   {
     fic = OSD_OpenFile(file, "r");
     if (fic)
@@ -312,16 +315,16 @@ IFSelect_ReturnStatus IFSelect_SessionPilot::ReadScript(const Standard_CString f
     if (!lefic)
       std::cout << theprompt.ToCString();
     ligne[0] = '\0';
-    if (fgets(ligne, 100, fic) == NULL || feof(fic) != 0)
+    if (fgets(ligne, 100, fic) == nullptr || feof(fic) != 0)
     {
       break;
     }
     if (ligne[0] == '\0')
       continue;
-    //    On interprete cette commande
+    //    We interpret this command
     TCollection_AsciiString command(ligne);
     if (lefic)
-      std::cout << file << ":" << command; // le return est dans la ligne ... !
+      std::cout << file << ":" << command; // the return is in the line ... !
     stat = Execute(command);
     if (stat == IFSelect_RetStop)
       break;
@@ -337,10 +340,10 @@ IFSelect_ReturnStatus IFSelect_SessionPilot::ReadScript(const Standard_CString f
   std::cout << "End of Reading Script File " << file << std::endl;
   if (stat == IFSelect_RetError || stat == IFSelect_RetFail)
     return stat;
-  return IFSelect_RetVoid; // fin fichier : depiler
+  return IFSelect_RetVoid; // end file : unstack
 }
 
-//  On boucle sur la lecture jusqu a une commande de fin ou un EOF
+//  We loop on reading until an end command or an EOF
 
 IFSelect_ReturnStatus IFSelect_SessionPilot::Perform()
 {
@@ -348,23 +351,23 @@ IFSelect_ReturnStatus IFSelect_SessionPilot::Perform()
   if (thenbwords == 0)
     return stat;
   if (thewords(0).Value(1) == '#')
-    return stat; // commentaire
+    return stat; // comment
 
   theobjrec.Nullify();
-  //  Est-ce un nom ?
+  //  Is it a name ?
 
-  //  Commande pour un Acteur
-  Handle(IFSelect_Activator) actor;
-  Standard_Integer           num;
+  //  Command for an Actor
+  occ::handle<IFSelect_Activator> actor;
+  int                             num;
   if (IFSelect_Activator::Select(thewords(0).ToCString(), num, actor))
   {
     stat = actor->Do(num, this);
-    //  Prise en compte des commandes a resultat
-    //  Ici, resultat non nomme;  Resultat nomme par commande x (plus loin)
+    //  Taking into account commands with result
+    //  Here, unnamed result;  Result named by command x (further)
     if (!theobjrec.IsNull())
     {
-      thesession->RemoveItem(theobjrec); //// depannage ?
-      Standard_Integer addws = thesession->AddItem(theobjrec);
+      thesession->RemoveItem(theobjrec); //// troubleshooting ?
+      int addws = thesession->AddItem(theobjrec);
       if (addws == 0)
       {
         std::cout << "Could not add item to session, sorry" << std::endl;
@@ -384,7 +387,7 @@ IFSelect_ReturnStatus IFSelect_SessionPilot::Perform()
     return stat;
   }
   std::cout << " Command : " << thewords(0) << " unknown" << std::endl;
-  return IFSelect_RetError; // pas reconnu donc incorrect
+  return IFSelect_RetError; // not recognized therefore incorrect
 }
 
 IFSelect_ReturnStatus IFSelect_SessionPilot::ExecuteAlias(const TCollection_AsciiString& alias)
@@ -401,9 +404,9 @@ IFSelect_ReturnStatus IFSelect_SessionPilot::Execute(const TCollection_AsciiStri
 }
 
 IFSelect_ReturnStatus IFSelect_SessionPilot::ExecuteCounter(
-  const Handle(IFSelect_SignCounter)& counter,
-  const Standard_Integer              numword,
-  const IFSelect_PrintCount           mode)
+  const occ::handle<IFSelect_SignCounter>& counter,
+  const int                                numword,
+  const IFSelect_PrintCount                mode)
 {
   if (counter.IsNull())
     return IFSelect_RetError;
@@ -412,8 +415,9 @@ IFSelect_ReturnStatus IFSelect_SessionPilot::ExecuteCounter(
     counter->AddModel(thesession->Model());
   else
   {
-    //   on demande un givelist
-    Handle(TColStd_HSequenceOfTransient) list = thesession->GiveList(CommandPart(numword));
+    //   we request a givelist
+    occ::handle<NCollection_HSequence<occ::handle<Standard_Transient>>> list =
+      thesession->GiveList(CommandPart(numword));
     if (list.IsNull())
     {
       std::cout << "Nothing selected from : " << CommandPart(numword) << std::endl;
@@ -426,9 +430,9 @@ IFSelect_ReturnStatus IFSelect_SessionPilot::ExecuteCounter(
   return IFSelect_RetVoid;
 }
 
-Standard_Integer IFSelect_SessionPilot::Number(const Standard_CString val) const
+int IFSelect_SessionPilot::Number(const char* val) const
 {
-  Standard_Integer num = thesession->NumberFromLabel(val);
+  int num = thesession->NumberFromLabel(val);
   if (num < 0)
     std::cout << " Label:" << val << " ->" << -num << " ent.s, refus" << std::endl;
   return num;
@@ -440,34 +444,34 @@ Standard_Integer IFSelect_SessionPilot::Number(const Standard_CString val) const
 #define MAXCOMPERLINE 5
 #define LENGTHFORCOM 15
 
-IFSelect_ReturnStatus IFSelect_SessionPilot::Do(const Standard_Integer               number,
-                                                const Handle(IFSelect_SessionPilot)& session)
+IFSelect_ReturnStatus IFSelect_SessionPilot::Do(const int                                 number,
+                                                const occ::handle<IFSelect_SessionPilot>& session)
 {
-  //                  Commandes Propres : x, exit, undo, redo, ?, help
-  IFSelect_ReturnStatus  stat    = IFSelect_RetVoid;
-  Standard_Integer       argc    = NbWords();
-  const Standard_CString arg1    = Word(1).ToCString();
-  Standard_Integer       modhelp = -1;
+  //                  Own Commands : x, exit, undo, redo, ?, help
+  IFSelect_ReturnStatus stat    = IFSelect_RetVoid;
+  int                   argc    = NbWords();
+  const char*           arg1    = Word(1).ToCString();
+  int                   modhelp = -1;
   switch (number)
   {
     case -1: //        ****     HELP-XSNEW
       modhelp = 1;
       std::cout << "  --  Commands candidate for  xsnew  --" << std::endl;
-      //  HELP : soit complet (par defaut)  soit limite a xsnew
-      Standard_FALLTHROUGH
+      //  HELP : either complete (by default)  or limited to xsnew
+      [[fallthrough]];
     case 0: { //        ****     HELP
-      Handle(TColStd_HSequenceOfAsciiString) list;
-      //    Help complet : on donne la liste des commandes, sans plus (deja pas mal)
+      occ::handle<NCollection_HSequence<TCollection_AsciiString>> list;
+      //    Complete Help : we give the list of commands, nothing more (already not bad)
       if (thenbwords <= 1)
       {
-        list                   = IFSelect_Activator::Commands(modhelp);
-        Standard_Integer nbcom = 0;
-        Standard_Integer nb    = list->Length();
-        std::cout << " -- Liste des Commands Disponibles --" << std::endl;
-        for (Standard_Integer i = 1; i <= nb; i++)
+        list      = IFSelect_Activator::Commands(modhelp);
+        int nbcom = 0;
+        int nb    = list->Length();
+        std::cout << " -- List of Available Commands --" << std::endl;
+        for (int i = 1; i <= nb; i++)
         {
           const TCollection_AsciiString& uncom  = list->Value(i);
-          Standard_Integer               loncom = uncom.Length();
+          int                            loncom = uncom.Length();
           nbcom++;
           if (nbcom > MAXCOMPERLINE)
           {
@@ -477,16 +481,16 @@ IFSelect_ReturnStatus IFSelect_SessionPilot::Do(const Standard_Integer          
           std::cout << " " << uncom;
           if (nbcom == MAXCOMPERLINE)
             continue;
-          for (Standard_Integer j = loncom; j < LENGTHFORCOM; j++)
+          for (int j = loncom; j < LENGTHFORCOM; j++)
             std::cout << " ";
         }
         if (nbcom > 0)
           std::cout << std::endl;
-        std::cout << "\nhelp *  liste toutes les commandes avec un help sur chacune\n"
-                  << "help <com> liste la ou les commande debutant par <com>"
-                  << " avec un help sur chacune" << std::endl;
+        std::cout << "\nhelp *  lists all commands with help on each\n"
+                  << "help <com> lists the command(s) starting with <com>"
+                  << " with help on each" << std::endl;
 
-        //    Un Help particulier
+        //    A particular Help
       }
       else
       {
@@ -496,11 +500,11 @@ IFSelect_ReturnStatus IFSelect_SessionPilot::Do(const Standard_Integer          
         else
           list = IFSelect_Activator::Commands(modhelp, thewords(1).ToCString());
 
-        Standard_Integer nb = list->Length();
-        for (Standard_Integer i = 1; i <= nb; i++)
+        int nb = list->Length();
+        for (int i = 1; i <= nb; i++)
         {
-          Handle(IFSelect_Activator) actor;
-          Standard_Integer           num;
+          occ::handle<IFSelect_Activator> actor;
+          int                             num;
           if (IFSelect_Activator::Select(list->Value(i).ToCString(), num, actor))
           {
             if (IFSelect_Activator::Mode(list->Value(i).ToCString()) == 1)
@@ -515,17 +519,16 @@ IFSelect_ReturnStatus IFSelect_SessionPilot::Do(const Standard_Integer          
       return IFSelect_RetVoid;
     }
     case 1:
-      return IFSelect_RetStop; //        ****     Fin de session
+      return IFSelect_RetStop; //        ****     End of session
     case 2: {                  //        ****     HELP
       return Do(0, this);
     }
     case 3: { //        ****     COMMAND
       if (argc < 2)
       {
-        std::cout << "Donner une option :\n"
-                  << "a : analyse une ligne  r : toggle record mode\n"
-                  << "l : list recorded  c : clear  f nom : sauver dans fichier de nom"
-                  << std::endl;
+        std::cout << "Give an option :\n"
+                  << "a : analyze a line  r : toggle record mode\n"
+                  << "l : list recorded  c : clear  f name : save in file of name" << std::endl;
         return IFSelect_RetVoid;
       }
       switch (arg1[0])
@@ -533,7 +536,7 @@ IFSelect_ReturnStatus IFSelect_SessionPilot::Do(const Standard_Integer          
         case 'a': { //        ****    command analyse
           std::cout << "Command n0 " << number << " : " << session->CommandLine() << std::endl;
           std::cout << "Nb Words : " << argc - 2 << " :\n";
-          for (Standard_Integer i = 2; i < argc; i++)
+          for (int i = 2; i < argc; i++)
           {
             std::cout << " Word." << i - 1 << " : " << session->Word(i) << std::endl;
           }
@@ -545,45 +548,45 @@ IFSelect_ReturnStatus IFSelect_SessionPilot::Do(const Standard_Integer          
         case 'f': {
           if (argc < 3)
           {
-            std::cout << "Donner nom de fichier" << std::endl;
+            std::cout << "Give file name" << std::endl;
             return IFSelect_RetError;
           }
-          Standard_Integer nb = session->NbCommands();
+          int nb = session->NbCommands();
           if (nb == 0)
           {
-            std::cout << "Aucune commande enregistree" << std::endl;
+            std::cout << "No command recorded" << std::endl;
             break;
           }
-          std::cout << "Nb Commandes enregistrees : " << nb << std::endl;
+          std::cout << "Nb Recorded Commands : " << nb << std::endl;
           std::ofstream fout(Word(2).ToCString(), std::ios::out);
-          for (Standard_Integer i = 1; i <= nb; i++)
+          for (int i = 1; i <= nb; i++)
             fout << session->Command(i) << std::endl;
           break;
         }
         case 'l': { //        ****    command list
           if (session->RecordMode())
-            std::cout << "  -- Record Mode Actif" << std::endl;
+            std::cout << "  -- Record Mode Active" << std::endl;
           else
-            std::cout << "  -- Record Mode Inactif" << std::endl;
-          Standard_Integer nb = session->NbCommands();
-          std::cout << "Nb Commandes enregistrees : " << nb << " :" << std::endl;
-          for (Standard_Integer i = 1; i <= nb; i++)
+            std::cout << "  -- Record Mode Inactive" << std::endl;
+          int nb = session->NbCommands();
+          std::cout << "Nb Recorded Commands : " << nb << " :" << std::endl;
+          for (int i = 1; i <= nb; i++)
           {
             std::cout << "  " << i << "	" << session->Command(i) << std::endl;
           }
           break;
         }
         case 'r': { //        ****    command record
-          Standard_Boolean mode = session->RecordMode();
+          bool mode = session->RecordMode();
           if (mode)
-            std::cout << " -- Record Mode a present Inactif" << std::endl;
+            std::cout << " -- Record Mode now Inactive" << std::endl;
           else
-            std::cout << " -- Record Mode a present Actif" << std::endl;
+            std::cout << " -- Record Mode now Active" << std::endl;
           session->SetRecordMode(!mode);
           break;
         }
         default:
-          std::cout << "Option de controle de commande non comprise" << std::endl;
+          std::cout << "Command control option not understood" << std::endl;
       }
       return IFSelect_RetVoid;
     }
@@ -591,18 +594,18 @@ IFSelect_ReturnStatus IFSelect_SessionPilot::Do(const Standard_Integer          
     case 4: { //        ****     FILE
       if (argc < 2)
       {
-        std::cout << "Donner nom de fichier" << std::endl;
+        std::cout << "Give file name" << std::endl;
         return IFSelect_RetError;
       }
       return session->ReadScript(TCollection_AsciiString(session->Word(1)).ToCString());
-      //          On recopie la string parce que Word(1) change tout le temps !
+      //          We copy the string because Word(1) changes all the time !
     }
 
     case 5: { //        ****     XSTEP
       if (argc < 2)
       {
-        std::cout << "xstep : prefixe neutre pour toute commande xstep-draw" << std::endl
-                  << "xstep command args  equivaut a  command args" << std::endl;
+        std::cout << "xstep : neutral prefix for any xstep-draw command" << std::endl
+                  << "xstep command args  equivalent to  command args" << std::endl;
         return Do(2, this);
       }
       else
@@ -614,8 +617,8 @@ IFSelect_ReturnStatus IFSelect_SessionPilot::Do(const Standard_Integer          
     case 6: { //        ****    XSNEW(variable)
       if (argc < 3)
       {
-        std::cout << "xsnew nomvar command [args]   creates an item" << std::endl
-                  << "  nomvar : name of item (must be a new name) in the session" << std::endl;
+        std::cout << "xsnew varname command [args]   creates an item" << std::endl
+                  << "  varname : name of item (must be a new name) in the session" << std::endl;
         return Do(-1, this);
       }
       else
@@ -623,7 +626,7 @@ IFSelect_ReturnStatus IFSelect_SessionPilot::Do(const Standard_Integer          
 
         theobjrec.Nullify();
         TCollection_AsciiString name = Word(1);
-        //  Le nom ne doit pas etre deja pris !
+        //  The name must not be already taken !
         if (thesession.IsNull())
         {
           std::cout << "Command with a Name and no Session defined !" << std::endl;
@@ -635,18 +638,18 @@ IFSelect_ReturnStatus IFSelect_SessionPilot::Do(const Standard_Integer          
         RemoveWord(0);
         RemoveWord(0);
 
-        //  Commande pour un Acteur
-        Handle(IFSelect_Activator) actor;
-        Standard_Integer           num;
+        //  Command for an Actor
+        occ::handle<IFSelect_Activator> actor;
+        int                             num;
         if (IFSelect_Activator::Select(thewords(0).ToCString(), num, actor))
         {
           theobjrec.Nullify();
           stat = actor->Do(num, this);
-          //  Prise en compte des commandes a resultat
+          //  Taking into account commands with result
           if (!theobjrec.IsNull())
           {
-            thesession->RemoveItem(theobjrec); //// depannage ?
-            Standard_Integer addws = thesession->AddNamedItem(name.ToCString(), theobjrec);
+            thesession->RemoveItem(theobjrec); //// troubleshooting ?
+            int addws = thesession->AddNamedItem(name.ToCString(), theobjrec);
             theobjrec.Nullify();
             if (addws == 0)
             {
@@ -660,7 +663,7 @@ IFSelect_ReturnStatus IFSelect_SessionPilot::Do(const Standard_Integer          
           return stat;
         }
         std::cout << " Command : " << thewords(0) << " unknown" << std::endl;
-        return IFSelect_RetError; // pas reconnu donc incorrect
+        return IFSelect_RetError; // not recognized therefore incorrect
       }
     }
     default:
@@ -668,22 +671,22 @@ IFSelect_ReturnStatus IFSelect_SessionPilot::Do(const Standard_Integer          
   }
 }
 
-Standard_CString IFSelect_SessionPilot::Help(const Standard_Integer number) const
+const char* IFSelect_SessionPilot::Help(const int number) const
 {
   switch (number)
   {
     case 1:
-      return "exit ou x : Fin de session";
+      return "exit or x : End of session";
     case 2:
-      return "Liste les commandes. ? <titre> : commandes debutant par <titre>";
+      return "Lists the commands. ? <title> : commands starting with <title>";
     case 3:
-      return "controle de commande. command tout court pour help complet";
+      return "command control. command alone for complete help";
     case 4:
-      return "lit les commandes depuis un fichier";
+      return "reads commands from a file";
     case 5:
-      return "prefixe neutre pour xstep-draw";
+      return "neutral prefix for xstep-draw";
     case 6:
-      return "creation item : donner nom_item puis commande args";
+      return "item creation : give item_name then command args";
     default:
       return "";
   }

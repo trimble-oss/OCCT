@@ -41,7 +41,7 @@
 #include <IGESGraph_ToolTextFontDef.hxx>
 #include <IGESGraph_ToolUniformRectGrid.hxx>
 #include <IGESGraph_UniformRectGrid.hxx>
-#include <Interface_Macros.hxx>
+#include <MoniTool_Macros.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_Type.hxx>
 
@@ -50,13 +50,13 @@ IMPLEMENT_STANDARD_RTTIEXT(IGESGraph_SpecificModule, IGESData_SpecificModule)
 //  Each Module is attached to a Protocol : it must interpret Case Numbers
 //  (arguments <CN> of various methods) in accordance to values returned by
 //  the method TypeNumber from this Protocol
-IGESGraph_SpecificModule::IGESGraph_SpecificModule() {}
+IGESGraph_SpecificModule::IGESGraph_SpecificModule() = default;
 
-void IGESGraph_SpecificModule::OwnDump(const Standard_Integer             CN,
-                                       const Handle(IGESData_IGESEntity)& ent,
-                                       const IGESData_IGESDumper&         dumper,
-                                       Standard_OStream&                  S,
-                                       const Standard_Integer             own) const
+void IGESGraph_SpecificModule::OwnDump(const int                               CN,
+                                       const occ::handle<IGESData_IGESEntity>& ent,
+                                       const IGESData_IGESDumper&              dumper,
+                                       Standard_OStream&                       S,
+                                       const int                               own) const
 {
   switch (CN)
   {
@@ -177,8 +177,8 @@ void IGESGraph_SpecificModule::OwnDump(const Standard_Integer             CN,
   }
 }
 
-Standard_Boolean IGESGraph_SpecificModule::OwnCorrect(const Standard_Integer             CN,
-                                                      const Handle(IGESData_IGESEntity)& ent) const
+bool IGESGraph_SpecificModule::OwnCorrect(const int                               CN,
+                                          const occ::handle<IGESData_IGESEntity>& ent) const
 {
   //   Applies only on some types
   switch (CN)
@@ -242,5 +242,5 @@ Standard_Boolean IGESGraph_SpecificModule::OwnCorrect(const Standard_Integer    
     default:
       break;
   }
-  return Standard_False;
+  return false;
 }

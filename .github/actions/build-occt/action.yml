@@ -18,7 +18,7 @@ inputs:
   use-vtk:
     description: 'Enable VTK'
     required: false
-    default: 'true'
+    default: 'false'
   build-use-pch:
     description: 'Enable precompiled headers'
     required: false
@@ -55,6 +55,7 @@ runs:
       with:
         artifact-name: ${{ inputs.artifact-name }}-cache
         build-directory: build
+        include-debug: ${{ inputs.cmake-build-type == 'Debug' && 'true' || 'false' }}
 
     - name: Build OCCT (Windows)
       if: ${{ inputs.platform == 'windows' }}
@@ -78,7 +79,7 @@ runs:
       shell: bash
 
     - name: Upload install directory
-      uses: actions/upload-artifact@v4.6.2
+      uses: ./.github/actions/upload-artifacts
       with:
         name: ${{ inputs.artifact-name }}
         path: install

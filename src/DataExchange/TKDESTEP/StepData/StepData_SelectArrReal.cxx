@@ -20,25 +20,25 @@ IMPLEMENT_STANDARD_RTTIEXT(StepData_SelectArrReal, StepData_SelectNamed)
 
 //=================================================================================================
 
-StepData_SelectArrReal::StepData_SelectArrReal() {}
+StepData_SelectArrReal::StepData_SelectArrReal() = default;
 
 //=================================================================================================
 
-Standard_Integer StepData_SelectArrReal::Kind() const
+int StepData_SelectArrReal::Kind() const
 {
   return myKindArrReal;
 }
 
 //=================================================================================================
 
-Handle(TColStd_HArray1OfReal) StepData_SelectArrReal::ArrReal() const
+occ::handle<NCollection_HArray1<double>> StepData_SelectArrReal::ArrReal() const
 {
   return theArr;
 }
 
 //=================================================================================================
 
-void StepData_SelectArrReal::SetArrReal(const Handle(TColStd_HArray1OfReal)& arr)
+void StepData_SelectArrReal::SetArrReal(const occ::handle<NCollection_HArray1<double>>& arr)
 {
   theArr = arr;
 }

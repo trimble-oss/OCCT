@@ -24,21 +24,21 @@ IMPLEMENT_STANDARD_RTTIEXT(OpenGl_PointSprite, OpenGl_Texture)
 //=================================================================================================
 
 OpenGl_PointSprite::OpenGl_PointSprite(const TCollection_AsciiString& theResourceId)
-    : OpenGl_Texture(theResourceId, Handle(Graphic3d_TextureParams)()),
+    : OpenGl_Texture(theResourceId, occ::handle<Graphic3d_TextureParams>()),
       myBitmapList(0)
 {
   // mySampler->Parameters()->SetFilter (Graphic3d_TOTF_NEAREST);
-  mySampler->Parameters()->SetModulate(Standard_False);
+  mySampler->Parameters()->SetModulate(false);
   mySampler->Parameters()->SetGenMode(Graphic3d_TOTM_SPRITE,
-                                      Graphic3d_Vec4(0.0f, 0.0f, 0.0f, 0.0f),
-                                      Graphic3d_Vec4(0.0f, 0.0f, 0.0f, 0.0f));
+                                      NCollection_Vec4<float>(0.0f, 0.0f, 0.0f, 0.0f),
+                                      NCollection_Vec4<float>(0.0f, 0.0f, 0.0f, 0.0f));
 }
 
 //=================================================================================================
 
 OpenGl_PointSprite::~OpenGl_PointSprite()
 {
-  Release(NULL);
+  Release(nullptr);
 }
 
 //=================================================================================================
@@ -48,8 +48,9 @@ void OpenGl_PointSprite::Release(OpenGl_Context* theGlCtx)
   if (myBitmapList != 0)
   {
     Standard_ASSERT_RETURN(
-      theGlCtx != NULL,
-      "OpenGl_PointSprite destroyed without GL context! Possible GPU memory leakage...", );
+      theGlCtx != nullptr,
+      "OpenGl_PointSprite destroyed without GL context! Possible GPU memory leakage...",
+      Standard_VOID_RETURN);
 
     if (theGlCtx->IsValid())
     {
@@ -63,8 +64,8 @@ void OpenGl_PointSprite::Release(OpenGl_Context* theGlCtx)
 
 //=================================================================================================
 
-void OpenGl_PointSprite::SetDisplayList(const Handle(OpenGl_Context)& theCtx,
-                                        const GLuint                  theBitmapList)
+void OpenGl_PointSprite::SetDisplayList(const occ::handle<OpenGl_Context>& theCtx,
+                                        const GLuint                       theBitmapList)
 {
   Release(theCtx.operator->());
   myBitmapList = theBitmapList;
@@ -72,7 +73,7 @@ void OpenGl_PointSprite::SetDisplayList(const Handle(OpenGl_Context)& theCtx,
 
 //=================================================================================================
 
-void OpenGl_PointSprite::DrawBitmap(const Handle(OpenGl_Context)& theCtx) const
+void OpenGl_PointSprite::DrawBitmap(const occ::handle<OpenGl_Context>& theCtx) const
 {
   if (myBitmapList != 0)
   {

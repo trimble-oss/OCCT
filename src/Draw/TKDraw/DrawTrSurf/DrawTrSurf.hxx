@@ -35,13 +35,13 @@ struct DrawTrSurf_Params;
 
 //! This package supports the display of parametric curves and surfaces.
 //!
-//! The  Drawable deferred  classes is  inherited from
-//! the Drawable3D  class  from  the package Draw,  it
-//! adds methods to  draw 3D Curves  and  Curves on 3D
+//! The Drawable deferred classes is inherited from
+//! the Drawable3D class from the package Draw, it
+//! adds methods to draw 3D Curves and Curves on 3D
 //! Surfaces.
 //!
 //! The classes Curve Curve2d and Surface are drawable
-//! and  can be  used  to  draw a   single  curve from
+//! and can be used to draw a single curve from
 //! packages Geom or Geom2d or a surface from Geom.
 //!
 //! The Triangulation and Polygon from the package Poly are also supported.
@@ -50,119 +50,118 @@ class DrawTrSurf
 public:
   DEFINE_STANDARD_ALLOC
 
-  //! Sets <G> in the variable <Name>.  Overwrite the
+  //! Sets <G> in the variable <Name>. Overwrite the
   //! variable if already set.
-  Standard_EXPORT static void Set(const Standard_CString Name, const gp_Pnt& G);
+  Standard_EXPORT static void Set(const char* Name, const gp_Pnt& G);
 
-  //! Sets <G> in the variable <Name>.  Overwrite the
+  //! Sets <G> in the variable <Name>. Overwrite the
   //! variable if already set.
-  Standard_EXPORT static void Set(const Standard_CString Name, const gp_Pnt2d& G);
+  Standard_EXPORT static void Set(const char* Name, const gp_Pnt2d& G);
 
-  //! Sets <G> in the variable <Name>.  Overwrite the
-  //! variable if already set.
-  //! isSenseMarker indicates whether to render the
-  //! sense glyph (arrow) for curves or not
-  Standard_EXPORT static void Set(const Standard_CString       Name,
-                                  const Handle(Geom_Geometry)& G,
-                                  const Standard_Boolean       isSenseMarker = Standard_True);
-
-  template <class T>
-  static void Set(const Standard_CString Name,
-                  const Handle(T)&       Arg,
-                  typename opencascade::std::enable_if<
-                    opencascade::std::is_base_of<Geom_Geometry, T>::value>::type* = 0)
-  {
-    Set(Name, (const Handle(Geom_Geometry)&)Arg);
-  }
-
-  //! Sets <C> in the variable <Name>.  Overwrite the
+  //! Sets <G> in the variable <Name>. Overwrite the
   //! variable if already set.
   //! isSenseMarker indicates whether to render the
   //! sense glyph (arrow) for curves or not
-  Standard_EXPORT static void Set(const Standard_CString      Name,
-                                  const Handle(Geom2d_Curve)& C,
-                                  const Standard_Boolean      isSenseMarker = Standard_True);
+  Standard_EXPORT static void Set(const char*                       Name,
+                                  const occ::handle<Geom_Geometry>& G,
+                                  const bool                        isSenseMarker = true);
 
   template <class T>
-  static void Set(const Standard_CString Name,
-                  const Handle(T)&       Arg,
+  static void Set(const char*           Name,
+                  const occ::handle<T>& Arg,
                   typename opencascade::std::enable_if<
-                    opencascade::std::is_base_of<Geom2d_Curve, T>::value>::type* = 0)
+                    opencascade::std::is_base_of<Geom_Geometry, T>::value>::type* = nullptr)
   {
-    Set(Name, (const Handle(Geom2d_Curve)&)Arg);
+    Set(Name, (const occ::handle<Geom_Geometry>&)Arg);
   }
 
-  //! Sets <T> in the variable <Name>.  Overwrite the
+  //! Sets <C> in the variable <Name>. Overwrite the
   //! variable if already set.
-  Standard_EXPORT static void Set(const Standard_CString Name, const Handle(Poly_Triangulation)& T);
+  //! isSenseMarker indicates whether to render the
+  //! sense glyph (arrow) for curves or not
+  Standard_EXPORT static void Set(const char*                      Name,
+                                  const occ::handle<Geom2d_Curve>& C,
+                                  const bool                       isSenseMarker = true);
 
-  //! Sets <P> in the variable <Name>.  Overwrite the
+  template <class T>
+  static void Set(const char*           Name,
+                  const occ::handle<T>& Arg,
+                  typename opencascade::std::enable_if<
+                    opencascade::std::is_base_of<Geom2d_Curve, T>::value>::type* = nullptr)
+  {
+    Set(Name, (const occ::handle<Geom2d_Curve>&)Arg);
+  }
+
+  //! Sets <T> in the variable <Name>. Overwrite the
   //! variable if already set.
-  Standard_EXPORT static void Set(const Standard_CString Name, const Handle(Poly_Polygon3D)& P);
+  Standard_EXPORT static void Set(const char* Name, const occ::handle<Poly_Triangulation>& T);
 
-  //! Sets <P> in the variable <Name>.  Overwrite the
+  //! Sets <P> in the variable <Name>. Overwrite the
   //! variable if already set.
-  Standard_EXPORT static void Set(const Standard_CString Name, const Handle(Poly_Polygon2D)& P);
+  Standard_EXPORT static void Set(const char* Name, const occ::handle<Poly_Polygon3D>& P);
 
-  //! Get  the variable <S>.  Returns a  null  handle if
-  //! none, and print a warning message.
-  Standard_EXPORT static Handle(Geom_Geometry) Get(Standard_CString& Name);
+  //! Sets <P> in the variable <Name>. Overwrite the
+  //! variable if already set.
+  Standard_EXPORT static void Set(const char* Name, const occ::handle<Poly_Polygon2D>& P);
+  //! Getthe variable <S>. Returns a null handle if
+  //!  none, and print a warning message.
+  Standard_EXPORT static occ::handle<Geom_Geometry> Get(const char*& Name);
 
   //! Gets the variable. Returns False if none and print
   //! a warning message.
-  Standard_EXPORT static Standard_Boolean GetPoint(Standard_CString& Name, gp_Pnt& P);
+  Standard_EXPORT static bool GetPoint(const char*& Name, gp_Pnt& P);
 
   //! Gets the variable. Returns False if none and print
   //! a warning message.
-  Standard_EXPORT static Standard_Boolean GetPoint2d(Standard_CString& Name, gp_Pnt2d& P);
+  Standard_EXPORT static bool GetPoint2d(const char*& Name, gp_Pnt2d& P);
 
-  //! Get  the variable <S>.  Returns a  null  handle if
+  //! Get the variable <S>. Returns a null handle if
   //! none, and print a warning message.
-  Standard_EXPORT static Handle(Geom_Curve) GetCurve(Standard_CString& Name);
+  Standard_EXPORT static occ::handle<Geom_Curve> GetCurve(const char*& Name);
 
-  //! Get  the variable <S>.  Returns a  null  handle if
+  //! Get the variable <S>. Returns a null handle if
   //! none, and print a warning message.
-  Standard_EXPORT static Handle(Geom_BezierCurve) GetBezierCurve(Standard_CString& Name);
+  Standard_EXPORT static occ::handle<Geom_BezierCurve> GetBezierCurve(const char*& Name);
 
-  //! Get  the variable <S>.  Returns a  null  handle if
+  //! Get the variable <S>. Returns a null handle if
   //! none, and print a warning message.
-  Standard_EXPORT static Handle(Geom_BSplineCurve) GetBSplineCurve(Standard_CString& Name);
+  Standard_EXPORT static occ::handle<Geom_BSplineCurve> GetBSplineCurve(const char*& Name);
 
-  //! Get  the variable <S>.  Returns a  null  handle if
+  //! Get the variable <S>. Returns a null handle if
   //! none, and print a warning message.
-  Standard_EXPORT static Handle(Geom2d_Curve) GetCurve2d(Standard_CString& Name);
+  Standard_EXPORT static occ::handle<Geom2d_Curve> GetCurve2d(const char*& Name);
 
-  //! Get  the variable <S>.  Returns a  null  handle if
+  //! Get the variable <S>. Returns a null handle if
   //! none, and print a warning message.
-  Standard_EXPORT static Handle(Geom2d_BezierCurve) GetBezierCurve2d(Standard_CString& Name);
+  Standard_EXPORT static occ::handle<Geom2d_BezierCurve> GetBezierCurve2d(const char*& Name);
 
-  //! Get  the variable <S>.  Returns a  null  handle if
+  //! Get the variable <S>. Returns a null handle if
   //! none, and print a warning message.
-  Standard_EXPORT static Handle(Geom2d_BSplineCurve) GetBSplineCurve2d(Standard_CString& Name);
+  Standard_EXPORT static occ::handle<Geom2d_BSplineCurve> GetBSplineCurve2d(const char*& Name);
 
-  //! Get  the variable <S>.  Returns a  null  handle if
+  //! Get the variable <S>. Returns a null handle if
   //! none, and print a warning message.
-  Standard_EXPORT static Handle(Geom_Surface) GetSurface(Standard_CString& Name);
+  Standard_EXPORT static occ::handle<Geom_Surface> GetSurface(const char*& Name);
 
-  //! Get  the variable <S>.  Returns a  null  handle if
+  //! Get the variable <S>. Returns a null handle if
   //! none, and print a warning message.
-  Standard_EXPORT static Handle(Geom_BezierSurface) GetBezierSurface(Standard_CString& Name);
+  Standard_EXPORT static occ::handle<Geom_BezierSurface> GetBezierSurface(const char*& Name);
 
-  //! Get  the variable <S>.  Returns a  null  handle if
+  //! Get the variable <S>. Returns a null handle if
   //! none, and print a warning message.
-  Standard_EXPORT static Handle(Geom_BSplineSurface) GetBSplineSurface(Standard_CString& Name);
+  Standard_EXPORT static occ::handle<Geom_BSplineSurface> GetBSplineSurface(const char*& Name);
 
-  //! Get  the variable <S>.  Returns a  null  handle if
+  //! Get the variable <S>. Returns a null handle if
   //! none, and print a warning message.
-  Standard_EXPORT static Handle(Poly_Triangulation) GetTriangulation(Standard_CString& Name);
+  Standard_EXPORT static occ::handle<Poly_Triangulation> GetTriangulation(const char*& Name);
 
-  //! Get  the variable <S>.  Returns a  null  handle if
+  //! Get the variable <S>. Returns a null handle if
   //! none, and print a warning message.
-  Standard_EXPORT static Handle(Poly_Polygon3D) GetPolygon3D(Standard_CString& Name);
+  Standard_EXPORT static occ::handle<Poly_Polygon3D> GetPolygon3D(const char*& Name);
 
-  //! Get  the variable <S>.  Returns a  null  handle if
+  //! Get the variable <S>. Returns a null handle if
   //! none, and print a warning message.
-  Standard_EXPORT static Handle(Poly_Polygon2D) GetPolygon2D(Standard_CString& Name);
+  Standard_EXPORT static occ::handle<Poly_Polygon2D> GetPolygon2D(const char*& Name);
 
   //! Return package global parameters.
   Standard_EXPORT static DrawTrSurf_Params& Parameters();

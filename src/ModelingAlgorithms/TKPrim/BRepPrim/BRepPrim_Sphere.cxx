@@ -31,7 +31,7 @@
 
 //=================================================================================================
 
-BRepPrim_Sphere::BRepPrim_Sphere(const Standard_Real Radius)
+BRepPrim_Sphere::BRepPrim_Sphere(const double Radius)
     : BRepPrim_Revolution(gp::XOY(), PMIN, PMAX),
       myRadius(Radius)
 {
@@ -40,8 +40,8 @@ BRepPrim_Sphere::BRepPrim_Sphere(const Standard_Real Radius)
 
 //=================================================================================================
 
-BRepPrim_Sphere::BRepPrim_Sphere(const gp_Pnt& Center, const Standard_Real Radius)
-    : BRepPrim_Revolution(gp_Ax2(Center, gp_Dir(0, 0, 1), gp_Dir(1, 0, 0)), PMIN, PMAX),
+BRepPrim_Sphere::BRepPrim_Sphere(const gp_Pnt& Center, const double Radius)
+    : BRepPrim_Revolution(gp_Ax2(Center, gp_Dir(gp_Dir::D::Z), gp_Dir(gp_Dir::D::X)), PMIN, PMAX),
       myRadius(Radius)
 {
   SetMeridian();
@@ -49,7 +49,7 @@ BRepPrim_Sphere::BRepPrim_Sphere(const gp_Pnt& Center, const Standard_Real Radiu
 
 //=================================================================================================
 
-BRepPrim_Sphere::BRepPrim_Sphere(const gp_Ax2& Axes, const Standard_Real Radius)
+BRepPrim_Sphere::BRepPrim_Sphere(const gp_Ax2& Axes, const double Radius)
     : BRepPrim_Revolution(Axes, PMIN, PMAX),
       myRadius(Radius)
 {
@@ -60,8 +60,8 @@ BRepPrim_Sphere::BRepPrim_Sphere(const gp_Ax2& Axes, const Standard_Real Radius)
 
 TopoDS_Face BRepPrim_Sphere::MakeEmptyLateralFace() const
 {
-  Handle(Geom_SphericalSurface) S = new Geom_SphericalSurface(Axes(), myRadius);
-  TopoDS_Face                   F;
+  occ::handle<Geom_SphericalSurface> S = new Geom_SphericalSurface(Axes(), myRadius);
+  TopoDS_Face                        F;
   myBuilder.Builder().MakeFace(F, S, Precision::Confusion());
   return F;
 }
@@ -77,8 +77,9 @@ void BRepPrim_Sphere::SetMeridian()
 
   gp_Dir D = Axes().YDirection();
   D.Reverse();
-  gp_Ax2                A(Axes().Location(), D, Axes().XDirection());
-  Handle(Geom_Circle)   C   = new Geom_Circle(A, myRadius);
-  Handle(Geom2d_Circle) C2d = new Geom2d_Circle(gp_Ax2d(gp_Pnt2d(0, 0), gp_Dir2d(1, 0)), myRadius);
+  gp_Ax2                     A(Axes().Location(), D, Axes().XDirection());
+  occ::handle<Geom_Circle>   C = new Geom_Circle(A, myRadius);
+  occ::handle<Geom2d_Circle> C2d =
+    new Geom2d_Circle(gp_Ax2d(gp_Pnt2d(0, 0), gp_Dir2d(gp_Dir2d::D::X)), myRadius);
   Meridian(C, C2d);
 }

@@ -42,13 +42,13 @@ VrmlData_WorldInfo::VrmlData_WorldInfo(const VrmlData_Scene& theScene,
 
 void VrmlData_WorldInfo::SetTitle(const char* theString)
 {
-  if (theString == 0L)
-    myTitle = 0L;
+  if (theString == nullptr)
+    myTitle = nullptr;
   else
   {
     const size_t len = strlen(theString) + 1;
     if (len == 1)
-      myTitle = 0L;
+      myTitle = nullptr;
     else
     {
       myTitle = static_cast<const char*>(Scene().Allocator()->Allocate(len));
@@ -64,7 +64,7 @@ void VrmlData_WorldInfo::SetTitle(const char* theString)
 
 void VrmlData_WorldInfo::AddInfo(const char* theString)
 {
-  if (theString != 0L)
+  if (theString != nullptr)
     if (*theString != '\0')
     {
       const size_t len  = strlen(theString) + 1;
@@ -79,10 +79,11 @@ void VrmlData_WorldInfo::AddInfo(const char* theString)
 // purpose  : Create a copy of this node
 //=======================================================================
 
-Handle(VrmlData_Node) VrmlData_WorldInfo::Clone(const Handle(VrmlData_Node)& theOther) const
+occ::handle<VrmlData_Node> VrmlData_WorldInfo::Clone(
+  const occ::handle<VrmlData_Node>& theOther) const
 {
-  Handle(VrmlData_WorldInfo) aResult =
-    Handle(VrmlData_WorldInfo)::DownCast(VrmlData_Node::Clone(theOther));
+  occ::handle<VrmlData_WorldInfo> aResult =
+    occ::down_cast<VrmlData_WorldInfo>(VrmlData_Node::Clone(theOther));
   if (aResult.IsNull())
     aResult = new VrmlData_WorldInfo(theOther.IsNull() ? Scene() : theOther->Scene(), Name());
 
@@ -148,8 +149,7 @@ VrmlData_ErrorStatus VrmlData_WorldInfo::Write(const char* thePrefix) const
   VrmlData_ErrorStatus  aStatus(VrmlData_StatusOK);
   const VrmlData_Scene& aScene   = Scene();
   static char           header[] = "WorldInfo {";
-  if (aScene.IsDummyWrite() == Standard_False
-      && OK(aStatus, aScene.WriteLine(thePrefix, header, GlobalIndent())))
+  if (!aScene.IsDummyWrite() && OK(aStatus, aScene.WriteLine(thePrefix, header, GlobalIndent())))
   {
     char buf[4096];
     if (myTitle)
@@ -158,9 +158,9 @@ VrmlData_ErrorStatus VrmlData_WorldInfo::Write(const char* thePrefix) const
       aStatus = aScene.WriteLine(buf);
     }
 
-    if (myInfo.IsEmpty() == Standard_False && OK(aStatus))
+    if (!myInfo.IsEmpty() && OK(aStatus))
     {
-      if (OK(aStatus, aScene.WriteLine("info [", 0L, GlobalIndent())))
+      if (OK(aStatus, aScene.WriteLine("info [", nullptr, GlobalIndent())))
       {
         NCollection_List<const char*>::Iterator anIter(myInfo);
         while (anIter.More())
@@ -173,7 +173,7 @@ VrmlData_ErrorStatus VrmlData_WorldInfo::Write(const char* thePrefix) const
             aStatus = aScene.WriteLine(buf);
         }
       }
-      aStatus = aScene.WriteLine("]", 0L, -GlobalIndent());
+      aStatus = aScene.WriteLine("]", nullptr, -GlobalIndent());
     }
 
     aStatus = WriteClosing();
@@ -183,7 +183,7 @@ VrmlData_ErrorStatus VrmlData_WorldInfo::Write(const char* thePrefix) const
 
 //=================================================================================================
 
-Standard_Boolean VrmlData_WorldInfo::IsDefault() const
+bool VrmlData_WorldInfo::IsDefault() const
 {
-  return (myTitle == 0L && myInfo.IsEmpty());
+  return (myTitle == nullptr && myInfo.IsEmpty());
 }

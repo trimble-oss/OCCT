@@ -37,7 +37,7 @@
 
 //=================================================================================================
 
-BRepPrim_Builder::BRepPrim_Builder() {}
+BRepPrim_Builder::BRepPrim_Builder() = default;
 
 //=================================================================================================
 
@@ -51,7 +51,7 @@ BRepPrim_Builder::BRepPrim_Builder(const BRep_Builder& B)
 void BRepPrim_Builder::MakeShell(TopoDS_Shell& S) const
 {
   myBuilder.MakeShell(S);
-  S.Closed(Standard_True);
+  S.Closed(true);
 }
 
 //=================================================================================================
@@ -73,7 +73,7 @@ void BRepPrim_Builder::MakeWire(TopoDS_Wire& W) const
 void BRepPrim_Builder::MakeDegeneratedEdge(TopoDS_Edge& E) const
 {
   myBuilder.MakeEdge(E);
-  myBuilder.Degenerated(E, Standard_True);
+  myBuilder.Degenerated(E, true);
 }
 
 //=================================================================================================
@@ -83,10 +83,7 @@ void BRepPrim_Builder::MakeEdge(TopoDS_Edge& E, const gp_Lin& L) const
   myBuilder.MakeEdge(E, new Geom_Line(L), Precision::Confusion());
 }
 
-//=======================================================================
-// function : MakeEdge
-// purpose  : Make a Circular Edge
-//=======================================================================
+//=================================================================================================
 
 void BRepPrim_Builder::MakeEdge(TopoDS_Edge& E, const gp_Circ& C) const
 {
@@ -146,10 +143,10 @@ void BRepPrim_Builder::ReverseFace(TopoDS_Face& F) const
 // purpose  : Add a Vertex to an Edge
 //=======================================================================
 
-void BRepPrim_Builder::AddEdgeVertex(TopoDS_Edge&           E,
-                                     const TopoDS_Vertex&   V,
-                                     const Standard_Real    P,
-                                     const Standard_Boolean direct) const
+void BRepPrim_Builder::AddEdgeVertex(TopoDS_Edge&         E,
+                                     const TopoDS_Vertex& V,
+                                     const double         P,
+                                     const bool           direct) const
 {
   TopoDS_Vertex VV = V;
   if (!direct)
@@ -165,8 +162,8 @@ void BRepPrim_Builder::AddEdgeVertex(TopoDS_Edge&           E,
 
 void BRepPrim_Builder::AddEdgeVertex(TopoDS_Edge&         E,
                                      const TopoDS_Vertex& V,
-                                     const Standard_Real  P1,
-                                     const Standard_Real  P2) const
+                                     const double         P1,
+                                     const double         P2) const
 {
   TopoDS_Vertex VV = V;
   VV.Orientation(TopAbs_FORWARD);
@@ -180,20 +177,15 @@ void BRepPrim_Builder::AddEdgeVertex(TopoDS_Edge&         E,
 
 void BRepPrim_Builder::SetParameters(TopoDS_Edge& E,
                                      const TopoDS_Vertex&,
-                                     const Standard_Real P1,
-                                     const Standard_Real P2) const
+                                     const double P1,
+                                     const double P2) const
 {
   myBuilder.Range(E, P1, P2);
 }
 
-//=======================================================================
-// function : AddWireEdge
-// purpose  : Add an Edge to a Wire
-//=======================================================================
+//=================================================================================================
 
-void BRepPrim_Builder::AddWireEdge(TopoDS_Wire&           W,
-                                   const TopoDS_Edge&     E,
-                                   const Standard_Boolean direct) const
+void BRepPrim_Builder::AddWireEdge(TopoDS_Wire& W, const TopoDS_Edge& E, const bool direct) const
 {
   TopoDS_Edge EE = E;
   if (!direct)
@@ -201,20 +193,14 @@ void BRepPrim_Builder::AddWireEdge(TopoDS_Wire&           W,
   myBuilder.Add(W, EE);
 }
 
-//=======================================================================
-// function : AddFaceWire
-// purpose  : Add a Wire to a Face
-//=======================================================================
+//=================================================================================================
 
 void BRepPrim_Builder::AddFaceWire(TopoDS_Face& F, const TopoDS_Wire& W) const
 {
   myBuilder.Add(F, W);
 }
 
-//=======================================================================
-// function : AddShellFace
-// purpose  : Add a Face to a Shell
-//=======================================================================
+//=================================================================================================
 
 void BRepPrim_Builder::AddShellFace(TopoDS_Shell& S, const TopoDS_Face& F) const
 {

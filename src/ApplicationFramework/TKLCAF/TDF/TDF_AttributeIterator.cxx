@@ -24,19 +24,18 @@
 //=================================================================================================
 
 TDF_AttributeIterator::TDF_AttributeIterator()
-    : myValue(0L),
-      myWithoutForgotten(Standard_True)
+    : myValue(nullptr),
+      myWithoutForgotten(true)
 {
 }
 
 //=================================================================================================
 
-TDF_AttributeIterator::TDF_AttributeIterator(const TDF_Label&       aLabel,
-                                             const Standard_Boolean withoutForgotten)
-    : myValue(0L),
+TDF_AttributeIterator::TDF_AttributeIterator(const TDF_Label& aLabel, const bool withoutForgotten)
+    : myValue(nullptr),
       myWithoutForgotten(withoutForgotten)
 {
-  const Handle(TDF_Attribute)& aFirstAttribute = aLabel.myLabelNode->FirstAttribute();
+  const occ::handle<TDF_Attribute>& aFirstAttribute = aLabel.myLabelNode->FirstAttribute();
   if (!aFirstAttribute.IsNull())
     goToNext(aFirstAttribute);
 }
@@ -44,24 +43,23 @@ TDF_AttributeIterator::TDF_AttributeIterator(const TDF_Label&       aLabel,
 //=================================================================================================
 
 TDF_AttributeIterator::TDF_AttributeIterator(const TDF_LabelNodePtr aLabelNode,
-                                             const Standard_Boolean withoutForgotten)
-    : myValue(0L),
+                                             const bool             withoutForgotten)
+    : myValue(nullptr),
       myWithoutForgotten(withoutForgotten)
 {
-  const Handle(TDF_Attribute)& aFirstAttribute = aLabelNode->FirstAttribute();
+  const occ::handle<TDF_Attribute>& aFirstAttribute = aLabelNode->FirstAttribute();
   if (!aFirstAttribute.IsNull())
     goToNext(aFirstAttribute);
 }
 
 //=================================================================================================
 
-void TDF_AttributeIterator::Initialize(const TDF_Label&       aLabel,
-                                       const Standard_Boolean withoutForgotten)
+void TDF_AttributeIterator::Initialize(const TDF_Label& aLabel, const bool withoutForgotten)
 {
-  myWithoutForgotten                           = withoutForgotten;
-  const Handle(TDF_Attribute)& aFirstAttribute = aLabel.myLabelNode->FirstAttribute();
+  myWithoutForgotten                                = withoutForgotten;
+  const occ::handle<TDF_Attribute>& aFirstAttribute = aLabel.myLabelNode->FirstAttribute();
   if (aFirstAttribute.IsNull())
-    myValue = 0L;
+    myValue = nullptr;
   else
     goToNext(aFirstAttribute);
 }
@@ -74,9 +72,9 @@ void TDF_AttributeIterator::Next()
   // but necessary if we want to find sometimes the Forgotten attributes.
   if (myValue)
   {
-    const Handle(TDF_Attribute)& anAttribute = myValue->myNext;
+    const occ::handle<TDF_Attribute>& anAttribute = myValue->myNext;
     if (anAttribute.IsNull())
-      myValue = 0L;
+      myValue = nullptr;
     else
       goToNext(anAttribute);
   }
@@ -87,17 +85,17 @@ void TDF_AttributeIterator::Next()
 // purpose  : private method, used by the above
 //=======================================================================
 
-void TDF_AttributeIterator::goToNext(const Handle(TDF_Attribute)& anAttr)
+void TDF_AttributeIterator::goToNext(const occ::handle<TDF_Attribute>& anAttr)
 {
   myValue = anAttr.operator->();
   if (myWithoutForgotten)
   {
     while (myValue->IsForgotten())
     {
-      const Handle(TDF_Attribute)& anAttribute = myValue->myNext;
+      const occ::handle<TDF_Attribute>& anAttribute = myValue->myNext;
       if (anAttribute.IsNull())
       {
-        myValue = 0L;
+        myValue = nullptr;
         break;
       }
       myValue = anAttribute.operator->();

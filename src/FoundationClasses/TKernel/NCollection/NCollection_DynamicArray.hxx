@@ -21,9 +21,7 @@
 #include <Standard_NotImplemented.hxx>
 #include <Standard_OutOfRange.hxx>
 
-#include <NCollection_BasePointerVector.hxx>
 #include <NCollection_DefineAlloc.hxx>
-#include <NCollection_Allocator.hxx>
 #include <NCollection_Iterator.hxx>
 #include <NCollection_OccAllocator.hxx>
 #include <StdFail_NotDone.hxx>
@@ -39,18 +37,18 @@
 //! The Vector is always created with 0 length. It can be enlarged by two means:
 //!  1. Calling the method Append (val) - then "val" is added to the end of the
 //!     vector (the vector length is incremented)
-//!  2. Calling the method SetValue (i, val)  - if "i" is greater than or equal
-//!     to the current length of the vector,  the vector is enlarged to accomo-
+//!  2. Calling the method SetValue (i, val) - if "i" is greater than or equal
+//!     to the current length of the vector, the vector is enlarged to accomo-
 //!     date this index
 //!
-//! The methods Append and SetValue return  a non-const reference  to the copied
-//! object  inside  the vector.  This reference  is guaranteed to be valid until
+//! The methods Append and SetValue return a non-const reference to the copied
+//! object inside the vector. This reference is guaranteed to be valid until
 //! the vector is destroyed. It can be used to access the vector member directly
 //! or to pass its address to other data structures.
 //!
-//! The vector iterator remembers the length of the vector  at the moment of the
-//! creation or initialisation of the iterator.   Therefore the iteration begins
-//! at index 0  and stops at the index equal to (remembered_length-1).  It is OK
+//! The vector iterator remembers the length of the vector at the moment of the
+//! creation or initialisation of the iterator. Therefore the iteration begins
+//! at index 0 and stops at the index equal to (remembered_length-1). It is OK
 //! to enlarge the vector during the iteration.
 template <class TheItemType>
 class NCollection_DynamicArray
@@ -86,42 +84,38 @@ public:
   using Iterator       = NCollection_Iterator<NCollection_DynamicArray<TheItemType>>;
 
 public:
-  const_iterator begin() const { return const_iterator(*this); }
+  const_iterator begin() const noexcept { return const_iterator(*this); }
 
-  iterator begin() { return iterator(*this); }
+  iterator begin() noexcept { return iterator(*this); }
 
-  const_iterator cbegin() const { return const_iterator(*this); }
+  const_iterator cbegin() const noexcept { return const_iterator(*this); }
 
-  iterator end() { return iterator(myUsedSize, *this); }
+  iterator end() noexcept { return iterator(myUsedSize, *this); }
 
-  const_iterator end() const { return const_iterator(myUsedSize, *this); }
+  const_iterator end() const noexcept { return const_iterator(myUsedSize, *this); }
 
-  const_iterator cend() const { return const_iterator(myUsedSize, *this); }
+  const_iterator cend() const noexcept { return const_iterator(myUsedSize, *this); }
 
 public: //! @name public methods
-  NCollection_DynamicArray(const Standard_Integer theIncrement = 256)
-      : myContainer(),
-        myAlloc(),
+  NCollection_DynamicArray(const int theIncrement = 256)
+      : myAlloc(),
         myInternalSize(theIncrement),
         myUsedSize(0)
   {
   }
 
   // Constructor taking an allocator
-  explicit NCollection_DynamicArray(const Standard_Integer                   theIncrement,
-                                    const Handle(NCollection_BaseAllocator)& theAllocator)
-      : myContainer(),
-        myAlloc(allocator_type(theAllocator)),
+  explicit NCollection_DynamicArray(const int                                     theIncrement,
+                                    const occ::handle<NCollection_BaseAllocator>& theAllocator)
+      : myAlloc(allocator_type(theAllocator)),
         myInternalSize(theIncrement),
         myUsedSize(0)
   {
   }
 
   // Constructor taking an allocator
-  explicit NCollection_DynamicArray(const Standard_Integer theIncrement,
-                                    const allocator_type&  theAllocator)
-      : myContainer(),
-        myAlloc(theAllocator),
+  explicit NCollection_DynamicArray(const int theIncrement, const allocator_type& theAllocator)
+      : myAlloc(theAllocator),
         myInternalSize(theIncrement),
         myUsedSize(0)
   {
@@ -149,21 +143,21 @@ public: //! @name public methods
   ~NCollection_DynamicArray() { Clear(true); }
 
   //! Total number of items
-  Standard_Integer Length() const { return static_cast<int>(myUsedSize); }
+  int Length() const noexcept { return static_cast<int>(myUsedSize); }
 
   //! Total number of items in the vector
-  Standard_Integer Size() const { return Length(); }
+  int Size() const noexcept { return Length(); }
 
   //! Method for consistency with other collections.
   //! @return Lower bound (inclusive) for iteration.
-  Standard_Integer Lower() const { return 0; }
+  int Lower() const noexcept { return 0; }
 
   //! Method for consistency with other collections.
   //! @return Upper bound (inclusive) for iteration.
-  Standard_Integer Upper() const { return Length() - 1; }
+  int Upper() const noexcept { return Length() - 1; }
 
   //! Empty query
-  Standard_Boolean IsEmpty() const { return myUsedSize == 0; }
+  bool IsEmpty() const noexcept { return myUsedSize == 0; }
 
   //! Assignment to the collection of the same type
   NCollection_DynamicArray& Assign(const NCollection_DynamicArray& theOther,
@@ -264,44 +258,44 @@ public: //! @name public methods
   }
 
   //! Operator() - query the const value
-  const_reference operator()(const Standard_Integer theIndex) const { return Value(theIndex); }
+  const_reference operator()(const int theIndex) const noexcept { return Value(theIndex); }
 
   //! Operator[] - query the const value
-  const_reference operator[](const Standard_Integer theIndex) const { return Value(theIndex); }
+  const_reference operator[](const int theIndex) const noexcept { return Value(theIndex); }
 
   //! Operator[] - query the const value
-  const_reference operator[](const size_t theIndex) const { return at(theIndex); }
+  const_reference operator[](const size_t theIndex) const noexcept { return at(theIndex); }
 
-  const_reference Value(const Standard_Integer theIndex) const
+  const_reference Value(const int theIndex) const noexcept
   {
     return at(static_cast<int>(theIndex));
   }
 
   //! @return first element
-  const_reference First() const { return getArray()[0][0]; }
+  const_reference First() const noexcept { return getArray()[0][0]; }
 
   //! @return first element
-  reference ChangeFirst() { return getArray()[0][0]; }
+  reference ChangeFirst() noexcept { return getArray()[0][0]; }
 
   //! @return last element
-  const_reference Last() const { return at(myUsedSize - 1); }
+  const_reference Last() const noexcept { return at(myUsedSize - 1); }
 
   //! @return last element
-  reference ChangeLast() { return at(myUsedSize - 1); }
+  reference ChangeLast() noexcept { return at(myUsedSize - 1); }
 
   //! Operator() - query the value
-  reference operator()(const Standard_Integer theIndex) { return ChangeValue(theIndex); }
+  reference operator()(const int theIndex) noexcept { return ChangeValue(theIndex); }
 
   //! Operator[] - query the value
-  reference operator[](const Standard_Integer theIndex) { return ChangeValue(theIndex); }
+  reference operator[](const int theIndex) noexcept { return ChangeValue(theIndex); }
 
   //! Operator[] - query the value
-  reference operator[](const size_t theIndex) { return at(theIndex); }
+  reference operator[](const size_t theIndex) noexcept { return at(theIndex); }
 
-  reference ChangeValue(const Standard_Integer theIndex) { return at(static_cast<int>(theIndex)); }
+  reference ChangeValue(const int theIndex) noexcept { return at(static_cast<int>(theIndex)); }
 
   //! SetValue () - set or append a value
-  reference SetValue(const Standard_Integer theIndex, const TheItemType& theValue)
+  reference SetValue(const int theIndex, const TheItemType& theValue)
   {
     const size_t aBlockInd = static_cast<size_t>(theIndex / myInternalSize);
     const size_t anIndex   = static_cast<size_t>(theIndex);
@@ -324,7 +318,7 @@ public: //! @name public methods
   }
 
   //! SetValue () - set or append a value
-  reference SetValue(const Standard_Integer theIndex, TheItemType&& theValue)
+  reference SetValue(const int theIndex, TheItemType&& theValue)
   {
     const size_t aBlockInd = static_cast<size_t>(theIndex / myInternalSize);
     const size_t anIndex   = static_cast<size_t>(theIndex);
@@ -365,7 +359,7 @@ public: //! @name public methods
     myUsedSize = 0;
   }
 
-  void SetIncrement(const Standard_Integer theIncrement)
+  void SetIncrement(const int theIncrement) noexcept
   {
     if (myUsedSize != 0)
     {
@@ -378,7 +372,7 @@ public: //! @name public methods
   friend const_iterator;
 
 protected:
-  size_t availableSize() const { return myContainer.Size() * myInternalSize; }
+  size_t availableSize() const noexcept { return myContainer.Size() * myInternalSize; }
 
   TheItemType* expandArray()
   {
@@ -387,12 +381,12 @@ protected:
     return aNewBlock;
   }
 
-  reference at(const size_t theInd)
+  reference at(const size_t theInd) noexcept
   {
     return getArray()[theInd / myInternalSize][theInd % myInternalSize];
   }
 
-  const_reference at(const size_t theInd) const
+  const_reference at(const size_t theInd) const noexcept
   {
     return getArray()[theInd / myInternalSize][theInd % myInternalSize];
   }
@@ -415,7 +409,7 @@ protected:
   }
 
   //! Wrapper to extract array
-  TheItemType** getArray() const { return (TheItemType**)myContainer.GetArray(); }
+  TheItemType** getArray() const noexcept { return (TheItemType**)myContainer.GetArray(); }
 
 protected:
   vector         myContainer;

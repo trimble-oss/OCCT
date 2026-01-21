@@ -20,7 +20,7 @@
 
 //! Auxiliary class optimizing creation of array buffer
 //! (using stack allocation for small arrays).
-template <class theItem, Standard_Integer MAX_ARRAY_SIZE = 1024>
+template <class theItem, int MAX_ARRAY_SIZE = 1024>
 class NCollection_LocalArray
 {
 public:
@@ -30,7 +30,7 @@ public:
     Allocate(theSize);
   }
 
-  NCollection_LocalArray()
+  NCollection_LocalArray() noexcept
       : myPtr(myBuffer),
         mySize(0)
   {
@@ -49,13 +49,13 @@ public:
     mySize = theSize;
   }
 
-  size_t Size() const { return mySize; }
+  size_t Size() const noexcept { return mySize; }
 
-  operator theItem*() const { return myPtr; }
+  operator theItem*() const noexcept { return myPtr; }
 
 private:
-  NCollection_LocalArray(const NCollection_LocalArray&);
-  NCollection_LocalArray& operator=(const NCollection_LocalArray&);
+  NCollection_LocalArray(const NCollection_LocalArray&)            = delete;
+  NCollection_LocalArray& operator=(const NCollection_LocalArray&) = delete;
 
 protected:
   void Deallocate()

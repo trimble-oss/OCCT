@@ -58,19 +58,16 @@ public:
   //! the "YAxis" of the plane used to parametrize the plane.
   Standard_EXPORT gce_MakePln(const gp_Ax2& A2);
 
-  //! Creates a plane with the  "Location" point <P>
+  //! Creates a plane with the "Location" point <P>
   //! and the normal direction <V>.
   Standard_EXPORT gce_MakePln(const gp_Pnt& P, const gp_Dir& V);
 
   //! Creates a plane from its cartesian equation :
   //! A * X + B * Y + C * Z + D = 0.0
   //!
-  //! the status is "BadEquation" if Sqrt (A*A + B*B + C*C) <=
+  //! the status is "BadEquation" if std::sqrt(A*A + B*B + C*C) <=
   //! Resolution from gp.
-  Standard_EXPORT gce_MakePln(const Standard_Real A,
-                              const Standard_Real B,
-                              const Standard_Real C,
-                              const Standard_Real D);
+  Standard_EXPORT gce_MakePln(const double A, const double B, const double C, const double D);
 
   //! Make a Pln from gp <ThePln> parallel to another
   //! Pln <Pln> and passing through a Pnt <Point>.
@@ -83,7 +80,7 @@ public:
   //! <Dist> to the plane <Pln> in the direction of the
   //! normal to <Pln>.
   //! Otherwise it is in the opposite direction.
-  Standard_EXPORT gce_MakePln(const gp_Pln& Pln, const Standard_Real Dist);
+  Standard_EXPORT gce_MakePln(const gp_Pln& Pln, const double Dist);
 
   //! Make a Pln from gp <ThePln> passing through 3
   //! Pnt <P1>,<P2>,<P3>.
@@ -95,12 +92,12 @@ public:
   //! The status is "ConfusedPoints" if <P1> <P2> are confused.
   Standard_EXPORT gce_MakePln(const gp_Pnt& P1, const gp_Pnt& P2);
 
-  //! Make a pln  passing through the location of <Axis>and
+  //! Make a pln passing through the location of <Axis>and
   //! normal to the Direction of <Axis>.
-  //! Warning -  If an error occurs (that is, when IsDone returns
+  //! Warning - If an error occurs (that is, when IsDone returns
   //! false), the Status function returns:
-  //! -   gce_BadEquation if Sqrt(A*A + B*B +
-  //! C*C) is less than or equal to gp::Resolution(),
+  //! -   gce_BadEquation if std::sqrt(A*A + B*B + C*C)
+  //!     is less than or equal to gp::Resolution(),
   //! -   gce_ConfusedPoints if P1 and P2 are coincident, or
   //! -   gce_ColinearPoints if P1, P2 and P3 are collinear.
   Standard_EXPORT gce_MakePln(const gp_Ax1& Axis);
@@ -112,7 +109,6 @@ public:
   Standard_EXPORT const gp_Pln& Operator() const;
   Standard_EXPORT               operator gp_Pln() const;
 
-protected:
 private:
   gp_Pln ThePln;
 };

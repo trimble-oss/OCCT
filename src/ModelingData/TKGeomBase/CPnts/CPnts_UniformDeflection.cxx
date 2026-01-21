@@ -47,32 +47,24 @@
 #include <gp_Vec2d.hxx>
 #include <StdFail_NotDone.hxx>
 
-static inline void D03d(const Standard_Address C, const Standard_Real U, gp_Pnt& P)
+static inline void D03d(void* const C, const double U, gp_Pnt& P)
 {
   ((Adaptor3d_Curve*)C)->D0(U, P);
 }
 
-static void D02d(const Standard_Address C, const Standard_Real U, gp_Pnt& PP)
+static void D02d(void* const C, const double U, gp_Pnt& PP)
 {
   gp_Pnt2d P;
   ((Adaptor2d_Curve2d*)C)->D0(U, P);
   PP.SetCoord(P.X(), P.Y(), 0.);
 }
 
-static inline void D23d(const Standard_Address C,
-                        const Standard_Real    U,
-                        gp_Pnt&                P,
-                        gp_Vec&                V1,
-                        gp_Vec&                V2)
+static inline void D23d(void* const C, const double U, gp_Pnt& P, gp_Vec& V1, gp_Vec& V2)
 {
   ((Adaptor3d_Curve*)C)->D2(U, P, V1, V2);
 }
 
-static void D22d(const Standard_Address C,
-                 const Standard_Real    U,
-                 gp_Pnt&                PP,
-                 gp_Vec&                VV1,
-                 gp_Vec&                VV2)
+static void D22d(void* const C, const double U, gp_Pnt& PP, gp_Vec& VV1, gp_Vec& VV2)
 {
   gp_Pnt2d P;
   gp_Vec2d V1, V2;
@@ -86,15 +78,15 @@ static void D22d(const Standard_Address C,
 
 void CPnts_UniformDeflection::Perform()
 {
-  gp_Pnt        P, P1, P2;
-  gp_Vec        V1, V2, VV;
-  Standard_Real Un1;
-  Standard_Real NormD1, NormD2;
+  gp_Pnt P, P1, P2;
+  gp_Vec V1, V2, VV;
+  double Un1;
+  double NormD1, NormD2;
 
   myIPoint   = -1;
   myNbPoints = -1;
 
-  const Standard_Real anEspilon = Epsilon(myFirstParam);
+  const double anEspilon = Epsilon(myFirstParam);
 
   while ((myNbPoints < 2) && (!myFinish))
   {
@@ -114,7 +106,7 @@ void CPnts_UniformDeflection::Perform()
     if (NormD1 < myTolCur || V2.Magnitude() < myTolCur)
     {
       // singularity on the tangent or null curvature
-      myDu = Min(myDwmax, 1.5 * myDu);
+      myDu = std::min(myDwmax, 1.5 * myDu);
     }
     else
     {
@@ -122,19 +114,19 @@ void CPnts_UniformDeflection::Perform()
       if (NormD2 / NormD1 < myDeflection)
       {
         // collinearity of derivatives
-        myDu = Min(myDwmax, 1.5 * myDu);
+        myDu = std::min(myDwmax, 1.5 * myDu);
       }
       else
       {
-        myDu = Sqrt(8. * myDeflection * NormD1 / NormD2);
-        myDu = Min(Max(myDu, myTolCur), myDwmax);
+        myDu = std::sqrt(8. * myDeflection * NormD1 / NormD2);
+        myDu = std::min(std::max(myDu, myTolCur), myDwmax);
       }
     }
 
     // check if the arrow is observed if WithControl
     if (myControl)
     {
-      myDu = Min(myDu, myLastParam - myFirstParam);
+      myDu = std::min(myDu, myLastParam - myFirstParam);
       if (my3d)
       {
         D03d(myCurve, myFirstParam + myDu, P);
@@ -157,14 +149,14 @@ void CPnts_UniformDeflection::Perform()
         // from the others) this test does not work on the points of inflexion
         if (NormD2 > myDeflection / 5.0)
         {
-          NormD2 = Max(NormD2, 1.1 * myDeflection);
-          myDu   = myDu * Sqrt(myDeflection / NormD2);
-          myDu   = Min(Max(myDu, myTolCur), myDwmax);
+          NormD2 = std::max(NormD2, 1.1 * myDeflection);
+          myDu   = myDu * std::sqrt(myDeflection / NormD2);
+          myDu   = std::min(std::max(myDu, myTolCur), myDwmax);
         }
       }
     }
     myFirstParam += myDu;
-    myFinish = myLastParam - myFirstParam < myTolCur || Abs(myDu) < myTolCur ||
+    myFinish = myLastParam - myFirstParam < myTolCur || std::abs(myDu) < myTolCur ||
                // to avoid less than double precision endless increment
                myDu < anEspilon;
   }
@@ -260,11 +252,11 @@ void CPnts_UniformDeflection::Perform()
 //=================================================================================================
 
 CPnts_UniformDeflection::CPnts_UniformDeflection()
-    : myDone(Standard_False),
-      my3d(Standard_False),
-      myFinish(Standard_False),
+    : myDone(false),
+      my3d(false),
+      myFinish(false),
       myTolCur(0.0),
-      myControl(Standard_False),
+      myControl(false),
       myIPoint(0),
       myNbPoints(0),
       myDwmax(0.0),
@@ -279,9 +271,9 @@ CPnts_UniformDeflection::CPnts_UniformDeflection()
 //=================================================================================================
 
 CPnts_UniformDeflection::CPnts_UniformDeflection(const Adaptor3d_Curve& C,
-                                                 const Standard_Real    Deflection,
-                                                 const Standard_Real    Resolution,
-                                                 const Standard_Boolean WithControl)
+                                                 const double           Deflection,
+                                                 const double           Resolution,
+                                                 const bool             WithControl)
 {
   Initialize(C, Deflection, Resolution, WithControl);
 }
@@ -289,9 +281,9 @@ CPnts_UniformDeflection::CPnts_UniformDeflection(const Adaptor3d_Curve& C,
 //=================================================================================================
 
 CPnts_UniformDeflection::CPnts_UniformDeflection(const Adaptor2d_Curve2d& C,
-                                                 const Standard_Real      Deflection,
-                                                 const Standard_Real      Resolution,
-                                                 const Standard_Boolean   WithControl)
+                                                 const double             Deflection,
+                                                 const double             Resolution,
+                                                 const bool               WithControl)
 {
   Initialize(C, Deflection, Resolution, WithControl);
 }
@@ -299,9 +291,9 @@ CPnts_UniformDeflection::CPnts_UniformDeflection(const Adaptor2d_Curve2d& C,
 //=================================================================================================
 
 void CPnts_UniformDeflection::Initialize(const Adaptor3d_Curve& C,
-                                         const Standard_Real    Deflection,
-                                         const Standard_Real    Resolution,
-                                         const Standard_Boolean WithControl)
+                                         const double           Deflection,
+                                         const double           Resolution,
+                                         const bool             WithControl)
 {
   Initialize(C, Deflection, C.FirstParameter(), C.LastParameter(), Resolution, WithControl);
 }
@@ -309,9 +301,9 @@ void CPnts_UniformDeflection::Initialize(const Adaptor3d_Curve& C,
 //=================================================================================================
 
 void CPnts_UniformDeflection::Initialize(const Adaptor2d_Curve2d& C,
-                                         const Standard_Real      Deflection,
-                                         const Standard_Real      Resolution,
-                                         const Standard_Boolean   WithControl)
+                                         const double             Deflection,
+                                         const double             Resolution,
+                                         const bool               WithControl)
 {
   Initialize(C, Deflection, C.FirstParameter(), C.LastParameter(), Resolution, WithControl);
 }
@@ -319,11 +311,11 @@ void CPnts_UniformDeflection::Initialize(const Adaptor2d_Curve2d& C,
 //=================================================================================================
 
 CPnts_UniformDeflection ::CPnts_UniformDeflection(const Adaptor3d_Curve& C,
-                                                  const Standard_Real    Deflection,
-                                                  const Standard_Real    U1,
-                                                  const Standard_Real    U2,
-                                                  const Standard_Real    Resolution,
-                                                  const Standard_Boolean WithControl)
+                                                  const double           Deflection,
+                                                  const double           U1,
+                                                  const double           U2,
+                                                  const double           Resolution,
+                                                  const bool             WithControl)
 {
   Initialize(C, Deflection, U1, U2, Resolution, WithControl);
 }
@@ -331,11 +323,11 @@ CPnts_UniformDeflection ::CPnts_UniformDeflection(const Adaptor3d_Curve& C,
 //=================================================================================================
 
 CPnts_UniformDeflection ::CPnts_UniformDeflection(const Adaptor2d_Curve2d& C,
-                                                  const Standard_Real      Deflection,
-                                                  const Standard_Real      U1,
-                                                  const Standard_Real      U2,
-                                                  const Standard_Real      Resolution,
-                                                  const Standard_Boolean   WithControl)
+                                                  const double             Deflection,
+                                                  const double             U1,
+                                                  const double             U2,
+                                                  const double             Resolution,
+                                                  const bool               WithControl)
 {
   Initialize(C, Deflection, U1, U2, Resolution, WithControl);
 }
@@ -343,11 +335,11 @@ CPnts_UniformDeflection ::CPnts_UniformDeflection(const Adaptor2d_Curve2d& C,
 //=================================================================================================
 
 void CPnts_UniformDeflection::Initialize(const Adaptor3d_Curve& C,
-                                         const Standard_Real    Deflection,
-                                         const Standard_Real    U1,
-                                         const Standard_Real    U2,
-                                         const Standard_Real    Resolution,
-                                         const Standard_Boolean WithControl)
+                                         const double           Deflection,
+                                         const double           U1,
+                                         const double           U2,
+                                         const double           Resolution,
+                                         const bool             WithControl)
 {
   if (U1 > U2)
   {
@@ -359,12 +351,12 @@ void CPnts_UniformDeflection::Initialize(const Adaptor3d_Curve& C,
     myFirstParam = U1;
     myLastParam  = U2;
   }
-  my3d         = Standard_True;
+  my3d         = true;
   myDwmax      = myLastParam - myFirstParam;
   myDu         = myDwmax / 2.;
-  myDone       = Standard_True;
-  myCurve      = (Standard_Address)&C;
-  myFinish     = Standard_False;
+  myDone       = true;
+  myCurve      = (void*)&C;
+  myFinish     = false;
   myTolCur     = Resolution;
   myDeflection = Deflection;
   myControl    = WithControl;
@@ -374,11 +366,11 @@ void CPnts_UniformDeflection::Initialize(const Adaptor3d_Curve& C,
 //=================================================================================================
 
 void CPnts_UniformDeflection::Initialize(const Adaptor2d_Curve2d& C,
-                                         const Standard_Real      Deflection,
-                                         const Standard_Real      U1,
-                                         const Standard_Real      U2,
-                                         const Standard_Real      Resolution,
-                                         const Standard_Boolean   WithControl)
+                                         const double             Deflection,
+                                         const double             U1,
+                                         const double             U2,
+                                         const double             Resolution,
+                                         const bool               WithControl)
 {
   if (U1 > U2)
   {
@@ -390,12 +382,12 @@ void CPnts_UniformDeflection::Initialize(const Adaptor2d_Curve2d& C,
     myFirstParam = U1;
     myLastParam  = U2;
   }
-  my3d         = Standard_False;
+  my3d         = false;
   myDwmax      = myLastParam - myFirstParam;
   myDu         = myDwmax / 2.;
-  myDone       = Standard_True;
-  myCurve      = (Standard_Address)&C;
-  myFinish     = Standard_False;
+  myDone       = true;
+  myCurve      = (void*)&C;
+  myFinish     = false;
   myTolCur     = Resolution;
   myDeflection = Deflection;
   myControl    = WithControl;
@@ -404,17 +396,17 @@ void CPnts_UniformDeflection::Initialize(const Adaptor2d_Curve2d& C,
 
 //=================================================================================================
 
-Standard_Boolean CPnts_UniformDeflection::More()
+bool CPnts_UniformDeflection::More()
 {
   if (!myDone)
   {
-    return Standard_False;
+    return false;
   }
   else if (myIPoint == myNbPoints)
   {
     if (myFinish)
     {
-      return Standard_False;
+      return false;
     }
     else
     {

@@ -20,13 +20,13 @@ IMPLEMENT_STANDARD_RTTIEXT(BRepMesh_DiscretRoot, Standard_Transient)
 //=================================================================================================
 
 BRepMesh_DiscretRoot::BRepMesh_DiscretRoot()
-    : myIsDone(Standard_False)
+    : myIsDone(false)
 {
 }
 
 //=================================================================================================
 
-BRepMesh_DiscretRoot::~BRepMesh_DiscretRoot() {}
+BRepMesh_DiscretRoot::~BRepMesh_DiscretRoot() = default;
 
 //=================================================================================================
 

@@ -24,7 +24,7 @@
 //! Execute given DRAW command
 Standard_EXPORT const char* Draw_Eval(const char* theCommandStr)
 {
-  if (theCommandStr == 0)
+  if (theCommandStr == nullptr)
   {
     return "Error: null command string";
   }
@@ -38,6 +38,6 @@ Standard_EXPORT const char* Draw_Eval(const char* theCommandStr)
   }
   catch (Standard_Failure const& anException)
   {
-    return anException.GetMessageString();
+    return anException.what();
   }
 }

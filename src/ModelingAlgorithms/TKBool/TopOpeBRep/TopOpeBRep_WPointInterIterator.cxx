@@ -21,7 +21,7 @@
 //=================================================================================================
 
 TopOpeBRep_WPointInterIterator::TopOpeBRep_WPointInterIterator()
-    : myLineInter(NULL),
+    : myLineInter(nullptr),
       myWPointIndex(0),
       myWPointNb(0)
 {
@@ -52,7 +52,7 @@ void TopOpeBRep_WPointInterIterator::Init()
 
 //=================================================================================================
 
-Standard_Boolean TopOpeBRep_WPointInterIterator::More() const
+bool TopOpeBRep_WPointInterIterator::More() const
 {
   return (myWPointIndex <= myWPointNb);
 }

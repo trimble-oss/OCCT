@@ -35,26 +35,18 @@
 #include <StdFail_NotDone.hxx>
 
 #ifdef OCCT_DEBUG
-  // #define DRAW
-  #ifdef DRAW
-    #include <DrawTrSurf.hxx>
-    #pragma comment(lib, "TKDraw.lib")
-static char             name[100];
-static Standard_Integer nbb    = 0;
-static Standard_Boolean Affich = Standard_False;
-  #endif
 #endif
 
-static Standard_Boolean IsMaxRC(const Handle(Geom2d_Curve)& C, Standard_Real U, Standard_Real& R);
+static bool IsMaxRC(const occ::handle<Geom2d_Curve>& C, double U, double& R);
 
-static void ReplaceByLineIfIsToSmall(Handle(Bisector_Curve)& Bis,
-                                     Standard_Real&          UFirst,
-                                     Standard_Real&          ULast);
+static void ReplaceByLineIfIsToSmall(occ::handle<Bisector_Curve>& Bis,
+                                     double&                      UFirst,
+                                     double&                      ULast);
 
 //=============================================================================
 // function : Empty Constructor
 //=============================================================================
-Bisector_Bisec::Bisector_Bisec() {}
+Bisector_Bisec::Bisector_Bisec() = default;
 
 //===========================================================================
 //    calculate the bissectrice between two curves coming from a point.
@@ -68,44 +60,44 @@ Bisector_Bisec::Bisector_Bisec() {}
 //   tolerance     :   threshold starting from which the bisectrices are degenerated
 //===========================================================================
 
-void Bisector_Bisec::Perform(const Handle(Geom2d_Curve)& afirstcurve,
-                             const Handle(Geom2d_Curve)& asecondcurve,
-                             const gp_Pnt2d&             apoint,
-                             const gp_Vec2d&             afirstvector,
-                             const gp_Vec2d&             asecondvector,
-                             const Standard_Real         adirection,
-                             const GeomAbs_JoinType      ajointype,
-                             const Standard_Real         tolerance,
-                             const Standard_Boolean      oncurve)
+void Bisector_Bisec::Perform(const occ::handle<Geom2d_Curve>& afirstcurve,
+                             const occ::handle<Geom2d_Curve>& asecondcurve,
+                             const gp_Pnt2d&                  apoint,
+                             const gp_Vec2d&                  afirstvector,
+                             const gp_Vec2d&                  asecondvector,
+                             const double                     adirection,
+                             const GeomAbs_JoinType           ajointype,
+                             const double                     tolerance,
+                             const bool                       oncurve)
 {
-  Handle(Standard_Type)  Type1 = afirstcurve->DynamicType();
-  Handle(Standard_Type)  Type2 = asecondcurve->DynamicType();
-  Handle(Bisector_Curve) Bis;
-  Standard_Real          UFirst, ULast;
+  occ::handle<Standard_Type>  Type1 = afirstcurve->DynamicType();
+  occ::handle<Standard_Type>  Type2 = asecondcurve->DynamicType();
+  occ::handle<Bisector_Curve> Bis;
+  double                      UFirst, ULast;
 
   if (Type1 == STANDARD_TYPE(Geom2d_TrimmedCurve))
   {
-    Type1 = Handle(Geom2d_TrimmedCurve)::DownCast(afirstcurve)->BasisCurve()->DynamicType();
+    Type1 = occ::down_cast<Geom2d_TrimmedCurve>(afirstcurve)->BasisCurve()->DynamicType();
   }
   if (Type2 == STANDARD_TYPE(Geom2d_TrimmedCurve))
   {
-    Type2 = Handle(Geom2d_TrimmedCurve)::DownCast(asecondcurve)->BasisCurve()->DynamicType();
+    Type2 = occ::down_cast<Geom2d_TrimmedCurve>(asecondcurve)->BasisCurve()->DynamicType();
   }
 
-  Handle(Geom2d_Curve) afirstcurve1  = afirstcurve;
-  Handle(Geom2d_Curve) asecondcurve1 = asecondcurve;
+  occ::handle<Geom2d_Curve> afirstcurve1  = afirstcurve;
+  occ::handle<Geom2d_Curve> asecondcurve1 = asecondcurve;
 
   if (Type1 == STANDARD_TYPE(Geom2d_BSplineCurve))
   {
-    Handle(Geom2d_BSplineCurve) aBS;
+    occ::handle<Geom2d_BSplineCurve> aBS;
     if (afirstcurve->DynamicType() == STANDARD_TYPE(Geom2d_TrimmedCurve))
     {
-      aBS = Handle(Geom2d_BSplineCurve)::DownCast(
-        Handle(Geom2d_TrimmedCurve)::DownCast(afirstcurve)->BasisCurve());
+      aBS = occ::down_cast<Geom2d_BSplineCurve>(
+        occ::down_cast<Geom2d_TrimmedCurve>(afirstcurve)->BasisCurve());
     }
     else
     {
-      aBS = Handle(Geom2d_BSplineCurve)::DownCast(afirstcurve);
+      aBS = occ::down_cast<Geom2d_BSplineCurve>(afirstcurve);
     }
     if (aBS->Degree() == 1 && aBS->NbPoles() == 2)
     {
@@ -119,15 +111,15 @@ void Bisector_Bisec::Perform(const Handle(Geom2d_Curve)& afirstcurve,
 
   if (Type2 == STANDARD_TYPE(Geom2d_BSplineCurve))
   {
-    Handle(Geom2d_BSplineCurve) aBS;
+    occ::handle<Geom2d_BSplineCurve> aBS;
     if (asecondcurve->DynamicType() == STANDARD_TYPE(Geom2d_TrimmedCurve))
     {
-      aBS = Handle(Geom2d_BSplineCurve)::DownCast(
-        Handle(Geom2d_TrimmedCurve)::DownCast(asecondcurve)->BasisCurve());
+      aBS = occ::down_cast<Geom2d_BSplineCurve>(
+        occ::down_cast<Geom2d_TrimmedCurve>(asecondcurve)->BasisCurve());
     }
     else
     {
-      aBS = Handle(Geom2d_BSplineCurve)::DownCast(asecondcurve);
+      aBS = occ::down_cast<Geom2d_BSplineCurve>(asecondcurve);
     }
     if (aBS->Degree() == 1 && aBS->NbPoles() == 2)
     {
@@ -145,7 +137,7 @@ void Bisector_Bisec::Perform(const Handle(Geom2d_Curve)& afirstcurve,
     //------------------------------------------------------------------
     // Analytic Bissectrice.
     //------------------------------------------------------------------
-    Handle(Bisector_BisecAna) BisAna = new Bisector_BisecAna();
+    occ::handle<Bisector_BisecAna> BisAna = new Bisector_BisecAna();
     BisAna->Perform(afirstcurve1,
                     asecondcurve1,
                     apoint,
@@ -161,7 +153,7 @@ void Bisector_Bisec::Perform(const Handle(Geom2d_Curve)& afirstcurve,
   }
   else
   {
-    Standard_Boolean IsLine = Standard_False;
+    bool IsLine = false;
 
     if (oncurve)
     {
@@ -169,8 +161,8 @@ void Bisector_Bisec::Perform(const Handle(Geom2d_Curve)& afirstcurve,
       gp_Dir2d Sd(asecondvector);
       // if (Fd.Dot(Sd) < Precision::Angular() - 1.) {
       // if (Fd.Dot(Sd) < 10*Precision::Angular() - 1.) //patch
-      if (Fd.Dot(Sd) < Sqrt(2. * Precision::Angular()) - 1.)
-        IsLine = Standard_True;
+      if (Fd.Dot(Sd) < std::sqrt(2. * Precision::Angular()) - 1.)
+        IsLine = true;
     }
     if (IsLine)
     {
@@ -178,10 +170,10 @@ void Bisector_Bisec::Perform(const Handle(Geom2d_Curve)& afirstcurve,
       // Half-Staight.
       //------------------------------------------------------------------
       gp_Dir2d N(-adirection * afirstvector.Y(), adirection * afirstvector.X());
-      Handle(Geom2d_CartesianPoint) PG     = new Geom2d_CartesianPoint(apoint);
-      Handle(Geom2d_Line)           L      = new Geom2d_Line(apoint, N);
-      Handle(Geom2d_TrimmedCurve)   BisL   = new Geom2d_TrimmedCurve(L, 0, Precision::Infinite());
-      Handle(Bisector_BisecAna)     BisAna = new Bisector_BisecAna();
+      occ::handle<Geom2d_CartesianPoint> PG = new Geom2d_CartesianPoint(apoint);
+      occ::handle<Geom2d_Line>           L  = new Geom2d_Line(apoint, N);
+      occ::handle<Geom2d_TrimmedCurve> BisL = new Geom2d_TrimmedCurve(L, 0, Precision::Infinite());
+      occ::handle<Bisector_BisecAna>   BisAna = new Bisector_BisecAna();
       BisAna->Init(BisL);
       UFirst = BisAna->ParameterOfStartPoint();
       ULast  = BisAna->ParameterOfEndPoint();
@@ -192,7 +184,7 @@ void Bisector_Bisec::Perform(const Handle(Geom2d_Curve)& afirstcurve,
       //-------------------------------------------------------------------
       // Bissectrice algo
       //-------------------------------------------------------------------
-      Handle(Bisector_BisecCC) BisCC = new Bisector_BisecCC();
+      occ::handle<Bisector_BisecCC> BisCC = new Bisector_BisecCC();
       BisCC->Perform(asecondcurve1, afirstcurve1, adirection, adirection, apoint);
 
       if (BisCC->IsEmpty())
@@ -200,10 +192,10 @@ void Bisector_Bisec::Perform(const Handle(Geom2d_Curve)& afirstcurve,
         // bissectrice is empty. a point is projected at the end of the guide curve.
         // Construction of a false bissectrice.
         //  modified by NIZHNY-EAP Mon Feb 21 12:00:13 2000 ___BEGIN___
-        gp_Pnt2d      aP1 = afirstcurve1->Value(afirstcurve1->LastParameter());
-        gp_Pnt2d      aP2 = asecondcurve1->Value(asecondcurve1->FirstParameter());
-        gp_Pnt2d      aPm(.5 * (aP1.XY() + aP2.XY()));
-        Standard_Real Nx, Ny;
+        gp_Pnt2d aP1 = afirstcurve1->Value(afirstcurve1->LastParameter());
+        gp_Pnt2d aP2 = asecondcurve1->Value(asecondcurve1->FirstParameter());
+        gp_Pnt2d aPm(.5 * (aP1.XY() + aP2.XY()));
+        double   Nx, Ny;
         if (aPm.Distance(apoint) > 10. * Precision::Confusion())
         {
           Nx = apoint.X() - aPm.X();
@@ -218,7 +210,7 @@ void Bisector_Bisec::Perform(const Handle(Geom2d_Curve)& afirstcurve,
         {
           gp_Dir2d dir1(afirstvector), dir2(asecondvector);
           Nx = -dir1.X() - dir2.X(), Ny = -dir1.Y() - dir2.Y();
-          if (Abs(Nx) <= gp::Resolution() && Abs(Ny) <= gp::Resolution())
+          if (std::abs(Nx) <= gp::Resolution() && std::abs(Ny) <= gp::Resolution())
           {
             Nx = -afirstvector.Y();
             Ny = afirstvector.X();
@@ -227,10 +219,11 @@ void Bisector_Bisec::Perform(const Handle(Geom2d_Curve)& afirstcurve,
         gp_Dir2d N(adirection * Nx, adirection * Ny);
         //  modified by NIZHNY-EAP Mon Feb 21 12:00:19 2000 ___END___
 
-        Handle(Geom2d_CartesianPoint) PG     = new Geom2d_CartesianPoint(apoint);
-        Handle(Geom2d_Line)           L      = new Geom2d_Line(apoint, N);
-        Handle(Geom2d_TrimmedCurve)   BisL   = new Geom2d_TrimmedCurve(L, 0, Precision::Infinite());
-        Handle(Bisector_BisecAna)     BisAna = new Bisector_BisecAna();
+        occ::handle<Geom2d_CartesianPoint> PG = new Geom2d_CartesianPoint(apoint);
+        occ::handle<Geom2d_Line>           L  = new Geom2d_Line(apoint, N);
+        occ::handle<Geom2d_TrimmedCurve>   BisL =
+          new Geom2d_TrimmedCurve(L, 0, Precision::Infinite());
+        occ::handle<Bisector_BisecAna> BisAna = new Bisector_BisecAna();
         BisAna->Init(BisL);
         UFirst = BisAna->ParameterOfStartPoint();
         ULast  = BisAna->ParameterOfEndPoint();
@@ -245,22 +238,9 @@ void Bisector_Bisec::Perform(const Handle(Geom2d_Curve)& afirstcurve,
       }
     }
   }
-  UFirst      = Max(UFirst, Bis->FirstParameter());
-  ULast       = Min(ULast, Bis->LastParameter());
+  UFirst      = std::max(UFirst, Bis->FirstParameter());
+  ULast       = std::min(ULast, Bis->LastParameter());
   thebisector = new Geom2d_TrimmedCurve(Bis, UFirst, ULast);
-#ifdef DRAW
-  if (Affich)
-  {
-    sprintf(name, "c1_%d", ++nbb);
-    DrawTrSurf::Set(name, afirstcurve);
-    sprintf(name, "c2_%d", nbb);
-    DrawTrSurf::Set(name, asecondcurve);
-    sprintf(name, "p%d", nbb);
-    DrawTrSurf::Set(name, apoint);
-    sprintf(name, "b%d", nbb);
-    DrawTrSurf::Set(name, thebisector);
-  }
-#endif
 }
 
 //===========================================================================
@@ -275,24 +255,24 @@ void Bisector_Bisec::Perform(const Handle(Geom2d_Curve)& afirstcurve,
 //   tolerance     :   threshold starting from which the bisectrices are degenerated
 //===========================================================================
 
-void Bisector_Bisec::Perform(const Handle(Geom2d_Curve)& afirstcurve,
-                             const Handle(Geom2d_Point)& asecondpoint,
-                             const gp_Pnt2d&             apoint,
-                             const gp_Vec2d&             afirstvector,
-                             const gp_Vec2d&             asecondvector,
-                             const Standard_Real         adirection,
-                             const Standard_Real         tolerance,
-                             const Standard_Boolean      oncurve)
+void Bisector_Bisec::Perform(const occ::handle<Geom2d_Curve>& afirstcurve,
+                             const occ::handle<Geom2d_Point>& asecondpoint,
+                             const gp_Pnt2d&                  apoint,
+                             const gp_Vec2d&                  afirstvector,
+                             const gp_Vec2d&                  asecondvector,
+                             const double                     adirection,
+                             const double                     tolerance,
+                             const bool                       oncurve)
 {
   // gp_Pnt2d SecondPnt = asecondpoint->Pnt2d();
 
-  Handle(Bisector_Curve) Bis;
-  Handle(Standard_Type)  Type1 = afirstcurve->DynamicType();
-  Standard_Real          UFirst, ULast;
+  occ::handle<Bisector_Curve> Bis;
+  occ::handle<Standard_Type>  Type1 = afirstcurve->DynamicType();
+  double                      UFirst, ULast;
 
   if (Type1 == STANDARD_TYPE(Geom2d_TrimmedCurve))
   {
-    Type1 = Handle(Geom2d_TrimmedCurve)::DownCast(afirstcurve)->BasisCurve()->DynamicType();
+    Type1 = occ::down_cast<Geom2d_TrimmedCurve>(afirstcurve)->BasisCurve()->DynamicType();
   }
 
   if (Type1 == STANDARD_TYPE(Geom2d_Circle) || Type1 == STANDARD_TYPE(Geom2d_Line))
@@ -300,7 +280,7 @@ void Bisector_Bisec::Perform(const Handle(Geom2d_Curve)& afirstcurve,
     //------------------------------------------------------------------
     // Analytic Bissectrice.
     //------------------------------------------------------------------
-    Handle(Bisector_BisecAna) BisAna = new Bisector_BisecAna();
+    occ::handle<Bisector_BisecAna> BisAna = new Bisector_BisecAna();
     BisAna->Perform(afirstcurve,
                     asecondpoint,
                     apoint,
@@ -315,15 +295,15 @@ void Bisector_Bisec::Perform(const Handle(Geom2d_Curve)& afirstcurve,
   }
   else
   {
-    Standard_Boolean IsLine = Standard_False;
-    Standard_Real    RC     = Precision::Infinite();
+    bool   IsLine = false;
+    double RC     = Precision::Infinite();
 
     if (oncurve)
     {
       if (Bisector::IsConvex(afirstcurve, adirection)
           || IsMaxRC(afirstcurve, afirstcurve->LastParameter(), RC))
       {
-        IsLine = Standard_True;
+        IsLine = true;
       }
     }
     if (IsLine)
@@ -331,10 +311,10 @@ void Bisector_Bisec::Perform(const Handle(Geom2d_Curve)& afirstcurve,
       //------------------------------------------------------------------
       // Half-Right.
       //------------------------------------------------------------------
-      gp_Dir2d                    N(-adirection * afirstvector.Y(), adirection * afirstvector.X());
-      Handle(Geom2d_Line)         L      = new Geom2d_Line(apoint, N);
-      Handle(Geom2d_TrimmedCurve) BisL   = new Geom2d_TrimmedCurve(L, 0, RC);
-      Handle(Bisector_BisecAna)   BisAna = new Bisector_BisecAna();
+      gp_Dir2d                 N(-adirection * afirstvector.Y(), adirection * afirstvector.X());
+      occ::handle<Geom2d_Line> L              = new Geom2d_Line(apoint, N);
+      occ::handle<Geom2d_TrimmedCurve> BisL   = new Geom2d_TrimmedCurve(L, 0, RC);
+      occ::handle<Bisector_BisecAna>   BisAna = new Bisector_BisecAna();
       BisAna->Init(BisL);
       UFirst = BisAna->ParameterOfStartPoint();
       ULast  = BisAna->ParameterOfEndPoint();
@@ -345,25 +325,25 @@ void Bisector_Bisec::Perform(const Handle(Geom2d_Curve)& afirstcurve,
       //-------------------------------------------------------------------
       // Bissectrice algo
       //-------------------------------------------------------------------
-      Handle(Bisector_BisecPC) BisPC              = new Bisector_BisecPC();
-      Handle(Geom2d_Curve)     afirstcurvereverse = afirstcurve->Reversed();
+      occ::handle<Bisector_BisecPC> BisPC              = new Bisector_BisecPC();
+      occ::handle<Geom2d_Curve>     afirstcurvereverse = afirstcurve->Reversed();
 
       BisPC->Perform(afirstcurvereverse, asecondpoint->Pnt2d(), -adirection);
       //  Modified by Sergey KHROMOV - Thu Feb 21 16:49:54 2002 Begin
       if (BisPC->IsEmpty())
       {
-        gp_Dir2d      dir1(afirstvector), dir2(asecondvector);
-        Standard_Real Nx = -dir1.X() - dir2.X(), Ny = -dir1.Y() - dir2.Y();
-        if (Abs(Nx) <= gp::Resolution() && Abs(Ny) <= gp::Resolution())
+        gp_Dir2d dir1(afirstvector), dir2(asecondvector);
+        double   Nx = -dir1.X() - dir2.X(), Ny = -dir1.Y() - dir2.Y();
+        if (std::abs(Nx) <= gp::Resolution() && std::abs(Ny) <= gp::Resolution())
         {
           Nx = -afirstvector.Y();
           Ny = afirstvector.X();
         }
         // 	gp_Dir2d N ( -adirection*afirstvector.Y(), adirection*afirstvector.X());
-        gp_Dir2d                    N(adirection * Nx, adirection * Ny);
-        Handle(Geom2d_Line)         L      = new Geom2d_Line(apoint, N);
-        Handle(Geom2d_TrimmedCurve) BisL   = new Geom2d_TrimmedCurve(L, 0, RC);
-        Handle(Bisector_BisecAna)   BisAna = new Bisector_BisecAna();
+        gp_Dir2d                         N(adirection * Nx, adirection * Ny);
+        occ::handle<Geom2d_Line>         L      = new Geom2d_Line(apoint, N);
+        occ::handle<Geom2d_TrimmedCurve> BisL   = new Geom2d_TrimmedCurve(L, 0, RC);
+        occ::handle<Bisector_BisecAna>   BisAna = new Bisector_BisecAna();
         BisAna->Init(BisL);
         UFirst = BisAna->ParameterOfStartPoint();
         ULast  = BisAna->ParameterOfEndPoint();
@@ -376,15 +356,15 @@ void Bisector_Bisec::Perform(const Handle(Geom2d_Curve)& afirstcurve,
         ULast  = BisPC->LastParameter();
         if (UFirst >= ULast)
         {
-          // Standard_Real t = .9;
+          // double t = .9;
           // UFirst = (1. - t) * BisPC->FirstParameter() + t * ULast;
           // Extrapolate by line
           // gp_Dir2d N ( -adirection*afirstvector.Y(), adirection*afirstvector.X());
-          gp_Vec2d                    V(BisPC->Value(BisPC->FirstParameter()), BisPC->Value(ULast));
-          gp_Dir2d                    N(V);
-          Handle(Geom2d_Line)         L      = new Geom2d_Line(apoint, N);
-          Handle(Geom2d_TrimmedCurve) BisL   = new Geom2d_TrimmedCurve(L, 0, RC);
-          Handle(Bisector_BisecAna)   BisAna = new Bisector_BisecAna();
+          gp_Vec2d                 V(BisPC->Value(BisPC->FirstParameter()), BisPC->Value(ULast));
+          gp_Dir2d                 N(V);
+          occ::handle<Geom2d_Line> L              = new Geom2d_Line(apoint, N);
+          occ::handle<Geom2d_TrimmedCurve> BisL   = new Geom2d_TrimmedCurve(L, 0, RC);
+          occ::handle<Bisector_BisecAna>   BisAna = new Bisector_BisecAna();
           BisAna->Init(BisL);
           UFirst = BisAna->ParameterOfStartPoint();
           ULast  = BisAna->ParameterOfEndPoint();
@@ -400,20 +380,6 @@ void Bisector_Bisec::Perform(const Handle(Geom2d_Curve)& afirstcurve,
   if (ULast > Bis->LastParameter())
     ULast = Bis->LastParameter();
   thebisector = new Geom2d_TrimmedCurve(Bis, UFirst, ULast);
-
-#ifdef DRAW
-  if (Affich)
-  {
-    sprintf(name, "c1_%d", ++nbb);
-    DrawTrSurf::Set(name, afirstcurve);
-    sprintf(name, "c2_%d", nbb);
-    DrawTrSurf::Set(name, asecondpoint->Pnt2d());
-    sprintf(name, "p%d", nbb);
-    DrawTrSurf::Set(name, apoint);
-    sprintf(name, "b%d", nbb);
-    DrawTrSurf::Set(name, thebisector);
-  }
-#endif
 }
 
 //===========================================================================
@@ -428,25 +394,25 @@ void Bisector_Bisec::Perform(const Handle(Geom2d_Curve)& afirstcurve,
 //   tolerance     :   threshold starting from which the bisectrices are degenerated
 //===========================================================================
 
-void Bisector_Bisec::Perform(const Handle(Geom2d_Point)& afirstpoint,
-                             const Handle(Geom2d_Curve)& asecondcurve,
-                             const gp_Pnt2d&             apoint,
-                             const gp_Vec2d&             afirstvector,
-                             const gp_Vec2d&             asecondvector,
-                             const Standard_Real         adirection,
-                             const Standard_Real         tolerance,
-                             const Standard_Boolean      oncurve)
+void Bisector_Bisec::Perform(const occ::handle<Geom2d_Point>& afirstpoint,
+                             const occ::handle<Geom2d_Curve>& asecondcurve,
+                             const gp_Pnt2d&                  apoint,
+                             const gp_Vec2d&                  afirstvector,
+                             const gp_Vec2d&                  asecondvector,
+                             const double                     adirection,
+                             const double                     tolerance,
+                             const bool                       oncurve)
 
 {
   // gp_Pnt2d FirstPnt = afirstpoint->Pnt2d();
 
-  Handle(Bisector_Curve) Bis;
-  Handle(Standard_Type)  Type1 = asecondcurve->DynamicType();
-  Standard_Real          UFirst, ULast;
+  occ::handle<Bisector_Curve> Bis;
+  occ::handle<Standard_Type>  Type1 = asecondcurve->DynamicType();
+  double                      UFirst, ULast;
 
   if (Type1 == STANDARD_TYPE(Geom2d_TrimmedCurve))
   {
-    Type1 = Handle(Geom2d_TrimmedCurve)::DownCast(asecondcurve)->BasisCurve()->DynamicType();
+    Type1 = occ::down_cast<Geom2d_TrimmedCurve>(asecondcurve)->BasisCurve()->DynamicType();
   }
 
   if (Type1 == STANDARD_TYPE(Geom2d_Circle) || Type1 == STANDARD_TYPE(Geom2d_Line))
@@ -454,7 +420,7 @@ void Bisector_Bisec::Perform(const Handle(Geom2d_Point)& afirstpoint,
     //------------------------------------------------------------------
     // Analytic Bissectrice.
     //------------------------------------------------------------------
-    Handle(Bisector_BisecAna) BisAna = new Bisector_BisecAna();
+    occ::handle<Bisector_BisecAna> BisAna = new Bisector_BisecAna();
     BisAna->Perform(afirstpoint,
                     asecondcurve,
                     apoint,
@@ -469,16 +435,16 @@ void Bisector_Bisec::Perform(const Handle(Geom2d_Point)& afirstpoint,
   }
   else
   {
-    //  Standard_Real    UPoint    = 0.;
-    Standard_Boolean IsLine = Standard_False;
-    Standard_Real    RC     = Precision::Infinite();
+    //  double    UPoint    = 0.;
+    bool   IsLine = false;
+    double RC     = Precision::Infinite();
 
     if (oncurve)
     {
       if (Bisector::IsConvex(asecondcurve, adirection)
           || IsMaxRC(asecondcurve, asecondcurve->FirstParameter(), RC))
       {
-        IsLine = Standard_True;
+        IsLine = true;
       }
     }
     if (IsLine)
@@ -486,10 +452,10 @@ void Bisector_Bisec::Perform(const Handle(Geom2d_Point)& afirstpoint,
       //------------------------------------------------------------------
       // Half-Staight.
       //------------------------------------------------------------------
-      gp_Dir2d                    N(-adirection * afirstvector.Y(), adirection * afirstvector.X());
-      Handle(Geom2d_Line)         L      = new Geom2d_Line(apoint, N);
-      Handle(Geom2d_TrimmedCurve) BisL   = new Geom2d_TrimmedCurve(L, 0, RC);
-      Handle(Bisector_BisecAna)   BisAna = new Bisector_BisecAna();
+      gp_Dir2d                 N(-adirection * afirstvector.Y(), adirection * afirstvector.X());
+      occ::handle<Geom2d_Line> L              = new Geom2d_Line(apoint, N);
+      occ::handle<Geom2d_TrimmedCurve> BisL   = new Geom2d_TrimmedCurve(L, 0, RC);
+      occ::handle<Bisector_BisecAna>   BisAna = new Bisector_BisecAna();
       BisAna->Init(BisL);
       UFirst = BisAna->ParameterOfStartPoint();
       ULast  = BisAna->ParameterOfEndPoint();
@@ -500,23 +466,23 @@ void Bisector_Bisec::Perform(const Handle(Geom2d_Point)& afirstpoint,
       //-------------------------------------------------------------------
       // Bissectrice algo
       //-------------------------------------------------------------------
-      Handle(Bisector_BisecPC) BisPC = new Bisector_BisecPC();
+      occ::handle<Bisector_BisecPC> BisPC = new Bisector_BisecPC();
       BisPC->Perform(asecondcurve, afirstpoint->Pnt2d(), adirection);
       //  Modified by Sergey KHROMOV - Thu Feb 21 16:49:54 2002 Begin
       if (BisPC->IsEmpty())
       {
-        gp_Dir2d      dir1(afirstvector), dir2(asecondvector);
-        Standard_Real Nx = -dir1.X() - dir2.X(), Ny = -dir1.Y() - dir2.Y();
-        if (Abs(Nx) <= gp::Resolution() && Abs(Ny) <= gp::Resolution())
+        gp_Dir2d dir1(afirstvector), dir2(asecondvector);
+        double   Nx = -dir1.X() - dir2.X(), Ny = -dir1.Y() - dir2.Y();
+        if (std::abs(Nx) <= gp::Resolution() && std::abs(Ny) <= gp::Resolution())
         {
           Nx = -afirstvector.Y();
           Ny = afirstvector.X();
         }
         // 	gp_Dir2d N ( -adirection*afirstvector.Y(), adirection*afirstvector.X());
-        gp_Dir2d                    N(adirection * Nx, adirection * Ny);
-        Handle(Geom2d_Line)         L      = new Geom2d_Line(apoint, N);
-        Handle(Geom2d_TrimmedCurve) BisL   = new Geom2d_TrimmedCurve(L, 0, RC);
-        Handle(Bisector_BisecAna)   BisAna = new Bisector_BisecAna();
+        gp_Dir2d                         N(adirection * Nx, adirection * Ny);
+        occ::handle<Geom2d_Line>         L      = new Geom2d_Line(apoint, N);
+        occ::handle<Geom2d_TrimmedCurve> BisL   = new Geom2d_TrimmedCurve(L, 0, RC);
+        occ::handle<Bisector_BisecAna>   BisAna = new Bisector_BisecAna();
         BisAna->Init(BisL);
         UFirst = BisAna->ParameterOfStartPoint();
         ULast  = BisAna->ParameterOfEndPoint();
@@ -531,11 +497,11 @@ void Bisector_Bisec::Perform(const Handle(Geom2d_Point)& afirstpoint,
         {
           // Extrapolate by line
           // gp_Dir2d N ( -adirection*afirstvector.Y(), adirection*afirstvector.X());
-          gp_Vec2d                    V(BisPC->Value(BisPC->FirstParameter()), BisPC->Value(ULast));
-          gp_Dir2d                    N(V);
-          Handle(Geom2d_Line)         L      = new Geom2d_Line(apoint, N);
-          Handle(Geom2d_TrimmedCurve) BisL   = new Geom2d_TrimmedCurve(L, 0, RC);
-          Handle(Bisector_BisecAna)   BisAna = new Bisector_BisecAna();
+          gp_Vec2d                 V(BisPC->Value(BisPC->FirstParameter()), BisPC->Value(ULast));
+          gp_Dir2d                 N(V);
+          occ::handle<Geom2d_Line> L              = new Geom2d_Line(apoint, N);
+          occ::handle<Geom2d_TrimmedCurve> BisL   = new Geom2d_TrimmedCurve(L, 0, RC);
+          occ::handle<Bisector_BisecAna>   BisAna = new Bisector_BisecAna();
           BisAna->Init(BisL);
           UFirst = BisAna->ParameterOfStartPoint();
           ULast  = BisAna->ParameterOfEndPoint();
@@ -547,23 +513,9 @@ void Bisector_Bisec::Perform(const Handle(Geom2d_Point)& afirstpoint,
     }
   }
 
-  UFirst      = Max(UFirst, Bis->FirstParameter());
-  ULast       = Min(ULast, Bis->LastParameter());
+  UFirst      = std::max(UFirst, Bis->FirstParameter());
+  ULast       = std::min(ULast, Bis->LastParameter());
   thebisector = new Geom2d_TrimmedCurve(Bis, UFirst, ULast);
-
-#ifdef DRAW
-  if (Affich)
-  {
-    sprintf(name, "c1_%d", ++nbb);
-    DrawTrSurf::Set(name, afirstpoint->Pnt2d());
-    sprintf(name, "c2_%d", nbb);
-    DrawTrSurf::Set(name, asecondcurve);
-    sprintf(name, "p%d", nbb);
-    DrawTrSurf::Set(name, apoint);
-    sprintf(name, "b%d", nbb);
-    DrawTrSurf::Set(name, thebisector);
-  }
-#endif
 }
 
 //===========================================================================
@@ -577,16 +529,16 @@ void Bisector_Bisec::Perform(const Handle(Geom2d_Point)& afirstpoint,
 //   adirection    :   shows the side of the bissectrice to be preserved.
 //===========================================================================
 
-void Bisector_Bisec::Perform(const Handle(Geom2d_Point)& afirstpoint,
-                             const Handle(Geom2d_Point)& asecondpoint,
-                             const gp_Pnt2d&             apoint,
-                             const gp_Vec2d&             afirstvector,
-                             const gp_Vec2d&             asecondvector,
-                             const Standard_Real         adirection,
-                             const Standard_Real         tolerance,
-                             const Standard_Boolean      oncurve)
+void Bisector_Bisec::Perform(const occ::handle<Geom2d_Point>& afirstpoint,
+                             const occ::handle<Geom2d_Point>& asecondpoint,
+                             const gp_Pnt2d&                  apoint,
+                             const gp_Vec2d&                  afirstvector,
+                             const gp_Vec2d&                  asecondvector,
+                             const double                     adirection,
+                             const double                     tolerance,
+                             const bool                       oncurve)
 {
-  Handle(Bisector_BisecAna) Bis = new Bisector_BisecAna();
+  occ::handle<Bisector_BisecAna> Bis = new Bisector_BisecAna();
 
   Bis->Perform(afirstpoint,
                asecondpoint,
@@ -598,32 +550,18 @@ void Bisector_Bisec::Perform(const Handle(Geom2d_Point)& afirstpoint,
                oncurve);
   thebisector =
     new Geom2d_TrimmedCurve(Bis, Bis->ParameterOfStartPoint(), Bis->ParameterOfEndPoint());
-
-#ifdef DRAW
-  if (Affich)
-  {
-    sprintf(name, "c1_%d", ++nbb);
-    DrawTrSurf::Set(name, afirstpoint->Pnt2d());
-    sprintf(name, "c2_%d", nbb);
-    DrawTrSurf::Set(name, asecondpoint->Pnt2d());
-    sprintf(name, "p%d", nbb);
-    DrawTrSurf::Set(name, apoint);
-    sprintf(name, "b%d", nbb);
-    DrawTrSurf::Set(name, thebisector);
-  }
-#endif
 }
 
 //=================================================================================================
 
-const Handle(Geom2d_TrimmedCurve)& Bisector_Bisec::Value() const
+const occ::handle<Geom2d_TrimmedCurve>& Bisector_Bisec::Value() const
 {
   return thebisector;
 }
 
 //=================================================================================================
 
-const Handle(Geom2d_TrimmedCurve)& Bisector_Bisec::ChangeValue()
+const occ::handle<Geom2d_TrimmedCurve>& Bisector_Bisec::ChangeValue()
 {
   return thebisector;
 }
@@ -633,12 +571,12 @@ const Handle(Geom2d_TrimmedCurve)& Bisector_Bisec::ChangeValue()
 // purpose  : If the size of an algorithmic bissectrice is negligeable it is
 //           replaced by a half-straight.
 //=============================================================================
-static void ReplaceByLineIfIsToSmall(Handle(Bisector_Curve)& Bis,
-                                     Standard_Real&          UFirst,
-                                     Standard_Real&          ULast)
+static void ReplaceByLineIfIsToSmall(occ::handle<Bisector_Curve>& Bis,
+                                     double&                      UFirst,
+                                     double&                      ULast)
 
 {
-  if (Abs(ULast - UFirst) > 2. * Precision::PConfusion() * 10.)
+  if (std::abs(ULast - UFirst) > 2. * Precision::PConfusion() * 10.)
     return; // patch
 
   gp_Pnt2d PF = Bis->Value(UFirst);
@@ -649,10 +587,10 @@ static void ReplaceByLineIfIsToSmall(Handle(Bisector_Curve)& Bis,
 
   gp_Vec2d T1 = Bis->DN(UFirst, 1);
 
-  Handle(Geom2d_CartesianPoint) PG     = new Geom2d_CartesianPoint(PF);
-  Handle(Geom2d_Line)           L      = new Geom2d_Line(PF, T1);
-  Handle(Geom2d_TrimmedCurve)   BisL   = new Geom2d_TrimmedCurve(L, 0, Precision::Infinite());
-  Handle(Bisector_BisecAna)     BisAna = new Bisector_BisecAna();
+  occ::handle<Geom2d_CartesianPoint> PG     = new Geom2d_CartesianPoint(PF);
+  occ::handle<Geom2d_Line>           L      = new Geom2d_Line(PF, T1);
+  occ::handle<Geom2d_TrimmedCurve>   BisL   = new Geom2d_TrimmedCurve(L, 0, Precision::Infinite());
+  occ::handle<Bisector_BisecAna>     BisAna = new Bisector_BisecAna();
   BisAna->Init(BisL);
   UFirst = BisAna->ParameterOfStartPoint();
   ULast  = BisAna->ParameterOfEndPoint();
@@ -661,15 +599,15 @@ static void ReplaceByLineIfIsToSmall(Handle(Bisector_Curve)& Bis,
 
 //=================================================================================================
 
-static Standard_Boolean IsMaxRC(const Handle(Geom2d_Curve)& C, Standard_Real U, Standard_Real& R)
+static bool IsMaxRC(const occ::handle<Geom2d_Curve>& C, double U, double& R)
 {
-  Standard_Real KF, KL;
-  Standard_Real US = C->FirstParameter();
-  Standard_Real UL = C->LastParameter();
+  double KF, KL;
+  double US = C->FirstParameter();
+  double UL = C->LastParameter();
 
-  gp_Vec2d      D1, D2;
-  gp_Pnt2d      P;
-  Standard_Real Norm2;
+  gp_Vec2d D1, D2;
+  gp_Pnt2d P;
+  double   Norm2;
 
   C->D2(US, P, D1, D2);
   Norm2 = D1.SquareMagnitude();
@@ -679,7 +617,7 @@ static Standard_Boolean IsMaxRC(const Handle(Geom2d_Curve)& C, Standard_Real U, 
   }
   else
   {
-    KF = Abs(D1 ^ D2) / (Norm2 * sqrt(Norm2));
+    KF = std::abs(D1 ^ D2) / (Norm2 * sqrt(Norm2));
   }
 
   C->D2(UL, P, D1, D2);
@@ -690,10 +628,10 @@ static Standard_Boolean IsMaxRC(const Handle(Geom2d_Curve)& C, Standard_Real U, 
   }
   else
   {
-    KL = Abs(D1 ^ D2) / (Norm2 * sqrt(Norm2));
+    KL = std::abs(D1 ^ D2) / (Norm2 * sqrt(Norm2));
   }
 
-  Standard_Boolean IsMax = Standard_False;
+  bool IsMax = false;
 
   if (U == UL)
   {
@@ -703,7 +641,7 @@ static Standard_Boolean IsMaxRC(const Handle(Geom2d_Curve)& C, Standard_Real U, 
         R = Precision::Infinite();
       else
         R = 1 / KL;
-      IsMax = Standard_True;
+      IsMax = true;
     }
   }
   else
@@ -714,7 +652,7 @@ static Standard_Boolean IsMaxRC(const Handle(Geom2d_Curve)& C, Standard_Real U, 
         R = Precision::Infinite();
       else
         R = 1 / KF;
-      IsMax = Standard_True;
+      IsMax = true;
     }
   }
   return IsMax;

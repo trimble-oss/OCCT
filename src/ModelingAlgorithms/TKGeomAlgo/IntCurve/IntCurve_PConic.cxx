@@ -22,14 +22,8 @@
 #include <IntCurve_PConic.hxx>
 
 IntCurve_PConic::IntCurve_PConic(const IntCurve_PConic& PC)
-    : axe(PC.axe),
-      prm1(PC.prm1),
-      prm2(PC.prm2),
-      TheEpsX(PC.TheEpsX),
-      TheAccuracy(PC.TheAccuracy),
-      type(PC.type)
-{
-}
+
+  = default;
 
 IntCurve_PConic::IntCurve_PConic(const gp_Elips2d& E)
     : axe(E.Axis()),
@@ -81,12 +75,12 @@ IntCurve_PConic::IntCurve_PConic(const gp_Lin2d& L)
 {
 }
 
-void IntCurve_PConic::SetEpsX(const Standard_Real epsx)
+void IntCurve_PConic::SetEpsX(const double epsx)
 {
   TheEpsX = epsx;
 }
 
-void IntCurve_PConic::SetAccuracy(const Standard_Integer n)
+void IntCurve_PConic::SetAccuracy(const int n)
 {
   TheAccuracy = n;
 }

@@ -32,8 +32,8 @@ IMPLEMENT_STANDARD_RTTIEXT(Media_CodecContext, Standard_Transient)
 //=================================================================================================
 
 Media_CodecContext::Media_CodecContext()
-    : myCodecCtx(NULL),
-      myCodec(NULL),
+    : myCodecCtx(nullptr),
+      myCodec(nullptr),
       myPtsStartBase(0.0),
       myPtsStartStream(0.0),
       myTimeBase(1.0),
@@ -41,7 +41,7 @@ Media_CodecContext::Media_CodecContext()
       myPixelAspectRatio(1.0f)
 {
 #ifdef HAVE_FFMPEG
-  myCodecCtx = avcodec_alloc_context3(NULL);
+  myCodecCtx = avcodec_alloc_context3(nullptr);
 #endif
 }
 
@@ -115,7 +115,7 @@ bool Media_CodecContext::Init(const AVStream& theStream,
   #endif
 
   myCodec = ffmpeg_find_decoder(aCodecId);
-  if (myCodec == NULL)
+  if (myCodec == nullptr)
   {
     Message::Send("FFmpeg: unable to find decoder", Message_Fail);
     Close();
@@ -123,7 +123,7 @@ bool Media_CodecContext::Init(const AVStream& theStream,
   }
 
   myCodecCtx->codec_id = aCodecId;
-  AVDictionary* anOpts = NULL;
+  AVDictionary* anOpts = nullptr;
   av_dict_set(&anOpts, "refcounted_frames", "1", 0);
 
   #if FFMPEG_HAVE_AVCODEC_PARAMETERS
@@ -204,7 +204,7 @@ bool Media_CodecContext::Init(const AVStream& theStream,
 
 void Media_CodecContext::Close()
 {
-  if (myCodecCtx != NULL)
+  if (myCodecCtx != nullptr)
   {
 #ifdef HAVE_FFMPEG
   #if FFMPEG_NEW_API
@@ -222,7 +222,7 @@ void Media_CodecContext::Close()
 
 void Media_CodecContext::Flush()
 {
-  if (myCodecCtx != NULL)
+  if (myCodecCtx != nullptr)
   {
 #ifdef HAVE_FFMPEG
     avcodec_flush_buffers(myCodecCtx);
@@ -235,7 +235,7 @@ void Media_CodecContext::Flush()
 int Media_CodecContext::SizeX() const
 {
 #ifdef HAVE_FFMPEG
-  return (myCodecCtx != NULL) ? myCodecCtx->width : 0;
+  return (myCodecCtx != nullptr) ? myCodecCtx->width : 0;
 #else
   return 0;
 #endif
@@ -246,7 +246,7 @@ int Media_CodecContext::SizeX() const
 int Media_CodecContext::SizeY() const
 {
 #ifdef HAVE_FFMPEG
-  return (myCodecCtx != NULL) ? myCodecCtx->height : 0;
+  return (myCodecCtx != nullptr) ? myCodecCtx->height : 0;
 #else
   return 0;
 #endif
@@ -254,14 +254,14 @@ int Media_CodecContext::SizeY() const
 
 //=================================================================================================
 
-bool Media_CodecContext::CanProcessPacket(const Handle(Media_Packet)& thePacket) const
+bool Media_CodecContext::CanProcessPacket(const occ::handle<Media_Packet>& thePacket) const
 {
   return !thePacket.IsNull() && myStreamIndex == thePacket->StreamIndex();
 }
 
 //=================================================================================================
 
-bool Media_CodecContext::SendPacket(const Handle(Media_Packet)& thePacket)
+bool Media_CodecContext::SendPacket(const occ::handle<Media_Packet>& thePacket)
 {
   if (!CanProcessPacket(thePacket))
   {
@@ -271,11 +271,7 @@ bool Media_CodecContext::SendPacket(const Handle(Media_Packet)& thePacket)
 #ifdef HAVE_FFMPEG
   #if FFMPEG_HAVE_NEW_DECODE_API
   const int aRes = avcodec_send_packet(myCodecCtx, thePacket->Packet());
-  if (aRes < 0 && aRes != AVERROR_EOF)
-  {
-    return false;
-  }
-  return true;
+  return aRes >= 0 || aRes == AVERROR_EOF;
   #else
   // For older FFmpeg versions, fallback to older decode API if needed
   const int aRes = avcodec_send_packet(myCodecCtx, thePacket->Packet());
@@ -292,7 +288,7 @@ bool Media_CodecContext::SendPacket(const Handle(Media_Packet)& thePacket)
 
 //=================================================================================================
 
-bool Media_CodecContext::ReceiveFrame(const Handle(Media_Frame)& theFrame)
+bool Media_CodecContext::ReceiveFrame(const occ::handle<Media_Frame>& theFrame)
 {
   if (theFrame.IsNull())
   {

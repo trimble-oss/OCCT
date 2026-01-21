@@ -22,18 +22,18 @@ IMPLEMENT_STANDARD_RTTIEXT(ShapeAlgo_ToolContainer, Standard_Transient)
 
 //=================================================================================================
 
-ShapeAlgo_ToolContainer::ShapeAlgo_ToolContainer() {}
+ShapeAlgo_ToolContainer::ShapeAlgo_ToolContainer() = default;
 
 //=================================================================================================
 
-Handle(ShapeFix_Shape) ShapeAlgo_ToolContainer::FixShape() const
+occ::handle<ShapeFix_Shape> ShapeAlgo_ToolContainer::FixShape() const
 {
   return new ShapeFix_Shape;
 }
 
 //=================================================================================================
 
-Handle(ShapeFix_EdgeProjAux) ShapeAlgo_ToolContainer::EdgeProjAux() const
+occ::handle<ShapeFix_EdgeProjAux> ShapeAlgo_ToolContainer::EdgeProjAux() const
 {
   return new ShapeFix_EdgeProjAux;
 }

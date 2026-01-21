@@ -24,13 +24,14 @@ IMPLEMENT_STANDARD_RTTIEXT(StepFEA_FeaCurveSectionGeometricRelationship, Standar
 
 //=================================================================================================
 
-StepFEA_FeaCurveSectionGeometricRelationship::StepFEA_FeaCurveSectionGeometricRelationship() {}
+StepFEA_FeaCurveSectionGeometricRelationship::StepFEA_FeaCurveSectionGeometricRelationship() =
+  default;
 
 //=================================================================================================
 
 void StepFEA_FeaCurveSectionGeometricRelationship::Init(
-  const Handle(StepElement_CurveElementSectionDefinition)&    aSectionRef,
-  const Handle(StepElement_AnalysisItemWithinRepresentation)& aItem)
+  const occ::handle<StepElement_CurveElementSectionDefinition>&    aSectionRef,
+  const occ::handle<StepElement_AnalysisItemWithinRepresentation>& aItem)
 {
 
   theSectionRef = aSectionRef;
@@ -40,8 +41,8 @@ void StepFEA_FeaCurveSectionGeometricRelationship::Init(
 
 //=================================================================================================
 
-Handle(StepElement_CurveElementSectionDefinition) StepFEA_FeaCurveSectionGeometricRelationship::
-  SectionRef() const
+occ::handle<StepElement_CurveElementSectionDefinition>
+  StepFEA_FeaCurveSectionGeometricRelationship::SectionRef() const
 {
   return theSectionRef;
 }
@@ -49,15 +50,15 @@ Handle(StepElement_CurveElementSectionDefinition) StepFEA_FeaCurveSectionGeometr
 //=================================================================================================
 
 void StepFEA_FeaCurveSectionGeometricRelationship::SetSectionRef(
-  const Handle(StepElement_CurveElementSectionDefinition)& aSectionRef)
+  const occ::handle<StepElement_CurveElementSectionDefinition>& aSectionRef)
 {
   theSectionRef = aSectionRef;
 }
 
 //=================================================================================================
 
-Handle(StepElement_AnalysisItemWithinRepresentation) StepFEA_FeaCurveSectionGeometricRelationship::
-  Item() const
+occ::handle<StepElement_AnalysisItemWithinRepresentation>
+  StepFEA_FeaCurveSectionGeometricRelationship::Item() const
 {
   return theItem;
 }
@@ -65,7 +66,7 @@ Handle(StepElement_AnalysisItemWithinRepresentation) StepFEA_FeaCurveSectionGeom
 //=================================================================================================
 
 void StepFEA_FeaCurveSectionGeometricRelationship::SetItem(
-  const Handle(StepElement_AnalysisItemWithinRepresentation)& aItem)
+  const occ::handle<StepElement_AnalysisItemWithinRepresentation>& aItem)
 {
   theItem = aItem;
 }

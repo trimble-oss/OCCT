@@ -22,15 +22,15 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(IFSelect_SelectSignature, IFSelect_SelectExtract)
 
-//  theexact : -1  OUI   0  NON une seule valeur  > 0 NON nb de valeurs
-//  signmode : 1 prendre si contenu, 2 refuser si contenu
-//             3 prendre si egal,    4 refuser si egal
-//  ou test numerique, ajouter : 16 <  24 <=  32 >  40 >=
-static Standard_Integer multsign(const TCollection_AsciiString& signtext,
-                                 TColStd_SequenceOfAsciiString& signlist,
-                                 TColStd_SequenceOfInteger&     signmode)
+//  theexact : -1  YES   0  NO single value  > 0 NO number of values
+//  signmode: 1 take if contained, 2 refuse if contained
+//            3 take if equal,     4 refuse if equal
+//  or numeric test, add : 16 <  24 <=  32 >  40 >=
+static int multsign(const TCollection_AsciiString&                 signtext,
+                    NCollection_Sequence<TCollection_AsciiString>& signlist,
+                    NCollection_Sequence<int>&                     signmode)
 {
-  Standard_Integer i, nb = signtext.Length(), mode = 0;
+  int i, nb = signtext.Length(), mode = 0;
   for (i = 1; i <= nb; i++)
   {
     char unsign = signtext.Value(i);
@@ -49,7 +49,7 @@ static Standard_Integer multsign(const TCollection_AsciiString& signtext,
     return mode;
   //  On va tronconner
   TCollection_AsciiString item;
-  Standard_Integer        imod = 1;
+  int                     imod = 1;
   for (i = 1; i <= nb; i++)
   {
     char unsign = signtext.Value(i);
@@ -82,14 +82,14 @@ static Standard_Integer multsign(const TCollection_AsciiString& signtext,
   {
     signlist.Append(item);
     signmode.Append(imod);
-    //    mode ++;  valait un au depart
+    //    mode ++;  was one at start
   }
   return mode;
 }
 
-IFSelect_SelectSignature::IFSelect_SelectSignature(const Handle(IFSelect_Signature)& matcher,
-                                                   const TCollection_AsciiString&    signtext,
-                                                   const Standard_Boolean            exact)
+IFSelect_SelectSignature::IFSelect_SelectSignature(const occ::handle<IFSelect_Signature>& matcher,
+                                                   const TCollection_AsciiString&         signtext,
+                                                   const bool                             exact)
     : thematcher(matcher),
       thesigntext(signtext),
       theexact(exact ? -1 : 0)
@@ -98,9 +98,9 @@ IFSelect_SelectSignature::IFSelect_SelectSignature(const Handle(IFSelect_Signatu
     theexact = multsign(thesigntext, thesignlist, thesignmode);
 }
 
-IFSelect_SelectSignature::IFSelect_SelectSignature(const Handle(IFSelect_Signature)& matcher,
-                                                   const Standard_CString            signtext,
-                                                   const Standard_Boolean            exact)
+IFSelect_SelectSignature::IFSelect_SelectSignature(const occ::handle<IFSelect_Signature>& matcher,
+                                                   const char*                            signtext,
+                                                   const bool                             exact)
     : thematcher(matcher),
       thesigntext(signtext),
       theexact(exact ? -1 : 0)
@@ -109,9 +109,9 @@ IFSelect_SelectSignature::IFSelect_SelectSignature(const Handle(IFSelect_Signatu
     theexact = multsign(thesigntext, thesignlist, thesignmode);
 }
 
-IFSelect_SelectSignature::IFSelect_SelectSignature(const Handle(IFSelect_SignCounter)& counter,
-                                                   const Standard_CString              signtext,
-                                                   const Standard_Boolean              exact)
+IFSelect_SelectSignature::IFSelect_SelectSignature(const occ::handle<IFSelect_SignCounter>& counter,
+                                                   const char* signtext,
+                                                   const bool  exact)
     : thecounter(counter),
       thesigntext(signtext),
       theexact(exact ? -1 : 0)
@@ -120,23 +120,23 @@ IFSelect_SelectSignature::IFSelect_SelectSignature(const Handle(IFSelect_SignCou
     theexact = multsign(thesigntext, thesignlist, thesignmode);
 }
 
-Handle(IFSelect_Signature) IFSelect_SelectSignature::Signature() const
+occ::handle<IFSelect_Signature> IFSelect_SelectSignature::Signature() const
 {
   return thematcher;
 }
 
-Handle(IFSelect_SignCounter) IFSelect_SelectSignature::Counter() const
+occ::handle<IFSelect_SignCounter> IFSelect_SelectSignature::Counter() const
 {
   return thecounter;
 }
 
-Standard_Boolean IFSelect_SelectSignature::SortInGraph(const Standard_Integer,
-                                                       const Handle(Standard_Transient)& ent,
-                                                       const Interface_Graph&            G) const
+bool IFSelect_SelectSignature::SortInGraph(const int,
+                                           const occ::handle<Standard_Transient>& ent,
+                                           const Interface_Graph&                 G) const
 {
-  Standard_Boolean                        res;
-  Standard_CString                        txt;
-  const Handle(Interface_InterfaceModel)& model = G.Model();
+  bool                                         res;
+  const char*                                  txt;
+  const occ::handle<Interface_InterfaceModel>& model = G.Model();
   if (theexact <= 0)
   {
     if (!thematcher.IsNull())
@@ -145,24 +145,24 @@ Standard_Boolean IFSelect_SelectSignature::SortInGraph(const Standard_Integer,
     return IFSelect_Signature::MatchValue(txt, thesigntext, (theexact < 0));
   }
 
-  //  sinon : liste
-  //  Analyse en sequence : si alternance prend/prend-pas, le dernier a raison
-  //   en consequence, si que des prend ou que des prend-pas, c est commutatif
-  //   DONC recommendation : mettre les prend-pas en fin
+  //  otherwise: list
+  //  Sequence analysis: if take/don't-take alternation, the last one is right
+  //   consequently, if only takes or only don't-takes, it's commutative
+  //   THEREFORE recommendation: put the don't-takes at the end
 
-  //  AU DEPART : prendre = ne prendre que. prend-pas = prend-tout-sauf ...
-  //  Donc si le premier est un prend-pas, je commence par tout prendre
-  Standard_Integer hmod = thesignmode.Value(1);
-  Standard_Integer jmod = hmod / 8;
-  Standard_Integer imod = hmod - (jmod * 8);
-  res                   = (imod == 2 || imod == 4);
-  for (Standard_Integer i = 1; i <= theexact; i++)
+  //  AT START: take = take only. don't-take = take-all-except ...
+  //  So if the first is a don't-take, I start by taking everything
+  int hmod = thesignmode.Value(1);
+  int jmod = hmod / 8;
+  int imod = hmod - (jmod * 8);
+  res      = (imod == 2 || imod == 4);
+  for (int i = 1; i <= theexact; i++)
   {
-    Standard_CString signtext = thesignlist.Value(i).ToCString();
-    hmod                      = thesignmode.Value(i);
-    jmod                      = hmod / 8;
-    imod                      = hmod - (jmod * 8);
-    Standard_Boolean quid;
+    const char* signtext = thesignlist.Value(i).ToCString();
+    hmod                 = thesignmode.Value(i);
+    jmod                 = hmod / 8;
+    imod                 = hmod - (jmod * 8);
+    bool quid;
     if (jmod == 0)
     {
       if (!thematcher.IsNull())
@@ -178,8 +178,8 @@ Standard_Boolean IFSelect_SelectSignature::SortInGraph(const Standard_Integer,
       else
         txt = thecounter->ComputedSign(ent, G);
 
-      Standard_Integer val = atoi(txt);
-      Standard_Integer lav = atoi(signtext);
+      int val = atoi(txt);
+      int lav = atoi(signtext);
       switch (jmod)
       {
         case 2:
@@ -195,24 +195,23 @@ Standard_Boolean IFSelect_SelectSignature::SortInGraph(const Standard_Integer,
           quid = (val >= lav);
           break;
         default:
-          quid = Standard_False;
+          quid = false;
           break;
       }
     }
     if ((imod == 1 || imod == 3) && quid)
-      res = Standard_True;
+      res = true;
     if ((imod == 2 || imod == 4) && quid)
-      res = Standard_False;
+      res = false;
   }
   return res;
 }
 
-Standard_Boolean IFSelect_SelectSignature::Sort(
-  const Standard_Integer,
-  const Handle(Standard_Transient)& /*ent*/,
-  const Handle(Interface_InterfaceModel)& /*model*/) const
+bool IFSelect_SelectSignature::Sort(const int,
+                                    const occ::handle<Standard_Transient>& /*ent*/,
+                                    const occ::handle<Interface_InterfaceModel>& /*model*/) const
 {
-  return Standard_True;
+  return true;
 }
 
 const TCollection_AsciiString& IFSelect_SelectSignature::SignatureText() const
@@ -220,7 +219,7 @@ const TCollection_AsciiString& IFSelect_SelectSignature::SignatureText() const
   return thesigntext;
 }
 
-Standard_Boolean IFSelect_SelectSignature::IsExact() const
+bool IFSelect_SelectSignature::IsExact() const
 {
   return (theexact < 0);
 }

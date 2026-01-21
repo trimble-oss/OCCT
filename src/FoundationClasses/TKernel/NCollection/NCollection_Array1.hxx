@@ -35,7 +35,7 @@
 //!
 //! Examples:
 //! @code
-//! Item tab[100]; //  an example with a C array
+//! Item tab[100]; // an example with a C array
 //! NCollection_Array1<Item> ttab (tab[0], 1, 100);
 //!
 //! NCollection_Array1<Item> tttab (ttab(10), 10, 20); // a slice of ttab
@@ -81,27 +81,27 @@ public:
   using Iterator       = NCollection_Iterator<NCollection_Array1<TheItemType>>;
 
 public:
-  const_iterator begin() const { return const_iterator(*this); }
+  const_iterator begin() const noexcept { return const_iterator(*this); }
 
-  iterator begin() { return iterator(*this); }
+  iterator begin() noexcept { return iterator(*this); }
 
-  const_iterator cbegin() const { return const_iterator(*this); }
+  const_iterator cbegin() const noexcept { return const_iterator(*this); }
 
-  iterator end() { return iterator(mySize, *this); }
+  iterator end() noexcept { return iterator(mySize, *this); }
 
-  const_iterator end() const { return const_iterator(mySize, *this); }
+  const_iterator end() const noexcept { return const_iterator(mySize, *this); }
 
-  const_iterator cend() const { return const_iterator(mySize, *this); }
+  const_iterator cend() const noexcept { return const_iterator(mySize, *this); }
 
 public:
   // Constructors
-  NCollection_Array1()
+  NCollection_Array1() noexcept
       : myLowerBound(1),
         mySize(0)
   {
   }
 
-  explicit NCollection_Array1(const Standard_Integer theLower, const Standard_Integer theUpper)
+  explicit NCollection_Array1(const int theLower, const int theUpper)
       : myLowerBound(theLower),
         mySize(theUpper - theLower + 1)
   {
@@ -114,9 +114,9 @@ public:
     construct(0, mySize);
   }
 
-  explicit NCollection_Array1(const allocator_type&  theAlloc,
-                              const Standard_Integer theLower,
-                              const Standard_Integer theUpper)
+  explicit NCollection_Array1(const allocator_type& theAlloc,
+                              const int             theLower,
+                              const int             theUpper)
       : myLowerBound(theLower),
         mySize(theUpper - theLower + 1),
         myPointer(nullptr),
@@ -132,10 +132,10 @@ public:
     construct(0, mySize);
   }
 
-  explicit NCollection_Array1(const_reference        theBegin,
-                              const Standard_Integer theLower,
-                              const Standard_Integer theUpper,
-                              const bool             theUseBuffer = true)
+  explicit NCollection_Array1(const_reference theBegin,
+                              const int       theLower,
+                              const int       theUpper,
+                              const bool      theUseBuffer = true)
       : myLowerBound(theLower),
         mySize(theUpper - theLower + 1),
         myPointer(theUseBuffer ? const_cast<pointer>(&theBegin) : nullptr),
@@ -197,19 +197,19 @@ public:
   }
 
   //! Size query
-  Standard_Integer Size() const { return Length(); }
+  int Size() const noexcept { return Length(); }
 
   //! Length query (the same)
-  Standard_Integer Length() const { return static_cast<Standard_Integer>(mySize); }
+  int Length() const noexcept { return static_cast<int>(mySize); }
 
   //! Return TRUE if array has zero length.
-  Standard_Boolean IsEmpty() const { return mySize == 0; }
+  bool IsEmpty() const noexcept { return mySize == 0; }
 
   //! Lower bound
-  Standard_Integer Lower() const { return myLowerBound; }
+  int Lower() const noexcept { return myLowerBound; }
 
   //! Upper bound
-  Standard_Integer Upper() const { return myLowerBound + static_cast<int>(mySize) - 1; }
+  int Upper() const noexcept { return myLowerBound + static_cast<int>(mySize) - 1; }
 
   //! Copies data of theOther array to this.
   //! This array should be pre-allocated and have the same length as theOther;
@@ -255,7 +255,10 @@ public:
     return *this;
   }
 
-  NCollection_Array1& Move(NCollection_Array1& theOther) { return Move(std::move(theOther)); }
+  NCollection_Array1& Move(NCollection_Array1& theOther) noexcept
+  {
+    return Move(std::move(theOther));
+  }
 
   //! Assignment operator; @sa Assign()
   NCollection_Array1& operator=(const NCollection_Array1& theOther) { return Assign(theOther); }
@@ -267,19 +270,19 @@ public:
   }
 
   //! @return first element
-  const_reference First() const { return myPointer[0]; }
+  const_reference First() const noexcept { return myPointer[0]; }
 
   //! @return first element
-  reference ChangeFirst() { return myPointer[0]; }
+  reference ChangeFirst() noexcept { return myPointer[0]; }
 
   //! @return last element
-  const_reference Last() const { return myPointer[mySize - 1]; }
+  const_reference Last() const noexcept { return myPointer[mySize - 1]; }
 
   //! @return last element
-  reference ChangeLast() { return myPointer[mySize - 1]; }
+  reference ChangeLast() noexcept { return myPointer[mySize - 1]; }
 
   //! Constant value access
-  const_reference Value(const Standard_Integer theIndex) const
+  const_reference Value(const int theIndex) const
   {
     const size_t aPos = theIndex - myLowerBound;
     Standard_OutOfRange_Raise_if(aPos >= mySize, "NCollection_Array1::Value");
@@ -287,13 +290,13 @@ public:
   }
 
   //! operator() - alias to Value
-  const_reference operator()(const Standard_Integer theIndex) const { return Value(theIndex); }
+  const_reference operator()(const int theIndex) const { return Value(theIndex); }
 
   //! operator[] - alias to Value
-  const_reference operator[](const Standard_Integer theIndex) const { return Value(theIndex); }
+  const_reference operator[](const int theIndex) const { return Value(theIndex); }
 
   //! Variable value access
-  reference ChangeValue(const Standard_Integer theIndex)
+  reference ChangeValue(const int theIndex)
   {
     const size_t aPos = theIndex - myLowerBound;
     Standard_OutOfRange_Raise_if(aPos >= mySize, "NCollection_Array1::ChangeValue");
@@ -301,13 +304,13 @@ public:
   }
 
   //! operator() - alias to ChangeValue
-  reference operator()(const Standard_Integer theIndex) { return ChangeValue(theIndex); }
+  reference operator()(const int theIndex) { return ChangeValue(theIndex); }
 
   //! operator[] - alias to ChangeValue
-  reference operator[](const Standard_Integer theIndex) { return ChangeValue(theIndex); }
+  reference operator[](const int theIndex) { return ChangeValue(theIndex); }
 
   //! Set value
-  void SetValue(const Standard_Integer theIndex, const value_type& theItem)
+  void SetValue(const int theIndex, const value_type& theItem)
   {
     const size_t aPos = theIndex - myLowerBound;
     Standard_OutOfRange_Raise_if(aPos >= mySize, "NCollection_Array1::SetValue");
@@ -315,7 +318,7 @@ public:
   }
 
   //! Set value
-  void SetValue(const Standard_Integer theIndex, value_type&& theItem)
+  void SetValue(const int theIndex, value_type&& theItem)
   {
     const size_t aPos = theIndex - myLowerBound;
     Standard_OutOfRange_Raise_if(aPos >= mySize, "NCollection_Array1::SetValue");
@@ -323,10 +326,10 @@ public:
   }
 
   //! Changes the lowest bound. Do not move data
-  void UpdateLowerBound(const Standard_Integer theLower) { myLowerBound = theLower; }
+  void UpdateLowerBound(const int theLower) noexcept { myLowerBound = theLower; }
 
   //! Changes the upper bound. Do not move data
-  void UpdateUpperBound(const Standard_Integer theUpper)
+  void UpdateUpperBound(const int theUpper) noexcept
   {
     myLowerBound = myLowerBound - Upper() + theUpper;
   }
@@ -337,9 +340,7 @@ public:
   //! @param theLower new lower bound of array
   //! @param theUpper new upper bound of array
   //! @param theToCopyData flag to copy existing data into new array
-  void Resize(const Standard_Integer theLower,
-              const Standard_Integer theUpper,
-              const Standard_Boolean theToCopyData)
+  void Resize(const int theLower, const int theUpper, const bool theToCopyData)
   {
     Standard_RangeError_Raise_if(theUpper < theLower, "NCollection_Array1::Resize");
     const size_t aNewSize     = static_cast<size_t>(theUpper - theLower + 1);
@@ -359,7 +360,7 @@ public:
     myLowerBound = theLower;
     if (theToCopyData)
     {
-      const size_t aMinSize = std::min<size_t>(aNewSize, mySize);
+      const size_t aMinSize = (std::min)(aNewSize, mySize);
       if (myIsOwner)
       {
         myPointer = myAllocator.reallocate(myPointer, aNewSize);
@@ -382,7 +383,7 @@ public:
     myIsOwner = true;
   }
 
-  bool IsDeletable() const { return myIsOwner; }
+  bool IsDeletable() const noexcept { return myIsOwner; }
 
   friend iterator;
   friend const_iterator;
@@ -450,11 +451,11 @@ protected:
   }
 
   // ---------- PROTECTED FIELDS -----------
-  Standard_Integer myLowerBound;
-  size_t           mySize;
-  pointer          myPointer = nullptr;
-  bool             myIsOwner = false;
-  allocator_type   myAllocator;
+  int            myLowerBound;
+  size_t         mySize;
+  pointer        myPointer = nullptr;
+  bool           myIsOwner = false;
+  allocator_type myAllocator;
 };
 
 #endif

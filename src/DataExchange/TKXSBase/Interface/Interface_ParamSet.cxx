@@ -20,27 +20,27 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(Interface_ParamSet, Standard_Transient)
 
-Interface_ParamSet::Interface_ParamSet(const Standard_Integer nres, const Standard_Integer) // nst)
+Interface_ParamSet::Interface_ParamSet(const int nres, const int) // nst)
 {
   thelist  = new Interface_ParamList; // (nst,nst+nres+2);
   themxpar = nres;
   thenbpar = 0;
   thelnval = 0;
-  thelnres = 100;                // *20;  // 10 caracteres par Param (\0 inclus) : raisonnable
+  thelnres = 100;                // *20;  // 10 characters per Param (\0 included): reasonable
   theval   = new char[thelnres]; // szv#4:S4163:12Mar99 `thelnres+1` chars was wrong
 }
 
-//  Append(CString) : Gestion des caracteres selon <lnval>
-//  Si lnval < 0, ParamSet passif, memoire geree de l exterieur, ParamSet
-//                se contente de s y referer
-//  Sinon, recopie dans une page locale
+//  Append(CString): Character management according to <lnval>
+//  If lnval < 0, ParamSet passive, memory managed externally, ParamSet
+//                just refers to it
+//  Otherwise, copy to a local page
 
-Standard_Integer Interface_ParamSet::Append(const Standard_CString    val,
-                                            const Standard_Integer    lnval,
-                                            const Interface_ParamType typ,
-                                            const Standard_Integer    nument)
+int Interface_ParamSet::Append(const char*               val,
+                               const int                 lnval,
+                               const Interface_ParamType typ,
+                               const int                 nument)
 {
-  //  Ici, gestion locale de String
+  //  Here, local String management
   thenbpar++;
   if (thenbpar > themxpar)
   {
@@ -49,7 +49,7 @@ Standard_Integer Interface_ParamSet::Append(const Standard_CString    val,
   }
   else if (lnval < 0)
   {
-    //    ..  Gestion externe des caracteres  ..
+    //    ..  External character management  ..
     Interface_FileParameter& FP = thelist->ChangeValue(thenbpar);
     FP.Init(val, typ);
     if (nument != 0)
@@ -57,19 +57,19 @@ Standard_Integer Interface_ParamSet::Append(const Standard_CString    val,
   }
   else
   {
-    //    ..  Gestion locale des caracteres  ..
-    Standard_Integer i;
+    //    ..  Local character management  ..
+    int i;
     if (thelnval + lnval + 1 > thelnres)
     {
-      //      Reservation de caracteres insuffisante : d abord augmenter
-      Standard_Integer newres = (Standard_Integer)(thelnres * 2 + lnval);
-      char*            newval = new char[newres];
+      //      Insufficient character reservation: first increase
+      int   newres = (int)(thelnres * 2 + lnval);
+      char* newval = new char[newres];
       for (i = 0; i < thelnval; i++)
         newval[i] = theval[i]; // szv#4:S4163:12Mar99 `<= thelnres` was wrong
-      //      et cepatou : il faut realigner les Params deja enregistres sur
-      //      l ancienne reservation de caracteres ...
-      // Standard_Integer delta = (Standard_Integer) (newval - theval);
-      // difference a appliquer
+      //      and that's not all: must realign Params already recorded on
+      //      the old character reservation ...
+      // int delta = (int) (newval - theval);
+      // difference to apply
       char* poldVal = &theval[0];
       char* pnewVal = &newval[0];
       for (i = 1; i < thenbpar; i++)
@@ -77,20 +77,20 @@ Standard_Integer Interface_ParamSet::Append(const Standard_CString    val,
         Interface_FileParameter& OFP   = thelist->ChangeValue(i);
         Interface_ParamType      otyp  = OFP.ParamType();
         char*                    oval  = (char*)OFP.CValue();
-        Standard_Integer         delta = (Standard_Integer)(oval - poldVal);
+        int                      delta = (int)(oval - poldVal);
         // if (oval < theval || oval >= (theval+thelnres))
         //   continue;  //hors reserve //szv#4:S4163:12Mar99 `oval >` was wrong
-        Standard_Integer onum = OFP.EntityNumber();
-        OFP.Init(pnewVal + delta, otyp); // et voila; on remet dans la boite
+        int onum = OFP.EntityNumber();
+        OFP.Init(pnewVal + delta, otyp); // and there we go; we put back in the box
         if (onum != 0)
           OFP.SetEntityNumber(onum);
       }
-      //      Enteriner la nouvelle reservation
+      //      Confirm the new reservation
       delete[] theval;
       theval   = newval;
       thelnres = newres;
     }
-    //      Enregistrer ce parametre
+    //      Register this parameter
     for (i = 0; i < lnval; i++)
       theval[thelnval + i] = val[i];
     theval[thelnval + lnval] = '\0';
@@ -99,14 +99,14 @@ Standard_Integer Interface_ParamSet::Append(const Standard_CString    val,
     FP.Init(&theval[thelnval], typ);
     if (nument != 0)
       FP.SetEntityNumber(nument);
-    thelnval += (Standard_Integer)(lnval + 1);
+    thelnval += (int)(lnval + 1);
   }
   return thenbpar;
 }
 
-Standard_Integer Interface_ParamSet::Append(const Interface_FileParameter& FP)
+int Interface_ParamSet::Append(const Interface_FileParameter& FP)
 {
-  //  Ici, FP tout pret : pas de gestion memoire sur String (dommage)
+  //  Here, FP ready: no memory management on String (too bad)
 
   thenbpar++;
   if (thenbpar > themxpar)
@@ -118,12 +118,12 @@ Standard_Integer Interface_ParamSet::Append(const Interface_FileParameter& FP)
   return thenbpar;
 }
 
-Standard_Integer Interface_ParamSet::NbParams() const
+int Interface_ParamSet::NbParams() const
 {
   return thenbpar;
 }
 
-const Interface_FileParameter& Interface_ParamSet::Param(const Standard_Integer num) const
+const Interface_FileParameter& Interface_ParamSet::Param(const int num) const
 {
   if (num > themxpar)
     return thenext->Param(num - themxpar);
@@ -131,7 +131,7 @@ const Interface_FileParameter& Interface_ParamSet::Param(const Standard_Integer 
     return thelist->Value(num);
 }
 
-Interface_FileParameter& Interface_ParamSet::ChangeParam(const Standard_Integer num)
+Interface_FileParameter& Interface_ParamSet::ChangeParam(const int num)
 {
   if (num > themxpar)
     return thenext->ChangeParam(num - themxpar);
@@ -139,7 +139,7 @@ Interface_FileParameter& Interface_ParamSet::ChangeParam(const Standard_Integer 
     return thelist->ChangeValue(num);
 }
 
-void Interface_ParamSet::SetParam(const Standard_Integer num, const Interface_FileParameter& FP)
+void Interface_ParamSet::SetParam(const int num, const Interface_FileParameter& FP)
 {
   if (num > themxpar)
     thenext->SetParam(num - themxpar, FP);
@@ -147,10 +147,9 @@ void Interface_ParamSet::SetParam(const Standard_Integer num, const Interface_Fi
     thelist->SetValue(num, FP);
 }
 
-Handle(Interface_ParamList) Interface_ParamSet::Params(const Standard_Integer num,
-                                                       const Standard_Integer nb) const
+occ::handle<Interface_ParamList> Interface_ParamSet::Params(const int num, const int nb) const
 {
-  Standard_Integer i, n0 = num - 1, nbp = nb;
+  int i, n0 = num - 1, nbp = nb;
   if (num > themxpar)
     return thenext->Params(num - themxpar, nb);
   if (num == 0 && nb == 0)
@@ -158,9 +157,9 @@ Handle(Interface_ParamList) Interface_ParamSet::Params(const Standard_Integer nu
     n0  = 0;
     nbp = thenbpar;
     if (thenbpar <= themxpar)
-      return thelist; // et zou
+      return thelist; // and there you go
   }
-  Handle(Interface_ParamList) list = new Interface_ParamList;
+  occ::handle<Interface_ParamList> list = new Interface_ParamList;
   if (nb == 0)
     return list;
 
@@ -173,10 +172,10 @@ void Interface_ParamSet::Destroy()
 {
   //  if (!thenext.IsNull()) thenext->Destroy();
   thenext.Nullify();
-  //  Destruction "manuelle" (gestion memoire directe)
+  //  "Manual" destruction (direct memory management)
   if (theval)
     delete[] theval;
-  theval = NULL;
+  theval = nullptr;
   thelist->Clear();
   thelist.Nullify();
 }

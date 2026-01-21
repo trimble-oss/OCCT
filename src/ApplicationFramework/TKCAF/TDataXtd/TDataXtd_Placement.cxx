@@ -32,9 +32,9 @@ const Standard_GUID& TDataXtd_Placement::GetID()
 
 //=================================================================================================
 
-Handle(TDataXtd_Placement) TDataXtd_Placement::Set(const TDF_Label& L)
+occ::handle<TDataXtd_Placement> TDataXtd_Placement::Set(const TDF_Label& L)
 {
-  Handle(TDataXtd_Placement) A;
+  occ::handle<TDataXtd_Placement> A;
   if (!L.FindAttribute(TDataXtd_Placement::GetID(), A))
   {
     A = new TDataXtd_Placement();
@@ -45,7 +45,7 @@ Handle(TDataXtd_Placement) TDataXtd_Placement::Set(const TDF_Label& L)
 
 //=================================================================================================
 
-TDataXtd_Placement::TDataXtd_Placement() {}
+TDataXtd_Placement::TDataXtd_Placement() = default;
 
 //=================================================================================================
 

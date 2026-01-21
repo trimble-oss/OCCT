@@ -19,56 +19,58 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(Transfer_MultipleBinder, Transfer_Binder)
 
-// Resultat Multiple
-// Possibilite de definir un Resultat Multiple : plusieurs objets resultant
-//  d un Transfert, sans pouvoir les distinguer
-//  N.B. : Pour l heure, tous Transients (pourra evoluer)
-Transfer_MultipleBinder::Transfer_MultipleBinder() {}
+// Multiple Result
+// Possibility to define a Multiple Result : several objects resulting
+//  from a Transfer, without being able to distinguish them
+//  N.B. : For now, all Transients (may evolve)
+Transfer_MultipleBinder::Transfer_MultipleBinder() = default;
 
-Standard_Boolean Transfer_MultipleBinder::IsMultiple() const
+bool Transfer_MultipleBinder::IsMultiple() const
 {
   if (themulres.IsNull())
-    return Standard_False;
+    return false;
   return (themulres->Length() != 1);
 }
 
-Handle(Standard_Type) Transfer_MultipleBinder::ResultType() const
+occ::handle<Standard_Type> Transfer_MultipleBinder::ResultType() const
 {
   return STANDARD_TYPE(Standard_Transient);
 }
 
-Standard_CString Transfer_MultipleBinder::ResultTypeName() const
+const char* Transfer_MultipleBinder::ResultTypeName() const
 {
   return "(list)";
 }
 
-//  ....        Gestion du Resultat Multiple        ....
+//  ....        Multiple Result Management        ....
 
-void Transfer_MultipleBinder::AddResult(const Handle(Standard_Transient)& res)
+void Transfer_MultipleBinder::AddResult(const occ::handle<Standard_Transient>& res)
 {
   if (themulres.IsNull())
-    themulres = new TColStd_HSequenceOfTransient();
+    themulres = new NCollection_HSequence<occ::handle<Standard_Transient>>();
   themulres->Append(res);
 }
 
-Standard_Integer Transfer_MultipleBinder::NbResults() const
+int Transfer_MultipleBinder::NbResults() const
 {
   return (themulres.IsNull() ? 0 : themulres->Length());
 }
 
-Handle(Standard_Transient) Transfer_MultipleBinder::ResultValue(const Standard_Integer num) const
+occ::handle<Standard_Transient> Transfer_MultipleBinder::ResultValue(const int num) const
 {
   return themulres->Value(num);
 }
 
-Handle(TColStd_HSequenceOfTransient) Transfer_MultipleBinder::MultipleResult() const
+occ::handle<NCollection_HSequence<occ::handle<Standard_Transient>>> Transfer_MultipleBinder::
+  MultipleResult() const
 {
   if (!themulres.IsNull())
     return themulres;
-  return new TColStd_HSequenceOfTransient();
+  return new NCollection_HSequence<occ::handle<Standard_Transient>>();
 }
 
-void Transfer_MultipleBinder::SetMultipleResult(const Handle(TColStd_HSequenceOfTransient)& mulres)
+void Transfer_MultipleBinder::SetMultipleResult(
+  const occ::handle<NCollection_HSequence<occ::handle<Standard_Transient>>>& mulres)
 {
   themulres = mulres;
 }

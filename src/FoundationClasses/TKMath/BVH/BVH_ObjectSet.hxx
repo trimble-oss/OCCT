@@ -31,10 +31,10 @@ public:
 
 public:
   //! Creates new set of geometric objects.
-  BVH_ObjectSet() {}
+  BVH_ObjectSet() = default;
 
   //! Releases resources of set of geometric objects.
-  virtual ~BVH_ObjectSet() {}
+  ~BVH_ObjectSet() override = default;
 
 public:
   //! Removes all geometric objects.
@@ -51,33 +51,28 @@ public:
   //! Returns reference to the array of geometric objects.
   BVH_ObjectList& Objects() { return myObjects; }
 
-  //! Returns reference to the  array of geometric objects.
+  //! Returns reference to the array of geometric objects.
   const BVH_ObjectList& Objects() const { return myObjects; }
 
 public:
   //! Return total number of objects.
-  virtual Standard_Integer Size() const Standard_OVERRIDE { return myObjects.Size(); }
+  int Size() const override { return myObjects.Size(); }
 
   //! Returns AABB of entire set of objects.
   using BVH_Set<T, N>::Box;
 
   //! Returns AABB of the given object.
-  virtual BVH_Box<T, N> Box(const Standard_Integer theIndex) const Standard_OVERRIDE
-  {
-    return myObjects.Value(theIndex)->Box();
-  }
+  BVH_Box<T, N> Box(const int theIndex) const override { return myObjects.Value(theIndex)->Box(); }
 
   //! Returns centroid position along the given axis.
-  virtual T Center(const Standard_Integer theIndex,
-                   const Standard_Integer theAxis) const Standard_OVERRIDE
+  T Center(const int theIndex, const int theAxis) const override
   {
     // Note: general implementation, not optimal
     return BVH::CenterAxis<T, N>::Center(myObjects.Value(theIndex)->Box(), theAxis);
   }
 
   //! Performs transposing the two given objects in the set.
-  virtual void Swap(const Standard_Integer theIndex1,
-                    const Standard_Integer theIndex2) Standard_OVERRIDE
+  void Swap(const int theIndex1, const int theIndex2) override
   {
     std::swap(myObjects.ChangeValue(theIndex1), myObjects.ChangeValue(theIndex2));
   }

@@ -14,8 +14,8 @@
 #include <Vrml_Cylinder.hxx>
 
 Vrml_Cylinder::Vrml_Cylinder(const Vrml_CylinderParts aParts,
-                             const Standard_Real      aRadius,
-                             const Standard_Real      aHeight)
+                             const double             aRadius,
+                             const double             aHeight)
 {
   myParts  = aParts;
   myRadius = aRadius;
@@ -32,22 +32,22 @@ Vrml_CylinderParts Vrml_Cylinder::Parts() const
   return myParts;
 }
 
-void Vrml_Cylinder::SetRadius(const Standard_Real aRadius)
+void Vrml_Cylinder::SetRadius(const double aRadius)
 {
   myRadius = aRadius;
 }
 
-Standard_Real Vrml_Cylinder::Radius() const
+double Vrml_Cylinder::Radius() const
 {
   return myRadius;
 }
 
-void Vrml_Cylinder::SetHeight(const Standard_Real aHeight)
+void Vrml_Cylinder::SetHeight(const double aHeight)
 {
   myHeight = aHeight;
 }
 
-Standard_Real Vrml_Cylinder::Height() const
+double Vrml_Cylinder::Height() const
 {
   return myHeight;
 }
@@ -71,13 +71,13 @@ Standard_OStream& Vrml_Cylinder::Print(Standard_OStream& anOStream) const
       break;
   }
 
-  if (Abs(myRadius - 1) > 0.0001)
+  if (std::abs(myRadius - 1) > 0.0001)
   {
     anOStream << "    radius\t";
     anOStream << myRadius << "\n";
   }
 
-  if (Abs(myHeight - 2) > 0.0001)
+  if (std::abs(myHeight - 2) > 0.0001)
   {
     anOStream << "    height\t";
     anOStream << myHeight << "\n";

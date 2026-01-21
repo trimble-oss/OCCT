@@ -19,15 +19,16 @@ IMPLEMENT_STANDARD_RTTIEXT(StepVisual_AnnotationFillAreaOccurrence, StepVisual_A
 
 //=================================================================================================
 
-StepVisual_AnnotationFillAreaOccurrence::StepVisual_AnnotationFillAreaOccurrence() {}
+StepVisual_AnnotationFillAreaOccurrence::StepVisual_AnnotationFillAreaOccurrence() = default;
 
 //=================================================================================================
 
 void StepVisual_AnnotationFillAreaOccurrence::Init(
-  const Handle(TCollection_HAsciiString)&                        theName,
-  const Handle(StepVisual_HArray1OfPresentationStyleAssignment)& theStyles,
-  const Handle(Standard_Transient)&                              theItem,
-  const Handle(StepGeom_GeometricRepresentationItem)&            theFillStyleTarget)
+  const occ::handle<TCollection_HAsciiString>& theName,
+  const occ::handle<NCollection_HArray1<occ::handle<StepVisual_PresentationStyleAssignment>>>&
+                                                           theStyles,
+  const occ::handle<Standard_Transient>&                   theItem,
+  const occ::handle<StepGeom_GeometricRepresentationItem>& theFillStyleTarget)
 {
   StepVisual_AnnotationOccurrence::Init(theName, theStyles, theItem);
   myFillStyleTarget = theFillStyleTarget;

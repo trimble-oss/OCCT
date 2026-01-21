@@ -25,14 +25,16 @@ IMPLEMENT_STANDARD_RTTIEXT(StepFEA_CurveElementIntervalLinearlyVarying,
 
 //=================================================================================================
 
-StepFEA_CurveElementIntervalLinearlyVarying::StepFEA_CurveElementIntervalLinearlyVarying() {}
+StepFEA_CurveElementIntervalLinearlyVarying::StepFEA_CurveElementIntervalLinearlyVarying() =
+  default;
 
 //=================================================================================================
 
 void StepFEA_CurveElementIntervalLinearlyVarying::Init(
-  const Handle(StepFEA_CurveElementLocation)& aCurveElementInterval_FinishPosition,
-  const Handle(StepBasic_EulerAngles)&        aCurveElementInterval_EuAngles,
-  const Handle(StepElement_HArray1OfCurveElementSectionDefinition)& aSections)
+  const occ::handle<StepFEA_CurveElementLocation>& aCurveElementInterval_FinishPosition,
+  const occ::handle<StepBasic_EulerAngles>&        aCurveElementInterval_EuAngles,
+  const occ::handle<NCollection_HArray1<occ::handle<StepElement_CurveElementSectionDefinition>>>&
+    aSections)
 {
   StepFEA_CurveElementInterval::Init(aCurveElementInterval_FinishPosition,
                                      aCurveElementInterval_EuAngles);
@@ -42,7 +44,7 @@ void StepFEA_CurveElementIntervalLinearlyVarying::Init(
 
 //=================================================================================================
 
-Handle(StepElement_HArray1OfCurveElementSectionDefinition)
+occ::handle<NCollection_HArray1<occ::handle<StepElement_CurveElementSectionDefinition>>>
   StepFEA_CurveElementIntervalLinearlyVarying::Sections() const
 {
   return theSections;
@@ -51,7 +53,8 @@ Handle(StepElement_HArray1OfCurveElementSectionDefinition)
 //=================================================================================================
 
 void StepFEA_CurveElementIntervalLinearlyVarying::SetSections(
-  const Handle(StepElement_HArray1OfCurveElementSectionDefinition)& aSections)
+  const occ::handle<NCollection_HArray1<occ::handle<StepElement_CurveElementSectionDefinition>>>&
+    aSections)
 {
   theSections = aSections;
 }

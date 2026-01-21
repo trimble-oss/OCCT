@@ -59,7 +59,7 @@
 #include <IGESSolid_ToroidalSurface.hxx>
 #include <IGESSolid_Torus.hxx>
 #include <IGESSolid_VertexList.hxx>
-#include <Interface_Macros.hxx>
+#include <MoniTool_Macros.hxx>
 #include <Standard_Type.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESSolid_SpecificModule, IGESData_SpecificModule)
@@ -67,13 +67,13 @@ IMPLEMENT_STANDARD_RTTIEXT(IGESSolid_SpecificModule, IGESData_SpecificModule)
 //  Each Module is attached to a Protocol : it must interpret Case Numbers
 //  (arguments <CN> of various methods) in accordance to values returned by
 //  the method TypeNumber from this Protocol
-IGESSolid_SpecificModule::IGESSolid_SpecificModule() {}
+IGESSolid_SpecificModule::IGESSolid_SpecificModule() = default;
 
-void IGESSolid_SpecificModule::OwnDump(const Standard_Integer             CN,
-                                       const Handle(IGESData_IGESEntity)& ent,
-                                       const IGESData_IGESDumper&         dumper,
-                                       Standard_OStream&                  S,
-                                       const Standard_Integer             own) const
+void IGESSolid_SpecificModule::OwnDump(const int                               CN,
+                                       const occ::handle<IGESData_IGESEntity>& ent,
+                                       const IGESData_IGESDumper&              dumper,
+                                       Standard_OStream&                       S,
+                                       const int                               own) const
 {
   switch (CN)
   {

@@ -29,10 +29,10 @@ ShapeUpgrade_ShapeDivideClosed::ShapeUpgrade_ShapeDivideClosed(const TopoDS_Shap
 
 //=================================================================================================
 
-void ShapeUpgrade_ShapeDivideClosed::SetNbSplitPoints(const Standard_Integer num)
+void ShapeUpgrade_ShapeDivideClosed::SetNbSplitPoints(const int num)
 {
-  Handle(ShapeUpgrade_ClosedFaceDivide) tool = new ShapeUpgrade_ClosedFaceDivide;
+  occ::handle<ShapeUpgrade_ClosedFaceDivide> tool = new ShapeUpgrade_ClosedFaceDivide;
   tool->SetNbSplitPoints(num);
-  tool->SetWireDivideTool(0); // no splitting of wire
+  tool->SetWireDivideTool(nullptr); // no splitting of wire
   SetSplitFaceTool(tool);
 }

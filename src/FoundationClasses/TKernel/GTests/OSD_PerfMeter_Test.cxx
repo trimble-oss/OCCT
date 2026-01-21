@@ -1,15 +1,26 @@
+// Copyright (c) 2025 OPEN CASCADE SAS
+//
+// This file is part of Open CASCADE Technology software library.
+//
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU Lesser General Public License version 2.1 as published
+// by the Free Software Foundation, with special exception defined in the file
+// OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
+// distribution for complete text of the license and disclaimer of any warranty.
+//
+// Alternatively, this file may be used under the terms of Open CASCADE
+// commercial license or contractual agreement.
+
 #include <gtest/gtest.h>
 #include <OSD_PerfMeter.hxx>
-
-#include <BRepPrimAPI_MakeBox.hxx>
-#include <BRepPrimAPI_MakeSphere.hxx>
-#include <BRepAlgoAPI_Cut.hxx>
+#include <TCollection_AsciiString.hxx>
 
 #include <chrono>
 #include <thread>
 #include <sstream>
 #include <string>
 #include <vector>
+#include <cmath>
 
 // Test fixture for OSD_PerfMeter tests
 class OSD_PerfMeterTest : public ::testing::Test
@@ -33,11 +44,23 @@ protected:
     OSD_PerfMeter meter("WorkMeter", true);
     while (meter.Elapsed() < theTimeInSec)
     {
-      // do some operation that will take considerable time compared with time of starting /
-      // stopping timers
-      BRepPrimAPI_MakeBox    aBox(10., 10., 10.);
-      BRepPrimAPI_MakeSphere aSphere(10.);
-      BRepAlgoAPI_Cut        aCutter(aBox.Shape(), aSphere.Shape());
+      // Do some computational work that takes considerable time
+      // compared with time of starting/stopping timers
+      volatile double result = 0.0;
+      for (int i = 0; i < 10000; ++i)
+      {
+        // Complex mathematical operations using only standard library
+        result += std::sin(i * 0.001) * std::cos(i * 0.002);
+        result += std::sqrt(i + 1.0);
+        result += std::pow(i * 0.1, 1.5);
+
+        // String operations to add more computational cost
+        TCollection_AsciiString aStr("Test");
+        aStr += TCollection_AsciiString(i);
+        volatile int len = aStr.Length(); // volatile to prevent optimization
+        (void)len;                        // Suppress unused variable warning
+      }
+      (void)result; // Suppress unused variable warning
     }
     meter.Kill();
   }

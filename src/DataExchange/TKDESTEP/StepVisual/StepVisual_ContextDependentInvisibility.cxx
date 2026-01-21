@@ -16,11 +16,11 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(StepVisual_ContextDependentInvisibility, StepVisual_Invisibility)
 
-StepVisual_ContextDependentInvisibility::StepVisual_ContextDependentInvisibility() {}
+StepVisual_ContextDependentInvisibility::StepVisual_ContextDependentInvisibility() = default;
 
 void StepVisual_ContextDependentInvisibility::Init(
-  const Handle(StepVisual_HArray1OfInvisibleItem)& aInvisibleItems,
-  const StepVisual_InvisibilityContext&            aPresentationContext)
+  const occ::handle<NCollection_HArray1<StepVisual_InvisibleItem>>& aInvisibleItems,
+  const StepVisual_InvisibilityContext&                             aPresentationContext)
 {
   // --- classe own fields ---
   presentationContext = aPresentationContext;

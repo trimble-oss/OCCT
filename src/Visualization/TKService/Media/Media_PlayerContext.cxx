@@ -82,7 +82,7 @@ Media_PlayerContext::Media_PlayerContext(Media_IFrameQueue* theFrameQueue)
 
 Media_PlayerContext::~Media_PlayerContext()
 {
-  myToShutDown = Standard_True;
+  myToShutDown = true;
   myWakeEvent.Set();
   myThread.Wait();
 
@@ -102,17 +102,18 @@ Media_PlayerContext::~Media_PlayerContext()
 
 //=================================================================================================
 
-Handle(Media_Frame) Media_PlayerContext::DumpFirstFrame(const TCollection_AsciiString& theSrcVideo,
-                                                        TCollection_AsciiString&       theMediaInfo)
+occ::handle<Media_Frame> Media_PlayerContext::DumpFirstFrame(
+  const TCollection_AsciiString& theSrcVideo,
+  TCollection_AsciiString&       theMediaInfo)
 {
   theMediaInfo.Clear();
-  Handle(Media_FormatContext) aFormatCtx = new Media_FormatContext();
+  occ::handle<Media_FormatContext> aFormatCtx = new Media_FormatContext();
   if (!aFormatCtx->OpenInput(theSrcVideo))
   {
-    return Handle(Media_Frame)();
+    return occ::handle<Media_Frame>();
   }
 
-  Handle(Media_CodecContext) aVideoCtx;
+  occ::handle<Media_CodecContext> aVideoCtx;
 #ifdef HAVE_FFMPEG
   for (unsigned int aStreamId = 0; aStreamId < aFormatCtx->NbSteams(); ++aStreamId)
   {
@@ -123,7 +124,7 @@ Handle(Media_Frame) Media_PlayerContext::DumpFirstFrame(const TCollection_AsciiS
       aVideoCtx = new Media_CodecContext();
       if (!aVideoCtx->Init(aStream, aFormatCtx->PtsStartBase(), 1))
       {
-        return Handle(Media_Frame)();
+        return occ::handle<Media_Frame>();
       }
 
       theMediaInfo = aFormatCtx->StreamInfo(aStreamId, aVideoCtx->Context());
@@ -134,18 +135,18 @@ Handle(Media_Frame) Media_PlayerContext::DumpFirstFrame(const TCollection_AsciiS
   if (aVideoCtx.IsNull())
   {
     Message::SendFail(TCollection_AsciiString("FFmpeg: no video stream in '") + theSrcVideo + "'");
-    return Handle(Media_Frame)();
+    return occ::handle<Media_Frame>();
   }
 
-  Handle(Media_Packet) aPacket = new Media_Packet();
-  Handle(Media_Frame)  aFrame  = new Media_Frame();
+  occ::handle<Media_Packet> aPacket = new Media_Packet();
+  occ::handle<Media_Frame>  aFrame  = new Media_Frame();
   for (;;)
   {
     if (!aFormatCtx->ReadPacket(aPacket))
     {
       Message::SendFail(TCollection_AsciiString("FFmpeg: unable to read from '") + theSrcVideo
                         + "'");
-      return Handle(Media_Frame)();
+      return occ::handle<Media_Frame>();
     }
     if (!aVideoCtx->CanProcessPacket(aPacket))
     {
@@ -161,7 +162,7 @@ Handle(Media_Frame) Media_PlayerContext::DumpFirstFrame(const TCollection_AsciiS
   {
     Message::SendFail(TCollection_AsciiString("FFmpeg: unable to decode first video frame from '")
                       + theSrcVideo + "'");
-    return Handle(Media_Frame)();
+    return occ::handle<Media_Frame>();
   }
   return aFrame;
 }
@@ -173,14 +174,14 @@ bool Media_PlayerContext::DumpFirstFrame(const TCollection_AsciiString& theSrcVi
                                          TCollection_AsciiString&       theMediaInfo,
                                          int                            theMaxSize)
 {
-  Handle(Media_Frame) aFrame = DumpFirstFrame(theSrcVideo, theMediaInfo);
+  occ::handle<Media_Frame> aFrame = DumpFirstFrame(theSrcVideo, theMediaInfo);
   if (aFrame.IsNull())
   {
     return false;
   }
 
-  Handle(Image_AlienPixMap) aPixMap   = new Image_AlienPixMap();
-  int                       aResSizeX = aFrame->SizeX(), aResSizeY = aFrame->SizeY();
+  occ::handle<Image_AlienPixMap> aPixMap   = new Image_AlienPixMap();
+  int                            aResSizeX = aFrame->SizeX(), aResSizeY = aFrame->SizeY();
   if (theMaxSize > 0)
   {
     if (aResSizeX > aResSizeY)
@@ -203,7 +204,7 @@ bool Media_PlayerContext::DumpFirstFrame(const TCollection_AsciiString& theSrcVi
   // Image_Format aFormat = aFrame->FormatFFmpeg2Occt (aFrame->Format());
   // if (aFormat == Image_Format_UNKNOWN || theMaxSize > 0)
   {
-    Handle(Media_Frame) anRgbFrame = new Media_Frame();
+    occ::handle<Media_Frame> anRgbFrame = new Media_Frame();
     anRgbFrame->InitWrapper(aPixMap);
 
     Media_Scaler aScaler;
@@ -221,11 +222,10 @@ bool Media_PlayerContext::DumpFirstFrame(const TCollection_AsciiString& theSrcVi
 
 //=================================================================================================
 
-void Media_PlayerContext::SetInput(const TCollection_AsciiString& theInputPath,
-                                   Standard_Boolean               theToWait)
+void Media_PlayerContext::SetInput(const TCollection_AsciiString& theInputPath, bool theToWait)
 {
   {
-    Standard_Mutex::Sentry aLock(myMutex);
+    std::lock_guard<std::mutex> aLock(myMutex);
     if (theToWait)
     {
       myNextEvent.Reset();
@@ -242,11 +242,9 @@ void Media_PlayerContext::SetInput(const TCollection_AsciiString& theInputPath,
 
 //=================================================================================================
 
-void Media_PlayerContext::PlaybackState(Standard_Boolean& theIsPaused,
-                                        Standard_Real&    theProgress,
-                                        Standard_Real&    theDuration)
+void Media_PlayerContext::PlaybackState(bool& theIsPaused, double& theProgress, double& theDuration)
 {
-  Standard_Mutex::Sentry aLock(myMutex);
+  std::lock_guard<std::mutex> aLock(myMutex);
   theIsPaused = !myTimer.IsStarted();
   theProgress = myTimer.ElapsedTime();
   theDuration = myDuration;
@@ -254,11 +252,9 @@ void Media_PlayerContext::PlaybackState(Standard_Boolean& theIsPaused,
 
 //=================================================================================================
 
-void Media_PlayerContext::PlayPause(Standard_Boolean& theIsPaused,
-                                    Standard_Real&    theProgress,
-                                    Standard_Real&    theDuration)
+void Media_PlayerContext::PlayPause(bool& theIsPaused, double& theProgress, double& theDuration)
 {
-  Standard_Mutex::Sentry aLock(myMutex);
+  std::lock_guard<std::mutex> aLock(myMutex);
   theProgress = myTimer.ElapsedTime();
   theDuration = myDuration;
   if (myTimer.IsStarted())
@@ -275,28 +271,44 @@ void Media_PlayerContext::PlayPause(Standard_Boolean& theIsPaused,
 
 //=================================================================================================
 
-void Media_PlayerContext::Seek(Standard_Real thePosSec)
+void Media_PlayerContext::Seek(double thePosSec)
 {
-  Standard_Mutex::Sentry aLock(myMutex);
+  std::lock_guard<std::mutex> aLock(myMutex);
   mySeekTo = thePosSec;
   pushPlayEvent(Media_PlayerEvent_SEEK);
 }
 
 //=================================================================================================
 
+void Media_PlayerContext::Pause()
+{
+  std::lock_guard<std::mutex> aLock(myMutex);
+  pushPlayEvent(Media_PlayerEvent_PAUSE);
+}
+
+//=================================================================================================
+
+void Media_PlayerContext::Resume()
+{
+  std::lock_guard<std::mutex> aLock(myMutex);
+  pushPlayEvent(Media_PlayerEvent_RESUME);
+}
+
+//=================================================================================================
+
 void Media_PlayerContext::pushPlayEvent(Media_PlayerEvent thePlayEvent)
 {
-  Standard_Mutex::Sentry aLock(myMutex);
+  // NOTE: Caller must hold myMutex lock before calling this method
   myPlayEvent = thePlayEvent;
   myWakeEvent.Set();
 }
 
 //=================================================================================================
 
-bool Media_PlayerContext::popPlayEvent(Media_PlayerEvent&                 thePlayEvent,
-                                       const Handle(Media_FormatContext)& theFormatCtx,
-                                       const Handle(Media_CodecContext)&  theVideoCtx,
-                                       const Handle(Media_Frame)&         theFrame)
+bool Media_PlayerContext::popPlayEvent(Media_PlayerEvent&                      thePlayEvent,
+                                       const occ::handle<Media_FormatContext>& theFormatCtx,
+                                       const occ::handle<Media_CodecContext>&  theVideoCtx,
+                                       const occ::handle<Media_Frame>&         theFrame)
 {
   if (myPlayEvent == Media_PlayerEvent_NONE)
   {
@@ -304,7 +316,7 @@ bool Media_PlayerContext::popPlayEvent(Media_PlayerEvent&                 thePla
     return false;
   }
 
-  Standard_Mutex::Sentry aLock(myMutex);
+  std::lock_guard<std::mutex> aLock(myMutex);
   thePlayEvent = myPlayEvent;
   if (thePlayEvent == Media_PlayerEvent_PAUSE)
   {
@@ -343,8 +355,8 @@ static int getAligned(size_t theNumber, size_t theAlignment = 32)
 
 //=================================================================================================
 
-bool Media_PlayerContext::receiveFrame(const Handle(Media_Frame)&        theFrame,
-                                       const Handle(Media_CodecContext)& theVideoCtx)
+bool Media_PlayerContext::receiveFrame(const occ::handle<Media_Frame>&        theFrame,
+                                       const occ::handle<Media_CodecContext>& theVideoCtx)
 {
   if (myFrameTmp.IsNull())
   {
@@ -381,9 +393,9 @@ bool Media_PlayerContext::receiveFrame(const Handle(Media_Frame)&        theFram
     return false;
   }
 
-  const Graphic3d_Vec2i aSize   = myFrameTmp->Size();
-  const Graphic3d_Vec2i aSizeUV = myFrameTmp->Size() / 2;
-  AVFrame*              aFrame  = theFrame->ChangeFrame();
+  const NCollection_Vec2<int> aSize   = myFrameTmp->Size();
+  const NCollection_Vec2<int> aSizeUV = myFrameTmp->Size() / 2;
+  AVFrame*                    aFrame  = theFrame->ChangeFrame();
   if (myToForceRgb)
   {
     if (myBufferPools[0].IsNull())
@@ -401,7 +413,7 @@ bool Media_PlayerContext::receiveFrame(const Handle(Media_Frame)&        theFram
 
 #ifdef HAVE_FFMPEG
     aFrame->buf[0] = myBufferPools[0]->GetBuffer();
-    if (aFrame->buf[0] == NULL)
+    if (aFrame->buf[0] == nullptr)
     {
       theFrame->Unref();
       Message::SendFail("FFmpeg: unable to allocate RGB24 frame buffer");
@@ -442,7 +454,7 @@ bool Media_PlayerContext::receiveFrame(const Handle(Media_Frame)&        theFram
     aFrame->buf[0] = myBufferPools[0]->GetBuffer();
     aFrame->buf[1] = myBufferPools[1]->GetBuffer();
     aFrame->buf[2] = myBufferPools[2]->GetBuffer();
-    if (aFrame->buf[0] == NULL || aFrame->buf[1] == NULL || aFrame->buf[2] == NULL)
+    if (aFrame->buf[0] == nullptr || aFrame->buf[1] == nullptr || aFrame->buf[2] == nullptr)
     {
       theFrame->Unref();
       Message::SendFail("FFmpeg: unable to allocate YUV420P frame buffers");
@@ -482,8 +494,8 @@ void Media_PlayerContext::doThreadLoop()
   // is owned by this class
   OSD::SetThreadLocalSignal(OSD_SignalMode_Set, false);
 
-  Handle(Media_Frame) aFrame;
-  bool                wasSeeked = false;
+  occ::handle<Media_Frame> aFrame;
+  bool                     wasSeeked = false;
   for (;;)
   {
     myWakeEvent.Wait();
@@ -495,7 +507,7 @@ void Media_PlayerContext::doThreadLoop()
 
     TCollection_AsciiString anInput;
     {
-      Standard_Mutex::Sentry aLock(myMutex);
+      std::lock_guard<std::mutex> aLock(myMutex);
       std::swap(anInput, myInputPath);
       if (myPlayEvent == Media_PlayerEvent_NEXT)
       {
@@ -508,13 +520,13 @@ void Media_PlayerContext::doThreadLoop()
       continue;
     }
 
-    Handle(Media_FormatContext) aFormatCtx = new Media_FormatContext();
+    occ::handle<Media_FormatContext> aFormatCtx = new Media_FormatContext();
     if (!aFormatCtx->OpenInput(anInput))
     {
       continue;
     }
 
-    Handle(Media_CodecContext) aVideoCtx;
+    occ::handle<Media_CodecContext> aVideoCtx;
 #ifdef HAVE_FFMPEG
     for (unsigned int aStreamId = 0; aStreamId < aFormatCtx->NbSteams(); ++aStreamId)
     {
@@ -540,10 +552,10 @@ void Media_PlayerContext::doThreadLoop()
       continue;
     }
 
-    Handle(Media_Packet) aPacket    = new Media_Packet();
-    Media_PlayerEvent    aPlayEvent = Media_PlayerEvent_NONE;
+    occ::handle<Media_Packet> aPacket    = new Media_Packet();
+    Media_PlayerEvent         aPlayEvent = Media_PlayerEvent_NONE;
     {
-      Standard_Mutex::Sentry aLock(myMutex);
+      std::lock_guard<std::mutex> aLock(myMutex);
       myTimer.Stop();
       myTimer.Start();
       myDuration = aFormatCtx->Duration();

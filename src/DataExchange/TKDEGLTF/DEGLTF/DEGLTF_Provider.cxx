@@ -13,6 +13,7 @@
 
 #include <DEGLTF_Provider.hxx>
 
+#include <DE_ValidationUtils.hxx>
 #include <Message.hxx>
 #include <RWGltf_CafWriter.hxx>
 #include <TDocStd_Document.hxx>
@@ -23,8 +24,8 @@ namespace
 {
 //=================================================================================================
 
-static void SetReaderParameters(RWGltf_CafReader&                       theReader,
-                                const Handle(DEGLTF_ConfigurationNode)& theNode)
+static void SetReaderParameters(RWGltf_CafReader&                            theReader,
+                                const occ::handle<DEGLTF_ConfigurationNode>& theNode)
 {
   theReader.SetDoublePrecision(!theNode->InternalParameters.ReadSinglePrecision);
   theReader.SetSystemLengthUnit(theNode->GlobalParameters.LengthUnit / 1000);
@@ -49,21 +50,21 @@ IMPLEMENT_STANDARD_RTTIEXT(DEGLTF_Provider, DE_Provider)
 
 //=================================================================================================
 
-DEGLTF_Provider::DEGLTF_Provider() {}
+DEGLTF_Provider::DEGLTF_Provider() = default;
 
 //=================================================================================================
 
-DEGLTF_Provider::DEGLTF_Provider(const Handle(DE_ConfigurationNode)& theNode)
+DEGLTF_Provider::DEGLTF_Provider(const occ::handle<DE_ConfigurationNode>& theNode)
     : DE_Provider(theNode)
 {
 }
 
 //=================================================================================================
 
-bool DEGLTF_Provider::Read(const TCollection_AsciiString&  thePath,
-                           const Handle(TDocStd_Document)& theDocument,
-                           Handle(XSControl_WorkSession)&  theWS,
-                           const Message_ProgressRange&    theProgress)
+bool DEGLTF_Provider::Read(const TCollection_AsciiString&       thePath,
+                           const occ::handle<TDocStd_Document>& theDocument,
+                           occ::handle<XSControl_WorkSession>&  theWS,
+                           const Message_ProgressRange&         theProgress)
 {
   (void)theWS;
   return Read(thePath, theDocument, theProgress);
@@ -71,10 +72,10 @@ bool DEGLTF_Provider::Read(const TCollection_AsciiString&  thePath,
 
 //=================================================================================================
 
-bool DEGLTF_Provider::Write(const TCollection_AsciiString&  thePath,
-                            const Handle(TDocStd_Document)& theDocument,
-                            Handle(XSControl_WorkSession)&  theWS,
-                            const Message_ProgressRange&    theProgress)
+bool DEGLTF_Provider::Write(const TCollection_AsciiString&       thePath,
+                            const occ::handle<TDocStd_Document>& theDocument,
+                            occ::handle<XSControl_WorkSession>&  theWS,
+                            const Message_ProgressRange&         theProgress)
 {
   (void)theWS;
   return Write(thePath, theDocument, theProgress);
@@ -82,25 +83,23 @@ bool DEGLTF_Provider::Write(const TCollection_AsciiString&  thePath,
 
 //=================================================================================================
 
-bool DEGLTF_Provider::Read(const TCollection_AsciiString&  thePath,
-                           const Handle(TDocStd_Document)& theDocument,
-                           const Message_ProgressRange&    theProgress)
+bool DEGLTF_Provider::Read(const TCollection_AsciiString&       thePath,
+                           const occ::handle<TDocStd_Document>& theDocument,
+                           const Message_ProgressRange&         theProgress)
 {
-  if (theDocument.IsNull())
+  TCollection_AsciiString aContext = TCollection_AsciiString("reading the file ") + thePath;
+  if (!DE_ValidationUtils::ValidateDocument(theDocument, aContext))
   {
-    Message::SendFail() << "Error in the DEGLTF_Provider during reading the file " << thePath
-                        << "\t: theDocument shouldn't be null";
     return false;
   }
-  if (GetNode().IsNull()
-      || (!GetNode().IsNull() && !GetNode()->IsKind(STANDARD_TYPE(DEGLTF_ConfigurationNode))))
+  if (!DE_ValidationUtils::ValidateConfigurationNode(GetNode(),
+                                                     STANDARD_TYPE(DEGLTF_ConfigurationNode),
+                                                     aContext))
   {
-    Message::SendFail() << "Error in the DEGLTF_Provider during reading the file " << thePath
-                        << "\t: Incorrect or empty Configuration Node";
     return false;
   }
-  Handle(DEGLTF_ConfigurationNode) aNode = Handle(DEGLTF_ConfigurationNode)::DownCast(GetNode());
-  RWGltf_CafReader                 aReader;
+  occ::handle<DEGLTF_ConfigurationNode> aNode = occ::down_cast<DEGLTF_ConfigurationNode>(GetNode());
+  RWGltf_CafReader                      aReader;
   aReader.SetDocument(theDocument);
   SetReaderParameters(aReader, aNode);
   XCAFDoc_DocumentTool::SetLengthUnit(theDocument,
@@ -117,20 +116,21 @@ bool DEGLTF_Provider::Read(const TCollection_AsciiString&  thePath,
 
 //=================================================================================================
 
-bool DEGLTF_Provider::Write(const TCollection_AsciiString&  thePath,
-                            const Handle(TDocStd_Document)& theDocument,
-                            const Message_ProgressRange&    theProgress)
+bool DEGLTF_Provider::Write(const TCollection_AsciiString&       thePath,
+                            const occ::handle<TDocStd_Document>& theDocument,
+                            const Message_ProgressRange&         theProgress)
 {
-  if (GetNode().IsNull() || !GetNode()->IsKind(STANDARD_TYPE(DEGLTF_ConfigurationNode)))
+  TCollection_AsciiString aContext = TCollection_AsciiString("writing the file ") + thePath;
+  if (!DE_ValidationUtils::ValidateConfigurationNode(GetNode(),
+                                                     STANDARD_TYPE(DEGLTF_ConfigurationNode),
+                                                     aContext))
   {
-    Message::SendFail() << "Error in the DEGLTF_Provider during writing the file " << thePath
-                        << "\t: Incorrect or empty Configuration Node";
     return false;
   }
-  Handle(DEGLTF_ConfigurationNode) aNode = Handle(DEGLTF_ConfigurationNode)::DownCast(GetNode());
+  occ::handle<DEGLTF_ConfigurationNode> aNode = occ::down_cast<DEGLTF_ConfigurationNode>(GetNode());
 
   RWMesh_CoordinateSystemConverter aConverter;
-  Standard_Real                    aScaleFactorM = 1.;
+  double                           aScaleFactorM = 1.;
   if (!XCAFDoc_DocumentTool::GetLengthUnit(theDocument, aScaleFactorM))
   {
     aConverter.SetInputLengthUnit(aNode->GlobalParameters.SystemUnit / 1000.);
@@ -142,13 +142,14 @@ bool DEGLTF_Provider::Write(const TCollection_AsciiString&  thePath,
   if (aNode->GlobalParameters.LengthUnit != 1000.)
   {
     Message::SendWarning()
-      << "Warning in the DEGLTF_Provider during writing the file " << thePath
-      << "\t: Target format doesn't support custom units. Model will be scaled to Meters";
+      << "Warning during " << aContext
+      << ": Target format doesn't support custom units. Model will be scaled to Meters (unit: "
+      << aNode->GlobalParameters.LengthUnit << ")";
   }
   aConverter.SetOutputLengthUnit(1.); // gltf units always Meters
   aConverter.SetOutputCoordinateSystem(aNode->InternalParameters.FileCS);
 
-  TColStd_IndexedDataMapOfStringString aFileInfo;
+  NCollection_IndexedDataMap<TCollection_AsciiString, TCollection_AsciiString> aFileInfo;
   if (!aNode->InternalParameters.WriteAuthor.IsEmpty())
   {
     aFileInfo.Add("Author", aNode->InternalParameters.WriteAuthor);
@@ -179,10 +180,10 @@ bool DEGLTF_Provider::Write(const TCollection_AsciiString&  thePath,
 
 //=================================================================================================
 
-bool DEGLTF_Provider::Read(const TCollection_AsciiString& thePath,
-                           TopoDS_Shape&                  theShape,
-                           Handle(XSControl_WorkSession)& theWS,
-                           const Message_ProgressRange&   theProgress)
+bool DEGLTF_Provider::Read(const TCollection_AsciiString&      thePath,
+                           TopoDS_Shape&                       theShape,
+                           occ::handle<XSControl_WorkSession>& theWS,
+                           const Message_ProgressRange&        theProgress)
 {
   (void)theWS;
   return Read(thePath, theShape, theProgress);
@@ -190,10 +191,10 @@ bool DEGLTF_Provider::Read(const TCollection_AsciiString& thePath,
 
 //=================================================================================================
 
-bool DEGLTF_Provider::Write(const TCollection_AsciiString& thePath,
-                            const TopoDS_Shape&            theShape,
-                            Handle(XSControl_WorkSession)& theWS,
-                            const Message_ProgressRange&   theProgress)
+bool DEGLTF_Provider::Write(const TCollection_AsciiString&      thePath,
+                            const TopoDS_Shape&                 theShape,
+                            occ::handle<XSControl_WorkSession>& theWS,
+                            const Message_ProgressRange&        theProgress)
 {
   (void)theWS;
   return Write(thePath, theShape, theProgress);
@@ -211,8 +212,8 @@ bool DEGLTF_Provider::Read(const TCollection_AsciiString& thePath,
                         << "\t: Incorrect or empty Configuration Node";
     return false;
   }
-  Handle(DEGLTF_ConfigurationNode) aNode = Handle(DEGLTF_ConfigurationNode)::DownCast(GetNode());
-  RWGltf_CafReader                 aReader;
+  occ::handle<DEGLTF_ConfigurationNode> aNode = occ::down_cast<DEGLTF_ConfigurationNode>(GetNode());
+  RWGltf_CafReader                      aReader;
   SetReaderParameters(aReader, aNode);
   if (!aReader.Perform(thePath, theProgress))
   {
@@ -229,8 +230,8 @@ bool DEGLTF_Provider::Write(const TCollection_AsciiString& thePath,
                             const TopoDS_Shape&            theShape,
                             const Message_ProgressRange&   theProgress)
 {
-  Handle(TDocStd_Document)  aDoc    = new TDocStd_Document("BinXCAF");
-  Handle(XCAFDoc_ShapeTool) aShTool = XCAFDoc_DocumentTool::ShapeTool(aDoc->Main());
+  occ::handle<TDocStd_Document>  aDoc    = new TDocStd_Document("BinXCAF");
+  occ::handle<XCAFDoc_ShapeTool> aShTool = XCAFDoc_DocumentTool::ShapeTool(aDoc->Main());
   aShTool->AddShape(theShape);
   return Write(thePath, aDoc, theProgress);
 }

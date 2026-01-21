@@ -22,13 +22,13 @@ IMPLEMENT_STANDARD_RTTIEXT(StepElement_CurveElementSectionDefinition, Standard_T
 
 //=================================================================================================
 
-StepElement_CurveElementSectionDefinition::StepElement_CurveElementSectionDefinition() {}
+StepElement_CurveElementSectionDefinition::StepElement_CurveElementSectionDefinition() = default;
 
 //=================================================================================================
 
 void StepElement_CurveElementSectionDefinition::Init(
-  const Handle(TCollection_HAsciiString)& aDescription,
-  const Standard_Real                     aSectionAngle)
+  const occ::handle<TCollection_HAsciiString>& aDescription,
+  const double                                 aSectionAngle)
 {
 
   theDescription = aDescription;
@@ -38,7 +38,7 @@ void StepElement_CurveElementSectionDefinition::Init(
 
 //=================================================================================================
 
-Handle(TCollection_HAsciiString) StepElement_CurveElementSectionDefinition::Description() const
+occ::handle<TCollection_HAsciiString> StepElement_CurveElementSectionDefinition::Description() const
 {
   return theDescription;
 }
@@ -46,21 +46,21 @@ Handle(TCollection_HAsciiString) StepElement_CurveElementSectionDefinition::Desc
 //=================================================================================================
 
 void StepElement_CurveElementSectionDefinition::SetDescription(
-  const Handle(TCollection_HAsciiString)& aDescription)
+  const occ::handle<TCollection_HAsciiString>& aDescription)
 {
   theDescription = aDescription;
 }
 
 //=================================================================================================
 
-Standard_Real StepElement_CurveElementSectionDefinition::SectionAngle() const
+double StepElement_CurveElementSectionDefinition::SectionAngle() const
 {
   return theSectionAngle;
 }
 
 //=================================================================================================
 
-void StepElement_CurveElementSectionDefinition::SetSectionAngle(const Standard_Real aSectionAngle)
+void StepElement_CurveElementSectionDefinition::SetSectionAngle(const double aSectionAngle)
 {
   theSectionAngle = aSectionAngle;
 }

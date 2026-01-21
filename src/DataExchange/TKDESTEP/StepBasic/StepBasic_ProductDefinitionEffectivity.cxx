@@ -17,24 +17,24 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(StepBasic_ProductDefinitionEffectivity, StepBasic_Effectivity)
 
-StepBasic_ProductDefinitionEffectivity::StepBasic_ProductDefinitionEffectivity() {}
+StepBasic_ProductDefinitionEffectivity::StepBasic_ProductDefinitionEffectivity() = default;
 
 void StepBasic_ProductDefinitionEffectivity::Init(
-  const Handle(TCollection_HAsciiString)&                aId,
-  const Handle(StepBasic_ProductDefinitionRelationship)& aUsage)
+  const occ::handle<TCollection_HAsciiString>&                aId,
+  const occ::handle<StepBasic_ProductDefinitionRelationship>& aUsage)
 {
   SetId(aId);
   theUsage = aUsage;
 }
 
-Handle(StepBasic_ProductDefinitionRelationship) StepBasic_ProductDefinitionEffectivity::Usage()
+occ::handle<StepBasic_ProductDefinitionRelationship> StepBasic_ProductDefinitionEffectivity::Usage()
   const
 {
   return theUsage;
 }
 
 void StepBasic_ProductDefinitionEffectivity::SetUsage(
-  const Handle(StepBasic_ProductDefinitionRelationship)& aUsage)
+  const occ::handle<StepBasic_ProductDefinitionRelationship>& aUsage)
 {
   theUsage = aUsage;
 }

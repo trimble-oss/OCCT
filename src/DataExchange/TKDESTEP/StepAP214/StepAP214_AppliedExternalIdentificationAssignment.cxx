@@ -26,17 +26,15 @@ IMPLEMENT_STANDARD_RTTIEXT(StepAP214_AppliedExternalIdentificationAssignment,
 //=================================================================================================
 
 StepAP214_AppliedExternalIdentificationAssignment::
-  StepAP214_AppliedExternalIdentificationAssignment()
-{
-}
+  StepAP214_AppliedExternalIdentificationAssignment() = default;
 
 //=================================================================================================
 
 void StepAP214_AppliedExternalIdentificationAssignment::Init(
-  const Handle(TCollection_HAsciiString)&     aIdentificationAssignment_AssignedId,
-  const Handle(StepBasic_IdentificationRole)& aIdentificationAssignment_Role,
-  const Handle(StepBasic_ExternalSource)&     aExternalIdentificationAssignment_Source,
-  const Handle(StepAP214_HArray1OfExternalIdentificationItem)& aItems)
+  const occ::handle<TCollection_HAsciiString>&     aIdentificationAssignment_AssignedId,
+  const occ::handle<StepBasic_IdentificationRole>& aIdentificationAssignment_Role,
+  const occ::handle<StepBasic_ExternalSource>&     aExternalIdentificationAssignment_Source,
+  const occ::handle<NCollection_HArray1<StepAP214_ExternalIdentificationItem>>& aItems)
 {
   StepBasic_ExternalIdentificationAssignment::Init(aIdentificationAssignment_AssignedId,
                                                    aIdentificationAssignment_Role,
@@ -47,7 +45,7 @@ void StepAP214_AppliedExternalIdentificationAssignment::Init(
 
 //=================================================================================================
 
-Handle(StepAP214_HArray1OfExternalIdentificationItem)
+occ::handle<NCollection_HArray1<StepAP214_ExternalIdentificationItem>>
   StepAP214_AppliedExternalIdentificationAssignment::Items() const
 {
   return theItems;
@@ -56,7 +54,7 @@ Handle(StepAP214_HArray1OfExternalIdentificationItem)
 //=================================================================================================
 
 void StepAP214_AppliedExternalIdentificationAssignment::SetItems(
-  const Handle(StepAP214_HArray1OfExternalIdentificationItem)& aItems)
+  const occ::handle<NCollection_HArray1<StepAP214_ExternalIdentificationItem>>& aItems)
 {
   theItems = aItems;
 }

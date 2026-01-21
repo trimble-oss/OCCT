@@ -15,11 +15,11 @@
 // commercial license or contractual agreement.
 
 #include <IntPolyh_Edge.hxx>
-#include <stdio.h>
+#include <cstdio>
 
 //=================================================================================================
 
-void IntPolyh_Edge::Dump(const Standard_Integer i) const
+void IntPolyh_Edge::Dump(const int i) const
 {
   printf("\nEdge(%3d) : P1:%5d   P2:%5d   T1:%5d   T2:%5d\n",
          i,

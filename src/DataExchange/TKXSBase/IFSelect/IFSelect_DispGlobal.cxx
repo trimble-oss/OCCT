@@ -21,22 +21,21 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(IFSelect_DispGlobal, IFSelect_Dispatch)
 
-// Genere un seul paquet avec la sortie finale
-IFSelect_DispGlobal::IFSelect_DispGlobal() {}
+// Generates a single packet with the final output
+IFSelect_DispGlobal::IFSelect_DispGlobal() = default;
 
 TCollection_AsciiString IFSelect_DispGlobal::Label() const
 {
   return TCollection_AsciiString("One File for All Input");
 }
 
-Standard_Boolean IFSelect_DispGlobal::LimitedMax(const Standard_Integer /* nbent */,
-                                                 Standard_Integer& pcount) const
+bool IFSelect_DispGlobal::LimitedMax(const int /* nbent */, int& pcount) const
 {
   pcount = 1;
-  return Standard_True;
+  return true;
 }
 
-// 1 packet ( a partir de UniqueResult)
+// 1 packet (from UniqueResult)
 void IFSelect_DispGlobal::Packets(const Interface_Graph& G, IFGraph_SubPartsIterator& packs) const
 {
   packs.AddPart();

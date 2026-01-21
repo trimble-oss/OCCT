@@ -16,25 +16,25 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(StepVisual_TessellatedCurveSet, StepVisual_TessellatedItem)
 
-StepVisual_TessellatedCurveSet::StepVisual_TessellatedCurveSet() {}
+StepVisual_TessellatedCurveSet::StepVisual_TessellatedCurveSet() = default;
 
 void StepVisual_TessellatedCurveSet::Init(
-  const Handle(TCollection_HAsciiString)&                          theName,
-  const Handle(StepVisual_CoordinatesList)&                        theCoordList,
-  const NCollection_Handle<StepVisual_VectorOfHSequenceOfInteger>& theCurves)
+  const occ::handle<TCollection_HAsciiString>&   theName,
+  const occ::handle<StepVisual_CoordinatesList>& theCoordList,
+  const NCollection_Handle<NCollection_Vector<occ::handle<NCollection_HSequence<int>>>>& theCurves)
 {
   StepRepr_RepresentationItem::Init(theName);
   myCoordList = theCoordList;
   myCurves    = theCurves;
 }
 
-NCollection_Handle<StepVisual_VectorOfHSequenceOfInteger> StepVisual_TessellatedCurveSet::Curves()
-  const
+NCollection_Handle<NCollection_Vector<occ::handle<NCollection_HSequence<int>>>>
+  StepVisual_TessellatedCurveSet::Curves() const
 {
   return myCurves;
 }
 
-Handle(StepVisual_CoordinatesList) StepVisual_TessellatedCurveSet::CoordList() const
+occ::handle<StepVisual_CoordinatesList> StepVisual_TessellatedCurveSet::CoordList() const
 {
   return myCoordList;
 }

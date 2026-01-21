@@ -39,15 +39,15 @@ LDOM_Document::LDOM_Document(const LDOM_MemManager& aMemManager)
 
 //=================================================================================================
 
-LDOM_Document::~LDOM_Document() {}
+LDOM_Document::~LDOM_Document() = default;
 
 //=================================================================================================
 
-Standard_Boolean LDOM_Document::isNull() const
+bool LDOM_Document::isNull() const
 {
   const LDOM_BasicElement* const aRootElement = myMemManager->RootElement();
-  if (aRootElement == NULL)
-    return Standard_True;
+  if (aRootElement == nullptr)
+    return true;
   return aRootElement->isNull();
 }
 
@@ -84,7 +84,7 @@ LDOM_Document LDOM_Document::createDocument(const LDOMString& theQualifiedName)
   if (strlen(aString) == 0)
     aString = "document";
   aDoc.myMemManager->myRootElement =
-    &LDOM_BasicElement::Create(aString, (Standard_Integer)strlen(aString), aDoc.myMemManager);
+    &LDOM_BasicElement::Create(aString, (int)strlen(aString), aDoc.myMemManager);
   return aDoc;
 }
 
@@ -94,7 +94,7 @@ LDOM_Element LDOM_Document::createElement(const LDOMString& theTagName)
 {
   const char*        aTagString = theTagName.GetString();
   LDOM_BasicElement& aBasicElem =
-    LDOM_BasicElement::Create(aTagString, (Standard_Integer)strlen(aTagString), myMemManager);
+    LDOM_BasicElement::Create(aTagString, (int)strlen(aTagString), myMemManager);
   return LDOM_Element(aBasicElem, myMemManager);
 }
 
@@ -145,9 +145,9 @@ LDOM_Document& LDOM_Document::operator=(const LDOM_NullPtr*)
 // purpose  : Compare to NULL
 //=======================================================================
 
-Standard_Boolean LDOM_Document::operator==(const LDOM_NullPtr*) const
+bool LDOM_Document::operator==(const LDOM_NullPtr*) const
 {
-  return myMemManager->RootElement() == NULL;
+  return myMemManager->RootElement() == nullptr;
 }
 
 //=======================================================================
@@ -155,7 +155,7 @@ Standard_Boolean LDOM_Document::operator==(const LDOM_NullPtr*) const
 // purpose  : Compare to NULL
 //=======================================================================
 
-Standard_Boolean LDOM_Document::operator!=(const LDOM_NullPtr*) const
+bool LDOM_Document::operator!=(const LDOM_NullPtr*) const
 {
-  return myMemManager->RootElement() != NULL;
+  return myMemManager->RootElement() != nullptr;
 }

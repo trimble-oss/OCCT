@@ -22,15 +22,14 @@ IMPLEMENT_STANDARD_RTTIEXT(StepVisual_CameraModelD3MultiClippingIntersection,
 //=================================================================================================
 
 StepVisual_CameraModelD3MultiClippingIntersection::
-  StepVisual_CameraModelD3MultiClippingIntersection()
-{
-}
+  StepVisual_CameraModelD3MultiClippingIntersection() = default;
 
 //=================================================================================================
 
 void StepVisual_CameraModelD3MultiClippingIntersection::Init(
-  const Handle(TCollection_HAsciiString)&                                        theName,
-  const Handle(StepVisual_HArray1OfCameraModelD3MultiClippingInterectionSelect)& theShapeClipping)
+  const occ::handle<TCollection_HAsciiString>& theName,
+  const occ::handle<NCollection_HArray1<StepVisual_CameraModelD3MultiClippingInterectionSelect>>&
+    theShapeClipping)
 {
   // Own field
   myShapeClipping = theShapeClipping;

@@ -20,14 +20,14 @@ IMPLEMENT_STANDARD_RTTIEXT(StepKinematics_SphericalPairValue, StepKinematics_Pai
 
 //=================================================================================================
 
-StepKinematics_SphericalPairValue::StepKinematics_SphericalPairValue() {}
+StepKinematics_SphericalPairValue::StepKinematics_SphericalPairValue() = default;
 
 //=================================================================================================
 
 void StepKinematics_SphericalPairValue::Init(
-  const Handle(TCollection_HAsciiString)&     theRepresentationItem_Name,
-  const Handle(StepKinematics_KinematicPair)& thePairValue_AppliesToPair,
-  const StepKinematics_SpatialRotation&       theInputOrientation)
+  const occ::handle<TCollection_HAsciiString>&     theRepresentationItem_Name,
+  const occ::handle<StepKinematics_KinematicPair>& thePairValue_AppliesToPair,
+  const StepKinematics_SpatialRotation&            theInputOrientation)
 {
   StepKinematics_PairValue::Init(theRepresentationItem_Name, thePairValue_AppliesToPair);
 

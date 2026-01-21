@@ -35,16 +35,16 @@ void Interface_FileParameter::Init(const TCollection_AsciiString& val,
 
 //=================================================================================================
 
-void Interface_FileParameter::Init(const Standard_CString val, const Interface_ParamType typ)
+void Interface_FileParameter::Init(const char* val, const Interface_ParamType typ)
 {
-  theval  = (Standard_PCharacter)val; // Principe : Allocation geree par contenant (ParamSet)
+  theval  = (Standard_PCharacter)val; // Principle: Allocation managed by container (ParamSet)
   thetype = typ;
   thenum  = 0;
 }
 
 //=================================================================================================
 
-Standard_CString Interface_FileParameter::CValue() const
+const char* Interface_FileParameter::CValue() const
 {
   return theval;
 }
@@ -58,14 +58,14 @@ Interface_ParamType Interface_FileParameter::ParamType() const
 
 //=================================================================================================
 
-void Interface_FileParameter::SetEntityNumber(const Standard_Integer num)
+void Interface_FileParameter::SetEntityNumber(const int num)
 {
   thenum = num;
 }
 
 //=================================================================================================
 
-Standard_Integer Interface_FileParameter::EntityNumber() const
+int Interface_FileParameter::EntityNumber() const
 {
   return thenum;
 }
@@ -74,8 +74,8 @@ Standard_Integer Interface_FileParameter::EntityNumber() const
 
 void Interface_FileParameter::Clear()
 {
-  theval = NULL;
-} // delete theval;  pas si gere par ParamSet
+  theval = nullptr;
+} // delete theval; not if managed by ParamSet
 
 //=================================================================================================
 

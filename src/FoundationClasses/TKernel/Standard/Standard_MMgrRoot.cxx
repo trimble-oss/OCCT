@@ -16,11 +16,11 @@
 
 //=================================================================================================
 
-Standard_MMgrRoot::~Standard_MMgrRoot() {}
+Standard_MMgrRoot::~Standard_MMgrRoot() = default;
 
 //=================================================================================================
 
-Standard_Integer Standard_MMgrRoot::Purge(Standard_Boolean)
+int Standard_MMgrRoot::Purge(bool)
 {
   return 0;
 }

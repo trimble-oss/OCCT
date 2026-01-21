@@ -22,25 +22,25 @@ IMPLEMENT_STANDARD_RTTIEXT(OpenGl_LineAttributes, OpenGl_Resource)
 
 //=================================================================================================
 
-OpenGl_LineAttributes::OpenGl_LineAttributes()
-{
-  //
-}
+OpenGl_LineAttributes::OpenGl_LineAttributes() = default;
 
 //=================================================================================================
 
 OpenGl_LineAttributes::~OpenGl_LineAttributes()
 {
-  Release(NULL);
+  Release(nullptr);
 }
 
 //=================================================================================================
 
 void OpenGl_LineAttributes::Release(OpenGl_Context* theGlCtx)
 {
-  if (theGlCtx != NULL && theGlCtx->IsValid())
+  if (theGlCtx != nullptr && theGlCtx->IsValid())
   {
-    for (OpenGl_MapOfHatchStylesAndIds::Iterator anIter(myStyles); anIter.More(); anIter.Next())
+    for (NCollection_DataMap<occ::handle<Graphic3d_HatchStyle>, unsigned int>::Iterator anIter(
+           myStyles);
+         anIter.More();
+         anIter.Next())
     {
       theGlCtx->core11ffp->glDeleteLists((GLuint)anIter.Value(), 1);
     }
@@ -50,8 +50,8 @@ void OpenGl_LineAttributes::Release(OpenGl_Context* theGlCtx)
 
 //=================================================================================================
 
-unsigned int OpenGl_LineAttributes::init(const OpenGl_Context*               theGlCtx,
-                                         const Handle(Graphic3d_HatchStyle)& theStyle)
+unsigned int OpenGl_LineAttributes::init(const OpenGl_Context*                    theGlCtx,
+                                         const occ::handle<Graphic3d_HatchStyle>& theStyle)
 {
   const unsigned int aListId = theGlCtx->core11ffp->glGenLists(1);
   theGlCtx->core11ffp->glNewList((GLuint)aListId, GL_COMPILE);
@@ -62,10 +62,11 @@ unsigned int OpenGl_LineAttributes::init(const OpenGl_Context*               the
 
 //=================================================================================================
 
-bool OpenGl_LineAttributes::SetTypeOfHatch(const OpenGl_Context*               theGlCtx,
-                                           const Handle(Graphic3d_HatchStyle)& theStyle)
+bool OpenGl_LineAttributes::SetTypeOfHatch(const OpenGl_Context*                    theGlCtx,
+                                           const occ::handle<Graphic3d_HatchStyle>& theStyle)
 {
-  if (theStyle.IsNull() || theStyle->HatchType() == Aspect_HS_SOLID || theGlCtx->core11ffp == NULL)
+  if (theStyle.IsNull() || theStyle->HatchType() == Aspect_HS_SOLID
+      || theGlCtx->core11ffp == nullptr)
   {
     return false;
   }

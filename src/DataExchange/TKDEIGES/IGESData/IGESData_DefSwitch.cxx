@@ -13,13 +13,12 @@
 
 #include <IGESData_DefSwitch.hxx>
 
-//  DefSwitch : represente une definition, soit vide (-> valeur = 0),
-//  soit comme rang dans une table (-> valeur > 0 ce rang),
-//  soit comme reference (-> valeur < 0), la reference elle-meme est ailleurs
-//=======================================================================
-// function : IGESData_DefSwitch
-// purpose  : Default constructor.
-//=======================================================================
+//  DefSwitch : represents a definition, either empty (-> value = 0),
+//  or as rank in a table (-> value > 0 this rank),
+//  or as reference (-> value < 0), the reference itself is elsewhere
+
+//=================================================================================================
+
 IGESData_DefSwitch::IGESData_DefSwitch()
     : theval(0)
 {
@@ -41,7 +40,7 @@ void IGESData_DefSwitch::SetReference()
 
 //=================================================================================================
 
-void IGESData_DefSwitch::SetRank(const Standard_Integer theRank)
+void IGESData_DefSwitch::SetRank(const int theRank)
 {
   theval = theRank;
 }
@@ -61,7 +60,7 @@ IGESData_DefType IGESData_DefSwitch::DefType() const
 
 //=================================================================================================
 
-Standard_Integer IGESData_DefSwitch::Value() const
+int IGESData_DefSwitch::Value() const
 {
   return theval;
 }

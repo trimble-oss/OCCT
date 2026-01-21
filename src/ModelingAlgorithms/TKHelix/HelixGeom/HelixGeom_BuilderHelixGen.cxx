@@ -13,33 +13,32 @@
 
 #include <HelixGeom_BuilderHelixGen.hxx>
 
-#include <math.h>
+#include <cmath>
 
 //=================================================================================================
 
 HelixGeom_BuilderHelixGen::HelixGeom_BuilderHelixGen()
-    : HelixGeom_BuilderApproxCurve(),
-      myT1(0.0),
+    : myT1(0.0),
       myT2(2.0 * M_PI),
       myPitch(1.0),
       myRStart(1.0),
       myTaperAngle(0.0),
-      myIsClockWise(Standard_True)
+      myIsClockWise(true)
 {
 }
 
 //=================================================================================================
 
-HelixGeom_BuilderHelixGen::~HelixGeom_BuilderHelixGen() {}
+HelixGeom_BuilderHelixGen::~HelixGeom_BuilderHelixGen() = default;
 
 //=================================================================================================
 
-void HelixGeom_BuilderHelixGen::SetCurveParameters(const Standard_Real    aT1,
-                                                   const Standard_Real    aT2,
-                                                   const Standard_Real    aPitch,
-                                                   const Standard_Real    aRStart,
-                                                   const Standard_Real    aTaperAngle,
-                                                   const Standard_Boolean aIsCW)
+void HelixGeom_BuilderHelixGen::SetCurveParameters(const double aT1,
+                                                   const double aT2,
+                                                   const double aPitch,
+                                                   const double aRStart,
+                                                   const double aTaperAngle,
+                                                   const bool   aIsCW)
 {
   // Input validation would typically be done in derived classes or Load methods
   // Base class just stores the values
@@ -53,12 +52,12 @@ void HelixGeom_BuilderHelixGen::SetCurveParameters(const Standard_Real    aT1,
 
 //=================================================================================================
 
-void HelixGeom_BuilderHelixGen::CurveParameters(Standard_Real&    aT1,
-                                                Standard_Real&    aT2,
-                                                Standard_Real&    aPitch,
-                                                Standard_Real&    aRStart,
-                                                Standard_Real&    aTaperAngle,
-                                                Standard_Boolean& aIsClockWise) const
+void HelixGeom_BuilderHelixGen::CurveParameters(double& aT1,
+                                                double& aT2,
+                                                double& aPitch,
+                                                double& aRStart,
+                                                double& aTaperAngle,
+                                                bool&   aIsClockWise) const
 {
   aT1          = myT1;
   aT2          = myT2;

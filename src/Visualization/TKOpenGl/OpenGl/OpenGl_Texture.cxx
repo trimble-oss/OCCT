@@ -44,7 +44,7 @@ struct OpenGl_UnpackAlignmentSentry
     }
   }
 
-  OpenGl_UnpackAlignmentSentry(const Handle(OpenGl_Context)& theCtx)
+  OpenGl_UnpackAlignmentSentry(const occ::handle<OpenGl_Context>& theCtx)
       : myCtx(theCtx.get())
   {
   }
@@ -56,9 +56,9 @@ private:
 };
 
 //! Compute the upper mipmap level for complete mipmap set (e.g. till the 1x1 level).
-static Standard_Integer computeUpperMipMapLevel(Standard_Integer theSize)
+static int computeUpperMipMapLevel(int theSize)
 {
-  for (Standard_Integer aMipIter = 0;; ++aMipIter, theSize /= 2)
+  for (int aMipIter = 0;; ++aMipIter, theSize /= 2)
   {
     if (theSize <= 1)
     {
@@ -68,11 +68,11 @@ static Standard_Integer computeUpperMipMapLevel(Standard_Integer theSize)
 }
 
 //! Compute size of the smallest defined mipmap level (for verbose messages).
-static Graphic3d_Vec2i computeSmallestMipMapSize(const Graphic3d_Vec2i& theBaseSize,
-                                                 Standard_Integer       theMaxLevel)
+static NCollection_Vec2<int> computeSmallestMipMapSize(const NCollection_Vec2<int>& theBaseSize,
+                                                       int                          theMaxLevel)
 {
-  Graphic3d_Vec2i aMipSizeXY = theBaseSize;
-  for (Standard_Integer aMipIter = 0;; ++aMipIter)
+  NCollection_Vec2<int> aMipSizeXY = theBaseSize;
+  for (int aMipIter = 0;; ++aMipIter)
   {
     if (aMipIter > theMaxLevel)
     {
@@ -95,8 +95,8 @@ static Graphic3d_Vec2i computeSmallestMipMapSize(const Graphic3d_Vec2i& theBaseS
 
 //=================================================================================================
 
-OpenGl_Texture::OpenGl_Texture(const TCollection_AsciiString&         theResourceId,
-                               const Handle(Graphic3d_TextureParams)& theParams)
+OpenGl_Texture::OpenGl_Texture(const TCollection_AsciiString&              theResourceId,
+                               const occ::handle<Graphic3d_TextureParams>& theParams)
     : OpenGl_NamedResource(theResourceId),
       mySampler(new OpenGl_Sampler(theParams)),
       myRevision(0),
@@ -109,19 +109,18 @@ OpenGl_Texture::OpenGl_Texture(const TCollection_AsciiString&         theResourc
       myIsAlpha(false),
       myIsTopDown(true)
 {
-  //
 }
 
 //=================================================================================================
 
 OpenGl_Texture::~OpenGl_Texture()
 {
-  Release(NULL);
+  Release(nullptr);
 }
 
 //=================================================================================================
 
-bool OpenGl_Texture::Create(const Handle(OpenGl_Context)& theCtx)
+bool OpenGl_Texture::Create(const occ::handle<OpenGl_Context>& theCtx)
 {
   if (myTextureId != NO_TEXTURE)
   {
@@ -129,13 +128,7 @@ bool OpenGl_Texture::Create(const Handle(OpenGl_Context)& theCtx)
   }
 
   theCtx->core11fwd->glGenTextures(1, &myTextureId);
-  if (myTextureId == NO_TEXTURE)
-  {
-    return false;
-  }
-
-  // mySampler->Create (theCtx); // do not create sampler object by default
-  return true;
+  return myTextureId != NO_TEXTURE;
 }
 
 //=================================================================================================
@@ -150,8 +143,9 @@ void OpenGl_Texture::Release(OpenGl_Context* theGlCtx)
 
   // application can not handle this case by exception - this is bug in code
   Standard_ASSERT_RETURN(
-    theGlCtx != NULL,
-    "OpenGl_Texture destroyed without GL context! Possible GPU memory leakage...", );
+    theGlCtx != nullptr,
+    "OpenGl_Texture destroyed without GL context! Possible GPU memory leakage...",
+    Standard_VOID_RETURN);
 
   if (theGlCtx->IsValid())
   {
@@ -163,11 +157,11 @@ void OpenGl_Texture::Release(OpenGl_Context* theGlCtx)
 
 //=================================================================================================
 
-void OpenGl_Texture::applyDefaultSamplerParams(const Handle(OpenGl_Context)& theCtx)
+void OpenGl_Texture::applyDefaultSamplerParams(const occ::handle<OpenGl_Context>& theCtx)
 {
   OpenGl_Sampler::applySamplerParams(theCtx,
                                      mySampler->Parameters(),
-                                     NULL,
+                                     nullptr,
                                      myTarget,
                                      myMaxMipLevel);
   if (mySampler->IsValid() && !mySampler->IsImmutable())
@@ -182,10 +176,10 @@ void OpenGl_Texture::applyDefaultSamplerParams(const Handle(OpenGl_Context)& the
 
 //=================================================================================================
 
-void OpenGl_Texture::Bind(const Handle(OpenGl_Context)& theCtx,
-                          const Graphic3d_TextureUnit   theTextureUnit) const
+void OpenGl_Texture::Bind(const occ::handle<OpenGl_Context>& theCtx,
+                          const Graphic3d_TextureUnit        theTextureUnit) const
 {
-  if (theCtx->core15fwd != NULL)
+  if (theCtx->core15fwd != nullptr)
   {
     theCtx->core15fwd->glActiveTexture(GL_TEXTURE0 + theTextureUnit);
   }
@@ -195,10 +189,10 @@ void OpenGl_Texture::Bind(const Handle(OpenGl_Context)& theCtx,
 
 //=================================================================================================
 
-void OpenGl_Texture::Unbind(const Handle(OpenGl_Context)& theCtx,
-                            const Graphic3d_TextureUnit   theTextureUnit) const
+void OpenGl_Texture::Unbind(const occ::handle<OpenGl_Context>& theCtx,
+                            const Graphic3d_TextureUnit        theTextureUnit) const
 {
-  if (theCtx->core15fwd != NULL)
+  if (theCtx->core15fwd != nullptr)
   {
     theCtx->core15fwd->glActiveTexture(GL_TEXTURE0 + theTextureUnit);
   }
@@ -208,18 +202,18 @@ void OpenGl_Texture::Unbind(const Handle(OpenGl_Context)& theCtx,
 
 //=================================================================================================
 
-bool OpenGl_Texture::InitSamplerObject(const Handle(OpenGl_Context)& theCtx)
+bool OpenGl_Texture::InitSamplerObject(const occ::handle<OpenGl_Context>& theCtx)
 {
   return myTextureId != NO_TEXTURE && mySampler->Init(theCtx, *this);
 }
 
 //=================================================================================================
 
-bool OpenGl_Texture::Init(const Handle(OpenGl_Context)& theCtx,
-                          const OpenGl_TextureFormat&   theFormat,
-                          const Graphic3d_Vec3i&        theSizeXYZ,
-                          const Graphic3d_TypeOfTexture theType,
-                          const Image_PixMap*           theImage)
+bool OpenGl_Texture::Init(const occ::handle<OpenGl_Context>& theCtx,
+                          const OpenGl_TextureFormat&        theFormat,
+                          const NCollection_Vec3<int>&       theSizeXYZ,
+                          const Graphic3d_TypeOfTexture      theType,
+                          const Image_PixMap*                theImage)
 {
   if (theSizeXYZ.x() < 1 || theSizeXYZ.y() < 1 || theSizeXYZ.z() < 1)
   {
@@ -266,7 +260,7 @@ bool OpenGl_Texture::Init(const Handle(OpenGl_Context)& theCtx,
     return false;
   }
 
-  if (theImage != NULL)
+  if (theImage != nullptr)
   {
     myIsAlpha =
       theImage->Format() == Image_Format_Alpha || theImage->Format() == Image_Format_AlphaF;
@@ -301,7 +295,7 @@ bool OpenGl_Texture::Init(const Handle(OpenGl_Context)& theCtx,
     return false;
   }
 
-  const Standard_Integer aMaxSize = theCtx->MaxTextureSize();
+  const int aMaxSize = theCtx->MaxTextureSize();
   if (theSizeXYZ.maxComp() > aMaxSize)
   {
     theCtx->PushMessage(GL_DEBUG_SOURCE_APPLICATION,
@@ -324,8 +318,8 @@ bool OpenGl_Texture::Init(const Handle(OpenGl_Context)& theCtx,
     // however some hardware (NV30 - GeForce FX, RadeOn 9xxx and Xxxx) supports GLSL but not NPOT!
     // Trying to create NPOT textures on such hardware will not fail
     // but driver will fall back into software rendering,
-    const Graphic3d_Vec2i aSizeP2(OpenGl_Context::GetPowerOfTwo(theSizeXYZ.x(), aMaxSize),
-                                  OpenGl_Context::GetPowerOfTwo(theSizeXYZ.y(), aMaxSize));
+    const NCollection_Vec2<int> aSizeP2(OpenGl_Context::GetPowerOfTwo(theSizeXYZ.x(), aMaxSize),
+                                        OpenGl_Context::GetPowerOfTwo(theSizeXYZ.y(), aMaxSize));
     if (theSizeXYZ.x() != aSizeP2.x()
         || (theType != Graphic3d_TypeOfTexture_1D && theSizeXYZ.y() != aSizeP2.y()))
     {
@@ -344,16 +338,16 @@ bool OpenGl_Texture::Init(const Handle(OpenGl_Context)& theCtx,
   }
 
   GLint   aTestWidth = 0, aTestHeight = 0;
-  GLvoid* aDataPtr = (theImage != NULL) ? (GLvoid*)theImage->Data() : NULL;
+  GLvoid* aDataPtr = (theImage != nullptr) ? (GLvoid*)theImage->Data() : nullptr;
 
   // setup the alignment
   OpenGl_UnpackAlignmentSentry anUnpackSentry(theCtx);
   (void)anUnpackSentry; // avoid compiler warning
 
-  if (aDataPtr != NULL)
+  if (aDataPtr != nullptr)
   {
     // clang-format off
-    const GLint anAligment = Min ((GLint )theImage->MaxRowAligmentBytes(), 8); // OpenGL supports alignment upto 8 bytes
+    const GLint anAligment = std::min((GLint )theImage->MaxRowAligmentBytes(), 8); // OpenGL supports alignment upto 8 bytes
     // clang-format on
     theCtx->core11fwd->glPixelStorei(GL_UNPACK_ALIGNMENT, anAligment);
     const GLint anExtraBytes = GLint(theImage->RowExtraBytes());
@@ -416,7 +410,7 @@ bool OpenGl_Texture::Init(const Handle(OpenGl_Context)& theCtx,
                                       0,
                                       theFormat.PixelFormat(),
                                       theFormat.DataType(),
-                                      NULL);
+                                      nullptr);
       theCtx->core11fwd->glGetTexLevelParameteriv(GL_PROXY_TEXTURE_1D,
                                                   0,
                                                   GL_TEXTURE_WIDTH,
@@ -480,7 +474,7 @@ bool OpenGl_Texture::Init(const Handle(OpenGl_Context)& theCtx,
                                         0,
                                         theFormat.PixelFormat(),
                                         theFormat.DataType(),
-                                        NULL);
+                                        nullptr);
         theCtx->core11fwd->glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D,
                                                     0,
                                                     GL_TEXTURE_WIDTH,
@@ -631,7 +625,7 @@ bool OpenGl_Texture::Init(const Handle(OpenGl_Context)& theCtx,
 
 //=================================================================================================
 
-bool OpenGl_Texture::GenerateMipmaps(const Handle(OpenGl_Context)& theCtx)
+bool OpenGl_Texture::GenerateMipmaps(const occ::handle<OpenGl_Context>& theCtx)
 {
   if (theCtx->arbFBO == nullptr || !IsValid())
   {
@@ -640,13 +634,13 @@ bool OpenGl_Texture::GenerateMipmaps(const Handle(OpenGl_Context)& theCtx)
 
   myMaxMipLevel = computeUpperMipMapLevel(mySize.maxComp());
 
-  const Standard_Integer aMaxSize = theCtx->MaxTextureSize();
+  const int aMaxSize = theCtx->MaxTextureSize();
   if (theCtx->GraphicsLibrary() == Aspect_GraphicsLibrary_OpenGLES
       && !theCtx->IsGlGreaterEqual(3, 0))
   {
     // Mipmap NPOT textures are not supported by OpenGL ES 2.0.
-    const Graphic3d_Vec2i aSizeP2(OpenGl_Context::GetPowerOfTwo(mySize.x(), aMaxSize),
-                                  OpenGl_Context::GetPowerOfTwo(mySize.y(), aMaxSize));
+    const NCollection_Vec2<int> aSizeP2(OpenGl_Context::GetPowerOfTwo(mySize.x(), aMaxSize),
+                                        OpenGl_Context::GetPowerOfTwo(mySize.y(), aMaxSize));
     if (mySize.xy() != aSizeP2)
     {
       theCtx->PushMessage(GL_DEBUG_SOURCE_APPLICATION,
@@ -671,7 +665,7 @@ bool OpenGl_Texture::GenerateMipmaps(const Handle(OpenGl_Context)& theCtx)
   Bind(theCtx);
   if (theCtx->HasTextureBaseLevel() && !mySampler->isValidSampler())
   {
-    const Standard_Integer aMaxLevel = Min(myMaxMipLevel, mySampler->Parameters()->MaxLevel());
+    const int aMaxLevel = std::min(myMaxMipLevel, mySampler->Parameters()->MaxLevel());
     mySampler->SetParameter(theCtx, myTarget, GL_TEXTURE_MAX_LEVEL, aMaxLevel);
   }
   theCtx->arbFBO->glGenerateMipmap(myTarget);
@@ -714,10 +708,10 @@ bool OpenGl_Texture::GenerateMipmaps(const Handle(OpenGl_Context)& theCtx)
 
 //=================================================================================================
 
-bool OpenGl_Texture::Init(const Handle(OpenGl_Context)& theCtx,
-                          const Image_PixMap&           theImage,
-                          const Graphic3d_TypeOfTexture theType,
-                          const Standard_Boolean        theIsColorMap)
+bool OpenGl_Texture::Init(const occ::handle<OpenGl_Context>& theCtx,
+                          const Image_PixMap&                theImage,
+                          const Graphic3d_TypeOfTexture      theType,
+                          const bool                         theIsColorMap)
 {
   if (theImage.IsEmpty())
   {
@@ -740,13 +734,13 @@ bool OpenGl_Texture::Init(const Handle(OpenGl_Context)& theCtx,
     return false;
   }
 
-  return Init(theCtx, aFormat, Graphic3d_Vec3i(theImage.SizeXYZ()), theType, &theImage);
+  return Init(theCtx, aFormat, NCollection_Vec3<int>(theImage.SizeXYZ()), theType, &theImage);
 }
 
 //=================================================================================================
 
-bool OpenGl_Texture::Init(const Handle(OpenGl_Context)&        theCtx,
-                          const Handle(Graphic3d_TextureRoot)& theTextureMap)
+bool OpenGl_Texture::Init(const occ::handle<OpenGl_Context>&        theCtx,
+                          const occ::handle<Graphic3d_TextureRoot>& theTextureMap)
 {
   if (theTextureMap.IsNull())
   {
@@ -757,7 +751,7 @@ bool OpenGl_Texture::Init(const Handle(OpenGl_Context)&        theCtx,
   {
     case Graphic3d_TypeOfTexture_CUBEMAP: {
       return InitCubeMap(theCtx,
-                         Handle(Graphic3d_CubeMap)::DownCast(theTextureMap),
+                         occ::down_cast<Graphic3d_CubeMap>(theTextureMap),
                          0,
                          Image_Format_RGB,
                          false,
@@ -767,14 +761,15 @@ bool OpenGl_Texture::Init(const Handle(OpenGl_Context)&        theCtx,
       if (theCtx->SupportedTextureFormats()->HasCompressed()
           && !theCtx->caps->compressedTexturesDisable)
       {
-        if (Handle(Image_CompressedPixMap) aCompressed =
+        if (occ::handle<Image_CompressedPixMap> aCompressed =
               theTextureMap->GetCompressedImage(theCtx->SupportedTextureFormats()))
         {
           return InitCompressed(theCtx, *aCompressed, theTextureMap->IsColorMap());
         }
       }
 
-      Handle(Image_PixMap) anImage = theTextureMap->GetImage(theCtx->SupportedTextureFormats());
+      occ::handle<Image_PixMap> anImage =
+        theTextureMap->GetImage(theCtx->SupportedTextureFormats());
       if (anImage.IsNull())
       {
         return false;
@@ -794,9 +789,9 @@ bool OpenGl_Texture::Init(const Handle(OpenGl_Context)&        theCtx,
 
 //=================================================================================================
 
-bool OpenGl_Texture::InitCompressed(const Handle(OpenGl_Context)& theCtx,
-                                    const Image_CompressedPixMap& theImage,
-                                    const Standard_Boolean        theIsColorMap)
+bool OpenGl_Texture::InitCompressed(const occ::handle<OpenGl_Context>& theCtx,
+                                    const Image_CompressedPixMap&      theImage,
+                                    const bool                         theIsColorMap)
 {
   if (theImage.SizeX() < 1 || theImage.SizeY() < 1 || theImage.FaceData().IsNull())
   {
@@ -847,10 +842,10 @@ bool OpenGl_Texture::InitCompressed(const Handle(OpenGl_Context)& theCtx,
   mySizedFormat = aFormat.Internal();
   myIsTopDown   = theImage.IsTopDown();
   mySize.SetValues(theImage.SizeX(), theImage.SizeY(), 1);
-  myMaxMipLevel = Max(theImage.MipMaps().Size() - 1, 0);
+  myMaxMipLevel = std::max(theImage.MipMaps().Size() - 1, 0);
   if (myMaxMipLevel > 0 && !theImage.IsCompleteMipMapSet())
   {
-    const Graphic3d_Vec2i aMipSize = computeSmallestMipMapSize(mySize.xy(), myMaxMipLevel);
+    const NCollection_Vec2<int> aMipSize = computeSmallestMipMapSize(mySize.xy(), myMaxMipLevel);
     if (!theCtx->HasTextureBaseLevel())
     {
       myMaxMipLevel = 0;
@@ -876,11 +871,11 @@ bool OpenGl_Texture::InitCompressed(const Handle(OpenGl_Context)& theCtx,
   // setup the alignment
   OpenGl_UnpackAlignmentSentry::Reset(*theCtx);
 
-  Graphic3d_Vec2i      aMipSizeXY(theImage.SizeX(), theImage.SizeY());
-  const Standard_Byte* aData = theImage.FaceData()->Data();
-  for (Standard_Integer aMipIter = 0; aMipIter <= myMaxMipLevel; ++aMipIter)
+  NCollection_Vec2<int> aMipSizeXY(theImage.SizeX(), theImage.SizeY());
+  const uint8_t*        aData = theImage.FaceData()->Data();
+  for (int aMipIter = 0; aMipIter <= myMaxMipLevel; ++aMipIter)
   {
-    const Standard_Integer aMipLength = theImage.MipMaps().Value(aMipIter);
+    const int aMipLength = theImage.MipMaps().Value(aMipIter);
     theCtx->Functions()->glCompressedTexImage2D(GL_TEXTURE_2D,
                                                 aMipIter,
                                                 mySizedFormat,
@@ -925,11 +920,11 @@ bool OpenGl_Texture::InitCompressed(const Handle(OpenGl_Context)& theCtx,
 
 //=================================================================================================
 
-bool OpenGl_Texture::Init2DMultisample(const Handle(OpenGl_Context)& theCtx,
-                                       const Standard_Integer        theNbSamples,
-                                       const Standard_Integer        theTextFormat,
-                                       const Standard_Integer        theSizeX,
-                                       const Standard_Integer        theSizeY)
+bool OpenGl_Texture::Init2DMultisample(const occ::handle<OpenGl_Context>& theCtx,
+                                       const int                          theNbSamples,
+                                       const int                          theTextFormat,
+                                       const int                          theSizeX,
+                                       const int                          theSizeY)
 {
   if (!Create(theCtx) || theNbSamples > theCtx->MaxMsaaSamples() || theNbSamples < 1)
   {
@@ -962,7 +957,7 @@ bool OpenGl_Texture::Init2DMultisample(const Handle(OpenGl_Context)& theCtx,
   // myTextFormat = theTextFormat;
   mySizedFormat = theTextFormat;
   if (theCtx->HasTextureMultisampling()
-      && theCtx->Functions()->glTexStorage2DMultisample != NULL) // OpenGL 4.3
+      && theCtx->Functions()->glTexStorage2DMultisample != nullptr) // OpenGL 4.3
   {
     theCtx->Functions()->glTexStorage2DMultisample(myTarget,
                                                    myNbSamples,
@@ -972,7 +967,7 @@ bool OpenGl_Texture::Init2DMultisample(const Handle(OpenGl_Context)& theCtx,
                                                    GL_FALSE);
   }
   else if (theCtx->HasTextureMultisampling()
-           && theCtx->Functions()->glTexImage2DMultisample != NULL) // OpenGL 3.2
+           && theCtx->Functions()->glTexImage2DMultisample != nullptr) // OpenGL 3.2
   {
     theCtx->Functions()
       ->glTexImage2DMultisample(myTarget, myNbSamples, theTextFormat, theSizeX, theSizeY, GL_FALSE);
@@ -1011,10 +1006,10 @@ bool OpenGl_Texture::Init2DMultisample(const Handle(OpenGl_Context)& theCtx,
 
 //=================================================================================================
 
-bool OpenGl_Texture::InitRectangle(const Handle(OpenGl_Context)& theCtx,
-                                   const Standard_Integer        theSizeX,
-                                   const Standard_Integer        theSizeY,
-                                   const OpenGl_TextureFormat&   theFormat)
+bool OpenGl_Texture::InitRectangle(const occ::handle<OpenGl_Context>& theCtx,
+                                   const int                          theSizeX,
+                                   const int                          theSizeY,
+                                   const OpenGl_TextureFormat&        theFormat)
 {
   if (!theCtx->IsGlGreaterEqual(3, 0) || !Create(theCtx)
       || theCtx->GraphicsLibrary() == Aspect_GraphicsLibrary_OpenGLES)
@@ -1026,8 +1021,8 @@ bool OpenGl_Texture::InitRectangle(const Handle(OpenGl_Context)& theCtx,
   myNbSamples   = 1;
   myMaxMipLevel = 0;
 
-  const GLsizei aSizeX = Min(theCtx->MaxTextureSize(), theSizeX);
-  const GLsizei aSizeY = Min(theCtx->MaxTextureSize(), theSizeY);
+  const GLsizei aSizeX = std::min(theCtx->MaxTextureSize(), theSizeX);
+  const GLsizei aSizeY = std::min(theCtx->MaxTextureSize(), theSizeY);
 
   Bind(theCtx);
   applyDefaultSamplerParams(theCtx);
@@ -1046,7 +1041,7 @@ bool OpenGl_Texture::InitRectangle(const Handle(OpenGl_Context)& theCtx,
                                   0,
                                   myTextFormat,
                                   GL_FLOAT,
-                                  NULL);
+                                  nullptr);
 
   GLint aTestSizeX = 0, aTestSizeY = 0;
   theCtx->core11fwd->glGetTexLevelParameteriv(GL_PROXY_TEXTURE_RECTANGLE,
@@ -1068,7 +1063,7 @@ bool OpenGl_Texture::InitRectangle(const Handle(OpenGl_Context)& theCtx,
   }
 
   theCtx->core11fwd
-    ->glTexImage2D(myTarget, 0, mySizedFormat, aSizeX, aSizeY, 0, myTextFormat, GL_FLOAT, NULL);
+    ->glTexImage2D(myTarget, 0, mySizedFormat, aSizeX, aSizeY, 0, myTextFormat, GL_FLOAT, nullptr);
   if (theCtx->core11fwd->glGetError() != GL_NO_ERROR)
   {
     Unbind(theCtx);
@@ -1082,12 +1077,12 @@ bool OpenGl_Texture::InitRectangle(const Handle(OpenGl_Context)& theCtx,
 
 //=================================================================================================
 
-bool OpenGl_Texture::Init3D(const Handle(OpenGl_Context)& theCtx,
-                            const OpenGl_TextureFormat&   theFormat,
-                            const Graphic3d_Vec3i&        theSizeXYZ,
-                            const void*                   thePixels)
+bool OpenGl_Texture::Init3D(const occ::handle<OpenGl_Context>& theCtx,
+                            const OpenGl_TextureFormat&        theFormat,
+                            const NCollection_Vec3<int>&       theSizeXYZ,
+                            const void*                        thePixels)
 {
-  if (theCtx->Functions()->glTexImage3D == NULL)
+  if (theCtx->Functions()->glTexImage3D == nullptr)
   {
     theCtx->PushMessage(GL_DEBUG_SOURCE_APPLICATION,
                         GL_DEBUG_TYPE_ERROR,
@@ -1106,7 +1101,8 @@ bool OpenGl_Texture::Init3D(const Handle(OpenGl_Context)& theCtx,
   myNbSamples   = 1;
   myMaxMipLevel = 0;
 
-  const Graphic3d_Vec3i aSizeXYZ = theSizeXYZ.cwiseMin(Graphic3d_Vec3i(theCtx->MaxTextureSize()));
+  const NCollection_Vec3<int> aSizeXYZ =
+    theSizeXYZ.cwiseMin(NCollection_Vec3<int>(theCtx->MaxTextureSize()));
   if (aSizeXYZ != theSizeXYZ)
   {
     theCtx->PushMessage(GL_DEBUG_SOURCE_APPLICATION,
@@ -1148,7 +1144,7 @@ bool OpenGl_Texture::Init3D(const Handle(OpenGl_Context)& theCtx,
                                       0,
                                       theFormat.PixelFormat(),
                                       theFormat.DataType(),
-                                      NULL);
+                                      nullptr);
 
     NCollection_Vec3<GLint> aTestSizeXYZ;
     theCtx->core11fwd->glGetTexLevelParameteriv(GL_PROXY_TEXTURE_3D,
@@ -1202,12 +1198,12 @@ bool OpenGl_Texture::Init3D(const Handle(OpenGl_Context)& theCtx,
 
 //=================================================================================================
 
-bool OpenGl_Texture::InitCubeMap(const Handle(OpenGl_Context)&    theCtx,
-                                 const Handle(Graphic3d_CubeMap)& theCubeMap,
-                                 Standard_Size                    theSize,
-                                 Image_Format                     theFormat,
-                                 Standard_Boolean                 theToGenMipmap,
-                                 Standard_Boolean                 theIsColorMap)
+bool OpenGl_Texture::InitCubeMap(const occ::handle<OpenGl_Context>&    theCtx,
+                                 const occ::handle<Graphic3d_CubeMap>& theCubeMap,
+                                 size_t                                theSize,
+                                 Image_Format                          theFormat,
+                                 bool                                  theToGenMipmap,
+                                 bool                                  theIsColorMap)
 {
   if (!Create(theCtx))
   {
@@ -1215,9 +1211,9 @@ bool OpenGl_Texture::InitCubeMap(const Handle(OpenGl_Context)&    theCtx,
     return false;
   }
 
-  Handle(Image_PixMap)           anImage;
-  Handle(Image_CompressedPixMap) aCompImage;
-  OpenGl_TextureFormat           aFormat;
+  occ::handle<Image_PixMap>           anImage;
+  occ::handle<Image_CompressedPixMap> aCompImage;
+  OpenGl_TextureFormat                aFormat;
   myMaxMipLevel = 0;
   if (!theCubeMap.IsNull())
   {
@@ -1237,12 +1233,12 @@ bool OpenGl_Texture::InitCubeMap(const Handle(OpenGl_Context)&    theCtx,
         theToGenMipmap = false;
         theSize        = aCompImage->SizeX();
         theFormat      = aCompImage->BaseFormat();
-        myMaxMipLevel  = Max(aCompImage->MipMaps().Size() - 1, 0);
+        myMaxMipLevel  = std::max(aCompImage->MipMaps().Size() - 1, 0);
         if (myMaxMipLevel > 0 && !aCompImage->IsCompleteMipMapSet())
         {
-          const Graphic3d_Vec2i aMipSize =
-            computeSmallestMipMapSize(Graphic3d_Vec2i(aCompImage->SizeX(), aCompImage->SizeY()),
-                                      myMaxMipLevel);
+          const NCollection_Vec2<int> aMipSize = computeSmallestMipMapSize(
+            NCollection_Vec2<int>(aCompImage->SizeX(), aCompImage->SizeY()),
+            myMaxMipLevel);
           if (!theCtx->HasTextureBaseLevel())
           {
             myMaxMipLevel = 0;
@@ -1343,9 +1339,9 @@ bool OpenGl_Texture::InitCubeMap(const Handle(OpenGl_Context)&    theCtx,
   Bind(theCtx);
   applyDefaultSamplerParams(theCtx);
 
-  for (Standard_Integer i = 0; i < 6; ++i)
+  for (int i = 0; i < 6; ++i)
   {
-    const Standard_Byte* aData = NULL;
+    const uint8_t* aData = nullptr;
 
     if (!theCubeMap.IsNull())
     {
@@ -1362,11 +1358,11 @@ bool OpenGl_Texture::InitCubeMap(const Handle(OpenGl_Context)&    theCtx,
       }
       if (!aCompImage.IsNull())
       {
-        Graphic3d_Vec2i aMipSizeXY = mySize.xy();
-        aData                      = aCompImage->FaceData()->Data();
-        for (Standard_Integer aMipIter = 0; aMipIter <= myMaxMipLevel; ++aMipIter)
+        NCollection_Vec2<int> aMipSizeXY = mySize.xy();
+        aData                            = aCompImage->FaceData()->Data();
+        for (int aMipIter = 0; aMipIter <= myMaxMipLevel; ++aMipIter)
         {
-          const Standard_Integer aMipLength = aCompImage->MipMaps().Value(aMipIter);
+          const int aMipLength = aCompImage->MipMaps().Value(aMipIter);
           theCtx->Functions()->glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
                                                       aMipIter,
                                                       mySizedFormat,
@@ -1413,7 +1409,7 @@ bool OpenGl_Texture::InitCubeMap(const Handle(OpenGl_Context)&    theCtx,
       if (!anImage.IsNull())
       {
         // clang-format off
-        const GLint anAligment = Min ((GLint)anImage->MaxRowAligmentBytes(), 8); // OpenGL supports alignment upto 8 bytes
+        const GLint anAligment = std::min((GLint)anImage->MaxRowAligmentBytes(), 8); // OpenGL supports alignment upto 8 bytes
         // clang-format on
         const GLint anExtraBytes = GLint(anImage->RowExtraBytes());
         const GLint aPixelsWidth = GLint(anImage->SizeRowBytes() / anImage->SizePixelBytes());
@@ -1425,9 +1421,9 @@ bool OpenGl_Texture::InitCubeMap(const Handle(OpenGl_Context)&    theCtx,
 
         if (aRowLength > 0 && !theCtx->hasUnpackRowLength)
         {
-          Handle(Image_PixMap) aCopyImage = new Image_PixMap();
+          occ::handle<Image_PixMap> aCopyImage = new Image_PixMap();
           aCopyImage->InitTrash(theFormat, theSize, theSize);
-          const Standard_Size aRowBytesPacked =
+          const size_t aRowBytesPacked =
             std::min(aCopyImage->SizeRowBytes(), anImage->SizeRowBytes());
           for (unsigned int y = 0; y < theSize; ++y)
           {
@@ -1435,7 +1431,7 @@ bool OpenGl_Texture::InitCubeMap(const Handle(OpenGl_Context)&    theCtx,
           }
           anImage = aCopyImage;
           // clang-format off
-          const GLint anAligment2 = Min((GLint)anImage->MaxRowAligmentBytes(), 8); // OpenGL supports alignment upto 8 bytes
+          const GLint anAligment2 = std::min((GLint)anImage->MaxRowAligmentBytes(), 8); // OpenGL supports alignment upto 8 bytes
           // clang-format on
           theCtx->core11fwd->glPixelStorei(GL_UNPACK_ALIGNMENT, anAligment2);
         }
@@ -1492,7 +1488,7 @@ bool OpenGl_Texture::InitCubeMap(const Handle(OpenGl_Context)&    theCtx,
     }
   }
 
-  if (theToGenMipmap && theCtx->arbFBO != NULL)
+  if (theToGenMipmap && theCtx->arbFBO != nullptr)
   {
     GenerateMipmaps(theCtx);
   }
@@ -1503,7 +1499,7 @@ bool OpenGl_Texture::InitCubeMap(const Handle(OpenGl_Context)&    theCtx,
 
 //=================================================================================================
 
-Standard_Size OpenGl_Texture::PixelSizeOfPixelFormat(Standard_Integer theInternalFormat)
+size_t OpenGl_Texture::PixelSizeOfPixelFormat(int theInternalFormat)
 {
   switch (theInternalFormat)
   {
@@ -1585,21 +1581,21 @@ Standard_Size OpenGl_Texture::PixelSizeOfPixelFormat(Standard_Integer theInterna
 
 //=================================================================================================
 
-Standard_Size OpenGl_Texture::EstimatedDataSize() const
+size_t OpenGl_Texture::EstimatedDataSize() const
 {
   if (!IsValid())
   {
     return 0;
   }
 
-  Standard_Size aSize = PixelSizeOfPixelFormat(mySizedFormat) * mySize.x() * myNbSamples;
+  size_t aSize = PixelSizeOfPixelFormat(mySizedFormat) * mySize.x() * myNbSamples;
   if (mySize.y() != 0)
   {
-    aSize *= Standard_Size(mySize.y());
+    aSize *= size_t(mySize.y());
   }
   if (mySize.z() != 0)
   {
-    aSize *= Standard_Size(mySize.z());
+    aSize *= size_t(mySize.z());
   }
   if (myTarget == GL_TEXTURE_CUBE_MAP)
   {
@@ -1614,11 +1610,11 @@ Standard_Size OpenGl_Texture::EstimatedDataSize() const
 
 //=================================================================================================
 
-bool OpenGl_Texture::ImageDump(Image_PixMap&                 theImage,
-                               const Handle(OpenGl_Context)& theCtx,
-                               Graphic3d_TextureUnit         theTexUnit,
-                               Standard_Integer              theLevel,
-                               Standard_Integer              theCubeSide) const
+bool OpenGl_Texture::ImageDump(Image_PixMap&                      theImage,
+                               const occ::handle<OpenGl_Context>& theCtx,
+                               Graphic3d_TextureUnit              theTexUnit,
+                               int                                theLevel,
+                               int                                theCubeSide) const
 {
   const OpenGl_TextureFormat aFormat = OpenGl_TextureFormat::FindSizedFormat(theCtx, mySizedFormat);
   if (theCtx.IsNull() || !IsValid()
@@ -1630,13 +1626,13 @@ bool OpenGl_Texture::ImageDump(Image_PixMap&                 theImage,
     return false;
   }
 
-  GLenum          aTarget = myTarget;
-  Graphic3d_Vec2i aSize   = mySize.xy();
+  GLenum                aTarget = myTarget;
+  NCollection_Vec2<int> aSize   = mySize.xy();
   if (myTarget == GL_TEXTURE_CUBE_MAP)
   {
     aTarget = GL_TEXTURE_CUBE_MAP_POSITIVE_X + theCubeSide;
   }
-  for (Standard_Integer aMipIter = 0; aMipIter < theLevel; ++aMipIter)
+  for (int aMipIter = 0; aMipIter < theLevel; ++aMipIter)
   {
     aSize /= 2;
     if (aSize.x() == 0)
@@ -1654,7 +1650,7 @@ bool OpenGl_Texture::ImageDump(Image_PixMap&                 theImage,
   }
 
   // clang-format off
-  const GLint anAligment = Min (GLint(theImage.MaxRowAligmentBytes()), 8); // limit to 8 bytes for OpenGL
+  const GLint anAligment = std::min(GLint(theImage.MaxRowAligmentBytes()), 8); // limit to 8 bytes for OpenGL
   // clang-format on
   theCtx->core11fwd->glPixelStorei(GL_PACK_ALIGNMENT, anAligment);
   if (theCtx->hasPackRowLength)

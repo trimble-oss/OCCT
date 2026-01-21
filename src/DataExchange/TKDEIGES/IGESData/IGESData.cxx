@@ -25,11 +25,11 @@
 #include <Standard_Real.hxx>
 #include <TCollection_HAsciiString.hxx>
 
-#include <stdio.h>
-static Handle(IGESData_Protocol) proto;
+#include <cstdio>
+static occ::handle<IGESData_Protocol> proto;
 
-static Handle(IGESData_DefaultGeneral)  stmod;
-static Handle(IGESData_DefaultSpecific) speci;
+static occ::handle<IGESData_DefaultGeneral>  stmod;
+static occ::handle<IGESData_DefaultSpecific> speci;
 
 void IGESData::Init()
 {
@@ -39,7 +39,7 @@ void IGESData::Init()
     stmod = new IGESData_DefaultGeneral;
   if (speci.IsNull())
     speci = new IGESData_DefaultSpecific;
-  //  et modele template "iges"
+  //  and template model "iges"
   if (Interface_InterfaceModel::HasTemplate("iges"))
     return;
 
@@ -190,11 +190,11 @@ void IGESData::Init()
   IGESData_GlobalSection GS;
   // #58 rln 28.12.98 changing default values for Global Section
   char procver[80];
-  sprintf(procver, XSTEP_PROCESSOR_VERSION, "IGES");
-  Handle(TCollection_HAsciiString) gsys = new TCollection_HAsciiString(procver);
+  Sprintf(procver, XSTEP_PROCESSOR_VERSION, "IGES");
+  occ::handle<TCollection_HAsciiString> gsys = new TCollection_HAsciiString(procver);
   Interface_Static::Init("XSTEP", "write.iges.header.product", 't', procver);
 
-  /*  Handle(TCollection_HAsciiString) gsys = new TCollection_HAsciiString
+  /*  occ::handle<TCollection_HAsciiString> gsys = new TCollection_HAsciiString
       (XSTEP_VERSION);
     gsys->AssignCat(" on ");
     gsys->AssignCat
@@ -206,15 +206,15 @@ void IGESData::Init()
       (host.SystemVersion().ToCString());
   #endif
 
-  //  SendName : nom significatif de la piece transmise par exemple
-  //  SystemId : c est MDTV etc
-  //  InterfaceVersion : la version en cours de XSTEP; incluant la plateforme
+  //  SendName : significant name of the transmitted part for example
+  //  SystemId : it is MDTV etc
+  //  InterfaceVersion : the current version of XSTEP; including the platform
 
     char nomsys[100]; int istat; long lstat;
     struct utsname infosy;
     istat = uname (&infosy);
     lstat = sysinfo (SI_HW_PROVIDER,nomsys,99);
-    Handle(TCollection_HAsciiString) gsys = new TCollection_HAsciiString(nomsys);
+    occ::handle<TCollection_HAsciiString> gsys = new TCollection_HAsciiString(nomsys);
     gsys->AssignCat(" ");
     lstat = sysinfo (SI_ARCHITECTURE,nomsys,99);
     gsys->AssignCat(nomsys);
@@ -223,17 +223,17 @@ void IGESData::Init()
     gsys->AssignCat(" ");
     gsys->AssignCat(infosy.release);
   */
-  Standard_Integer year; // gka 19.01.99
-  OSD_Process      system;
-  Quantity_Date    ladate = system.SystemDate();
-  year                    = ladate.Year();
-  Handle(TCollection_HAsciiString) datestr;
+  int           year; // gka 19.01.99
+  OSD_Process   system;
+  Quantity_Date ladate = system.SystemDate();
+  year                 = ladate.Year();
+  occ::handle<TCollection_HAsciiString> datestr;
   if (year < 2000)
     // #65 rln 12.02.99 S4151 (explicitly force YYMMDD.HHMMSS before Y2000)
-    datestr = GS.NewDateString(0, 0, 0, 0, 0, 0, 0);
+    datestr = IGESData_GlobalSection::NewDateString(0, 0, 0, 0, 0, 0, 0);
   else
     // #65 rln 12.02.99 S4151 (explicitly force YYYYMMDD.HHMMSS after Y2000)
-    datestr = GS.NewDateString(0, 0, 0, 0, 0, 0, -1);
+    datestr = IGESData_GlobalSection::NewDateString(0, 0, 0, 0, 0, 0, -1);
   GS.SetSeparator(',');
   GS.SetEndMark(';');
   GS.SetSendName(new TCollection_HAsciiString(Interface_Static::CVal("write.iges.header.product")));
@@ -261,7 +261,7 @@ void IGESData::Init()
   //  new TCollection_HAsciiString (process.UserName());
   GS.SetCompanyName(Interface_Static::Static("write.iges.header.company")->HStringValue());
   //  new TCollection_HAsciiString("Matra Datavision");
-  GS.SetIGESVersion(11); // pour IGES-5.3 //gka 19.01.99
+  GS.SetIGESVersion(11); // for IGES-5.3 //gka 19.01.99
   GS.SetDraftingStandard(0);
   GS.SetLastChangeDate(datestr);
   GS.SetApplicationProtocol(new TCollection_HAsciiString("")); // gka 19.01.99
@@ -272,12 +272,12 @@ void IGESData::Init()
   // Creating the Model
   //-------------------
 
-  Handle(IGESData_IGESModel) model = new IGESData_IGESModel;
+  occ::handle<IGESData_IGESModel> model = new IGESData_IGESModel;
   model->SetGlobalSection(GS);
   Interface_InterfaceModel::SetTemplate("iges", model);
 }
 
-Handle(IGESData_Protocol) IGESData::Protocol()
+occ::handle<IGESData_Protocol> IGESData::Protocol()
 {
   return proto;
 }

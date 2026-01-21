@@ -12,22 +12,24 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
+#include <OSD_Environment.hxx>
+
+#include <OSD_OSDError.hxx>
+#include <OSD_WhoAmI.hxx>
+#include <Standard_ConstructionError.hxx>
+#include <Standard_Failure.hxx>
+#include <Standard_NullObject.hxx>
+#include <TCollection_AsciiString.hxx>
+#include <NCollection_UtfString.hxx>
+
+#include <cerrno>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <mutex>
+
 #ifndef _WIN32
 
-  #include <OSD_Environment.hxx>
-  #include <OSD_OSDError.hxx>
-  #include <OSD_WhoAmI.hxx>
-  #include <Standard_ConstructionError.hxx>
-  #include <Standard_Failure.hxx>
-  #include <Standard_Mutex.hxx>
-  #include <Standard_NullObject.hxx>
-  #include <TCollection_AsciiString.hxx>
-  #include <NCollection_UtfString.hxx>
-
-  #include <errno.h>
-  #include <stdio.h>
-  #include <stdlib.h>
-  #include <string.h>
 static const OSD_WhoAmI Iam = OSD_WEnvironment;
 
 // ----------------------------------------------------------------------
@@ -41,11 +43,9 @@ static const OSD_WhoAmI Iam = OSD_WEnvironment;
 // ----------------------------------------------------------------------
 // Create object
 
-OSD_Environment::OSD_Environment() {}
+OSD_Environment::OSD_Environment() = default;
 
-// ----------------------------------------------------------------------
-// Constructor
-// ----------------------------------------------------------------------
+//=================================================================================================
 
 OSD_Environment::OSD_Environment(const TCollection_AsciiString& Name)
 {
@@ -56,9 +56,7 @@ OSD_Environment::OSD_Environment(const TCollection_AsciiString& Name)
   myName = Name;
 }
 
-// ----------------------------------------------------------------------
-// Create an environment variable and initialize it
-// ----------------------------------------------------------------------
+//=================================================================================================
 
 OSD_Environment::OSD_Environment(const TCollection_AsciiString& Name,
                                  const TCollection_AsciiString& Value)
@@ -73,18 +71,14 @@ OSD_Environment::OSD_Environment(const TCollection_AsciiString& Name,
   myValue = Value;
 }
 
-// ----------------------------------------------------------------------
-// Returns the name of the symbol
-// ----------------------------------------------------------------------
+//=================================================================================================
 
 TCollection_AsciiString OSD_Environment::Name() const
 {
   return myName;
 }
 
-// ----------------------------------------------------------------------
-// Set new value for environment variable
-// ----------------------------------------------------------------------
+//=================================================================================================
 
 void OSD_Environment::SetName(const TCollection_AsciiString& Name)
 {
@@ -95,9 +89,7 @@ void OSD_Environment::SetName(const TCollection_AsciiString& Name)
   myName = Name;
 }
 
-// ----------------------------------------------------------------------
-// Change value
-// ----------------------------------------------------------------------
+//=================================================================================================
 
 void OSD_Environment::SetValue(const TCollection_AsciiString& Value)
 {
@@ -107,35 +99,31 @@ void OSD_Environment::SetValue(const TCollection_AsciiString& Value)
   myValue = Value;
 }
 
-// ----------------------------------------------------------------------
-// Get environment variable physically
-// ----------------------------------------------------------------------
+//=================================================================================================
 
 TCollection_AsciiString OSD_Environment::Value()
 {
   char* result = getenv(myName.ToCString());
-  if (result == NULL)
+  if (result == nullptr)
     myValue.Clear();
   else
     myValue = result;
   return myValue;
 }
 
-// ----------------------------------------------------------------------
-// Sets physically the environment variable
-// ----------------------------------------------------------------------
+//=================================================================================================
 
 void OSD_Environment::Build()
 {
   // Static buffer to hold definitions of new variables for the environment.
   // Note that they need to be static since putenv does not make a copy
   // of the string, but just adds its pointer to the environment.
-  static char** buffer  = 0; // JPT:
-  static int    Ibuffer = 0; // Tout ca pour putenv,getenv
+  static char** buffer  = nullptr; // JPT:
+  static int    Ibuffer = 0;       // Tout ca pour putenv,getenv
 
   // Use mutex to avoid concurrent access to the buffer
-  static Standard_Mutex  theMutex;
-  Standard_Mutex::Sentry aSentry(theMutex);
+  static std::mutex           aMutex;
+  std::lock_guard<std::mutex> aLock(aMutex);
 
   // check if such variable has already been created in the buffer
   int index = -1, len = myName.Length();
@@ -149,7 +137,7 @@ void OSD_Environment::Build()
   }
 
   // and either add a new entry, or remember the old entry for a while
-  char* old_value = 0;
+  char* old_value = nullptr;
   if (index >= 0)
   {
     old_value = buffer[index];
@@ -173,7 +161,7 @@ void OSD_Environment::Build()
 
   // create a new entry in the buffer and add it to environment
   buffer[index] = (char*)malloc(len + myValue.Length() + 2);
-  sprintf(buffer[index], "%s=%s", myName.ToCString(), myValue.ToCString());
+  Sprintf(buffer[index], "%s=%s", myName.ToCString(), myValue.ToCString());
   putenv(buffer[index]);
 
   // then (and only then!) free old entry, if existed
@@ -182,13 +170,11 @@ void OSD_Environment::Build()
 
   // check the result
   char* result = getenv(myName.ToCString());
-  if (result == NULL)
+  if (result == nullptr)
     myError.SetValue(errno, Iam, "Set Environment");
 }
 
-// ----------------------------------------------------------------------
-// Remove physically the environment variable
-// ----------------------------------------------------------------------
+//=================================================================================================
 
 void OSD_Environment::Remove()
 {
@@ -205,7 +191,7 @@ void OSD_Environment::Reset()
 
 // ----------------------------------------------------------------------
 // ----------------------------------------------------------------------
-Standard_Boolean OSD_Environment::Failed() const
+bool OSD_Environment::Failed() const
 {
   return myError.Failed();
 }
@@ -219,7 +205,7 @@ void OSD_Environment::Perror()
 
 // ----------------------------------------------------------------------
 // ----------------------------------------------------------------------
-Standard_Integer OSD_Environment::Error() const
+int OSD_Environment::Error() const
 {
   return myError.Error();
 }
@@ -232,17 +218,13 @@ Standard_Integer OSD_Environment::Error() const
 
   #include <windows.h>
 
-  #include <OSD_Environment.hxx>
-
   #include <NCollection_DataMap.hxx>
-  #include <NCollection_UtfString.hxx>
-  #include <Standard_Mutex.hxx>
 
   #ifdef OCCT_UWP
 namespace
 {
 // emulate global map of environment variables
-static Standard_Mutex                                                        THE_ENV_LOCK;
+static std::mutex                                                            THE_ENV_LOCK;
 static NCollection_DataMap<TCollection_AsciiString, TCollection_AsciiString> THE_ENV_MAP;
 } // namespace
   #else
@@ -278,7 +260,7 @@ TCollection_AsciiString OSD_Environment::Value()
 {
   myValue.Clear();
   #ifdef OCCT_UWP
-  Standard_Mutex::Sentry aLock(THE_ENV_LOCK);
+  std::lock_guard<std::mutex> aLock(THE_ENV_LOCK);
   THE_ENV_MAP.Find(myName, myValue);
   #else
 
@@ -295,15 +277,15 @@ TCollection_AsciiString OSD_Environment::Value()
   // up-to-date value of environment variable nevertheless C-runtime version used (or not used at
   // all) for setting value externally, considering msvc C-runtime implementation details.
   SetLastError(ERROR_SUCCESS);
-  NCollection_UtfWideString aNameWide(myName.ToCString());
-  DWORD                     aSize = GetEnvironmentVariableW(aNameWide.ToCString(), NULL, 0);
+  NCollection_UtfString<wchar_t> aNameWide(myName.ToCString());
+  DWORD                          aSize = GetEnvironmentVariableW(aNameWide.ToCString(), NULL, 0);
   if (aSize == 0 && GetLastError() != ERROR_SUCCESS)
   {
     _set_error(myError, ERROR_ENVVAR_NOT_FOUND);
     return myValue;
   }
 
-  NCollection_Utf8String aValue;
+  NCollection_UtfString<char> aValue;
   aSize += 1; // NULL-terminator
   wchar_t* aBuff = new wchar_t[aSize];
   GetEnvironmentVariableW(aNameWide.ToCString(), aBuff, aSize);
@@ -334,11 +316,11 @@ TCollection_AsciiString OSD_Environment ::Name() const
 void OSD_Environment::Build()
 {
   #ifdef OCCT_UWP
-  Standard_Mutex::Sentry aLock(THE_ENV_LOCK);
+  std::lock_guard<std::mutex> aLock(THE_ENV_LOCK);
   THE_ENV_MAP.Bind(myName, myValue);
   #else
-  NCollection_Utf8String aSetVariable =
-    NCollection_Utf8String(myName.ToCString()) + "=" + myValue.ToCString();
+  NCollection_UtfString<char> aSetVariable =
+    NCollection_UtfString<char>(myName.ToCString()) + "=" + myValue.ToCString();
   _wputenv(aSetVariable.ToUtfWide().ToCString());
   #endif
 }
@@ -346,15 +328,15 @@ void OSD_Environment::Build()
 void OSD_Environment::Remove()
 {
   #ifdef OCCT_UWP
-  Standard_Mutex::Sentry aLock(THE_ENV_LOCK);
+  std::lock_guard<std::mutex> aLock(THE_ENV_LOCK);
   THE_ENV_MAP.UnBind(myName);
   #else
-  NCollection_Utf8String aSetVariable = NCollection_Utf8String(myName.ToCString()) + "=";
+  NCollection_UtfString<char> aSetVariable = NCollection_UtfString<char>(myName.ToCString()) + "=";
   _wputenv(aSetVariable.ToUtfWide().ToCString());
   #endif
 }
 
-Standard_Boolean OSD_Environment ::Failed() const
+bool OSD_Environment ::Failed() const
 {
 
   return myError.Failed();
@@ -373,7 +355,7 @@ void OSD_Environment ::Perror()
   myError.Perror();
 } // end OSD_Environment :: Perror
 
-Standard_Integer OSD_Environment ::Error() const
+int OSD_Environment ::Error() const
 {
 
   return myError.Error();
@@ -395,7 +377,7 @@ static void __fastcall _set_error(OSD_Error& theErr, DWORD theCode)
   {
     theErr.SetValue(anErrCode,
                     OSD_WEnvironment,
-                    TCollection_AsciiString("error code ") + (Standard_Integer)anErrCode);
+                    TCollection_AsciiString("error code ") + (int)anErrCode);
     SetLastError(anErrCode);
   }
   else

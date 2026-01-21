@@ -17,11 +17,11 @@
 IMPLEMENT_STANDARD_RTTIEXT(StepVisual_PresentationStyleByContext,
                            StepVisual_PresentationStyleAssignment)
 
-StepVisual_PresentationStyleByContext::StepVisual_PresentationStyleByContext() {}
+StepVisual_PresentationStyleByContext::StepVisual_PresentationStyleByContext() = default;
 
 void StepVisual_PresentationStyleByContext::Init(
-  const Handle(StepVisual_HArray1OfPresentationStyleSelect)& aStyles,
-  const StepVisual_StyleContextSelect&                       aStyleContext)
+  const occ::handle<NCollection_HArray1<StepVisual_PresentationStyleSelect>>& aStyles,
+  const StepVisual_StyleContextSelect&                                        aStyleContext)
 {
   // --- classe own fields ---
   styleContext = aStyleContext;

@@ -16,12 +16,12 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(StepGeom_GeometricRepresentationContext, StepRepr_RepresentationContext)
 
-StepGeom_GeometricRepresentationContext::StepGeom_GeometricRepresentationContext() {}
+StepGeom_GeometricRepresentationContext::StepGeom_GeometricRepresentationContext() = default;
 
 void StepGeom_GeometricRepresentationContext::Init(
-  const Handle(TCollection_HAsciiString)& aContextIdentifier,
-  const Handle(TCollection_HAsciiString)& aContextType,
-  const Standard_Integer                  aCoordinateSpaceDimension)
+  const occ::handle<TCollection_HAsciiString>& aContextIdentifier,
+  const occ::handle<TCollection_HAsciiString>& aContextType,
+  const int                                    aCoordinateSpaceDimension)
 {
   // --- classe own fields ---
   coordinateSpaceDimension = aCoordinateSpaceDimension;
@@ -30,12 +30,12 @@ void StepGeom_GeometricRepresentationContext::Init(
 }
 
 void StepGeom_GeometricRepresentationContext::SetCoordinateSpaceDimension(
-  const Standard_Integer aCoordinateSpaceDimension)
+  const int aCoordinateSpaceDimension)
 {
   coordinateSpaceDimension = aCoordinateSpaceDimension;
 }
 
-Standard_Integer StepGeom_GeometricRepresentationContext::CoordinateSpaceDimension() const
+int StepGeom_GeometricRepresentationContext::CoordinateSpaceDimension() const
 {
   return coordinateSpaceDimension;
 }

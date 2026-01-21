@@ -16,16 +16,17 @@
 #include <IFSelect_SelectModelEntities.hxx>
 #include <IFSelect_SelectModelRoots.hxx>
 #include <IFSelect_SelectSignature.hxx>
-#include <Standard_Mutex.hxx>
 #include <StepAP214.hxx>
 #include <StepAP214_Protocol.hxx>
 #include <StepData_StepModel.hxx>
 #include <StepSelect_StepType.hxx>
 
-Handle(Interface_Protocol) STEPEdit::Protocol()
+#include <mutex>
+
+occ::handle<Interface_Protocol> STEPEdit::Protocol()
 {
   /*
-    static Handle(StepData_FileProtocol) proto;
+    static occ::handle<StepData_FileProtocol> proto;
     if (!proto.IsNull()) return proto;
     proto =  new StepData_FileProtocol;
     proto->Add (StepAP214::Protocol());
@@ -35,18 +36,18 @@ Handle(Interface_Protocol) STEPEdit::Protocol()
   return StepAP214::Protocol();
 }
 
-Handle(StepData_StepModel) STEPEdit::NewModel()
+occ::handle<StepData_StepModel> STEPEdit::NewModel()
 {
-  Handle(StepData_StepModel) stepmodel = new StepData_StepModel;
+  occ::handle<StepData_StepModel> stepmodel = new StepData_StepModel;
   stepmodel->SetProtocol(STEPEdit::Protocol());
   return stepmodel;
 }
 
-Handle(IFSelect_Signature) STEPEdit::SignType()
+occ::handle<IFSelect_Signature> STEPEdit::SignType()
 {
-  static Standard_Mutex              aMutex;
-  Standard_Mutex::Sentry             aSentry(aMutex);
-  static Handle(StepSelect_StepType) sty;
+  static std::mutex                       aMutex;
+  std::lock_guard<std::mutex>             aLock(aMutex);
+  static occ::handle<StepSelect_StepType> sty;
   if (!sty.IsNull())
     return sty;
   sty = new StepSelect_StepType;
@@ -54,28 +55,28 @@ Handle(IFSelect_Signature) STEPEdit::SignType()
   return sty;
 }
 
-Handle(IFSelect_SelectSignature) STEPEdit::NewSelectSDR()
+occ::handle<IFSelect_SelectSignature> STEPEdit::NewSelectSDR()
 {
-  Handle(IFSelect_SelectSignature) sel =
+  occ::handle<IFSelect_SelectSignature> sel =
     new IFSelect_SelectSignature(STEPEdit::SignType(), "SHAPE_DEFINITION_REPRESENTATION");
   sel->SetInput(new IFSelect_SelectModelRoots);
   return sel;
 }
 
-Handle(IFSelect_SelectSignature) STEPEdit::NewSelectPlacedItem()
+occ::handle<IFSelect_SelectSignature> STEPEdit::NewSelectPlacedItem()
 {
-  Handle(IFSelect_SelectSignature) sel =
+  occ::handle<IFSelect_SelectSignature> sel =
     new IFSelect_SelectSignature(STEPEdit::SignType(),
                                  "MAPPED_ITEM|CONTEXT_DEPENDENT_SHAPE_REPRESENTATION",
-                                 Standard_False);
+                                 false);
   sel->SetInput(new IFSelect_SelectModelEntities);
   return sel;
 }
 
-Handle(IFSelect_SelectSignature) STEPEdit::NewSelectShapeRepr()
+occ::handle<IFSelect_SelectSignature> STEPEdit::NewSelectShapeRepr()
 {
-  Handle(IFSelect_SelectSignature) sel =
-    new IFSelect_SelectSignature(STEPEdit::SignType(), "SHAPE_REPRESENTATION", Standard_False);
+  occ::handle<IFSelect_SelectSignature> sel =
+    new IFSelect_SelectSignature(STEPEdit::SignType(), "SHAPE_REPRESENTATION", false);
   // REPRESENTATION_RELATIONSHIP passe par CONTEXT_DEPENDENT_SHAPE_REPRESENTATION
   sel->SetInput(new IFSelect_SelectModelEntities);
   return sel;

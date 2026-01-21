@@ -43,10 +43,10 @@
 //=================================================================================================
 
 Geom2dHatch_Hatcher::Geom2dHatch_Hatcher(const Geom2dHatch_Intersector& Intersector,
-                                         const Standard_Real            Confusion2d,
-                                         const Standard_Real            Confusion3d,
-                                         const Standard_Boolean         KeepPnt,
-                                         const Standard_Boolean         KeepSeg)
+                                         const double                   Confusion2d,
+                                         const double                   Confusion3d,
+                                         const bool                     KeepPnt,
+                                         const bool                     KeepSeg)
     : myIntersector(Intersector),
       myConfusion2d(Confusion2d),
       myConfusion3d(Confusion3d),
@@ -65,7 +65,7 @@ Geom2dHatch_Hatcher::Geom2dHatch_Hatcher(const Geom2dHatch_Intersector& Intersec
 void Geom2dHatch_Hatcher::Intersector(const Geom2dHatch_Intersector& Intersector)
 {
   myIntersector = Intersector;
-  for (Standard_Integer IndH = 1; IndH <= myNbHatchings; IndH++)
+  for (int IndH = 1; IndH <= myNbHatchings; IndH++)
   {
     if (myHatchings.IsBound(IndH))
     {
@@ -80,10 +80,10 @@ void Geom2dHatch_Hatcher::Intersector(const Geom2dHatch_Intersector& Intersector
 // Purpose  : Sets the 2dconfusion tolerance.
 //=======================================================================
 
-void Geom2dHatch_Hatcher::Confusion2d(const Standard_Real Confusion)
+void Geom2dHatch_Hatcher::Confusion2d(const double Confusion)
 {
   myConfusion2d = Confusion;
-  for (Standard_Integer IndH = 1; IndH <= myNbHatchings; IndH++)
+  for (int IndH = 1; IndH <= myNbHatchings; IndH++)
   {
     if (myHatchings.IsBound(IndH))
     {
@@ -98,10 +98,10 @@ void Geom2dHatch_Hatcher::Confusion2d(const Standard_Real Confusion)
 // Purpose  : Sets the 3d confusion tolerance.
 //=======================================================================
 
-void Geom2dHatch_Hatcher::Confusion3d(const Standard_Real Confusion)
+void Geom2dHatch_Hatcher::Confusion3d(const double Confusion)
 {
   myConfusion3d = Confusion;
-  for (Standard_Integer IndH = 1; IndH <= myNbHatchings; IndH++)
+  for (int IndH = 1; IndH <= myNbHatchings; IndH++)
   {
     if (myHatchings.IsBound(IndH))
     {
@@ -111,15 +111,12 @@ void Geom2dHatch_Hatcher::Confusion3d(const Standard_Real Confusion)
   }
 }
 
-//=======================================================================
-// Function : KeepPoints
-// Purpose  : Sets the above flag.
-//=======================================================================
+//=================================================================================================
 
-void Geom2dHatch_Hatcher::KeepPoints(const Standard_Boolean Keep)
+void Geom2dHatch_Hatcher::KeepPoints(const bool Keep)
 {
   myKeepPoints = Keep;
-  for (Standard_Integer IndH = 1; IndH <= myNbHatchings; IndH++)
+  for (int IndH = 1; IndH <= myNbHatchings; IndH++)
   {
     if (myHatchings.IsBound(IndH))
     {
@@ -129,15 +126,12 @@ void Geom2dHatch_Hatcher::KeepPoints(const Standard_Boolean Keep)
   }
 }
 
-//=======================================================================
-// Function : KeepSegments
-// Purpose  : Sets the above flag.
-//=======================================================================
+//=================================================================================================
 
-void Geom2dHatch_Hatcher::KeepSegments(const Standard_Boolean Keep)
+void Geom2dHatch_Hatcher::KeepSegments(const bool Keep)
 {
   myKeepSegments = Keep;
-  for (Standard_Integer IndH = 1; IndH <= myNbHatchings; IndH++)
+  for (int IndH = 1; IndH <= myNbHatchings; IndH++)
   {
     if (myHatchings.IsBound(IndH))
     {
@@ -158,10 +152,10 @@ void Geom2dHatch_Hatcher::KeepSegments(const Standard_Boolean Keep)
 // Purpose  : Adds an element to the Hatcher and returns its index.
 //=======================================================================
 
-Standard_Integer Geom2dHatch_Hatcher::AddElement(const Geom2dAdaptor_Curve& Curve,
-                                                 const TopAbs_Orientation   Orientation)
+int Geom2dHatch_Hatcher::AddElement(const Geom2dAdaptor_Curve& Curve,
+                                    const TopAbs_Orientation   Orientation)
 {
-  Standard_Integer IndE;
+  int IndE;
   for (IndE = 1; IndE <= myNbElements && myElements.IsBound(IndE); IndE++)
     ;
   if (IndE > myNbElements)
@@ -171,7 +165,7 @@ Standard_Integer Geom2dHatch_Hatcher::AddElement(const Geom2dAdaptor_Curve& Curv
   }
   Geom2dHatch_Element Element(Curve, Orientation);
   myElements.Bind(IndE, Element);
-  for (Standard_Integer IndH = 1; IndH <= myNbHatchings; IndH++)
+  for (int IndH = 1; IndH <= myNbHatchings; IndH++)
   {
     if (myHatchings.IsBound(IndH))
     {
@@ -187,26 +181,26 @@ Standard_Integer Geom2dHatch_Hatcher::AddElement(const Geom2dAdaptor_Curve& Curv
 // Purpose  : Removes the IndE-th element from the hatcher.
 //=======================================================================
 
-void Geom2dHatch_Hatcher::RemElement(const Standard_Integer IndE)
+void Geom2dHatch_Hatcher::RemElement(const int IndE)
 {
 #if RAISE_IF_NOSUCHOBJECT
   Standard_NoSuchObject_Raise_if(!myElements.IsBound(IndE), "");
 #endif
-  for (Standard_Integer IndH = 1; IndH <= myNbHatchings; IndH++)
+  for (int IndH = 1; IndH <= myNbHatchings; IndH++)
   {
     if (myHatchings.IsBound(IndH))
     {
       Geom2dHatch_Hatching& Hatching       = myHatchings.ChangeFind(IndH);
-      Standard_Boolean      DomainsToClear = Standard_False;
-      for (Standard_Integer IPntH = Hatching.NbPoints(); IPntH > 0; IPntH--)
+      bool                  DomainsToClear = false;
+      for (int IPntH = Hatching.NbPoints(); IPntH > 0; IPntH--)
       {
         HatchGen_PointOnHatching PntH = Hatching.ChangePoint(IPntH);
-        for (Standard_Integer IPntE = PntH.NbPoints(); IPntE > 0; IPntE--)
+        for (int IPntE = PntH.NbPoints(); IPntE > 0; IPntE--)
         {
           if (PntH.Point(IPntE).Index() == IndE)
           {
             PntH.RemPoint(IPntE);
-            DomainsToClear = Standard_True;
+            DomainsToClear = true;
           }
         }
         if (PntH.NbPoints() == 0)
@@ -232,7 +226,7 @@ void Geom2dHatch_Hatcher::ClrElements()
   {
     if (myNbHatchings != 0)
     {
-      for (Standard_Integer IndH = 1; IndH <= myNbHatchings; IndH++)
+      for (int IndH = 1; IndH <= myNbHatchings; IndH++)
       {
         if (myHatchings.IsBound(IndH))
         {
@@ -257,9 +251,9 @@ void Geom2dHatch_Hatcher::ClrElements()
 // Purpose  : Adds a hatching to the hatcher and returns its index.
 //=======================================================================
 
-Standard_Integer Geom2dHatch_Hatcher::AddHatching(const Geom2dAdaptor_Curve& Curve)
+int Geom2dHatch_Hatcher::AddHatching(const Geom2dAdaptor_Curve& Curve)
 {
-  Standard_Integer IndH;
+  int IndH;
   for (IndH = 1; IndH <= myNbHatchings && myHatchings.IsBound(IndH); IndH++)
     ;
   if (IndH > myNbHatchings)
@@ -277,7 +271,7 @@ Standard_Integer Geom2dHatch_Hatcher::AddHatching(const Geom2dAdaptor_Curve& Cur
 // Purpose  : Removes the IndH-th hatching from the hatcher.
 //=======================================================================
 
-void Geom2dHatch_Hatcher::RemHatching(const Standard_Integer IndH)
+void Geom2dHatch_Hatcher::RemHatching(const int IndH)
 {
 #if RAISE_IF_NOSUCHOBJECT
   Standard_NoSuchObject_Raise_if(!myHatchings.IsBound(IndH), "");
@@ -298,7 +292,7 @@ void Geom2dHatch_Hatcher::ClrHatchings()
 {
   if (myNbHatchings != 0)
   {
-    for (Standard_Integer IndH = 1; IndH <= myNbHatchings; IndH++)
+    for (int IndH = 1; IndH <= myNbHatchings; IndH++)
     {
       if (myHatchings.IsBound(IndH))
       {
@@ -325,7 +319,7 @@ void Geom2dHatch_Hatcher::ClrHatchings()
 
 void Geom2dHatch_Hatcher::Trim()
 {
-  for (Standard_Integer IndH = 1; IndH <= myNbHatchings; IndH++)
+  for (int IndH = 1; IndH <= myNbHatchings; IndH++)
     if (myHatchings.IsBound(IndH))
       Trim(IndH);
 }
@@ -336,9 +330,9 @@ void Geom2dHatch_Hatcher::Trim()
 //            already given and returns its index.
 //=======================================================================
 
-Standard_Integer Geom2dHatch_Hatcher::Trim(const Geom2dAdaptor_Curve& Curve)
+int Geom2dHatch_Hatcher::Trim(const Geom2dAdaptor_Curve& Curve)
 {
-  Standard_Integer IndH = AddHatching(Curve);
+  int IndH = AddHatching(Curve);
   Trim(IndH);
   return IndH;
 }
@@ -348,7 +342,7 @@ Standard_Integer Geom2dHatch_Hatcher::Trim(const Geom2dAdaptor_Curve& Curve)
 // Purpose  : Trims the IndH-th hatching by the elements already given.
 //=======================================================================
 
-void Geom2dHatch_Hatcher::Trim(const Standard_Integer IndH)
+void Geom2dHatch_Hatcher::Trim(const int IndH)
 {
 #if RAISE_IF_NOSUCHOBJECT
   Standard_NoSuchObject_Raise_if(!myHatchings.IsBound(IndH), "");
@@ -358,10 +352,10 @@ void Geom2dHatch_Hatcher::Trim(const Standard_Integer IndH)
 
   Hatching.ClrPoints();
 
-  Standard_Boolean OK, AllOK;
+  bool OK, AllOK;
 
-  AllOK = Standard_True;
-  for (Standard_Integer IndE = 1; IndE <= myNbElements; IndE++)
+  AllOK = true;
+  for (int IndE = 1; IndE <= myNbElements; IndE++)
   {
     if (myElements.IsBound(IndE))
     {
@@ -369,12 +363,12 @@ void Geom2dHatch_Hatcher::Trim(const Standard_Integer IndH)
       AllOK = AllOK && OK;
     }
   }
-  Hatching.TrimDone(Standard_True);
+  Hatching.TrimDone(true);
   Hatching.TrimFailed(!AllOK);
 
   if (AllOK)
   {
-    for (Standard_Integer IPnt = 1; IPnt <= Hatching.NbPoints(); IPnt++)
+    for (int IPnt = 1; IPnt <= Hatching.NbPoints(); IPnt++)
     {
       HatchGen_PointOnHatching& PntH = Hatching.ChangePoint(IPnt);
       OK                             = GlobalTransition(PntH);
@@ -391,10 +385,9 @@ void Geom2dHatch_Hatcher::Trim(const Standard_Integer IndH)
 // Purpose  : Dump of the intersection point.
 //=======================================================================
 
-static void IntersectionPointDump(const IntRes2d_IntersectionPoint& Pnt,
-                                  const Standard_Integer            Index)
+static void IntersectionPointDump(const IntRes2d_IntersectionPoint& Pnt, const int Index)
 {
-  Standard_Integer SavedPrecision = std::cout.precision();
+  int SavedPrecision = std::cout.precision();
   std::cout.precision(15);
   std::cout << "----- IntRes2d:: Point # " << std::setw(3) << Index << " ---------------"
             << std::endl;
@@ -510,7 +503,7 @@ static void IntersectionPointDump(const IntRes2d_IntersectionPoint& Pnt,
 //            element.
 //=======================================================================
 
-Standard_Boolean Geom2dHatch_Hatcher::Trim(const Standard_Integer IndH, const Standard_Integer IndE)
+bool Geom2dHatch_Hatcher::Trim(const int IndH, const int IndE)
 {
 #if RAISE_IF_NOSUCHOBJECT
   Standard_NoSuchObject_Raise_if(!myHatchings.IsBound(IndH), "");
@@ -534,7 +527,7 @@ Standard_Boolean Geom2dHatch_Hatcher::Trim(const Standard_Integer IndH, const St
   if (!myIntersector.IsDone())
   {
     std::cout << " Intersector -> Done = False ";
-    return Standard_False;
+    return false;
   }
 
 #if TRACE_HATCHER
@@ -547,7 +540,7 @@ Standard_Boolean Geom2dHatch_Hatcher::Trim(const Standard_Integer IndH, const St
 #endif
 
   if (myIntersector.IsEmpty())
-    return Standard_True;
+    return true;
 
 #if TRACE_HATCHER
   std::cout << "Number of intersection points   : " << std::setw(3) << (myIntersector.NbPoints())
@@ -560,7 +553,7 @@ Standard_Boolean Geom2dHatch_Hatcher::Trim(const Standard_Integer IndH, const St
   // Traitement des points d intersection.
   //-----------------------------------------------------------------------
 
-  for (Standard_Integer IPntI = 1; IPntI <= myIntersector.NbPoints(); IPntI++)
+  for (int IPntI = 1; IPntI <= myIntersector.NbPoints(); IPntI++)
   {
     const IntRes2d_IntersectionPoint& PntI = myIntersector.Point(IPntI);
 
@@ -582,7 +575,7 @@ Standard_Boolean Geom2dHatch_Hatcher::Trim(const Standard_Integer IndH, const St
   // Traitement des segments d intersection.
   //-----------------------------------------------------------------------
 
-  for (Standard_Integer ISeg = 1; ISeg <= myIntersector.NbSegments(); ISeg++)
+  for (int ISeg = 1; ISeg <= myIntersector.NbSegments(); ISeg++)
   {
 
     const IntRes2d_IntersectionSegment& Seg = myIntersector.Segment(ISeg);
@@ -591,8 +584,8 @@ Standard_Boolean Geom2dHatch_Hatcher::Trim(const Standard_Integer IndH, const St
     std::cout << "----- Segment # " << std::setw(3) << ISeg << " -------------" << std::endl;
 #endif
 
-    Standard_Boolean FirstPoint = Seg.HasFirstPoint();
-    Standard_Boolean LastPoint  = Seg.HasLastPoint();
+    bool FirstPoint = Seg.HasFirstPoint();
+    bool LastPoint  = Seg.HasLastPoint();
 
     //-----------------------------------------------------------------------
     // Les deux points peuvent etre confondus.
@@ -619,17 +612,17 @@ Standard_Boolean Geom2dHatch_Hatcher::Trim(const Standard_Integer IndH, const St
       // `hatcher'.
       //-----------------------------------------------------------------------
 
-      Standard_Boolean Conf2d = Abs(Pnt1.ParamOnFirst() - Pnt2.ParamOnFirst()) <= myConfusion2d;
+      bool Conf2d = std::abs(Pnt1.ParamOnFirst() - Pnt2.ParamOnFirst()) <= myConfusion2d;
 
       //-----------------------------------------------------------------------
       // Les deux points peuvent etre `confondus' au regard des intersections.
       //-----------------------------------------------------------------------
 
-      Standard_Boolean Conf3d = Standard_False;
+      bool Conf3d = false;
 
       if (!Conf2d)
       {
-        Conf3d = Standard_True;
+        Conf3d = true;
         if (Conf3d)
           Conf3d = TypePnt1H != IntRes2d_Touch && TypePnt1H != IntRes2d_Undecided;
         if (Conf3d)
@@ -757,8 +750,8 @@ Standard_Boolean Geom2dHatch_Hatcher::Trim(const Standard_Integer IndH, const St
 
         HatchGen_PointOnElement PntE(PntI);
         PntE.SetIndex(IndE);
-        PntE.SetSegmentBeginning(Standard_True);
-        PntE.SetSegmentEnd(Standard_False);
+        PntE.SetSegmentBeginning(true);
+        PntE.SetSegmentEnd(false);
 
         HatchGen_PointOnHatching PntH(PntI);
         PntH.SetIndex(IndH);
@@ -790,8 +783,8 @@ Standard_Boolean Geom2dHatch_Hatcher::Trim(const Standard_Integer IndH, const St
 
         HatchGen_PointOnElement PntE(PntI);
         PntE.SetIndex(IndE);
-        PntE.SetSegmentBeginning(Standard_False);
-        PntE.SetSegmentEnd(Standard_True);
+        PntE.SetSegmentBeginning(false);
+        PntE.SetSegmentEnd(true);
 
         HatchGen_PointOnHatching PntH(PntI);
         PntH.SetIndex(IndH);
@@ -813,7 +806,7 @@ Standard_Boolean Geom2dHatch_Hatcher::Trim(const Standard_Integer IndH, const St
               << std::endl;
 #endif
   }
-  return Standard_True;
+  return true;
 }
 
 //=======================================================================
@@ -829,16 +822,16 @@ Standard_Boolean Geom2dHatch_Hatcher::Trim(const Standard_Integer IndH, const St
 //            IndH-th hatching.
 //=======================================================================
 
-Standard_Boolean Geom2dHatch_Hatcher::GlobalTransition(HatchGen_PointOnHatching& Point)
+bool Geom2dHatch_Hatcher::GlobalTransition(HatchGen_PointOnHatching& Point)
 {
-  TopAbs_State     StateBefore  = TopAbs_UNKNOWN;
-  TopAbs_State     StateAfter   = TopAbs_UNKNOWN;
-  Standard_Boolean SegmentBegin = Standard_False;
-  Standard_Boolean SegmentEnd   = Standard_False;
+  TopAbs_State StateBefore  = TopAbs_UNKNOWN;
+  TopAbs_State StateAfter   = TopAbs_UNKNOWN;
+  bool         SegmentBegin = false;
+  bool         SegmentEnd   = false;
 
-  gp_Dir2d      Tangente2d, Normale2d;
-  gp_Dir        Tangente, Normale;
-  Standard_Real Courbure;
+  gp_Dir2d Tangente2d, Normale2d;
+  gp_Dir   Tangente, Normale;
+  double   Courbure;
 
   const Geom2dAdaptor_Curve& CurveH = HatchingCurve(Point.Index());
 
@@ -867,7 +860,7 @@ Standard_Boolean Geom2dHatch_Hatcher::GlobalTransition(HatchGen_PointOnHatching&
          Normale.Y(),
          Courbure);
 #endif
-  for (Standard_Integer IPntE = 1; IPntE <= Point.NbPoints(); IPntE++)
+  for (int IPntE = 1; IPntE <= Point.NbPoints(); IPntE++)
   {
     const HatchGen_PointOnElement& PntE = Point.Point(IPntE);
 
@@ -878,8 +871,8 @@ Standard_Boolean Geom2dHatch_Hatcher::GlobalTransition(HatchGen_PointOnHatching&
     const Geom2dAdaptor_Curve& CurveE  = Element.Curve();
 
     TopAbs_Orientation ElementOrientation = Element.Orientation();
-    Standard_Boolean   ToReverse          = (ElementOrientation == TopAbs_REVERSED);
-    Standard_Real      Param;
+    bool               ToReverse          = (ElementOrientation == TopAbs_REVERSED);
+    double             Param;
     switch (PntE.Position())
     {
       case TopAbs_FORWARD:
@@ -1052,9 +1045,9 @@ Standard_Boolean Geom2dHatch_Hatcher::GlobalTransition(HatchGen_PointOnHatching&
       StateBefore = TopAbs_OUT;
       break;
     case TopAbs_ON:
-      return Standard_False;
+      return false;
     case TopAbs_UNKNOWN:
-      return Standard_False;
+      return false;
   }
   switch (ComplexTransition.StateAfter())
   {
@@ -1065,9 +1058,9 @@ Standard_Boolean Geom2dHatch_Hatcher::GlobalTransition(HatchGen_PointOnHatching&
       StateAfter = TopAbs_OUT;
       break;
     case TopAbs_ON:
-      return Standard_False;
+      return false;
     case TopAbs_UNKNOWN:
-      return Standard_False;
+      return false;
   }
 
 #if TRACE_HATCHER
@@ -1089,7 +1082,7 @@ Standard_Boolean Geom2dHatch_Hatcher::GlobalTransition(HatchGen_PointOnHatching&
   Point.SetStateAfter(StateAfter);
   Point.SetSegmentBeginning(SegmentBegin);
   Point.SetSegmentEnd(SegmentEnd);
-  return Standard_True;
+  return true;
 }
 
 //=======================================================================
@@ -1099,7 +1092,7 @@ Standard_Boolean Geom2dHatch_Hatcher::GlobalTransition(HatchGen_PointOnHatching&
 
 void Geom2dHatch_Hatcher::ComputeDomains()
 {
-  for (Standard_Integer IndH = 1; IndH <= myNbHatchings; IndH++)
+  for (int IndH = 1; IndH <= myNbHatchings; IndH++)
     if (myHatchings.IsBound(IndH))
       ComputeDomains(IndH);
 }
@@ -1109,7 +1102,7 @@ void Geom2dHatch_Hatcher::ComputeDomains()
 // Purpose  : Computes the domains of the IndH-th hatching.
 //=======================================================================
 
-void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
+void Geom2dHatch_Hatcher::ComputeDomains(const int IndH)
 {
 #if RAISE_IF_NOSUCHOBJECT
   Standard_NoSuchObject_Raise_if(!myHatchings.IsBound(IndH), "");
@@ -1118,7 +1111,7 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
   Geom2dHatch_Hatching& Hatching = myHatchings.ChangeFind(IndH);
   Hatching.ClrDomains();
 
-  Hatching.IsDone(Standard_False);
+  Hatching.IsDone(false);
 
   if (!Hatching.TrimDone())
     Trim(IndH);
@@ -1126,13 +1119,13 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
   if (Hatching.Status() != HatchGen_NoProblem)
     return;
 
-  Standard_Boolean Points           = myKeepPoints;
-  Standard_Boolean Segments         = myKeepSegments;
-  Standard_Integer ISav             = 0;
-  Standard_Boolean SavPnt           = Standard_False;
-  Standard_Integer NbOpenedSegments = 0;
-  Standard_Integer NbPnt            = Hatching.NbPoints();
-  Standard_Integer IPnt             = 1;
+  bool Points           = myKeepPoints;
+  bool Segments         = myKeepSegments;
+  int  ISav             = 0;
+  bool SavPnt           = false;
+  int  NbOpenedSegments = 0;
+  int  NbPnt            = Hatching.NbPoints();
+  int  IPnt             = 1;
 
   if (NbPnt == 0)
   {
@@ -1145,16 +1138,16 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
       Hatching.AddDomain(domain);
     }
 
-    Hatching.IsDone(Standard_True);
+    Hatching.IsDone(true);
     return;
   }
 
-  // for (Standard_Integer IPnt = 1 ; IPnt <= NbPnt ; IPnt++) {
+  // for (int IPnt = 1 ; IPnt <= NbPnt ; IPnt++) {
   for (IPnt = 1; IPnt <= NbPnt; IPnt++)
   {
-    Standard_Boolean NoDomain   = Hatching.NbDomains() == 0;
-    Standard_Boolean FirstPoint = IPnt == 1;
-    Standard_Boolean LastPoint  = IPnt == NbPnt;
+    bool NoDomain   = Hatching.NbDomains() == 0;
+    bool FirstPoint = IPnt == 1;
+    bool LastPoint  = IPnt == NbPnt;
 
     const HatchGen_PointOnHatching& CurPnt = Hatching.Point(IPnt);
 
@@ -1169,10 +1162,10 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
     // Calcul des domaines.
     //-----------------------------------------------------------------------
 
-    TopAbs_State     StateBefore  = CurPnt.StateBefore();
-    TopAbs_State     StateAfter   = CurPnt.StateAfter();
-    Standard_Boolean SegmentBegin = CurPnt.SegmentBeginning();
-    Standard_Boolean SegmentEnd   = CurPnt.SegmentEnd();
+    TopAbs_State StateBefore  = CurPnt.StateBefore();
+    TopAbs_State StateAfter   = CurPnt.StateAfter();
+    bool         SegmentBegin = CurPnt.SegmentBeginning();
+    bool         SegmentEnd   = CurPnt.SegmentEnd();
 
     HatchGen_Domain domain;
 
@@ -1182,7 +1175,7 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
 
     if (FirstPoint)
     {
-      SavPnt           = Standard_False;
+      SavPnt           = false;
       ISav             = 0;
       NbOpenedSegments = 0;
       if (SegmentEnd && SegmentBegin)
@@ -1194,7 +1187,7 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
 
         if (Segments)
         {
-          SavPnt = Standard_True;
+          SavPnt = true;
           ISav   = 0;
         }
       }
@@ -1205,7 +1198,7 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
 
         if (Segments)
         {
-          SavPnt = Standard_True;
+          SavPnt = true;
           ISav   = 0;
         }
       }
@@ -1215,7 +1208,7 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
           StateBefore = TopAbs_IN;
         if (StateBefore == TopAbs_IN)
         {
-          SavPnt = Standard_True;
+          SavPnt = true;
           ISav   = 0;
         }
       }
@@ -1223,7 +1216,7 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
       {
         if (StateBefore == TopAbs_IN)
         {
-          SavPnt = Standard_True;
+          SavPnt = true;
           ISav   = 0;
         }
       }
@@ -1262,7 +1255,7 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
     // Cas general.
     //-----------------------------------------------------------------------
 
-    Standard_Boolean ToAppend = Standard_False;
+    bool ToAppend = false;
 
     if (SegmentEnd && SegmentBegin)
     {
@@ -1284,7 +1277,7 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
             }
             else
             {
-              Hatching.IsDone(Standard_True);
+              Hatching.IsDone(true);
             }
             return;
           }
@@ -1293,13 +1286,13 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
             domain.SetFirstPoint(Hatching.Point(ISav));
 
           domain.SetSecondPoint(CurPnt);
-          ToAppend = Standard_True;
-          SavPnt   = Standard_True;
+          ToAppend = true;
+          SavPnt   = true;
           ISav     = IPnt;
         }
         else
         {
-          Standard_Boolean isININ = (StateBefore == TopAbs_IN && StateAfter == TopAbs_IN);
+          bool isININ = (StateBefore == TopAbs_IN && StateAfter == TopAbs_IN);
           if (SavPnt && !isININ)
           {
             if (NoDomain)
@@ -1308,15 +1301,15 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
             }
             else
             {
-              Hatching.IsDone(Standard_True);
+              Hatching.IsDone(true);
             }
 
             return;
           }
 
           domain.SetPoints(CurPnt, CurPnt);
-          ToAppend = Standard_True;
-          SavPnt   = Standard_False;
+          ToAppend = true;
+          SavPnt   = false;
           ISav     = 0;
         }
       }
@@ -1335,7 +1328,7 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
             }
             else
             {
-              Hatching.IsDone(Standard_True);
+              Hatching.IsDone(true);
             }
             return;
           }
@@ -1344,7 +1337,7 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
             domain.SetFirstPoint(Hatching.Point(ISav));
 
           domain.SetSecondPoint(CurPnt);
-          ToAppend = Standard_True;
+          ToAppend = true;
         }
         else
         {
@@ -1354,8 +1347,8 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
               domain.SetFirstPoint(Hatching.Point(ISav));
 
             domain.SetSecondPoint(CurPnt);
-            ToAppend = Standard_True;
-            SavPnt   = Standard_True;
+            ToAppend = true;
+            SavPnt   = true;
             ISav     = IPnt;
           }
         }
@@ -1364,7 +1357,7 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
       {
         if (StateAfter == TopAbs_IN)
         {
-          SavPnt = Standard_True;
+          SavPnt = true;
           ISav   = IPnt;
         }
       }
@@ -1377,7 +1370,7 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
       {
         if (StateBefore == TopAbs_OUT)
         {
-          SavPnt = Standard_True;
+          SavPnt = true;
           ISav   = IPnt;
         }
         else
@@ -1392,7 +1385,7 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
               }
               else
               {
-                Hatching.IsDone(Standard_True);
+                Hatching.IsDone(true);
               }
 
               return;
@@ -1402,8 +1395,8 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
               domain.SetFirstPoint(Hatching.Point(ISav));
 
             domain.SetSecondPoint(CurPnt);
-            ToAppend = Standard_True;
-            SavPnt   = Standard_True;
+            ToAppend = true;
+            SavPnt   = true;
             ISav     = IPnt;
           }
         }
@@ -1420,7 +1413,7 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
             }
             else
             {
-              Hatching.IsDone(Standard_True);
+              Hatching.IsDone(true);
             }
 
             return;
@@ -1430,13 +1423,13 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
             domain.SetFirstPoint(Hatching.Point(ISav));
 
           domain.SetSecondPoint(CurPnt);
-          ToAppend = Standard_True;
+          ToAppend = true;
 
           // Modified by Sergey KHROMOV - Fri Jan  5 12:05:30 2001
-          // SavPnt = Standard_False ;
+          // SavPnt = false ;
           // ISav = 0 ;
 
-          SavPnt = Standard_True;
+          SavPnt = true;
           ISav   = IPnt;
           // Modified by Sergey KHROMOV - Fri Jan  5 12:05:31 2001
         }
@@ -1471,7 +1464,7 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
           }
           else
           {
-            Hatching.IsDone(Standard_True);
+            Hatching.IsDone(true);
           }
 
           return;
@@ -1480,14 +1473,14 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
         if (Points)
         {
           domain.SetPoints(CurPnt, CurPnt);
-          ToAppend = Standard_True;
-          SavPnt   = Standard_True;
+          ToAppend = true;
+          SavPnt   = true;
           ISav     = IPnt;
         }
       }
       else if (StateBefore == TopAbs_OUT && StateAfter == TopAbs_IN)
       {
-        SavPnt = Standard_True;
+        SavPnt = true;
         ISav   = IPnt;
       }
       else if (StateBefore == TopAbs_IN && StateAfter == TopAbs_OUT)
@@ -1500,7 +1493,7 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
           }
           else
           {
-            Hatching.IsDone(Standard_True);
+            Hatching.IsDone(true);
           }
 
           return;
@@ -1510,8 +1503,8 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
           domain.SetFirstPoint(Hatching.Point(ISav));
 
         domain.SetSecondPoint(CurPnt);
-        ToAppend = Standard_True;
-        SavPnt   = Standard_False;
+        ToAppend = true;
+        SavPnt   = false;
         ISav     = 0;
       }
       else if (StateBefore == TopAbs_IN && StateAfter == TopAbs_IN)
@@ -1528,7 +1521,7 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
               }
               else
               {
-                Hatching.IsDone(Standard_True);
+                Hatching.IsDone(true);
               }
 
               // return;
@@ -1539,8 +1532,8 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
               domain.SetFirstPoint(Hatching.Point(ISav));
 
             domain.SetSecondPoint(CurPnt);
-            ToAppend = Standard_True;
-            SavPnt   = Standard_True;
+            ToAppend = true;
+            SavPnt   = true;
             ISav     = IPnt;
           }
           else
@@ -1555,7 +1548,7 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
                 }
                 else
                 {
-                  Hatching.IsDone(Standard_True);
+                  Hatching.IsDone(true);
                 }
 
                 return;
@@ -1565,8 +1558,8 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
                 domain.SetFirstPoint(Hatching.Point(ISav));
 
               domain.SetSecondPoint(CurPnt);
-              ToAppend = Standard_True;
-              SavPnt   = Standard_True;
+              ToAppend = true;
+              SavPnt   = true;
               ISav     = IPnt;
             }
             else
@@ -1579,15 +1572,15 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
                 }
                 else
                 {
-                  Hatching.IsDone(Standard_True);
+                  Hatching.IsDone(true);
                 }
 
                 return;
               }
 
               domain.SetPoints(CurPnt, CurPnt);
-              ToAppend = Standard_True;
-              SavPnt   = Standard_False;
+              ToAppend = true;
+              SavPnt   = false;
               ISav     = 0;
             }
           }
@@ -1614,7 +1607,7 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
     if (LastPoint)
     {
       domain.SetPoints();
-      ToAppend = Standard_False;
+      ToAppend = false;
 
       if (SegmentEnd && SegmentBegin)
       {
@@ -1628,7 +1621,7 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
             }
             else
             {
-              Hatching.IsDone(Standard_True);
+              Hatching.IsDone(true);
             }
 
             return;
@@ -1637,7 +1630,7 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
           if (ISav != 0)
             domain.SetFirstPoint(Hatching.Point(ISav));
 
-          ToAppend = Standard_True;
+          ToAppend = true;
         }
       }
       else if (SegmentEnd)
@@ -1652,7 +1645,7 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
             }
             else
             {
-              Hatching.IsDone(Standard_True);
+              Hatching.IsDone(true);
             }
 
             return;
@@ -1661,7 +1654,7 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
           if (ISav != 0)
             domain.SetFirstPoint(Hatching.Point(ISav));
 
-          ToAppend = Standard_True;
+          ToAppend = true;
         }
       }
       else if (SegmentBegin)
@@ -1676,7 +1669,7 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
             }
             else
             {
-              Hatching.IsDone(Standard_True);
+              Hatching.IsDone(true);
             }
 
             return;
@@ -1685,7 +1678,7 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
           if (ISav != 0)
             domain.SetFirstPoint(Hatching.Point(ISav));
 
-          ToAppend = Standard_True;
+          ToAppend = true;
         }
       }
       else
@@ -1700,7 +1693,7 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
             }
             else
             {
-              Hatching.IsDone(Standard_True);
+              Hatching.IsDone(true);
             }
 
             return;
@@ -1709,7 +1702,7 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
           if (ISav != 0)
             domain.SetFirstPoint(Hatching.Point(ISav));
 
-          ToAppend = Standard_True;
+          ToAppend = true;
         }
       }
 
@@ -1718,7 +1711,7 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
     }
   }
 
-  Hatching.IsDone(Standard_True);
+  Hatching.IsDone(true);
 }
 
 //=======================================================================
@@ -1732,8 +1725,7 @@ void Geom2dHatch_Hatcher::ComputeDomains(const Standard_Integer IndH)
 // Purpose  : Returns the IDom-th domain of the IndH-th hatching.
 //=======================================================================
 
-const HatchGen_Domain& Geom2dHatch_Hatcher::Domain(const Standard_Integer IndH,
-                                                   const Standard_Integer IDom) const
+const HatchGen_Domain& Geom2dHatch_Hatcher::Domain(const int IndH, const int IDom) const
 {
 #if RAISE_IF_NOSUCHOBJECT
   Standard_NoSuchObject_Raise_if(!myHatchings.IsBound(IndH), "");
@@ -1779,7 +1771,7 @@ void Geom2dHatch_Hatcher::Dump() const
   std::cout << "========================================================" << std::endl;
   std::cout << std::endl;
 
-  for (Standard_Integer IndH = 1; IndH <= myNbHatchings; IndH++)
+  for (int IndH = 1; IndH <= myNbHatchings; IndH++)
   {
     std::cout << "Hatching # " << IndH;
     if (!myHatchings.IsBound(IndH))
@@ -1789,9 +1781,9 @@ void Geom2dHatch_Hatcher::Dump() const
     else
     {
       const Geom2dHatch_Hatching& Hatching = myHatchings.Find(IndH);
-      Standard_Integer            NbPnt    = Hatching.NbPoints();
+      int                         NbPnt    = Hatching.NbPoints();
       std::cout << " contains " << NbPnt << " restriction points :" << std::endl;
-      for (Standard_Integer IPnt = 1; IPnt <= NbPnt; IPnt++)
+      for (int IPnt = 1; IPnt <= NbPnt; IPnt++)
       {
         const HatchGen_PointOnHatching& PntH = Hatching.Point(IPnt);
         PntH.Dump(IPnt);
@@ -1806,7 +1798,7 @@ void Geom2dHatch_Hatcher::Dump() const
   std::cout << "========================================================" << std::endl;
   std::cout << std::endl;
 
-  for (Standard_Integer IndE = 1; IndE <= myNbElements; IndE++)
+  for (int IndE = 1; IndE <= myNbElements; IndE++)
   {
     std::cout << "Element # " << IndE;
     if (!myElements.IsBound(IndE))

@@ -16,17 +16,18 @@
 
 #include <HatchGen_PointOnHatching.hxx>
 #include <IntRes2d_IntersectionPoint.hxx>
-#include <Standard_Stream.hxx>
+#include <Standard_Macro.hxx>
+#include <iostream>
+#include <iomanip>
+#include <fstream>
 
 #define RAISE_IF_NOSUCHOBJECT 0
 
 //=================================================================================================
 
 HatchGen_PointOnHatching::HatchGen_PointOnHatching()
-    : HatchGen_IntersectionPoint(),
-      myPoints()
-{
-}
+
+  = default;
 
 //=================================================================================================
 
@@ -48,8 +49,8 @@ HatchGen_PointOnHatching::HatchGen_PointOnHatching(const IntRes2d_IntersectionPo
   }
   myBefore = TopAbs_UNKNOWN;
   myAfter  = TopAbs_UNKNOWN;
-  mySegBeg = Standard_False;
-  mySegEnd = Standard_False;
+  mySegBeg = false;
+  mySegEnd = false;
   myPoints.Clear();
 }
 
@@ -59,11 +60,11 @@ HatchGen_PointOnHatching::HatchGen_PointOnHatching(const IntRes2d_IntersectionPo
 //=======================================================================
 
 void HatchGen_PointOnHatching::AddPoint(const HatchGen_PointOnElement& Point,
-                                        const Standard_Real            Confusion)
+                                        const double                   Confusion)
 {
-  Standard_Integer NbPnt = myPoints.Length();
-  // for (Standard_Integer IPnt = 1 ;
-  Standard_Integer IPnt;
+  int NbPnt = myPoints.Length();
+  // for (int IPnt = 1 ;
+  int IPnt;
   for (IPnt = 1; IPnt <= NbPnt && myPoints(IPnt).IsDifferent(Point, Confusion); IPnt++)
     ;
   if (IPnt > NbPnt)
@@ -76,7 +77,7 @@ void HatchGen_PointOnHatching::AddPoint(const HatchGen_PointOnElement& Point,
 //            this point.
 //=======================================================================
 
-Standard_Integer HatchGen_PointOnHatching::NbPoints() const
+int HatchGen_PointOnHatching::NbPoints() const
 {
   return myPoints.Length();
 }
@@ -86,10 +87,10 @@ Standard_Integer HatchGen_PointOnHatching::NbPoints() const
 // Purpose  : Returns the Index-th point on element of the point.
 //=======================================================================
 
-const HatchGen_PointOnElement& HatchGen_PointOnHatching::Point(const Standard_Integer Index) const
+const HatchGen_PointOnElement& HatchGen_PointOnHatching::Point(const int Index) const
 {
 #if RAISE_IF_NOSUCHOBJECT
-  Standard_Integer NbPnt = myPoints.Length();
+  int NbPnt = myPoints.Length();
   Standard_OutOfRange_Raise_if(Index < 1 || Index > NbPnt, "");
 #endif
   const HatchGen_PointOnElement& Point = myPoints.Value(Index);
@@ -101,10 +102,10 @@ const HatchGen_PointOnElement& HatchGen_PointOnHatching::Point(const Standard_In
 // Purpose  : Removes the Index-th point on element of the point..
 //=======================================================================
 
-void HatchGen_PointOnHatching::RemPoint(const Standard_Integer Index)
+void HatchGen_PointOnHatching::RemPoint(const int Index)
 {
 #if RAISE_IF_NOSUCHOBJECT
-  Standard_Integer NbPnt = myPoints.Length();
+  int NbPnt = myPoints.Length();
   Standard_OutOfRange_Raise_if(Index < 1 || Index > NbPnt, "");
 #endif
   myPoints.Remove(Index);
@@ -125,8 +126,8 @@ void HatchGen_PointOnHatching::ClrPoints()
 // Purpose  : Tests if the point is lower than an other.
 //=======================================================================
 
-Standard_Boolean HatchGen_PointOnHatching::IsLower(const HatchGen_PointOnHatching& Point,
-                                                   const Standard_Real             Confusion) const
+bool HatchGen_PointOnHatching::IsLower(const HatchGen_PointOnHatching& Point,
+                                       const double                    Confusion) const
 {
   return (Point.myParam - myParam > Confusion);
 }
@@ -136,10 +137,10 @@ Standard_Boolean HatchGen_PointOnHatching::IsLower(const HatchGen_PointOnHatchin
 // Purpose  : Tests if the point is equal to an other.
 //=======================================================================
 
-Standard_Boolean HatchGen_PointOnHatching::IsEqual(const HatchGen_PointOnHatching& Point,
-                                                   const Standard_Real             Confusion) const
+bool HatchGen_PointOnHatching::IsEqual(const HatchGen_PointOnHatching& Point,
+                                       const double                    Confusion) const
 {
-  return (Abs(Point.myParam - myParam) <= Confusion);
+  return (std::abs(Point.myParam - myParam) <= Confusion);
 }
 
 //=======================================================================
@@ -147,15 +148,15 @@ Standard_Boolean HatchGen_PointOnHatching::IsEqual(const HatchGen_PointOnHatchin
 // Purpose  : Tests if the point is greater than an other.
 //=======================================================================
 
-Standard_Boolean HatchGen_PointOnHatching::IsGreater(const HatchGen_PointOnHatching& Point,
-                                                     const Standard_Real Confusion) const
+bool HatchGen_PointOnHatching::IsGreater(const HatchGen_PointOnHatching& Point,
+                                         const double                    Confusion) const
 {
   return (myParam - Point.myParam > Confusion);
 }
 
 //=================================================================================================
 
-void HatchGen_PointOnHatching::Dump(const Standard_Integer Index) const
+void HatchGen_PointOnHatching::Dump(const int Index) const
 {
   std::cout << "--- Point on hatching ";
   if (Index > 0)
@@ -224,7 +225,7 @@ void HatchGen_PointOnHatching::Dump(const Standard_Integer Index) const
   std::cout << "    Beginning of segment  = " << (mySegBeg ? "TRUE" : "FALSE") << std::endl;
   std::cout << "    End       of segment  = " << (mySegEnd ? "TRUE" : "FALSE") << std::endl;
 
-  Standard_Integer NbPnt = myPoints.Length();
+  int NbPnt = myPoints.Length();
   if (NbPnt == 0)
   {
     std::cout << "    No points on element" << std::endl;
@@ -232,7 +233,7 @@ void HatchGen_PointOnHatching::Dump(const Standard_Integer Index) const
   else
   {
     std::cout << "    Contains " << NbPnt << " points on element" << std::endl;
-    for (Standard_Integer IPnt = 1; IPnt <= NbPnt; IPnt++)
+    for (int IPnt = 1; IPnt <= NbPnt; IPnt++)
     {
       const HatchGen_PointOnElement& Point = myPoints.Value(IPnt);
       Point.Dump(IPnt);

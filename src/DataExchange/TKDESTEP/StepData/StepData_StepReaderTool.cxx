@@ -12,7 +12,7 @@
 // commercial license or contractual agreement.
 
 #include <Interface_Check.hxx>
-#include <Interface_Macros.hxx>
+#include <MoniTool_Macros.hxx>
 #include <Message.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_ErrorHandler.hxx>
@@ -29,51 +29,58 @@
 
 //=================================================================================================
 
-StepData_StepReaderTool::StepData_StepReaderTool(const Handle(StepData_StepReaderData)& reader,
-                                                 const Handle(StepData_Protocol)&       protocol)
-    : theglib(protocol),
-      therlib(protocol)
+// Constructor: Initialize the STEP reader tool with reader data and protocol
+StepData_StepReaderTool::StepData_StepReaderTool(const occ::handle<StepData_StepReaderData>& reader,
+                                                 const occ::handle<StepData_Protocol>& protocol)
+    : theglib(protocol), // General library from protocol
+      therlib(protocol)  // Reader library from protocol
 {
   SetData(reader, protocol);
 }
 
 //=================================================================================================
 
-Standard_Boolean StepData_StepReaderTool::Recognize(const Standard_Integer      num,
-                                                    Handle(Interface_Check)&    ach,
-                                                    Handle(Standard_Transient)& ent)
+// Recognize and create an entity from a STEP record number
+// Returns true if recognition was successful
+bool StepData_StepReaderTool::Recognize(const int                        num,
+                                        occ::handle<Interface_Check>&    ach,
+                                        occ::handle<Standard_Transient>& ent)
 {
-  //  Handle(Standard_Transient) bid;  // pas exploite
+  //  occ::handle<Standard_Transient> bid;  // not used
   //  return thereco->Evaluate(thetypes.Value(num),bid);
 
-  //  Recognizer : C est lui qui assure la Reconnaissance (-> Liste limitative)
+  // Recognizer: It ensures the Recognition (-> Restrictive list of types)
+  // If a specific recognizer is available, use it for type recognition
   if (!thereco.IsNull())
   {
     DeclareAndCast(StepData_StepReaderData, stepdat, Data());
     return thereco->Evaluate(stepdat->RecordType(num), ent);
   }
 
-  //  Pas de Recognizer : Reconnaissance par la librairie
+  // No Recognizer: Recognition by the library
+  // Fall back to standard library recognition when no specific recognizer is set
   return RecognizeByLib(num, theglib, therlib, ach, ent);
 }
 
-//  ....         Methodes de preparations propres a StepReaderTool         ....
+// ....         Preparation methods specific to StepReaderTool         ....
 
 //=================================================================================================
 
-void StepData_StepReaderTool::Prepare(const Handle(StepData_FileRecognizer)& reco,
-                                      const Standard_Boolean                 optim)
+// Prepare the reader tool with a file recognizer and optimization flag
+void StepData_StepReaderTool::Prepare(const occ::handle<StepData_FileRecognizer>& reco,
+                                      const bool                                  optim)
 {
-  thereco = reco;
-  Prepare(optim);
+  thereco = reco; // Store the recognizer for later use
+  Prepare(optim); // Continue with standard preparation
 }
 
 //=================================================================================================
 
-void StepData_StepReaderTool::Prepare(const Standard_Boolean optim)
+void StepData_StepReaderTool::Prepare(const bool optim)
 {
-  //   SetEntityNumbers a ete mis du cote de ReaderData, because beaucoup acces
-  Standard_Boolean erh = ErrorHandle();
+  // SetEntityNumbers has been moved to ReaderData side, because of many accesses
+  // Check if error handling is enabled to decide on exception handling strategy
+  bool erh = ErrorHandle();
   DeclareAndCast(StepData_StepReaderData, stepdat, Data());
   if (erh)
   {
@@ -87,7 +94,7 @@ void StepData_StepReaderTool::Prepare(const Standard_Boolean optim)
     {
       Message_Messenger::StreamBuffer sout = Message::SendInfo();
       sout << " Exception Raised during Preparation :\n";
-      sout << anException.GetMessageString();
+      sout << anException.what();
       sout << "\n Now, trying to continue, but with presomption of failure\n";
     }
   }
@@ -98,31 +105,34 @@ void StepData_StepReaderTool::Prepare(const Standard_Boolean optim)
   }
 }
 
-// ....            Gestion du Header : Preparation, lecture            .... //
+// ....            Header Management: Preparation, reading            .... //
 
 //=================================================================================================
 
-void StepData_StepReaderTool::PrepareHeader(const Handle(StepData_FileRecognizer)& reco)
+// Prepare header entities by recognizing their types and binding them
+void StepData_StepReaderTool::PrepareHeader(const occ::handle<StepData_FileRecognizer>& reco)
 {
-  Standard_Integer i = 0;
+  int i = 0; // Index for iterating through header records
 
-  // Reconnaissance des types
+  // Type recognition
   DeclareAndCast(StepData_StepReaderData, stepdat, Data());
   while ((i = stepdat->FindNextHeaderRecord(i)) != 0)
   {
-    Handle(Standard_Transient) ent;
-    //  On a donne un Recognizer : il fixe une liste limitative de types reconnus
+    occ::handle<Standard_Transient> ent;
+    // A Recognizer was provided: it sets a restrictive list of recognized types
     if (!reco.IsNull())
     {
+      // Try to recognize the entity type using the provided recognizer
       if (!reco->Evaluate(stepdat->RecordType(i), ent))
       {
+        // If recognition fails, create an unknown entity
         ent = Protocol()->UnknownEntity();
       }
     }
     else
     {
-      //  Pas de Recognizer : Reconnaissance par la librairie
-      Handle(Interface_Check) ach = new Interface_Check; // faudrait le lister ... ?
+      // No Recognizer: Recognition by the library
+      occ::handle<Interface_Check> ach = new Interface_Check; // should this be listed...?
       RecognizeByLib(i, theglib, therlib, ach, ent);
     }
     if (ent.IsNull())
@@ -130,16 +140,17 @@ void StepData_StepReaderTool::PrepareHeader(const Handle(StepData_FileRecognizer
     stepdat->BindEntity(i, ent);
   }
 
-  //  Reste la Resolution des references : ne concerne que les sous-listes
-  //  Assuree par ReaderData
+  // Remaining reference resolution: only concerns sub-lists
+  // Handled by ReaderData
   stepdat->PrepareHeader();
 }
 
-// ....   Methodes pour la lecture du Modele (apres preparation)   .... //
+// ....   Methods for reading the Model (after preparation)   .... //
 
 //=================================================================================================
 
-void StepData_StepReaderTool::BeginRead(const Handle(Interface_InterfaceModel)& amodel)
+// Begin reading process: clear model header and process header entities
+void StepData_StepReaderTool::BeginRead(const occ::handle<Interface_InterfaceModel>& amodel)
 {
   Message_Messenger::StreamBuffer sout = Message::SendTrace();
   DeclareAndCast(StepData_StepModel, model, amodel);
@@ -147,11 +158,11 @@ void StepData_StepReaderTool::BeginRead(const Handle(Interface_InterfaceModel)& 
 
   model->ClearHeader();
   model->SetGlobalCheck(stepdat->GlobalCheck());
-  Standard_Integer i = 0;
+  int i = 0;
   while ((i = stepdat->FindNextHeaderRecord(i)) != 0)
   {
-    Handle(Standard_Transient) ent = stepdat->BoundEntity(i);
-    Handle(Interface_Check)    ach = new Interface_Check(ent);
+    occ::handle<Standard_Transient> ent = stepdat->BoundEntity(i);
+    occ::handle<Interface_Check>    ach = new Interface_Check(ent);
     AnalyseRecord(i, ent, ach);
     if (ent->IsKind(STANDARD_TYPE(StepData_UndefinedEntity)))
     {
@@ -161,31 +172,31 @@ void StepData_StepReaderTool::BeginRead(const Handle(Interface_InterfaceModel)& 
     }
     if (ach->HasFailed() || ach->HasWarnings())
     {
-      Handle(Interface_Check) mch = model->GlobalCheck();
+      occ::handle<Interface_Check> mch = model->GlobalCheck();
       mch->GetMessages(ach);
       model->SetGlobalCheck(mch);
     }
     model->AddHeaderEntity(ent);
     if (ach->HasWarnings())
     {
-      Handle(Interface_Check) mch    = model->GlobalCheck();
-      Standard_Integer        nbmess = ach->NbWarnings();
+      occ::handle<Interface_Check> mch    = model->GlobalCheck();
+      int                          nbmess = ach->NbWarnings();
       sout << nbmess << " Warnings on Reading Header Entity N0." << i << ":";
       if (!ent.IsNull())
         sout << ent->DynamicType()->Name() << std::endl;
-      for (Standard_Integer nf = 1; nf <= nbmess; nf++)
+      for (int nf = 1; nf <= nbmess; nf++)
       {
         sout << ach->CWarning(nf) << "\n";
       }
     }
     if (ach->HasFailed())
     {
-      Handle(Interface_Check) mch    = model->GlobalCheck();
-      Standard_Integer        nbmess = ach->NbFails();
+      occ::handle<Interface_Check> mch    = model->GlobalCheck();
+      int                          nbmess = ach->NbFails();
       sout << " Fails on Reading Header Entity N0." << i << ":";
       if (!ent.IsNull())
         sout << ent->DynamicType()->Name() << std::endl;
-      for (Standard_Integer nf = 1; nf <= nbmess; nf++)
+      for (int nf = 1; nf <= nbmess; nf++)
       {
         sout << ach->CFail(nf) << "\n";
       }
@@ -195,21 +206,26 @@ void StepData_StepReaderTool::BeginRead(const Handle(Interface_InterfaceModel)& 
 
 //=================================================================================================
 
-Standard_Boolean StepData_StepReaderTool::AnalyseRecord(const Standard_Integer            num,
-                                                        const Handle(Standard_Transient)& anent,
-                                                        Handle(Interface_Check)&          acheck)
+// Analyze a STEP record and populate the corresponding entity
+// Returns true if analysis was successful (no failures)
+bool StepData_StepReaderTool::AnalyseRecord(const int                              num,
+                                            const occ::handle<Standard_Transient>& anent,
+                                            occ::handle<Interface_Check>&          acheck)
 {
   DeclareAndCast(StepData_StepReaderData, stepdat, Data());
-  Handle(Interface_ReaderModule) imodule;
-  Standard_Integer               CN;
+  occ::handle<Interface_ReaderModule> imodule;
+  int                                 CN;
+  // Try to find appropriate reader module for this entity type
   if (therlib.Select(anent, imodule, CN))
   {
-    Handle(StepData_ReadWriteModule) module = Handle(StepData_ReadWriteModule)::DownCast(imodule);
+    // Cast to STEP-specific module and read the entity data
+    occ::handle<StepData_ReadWriteModule> module =
+      occ::down_cast<StepData_ReadWriteModule>(imodule);
     module->ReadStep(CN, stepdat, num, acheck, anent);
   }
   else
   {
-    //  Pas trouve : tenter UndefinedEntity de StepData
+    // Not found: try UndefinedEntity from StepData
     DeclareAndCast(StepData_UndefinedEntity, und, anent);
     if (und.IsNull())
       acheck->AddFail("# Entity neither Recognized nor set as UndefinedEntity from StepData #");
@@ -221,13 +237,14 @@ Standard_Boolean StepData_StepReaderTool::AnalyseRecord(const Standard_Integer  
 
 //=================================================================================================
 
-void StepData_StepReaderTool::EndRead(const Handle(Interface_InterfaceModel)& amodel)
+// Finish reading process: set entity labels from record identifiers
+void StepData_StepReaderTool::EndRead(const occ::handle<Interface_InterfaceModel>& amodel)
 {
   DeclareAndCast(StepData_StepReaderData, stepdat, Data());
   DeclareAndCast(StepData_StepModel, stepmodel, amodel);
   if (stepmodel.IsNull())
     return;
-  Standard_Integer i = 0;
+  int i = 0;
   while ((i = stepdat->FindNextRecord(i)) != 0)
   {
     stepmodel->SetIdentLabel(stepdat->BoundEntity(i), stepdat->RecordIdent(i));

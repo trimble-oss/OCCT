@@ -22,14 +22,20 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESGraph_Color, IGESData_ColorEntity)
 
-IGESGraph_Color::IGESGraph_Color() {}
+namespace
+{
+// Precomputed sqrt(3)
+constexpr double SQRT_3 = 1.7320508075688772935;
+} // namespace
+
+IGESGraph_Color::IGESGraph_Color() = default;
 
 // This class inherits from IGESData_ColorEntity
 
-void IGESGraph_Color::Init(const Standard_Real                     red,
-                           const Standard_Real                     green,
-                           const Standard_Real                     blue,
-                           const Handle(TCollection_HAsciiString)& aColorName)
+void IGESGraph_Color::Init(const double                                 red,
+                           const double                                 green,
+                           const double                                 blue,
+                           const occ::handle<TCollection_HAsciiString>& aColorName)
 {
   theRed       = red;
   theGreen     = green;
@@ -38,41 +44,35 @@ void IGESGraph_Color::Init(const Standard_Real                     red,
   InitTypeAndForm(314, 0);
 }
 
-void IGESGraph_Color::RGBIntensity(Standard_Real& Red,
-                                   Standard_Real& Green,
-                                   Standard_Real& Blue) const
+void IGESGraph_Color::RGBIntensity(double& Red, double& Green, double& Blue) const
 {
   Red   = theRed;
   Green = theGreen;
   Blue  = theBlue;
 }
 
-void IGESGraph_Color::CMYIntensity(Standard_Real& Cyan,
-                                   Standard_Real& Magenta,
-                                   Standard_Real& Yellow) const
+void IGESGraph_Color::CMYIntensity(double& Cyan, double& Magenta, double& Yellow) const
 {
   Cyan    = 100.0 - theRed;
   Magenta = 100.0 - theGreen;
   Yellow  = 100.0 - theBlue;
 }
 
-void IGESGraph_Color::HLSPercentage(Standard_Real& Hue,
-                                    Standard_Real& Lightness,
-                                    Standard_Real& Saturation) const
+void IGESGraph_Color::HLSPercentage(double& Hue, double& Lightness, double& Saturation) const
 {
   Hue        = ((1.0 / (2.0 * M_PI))
-         * (ATan(((2 * theRed) - theGreen - theBlue) / (Sqrt(3) * (theGreen - theBlue)))));
+         * (std::atan(((2 * theRed) - theGreen - theBlue) / (SQRT_3 * (theGreen - theBlue)))));
   Lightness  = ((1.0 / 3.0) * (theRed + theGreen + theBlue));
-  Saturation = (Sqrt((theRed * theRed) + (theGreen * theGreen) + (theBlue * theBlue)
-                     - (theRed * theGreen) - (theRed * theBlue) - (theBlue * theGreen)));
+  Saturation = (std::sqrt((theRed * theRed) + (theGreen * theGreen) + (theBlue * theBlue)
+                          - (theRed * theGreen) - (theRed * theBlue) - (theBlue * theGreen)));
 }
 
-Standard_Boolean IGESGraph_Color::HasColorName() const
+bool IGESGraph_Color::HasColorName() const
 {
   return (!theColorName.IsNull());
 }
 
-Handle(TCollection_HAsciiString) IGESGraph_Color::ColorName() const
+occ::handle<TCollection_HAsciiString> IGESGraph_Color::ColorName() const
 {
   return theColorName;
 }

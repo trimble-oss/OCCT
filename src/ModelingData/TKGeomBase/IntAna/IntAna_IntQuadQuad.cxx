@@ -14,9 +14,15 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#include <stdio.h>
+#include <cstdio>
 
-#include <Standard_Stream.hxx>
+#include <Standard_Macro.hxx>
+
+#include <iostream>
+
+#include <iomanip>
+
+#include <fstream>
 
 #ifndef OCCT_DEBUG
   #define No_Standard_RangeError
@@ -55,17 +61,17 @@
 template <class gpSmth>
 static void AddSpecialPoints(const IntAna_Quadric& theQuad,
                              const gpSmth&         theGpObj,
-                             Standard_Real&        theTheta1,
-                             Standard_Real&        theTheta2)
+                             double&               theTheta1,
+                             double&               theTheta2)
 {
-  const Standard_Real             aPeriod = M_PI + M_PI;
+  const double                    aPeriod = M_PI + M_PI;
   const NCollection_List<gp_Pnt>& aLSP    = theQuad.SpecialPoints();
 
   if (aLSP.IsEmpty())
     return;
 
-  Standard_Real aU = 0.0, aV = 0.0;
-  Standard_Real aMaxDelta = 0.0;
+  double aU = 0.0, aV = 0.0;
+  double aMaxDelta = 0.0;
   for (NCollection_List<gp_Pnt>::Iterator anItr(aLSP); anItr.More(); anItr.Next())
   {
     const gp_Pnt& aPt = anItr.Value();
@@ -78,24 +84,24 @@ static void AddSpecialPoints(const IntAna_Quadric& theQuad,
       continue;
     }
 
-    Standard_Real aDelta1 = Min(aU - theTheta1, 0.0), aDelta2 = Max(aU - theTheta2, 0.0);
+    double aDelta1 = std::min(aU - theTheta1, 0.0), aDelta2 = std::max(aU - theTheta2, 0.0);
 
     if (aDelta1 < -M_PI)
     {
-      // Must be aDelta1 = Min(aU - theTheta1 + aPeriod, 0.0).
+      // Must be aDelta1 = std::min(aU - theTheta1 + aPeriod, 0.0).
       // But aU - theTheta1 + aPeriod >= 0 always.
       aDelta1 = 0.0;
     }
 
     if (aDelta2 > M_PI)
     {
-      // Must be aDelta2 = Max(aU - theTheta2 - aPeriod, 0.0).
+      // Must be aDelta2 = std::max(aU - theTheta2 - aPeriod, 0.0).
       // But aU - theTheta2 - aPeriod <= 0 always.
       aDelta2 = 0.0;
     }
 
-    const Standard_Real aDelta = Max(-aDelta1, aDelta2);
-    aMaxDelta                  = Max(aMaxDelta, aDelta);
+    const double aDelta = std::max(-aDelta1, aDelta2);
+    aMaxDelta           = std::max(aMaxDelta, aDelta);
   }
 
   if (aMaxDelta != 0.0)
@@ -117,46 +123,46 @@ class TrigonometricRoots
 {
 
 private:
-  Standard_Real    Roots[4];
-  Standard_Boolean done;
-  Standard_Integer NbRoots;
-  Standard_Boolean infinite_roots;
+  double Roots[4];
+  bool   done;
+  int    NbRoots;
+  bool   infinite_roots;
 
 public:
-  TrigonometricRoots(const Standard_Real CC,
-                     const Standard_Real SC,
-                     const Standard_Real C,
-                     const Standard_Real S,
-                     const Standard_Real Cte,
-                     const Standard_Real Binf,
-                     const Standard_Real Bsup);
+  TrigonometricRoots(const double CC,
+                     const double SC,
+                     const double C,
+                     const double S,
+                     const double Cte,
+                     const double Binf,
+                     const double Bsup);
 
   // IsDone
-  Standard_Boolean IsDone() { return done; }
+  bool IsDone() { return done; }
 
   // IsARoot
-  Standard_Boolean IsARoot(Standard_Real u)
+  bool IsARoot(double u)
   {
-    Standard_Integer        i;
-    constexpr Standard_Real aEps  = RealEpsilon();
-    Standard_Real           PIpPI = M_PI + M_PI;
+    int              i;
+    constexpr double aEps  = RealEpsilon();
+    double           PIpPI = M_PI + M_PI;
     //
     for (i = 0; i < NbRoots; ++i)
     {
-      if (Abs(u - Roots[i]) <= aEps)
+      if (std::abs(u - Roots[i]) <= aEps)
       {
-        return Standard_True;
+        return true;
       }
-      if (Abs(u - Roots[i] - PIpPI) <= aEps)
+      if (std::abs(u - Roots[i] - PIpPI) <= aEps)
       {
-        return Standard_True;
+        return true;
       }
     }
-    return Standard_False;
+    return false;
   }
 
   // NbSolutions
-  Standard_Integer NbSolutions()
+  int NbSolutions()
   {
     if (!done)
     {
@@ -166,7 +172,7 @@ public:
   }
 
   // InfiniteRoots
-  Standard_Boolean InfiniteRoots()
+  bool InfiniteRoots()
   {
     if (!done)
     {
@@ -176,7 +182,7 @@ public:
   }
 
   // Value
-  Standard_Real Value(const Standard_Integer n)
+  double Value(const int n)
   {
     if ((!done) || (n > NbRoots))
     {
@@ -188,20 +194,20 @@ public:
 
 //=================================================================================================
 
-TrigonometricRoots::TrigonometricRoots(const Standard_Real CC,
-                                       const Standard_Real SC,
-                                       const Standard_Real C,
-                                       const Standard_Real S,
-                                       const Standard_Real Cte,
-                                       const Standard_Real Binf,
-                                       const Standard_Real Bsup)
-    : infinite_roots(Standard_False)
+TrigonometricRoots::TrigonometricRoots(const double CC,
+                                       const double SC,
+                                       const double C,
+                                       const double S,
+                                       const double Cte,
+                                       const double Binf,
+                                       const double Bsup)
+    : infinite_roots(false)
 {
-  Standard_Integer i, j, SvNbRoots;
-  Standard_Boolean Triee;
-  Standard_Real    PIpPI = M_PI + M_PI;
+  int    i, j, SvNbRoots;
+  bool   Triee;
+  double PIpPI = M_PI + M_PI;
   //
-  done = Standard_False;
+  done = false;
   //
   //-- F= AA*CN*CN+2*BB*CN*SN+CC*CN+DD*SN+EE;
   math_TrigonometricFunctionRoots MTFR(CC, SC, C, S, Cte, Binf, Bsup);
@@ -210,10 +216,10 @@ TrigonometricRoots::TrigonometricRoots(const Standard_Real CC,
     return;
   }
   //
-  done = Standard_True;
+  done = true;
   if (MTFR.InfiniteRoots())
   {
-    infinite_roots = Standard_True;
+    infinite_roots = true;
     return;
   }
   //
@@ -236,41 +242,41 @@ TrigonometricRoots::TrigonometricRoots(const Standard_Real CC,
   SvNbRoots = NbRoots;
   for (i = 0; i < SvNbRoots; ++i)
   {
-    Standard_Real y;
-    Standard_Real co = cos(Roots[i]);
-    Standard_Real si = sin(Roots[i]);
-    y                = co * (CC * co + (SC + SC) * si + C) + S * si + Cte;
-    if (Abs(y) > 1e-8)
+    double y;
+    double co = cos(Roots[i]);
+    double si = sin(Roots[i]);
+    y         = co * (CC * co + (SC + SC) * si + C) + S * si + Cte;
+    if (std::abs(y) > 1e-8)
     {
-      done = Standard_False;
+      done = false;
       return; //-- le 1er avril 98
     }
   }
   //
   do
   {
-    Triee = Standard_True;
+    Triee = true;
     for (i = 1, j = 0; i < SvNbRoots; ++i, ++j)
     {
       if (Roots[i] < Roots[j])
       {
-        Triee           = Standard_False;
-        Standard_Real t = Roots[i];
-        Roots[i]        = Roots[j];
-        Roots[j]        = t;
+        Triee    = false;
+        double t = Roots[i];
+        Roots[i] = Roots[j];
+        Roots[j] = t;
       }
     }
   } while (!Triee);
   //
-  infinite_roots = Standard_False;
+  infinite_roots = false;
   //
   if (!NbRoots)
   { //--!!!!! Detection du cas Pol = Cte ( 1e-50 ) !!!!
-    if ((Abs(CC) + Abs(SC) + Abs(C) + Abs(S)) < 1e-10)
+    if ((std::abs(CC) + std::abs(SC) + std::abs(C) + std::abs(S)) < 1e-10)
     {
-      if (Abs(Cte) < 1e-10)
+      if (std::abs(Cte) < 1e-10)
       {
-        infinite_roots = Standard_True;
+        infinite_roots = true;
       }
     }
   }
@@ -286,16 +292,16 @@ class MyTrigonometricFunction
 {
 
 private:
-  Standard_Real CC, SS, SC, S, C, Cte;
+  double CC, SS, SC, S, C, Cte;
 
 public:
   //
-  MyTrigonometricFunction(const Standard_Real xCC,
-                          const Standard_Real xSS,
-                          const Standard_Real xSC,
-                          const Standard_Real xC,
-                          const Standard_Real xS,
-                          const Standard_Real xCte)
+  MyTrigonometricFunction(const double xCC,
+                          const double xSS,
+                          const double xSC,
+                          const double xC,
+                          const double xS,
+                          const double xCte)
   {
     CC  = xCC;
     SS  = xSS;
@@ -305,9 +311,9 @@ public:
     Cte = xCte;
   }
 
-  Standard_Real Value(const Standard_Real& U)
+  double Value(const double& U)
   {
-    Standard_Real sinus, cosinus, aRet;
+    double sinus, cosinus, aRet;
     //
     sinus   = sin(U);
     cosinus = cos(U);
@@ -318,9 +324,9 @@ public:
   }
 
   //
-  Standard_Real Derivative(const Standard_Real& U)
+  double Derivative(const double& U)
   {
-    Standard_Real sinus, cosinus;
+    double sinus, cosinus;
     //
     sinus   = sin(U);
     cosinus = cos(U);
@@ -336,10 +342,10 @@ public:
 // function : IntAna_IntQuadQuad::IntAna_IntQuadQuad
 // purpose  : C o n s t r u c t e u r    v i d e
 //=======================================================================
-IntAna_IntQuadQuad::IntAna_IntQuadQuad(void)
+IntAna_IntQuadQuad::IntAna_IntQuadQuad()
 {
-  done                   = Standard_False;
-  identical              = Standard_False;
+  done                   = false;
+  identical              = false;
   NbCurves               = 0;
   Nbpoints               = 0;
   myNbMaxCurves          = 12;
@@ -355,7 +361,7 @@ IntAna_IntQuadQuad::IntAna_IntQuadQuad(void)
 //=======================================================================
 IntAna_IntQuadQuad::IntAna_IntQuadQuad(const gp_Cylinder&    Cyl,
                                        const IntAna_Quadric& Quad,
-                                       const Standard_Real   Tol)
+                                       const double          Tol)
 {
   myNbMaxCurves          = 12;
   myEpsilon              = 0.00000001;
@@ -367,27 +373,25 @@ IntAna_IntQuadQuad::IntAna_IntQuadQuad(const gp_Cylinder&    Cyl,
 // function : Perform
 // purpose  : I n t e r s e c t i o n   C y l i n d r e   Q u a d r i q u e
 //=======================================================================
-void IntAna_IntQuadQuad::Perform(const gp_Cylinder&    Cyl,
-                                 const IntAna_Quadric& Quad,
-                                 const Standard_Real)
+void IntAna_IntQuadQuad::Perform(const gp_Cylinder& Cyl, const IntAna_Quadric& Quad, const double)
 {
-  done      = Standard_True;
-  identical = Standard_False;
+  done      = true;
+  identical = false;
   NbCurves  = 0;
   Nbpoints  = 0;
   //
-  Standard_Boolean UN_SEUL_Z_PAR_THETA, DEUX_Z_PAR_THETA, Z_POSITIF, Z_INDIFFERENT, Z_NEGATIF;
+  bool UN_SEUL_Z_PAR_THETA, DEUX_Z_PAR_THETA, Z_POSITIF, Z_INDIFFERENT, Z_NEGATIF;
   //
-  UN_SEUL_Z_PAR_THETA = Standard_False;
-  DEUX_Z_PAR_THETA    = Standard_True;
-  Z_POSITIF           = Standard_True;
-  Z_INDIFFERENT       = Standard_True;
-  Z_NEGATIF           = Standard_False;
+  UN_SEUL_Z_PAR_THETA = false;
+  DEUX_Z_PAR_THETA    = true;
+  Z_POSITIF           = true;
+  Z_INDIFFERENT       = true;
+  Z_NEGATIF           = false;
   //
-  Standard_Real Qxx, Qyy, Qzz, Qxy, Qxz, Qyz, Qx, Qy, Qz, Q1, aRealEpsilon, RCyl, R2;
-  Standard_Real PIpPI = M_PI + M_PI;
+  double Qxx, Qyy, Qzz, Qxy, Qxz, Qyz, Qx, Qy, Qz, Q1, aRealEpsilon, RCyl, R2;
+  double PIpPI = M_PI + M_PI;
   //
-  for (Standard_Integer raz = 0; raz < myNbMaxCurves; raz++)
+  for (int raz = 0; raz < myNbMaxCurves; raz++)
   {
     previouscurve[raz] = nextcurve[raz] = 0;
   }
@@ -411,12 +415,12 @@ void IntAna_IntQuadQuad::Perform(const gp_Cylinder&    Cyl,
 
   //----------------------------------------------------------------------
   //-- Parametrage du Cylindre Cyl :
-  //--     X = Rcyl * Cos(Theta)
-  //--     Y = Rcyl * Sin(Theta)
+  //--     X = Rcyl * std::cos(Theta)
+  //--     Y = Rcyl * std::sin(Theta)
   //--     Z = Z
   //----------------------------------------------------------------------
   //-- Donne une Equation de la forme :
-  //--   F(Sin(Theta),Cos(Theta),ZCyl) = 0
+  //--   F(std::sin(Theta),std::cos(Theta),ZCyl) = 0
   //--   (Equation du second degre en ZCyl)
   //--    ZCyl**2  CoeffZ2(Theta) + ZCyl CoeffZ1(Theta) + CoeffZ0(Theta)
   //----------------------------------------------------------------------
@@ -428,15 +432,15 @@ void IntAna_IntQuadQuad::Perform(const gp_Cylinder&    Cyl,
   //-- !!!! Attention , si on norme sur Qzz pour detecter le cas 1er degre
   //----------------------------------------------------------------------
   //-- On Cherche Les Racines en Theta du discriminant de cette equation :
-  //-- DIS(Theta) = C_1 + C_SS Sin()**2 + C_CC Cos()**2 + 2 C_SC Sin() Cos()
-  //--                  + 2 C_S  Sin()    + 2 C_C Cos()
+  //-- DIS(Theta) = C_1 + C_SS std::sin()**2 + C_CC std::cos()**2 + 2 C_SC std::sin() std::cos()
+  //--                  + 2 C_S  std::sin()    + 2 C_C std::cos()
   //--
   //-- Si Qzz = 0   Alors  On Resout Z=Fct(Theta)  sur le domaine de Theta
   //----------------------------------------------------------------------
 
-  if (Abs(Qzz) < myEpsilonCoeffPolyNull)
+  if (std::abs(Qzz) < myEpsilonCoeffPolyNull)
   {
-    done = Standard_False; //-- le 12 mars 98
+    done = false; //-- le 12 mars 98
     return;
   }
   else
@@ -446,19 +450,19 @@ void IntAna_IntQuadQuad::Perform(const gp_Cylinder&    Cyl,
     //----------------------------------------------------------------------
     R2 = RCyl * RCyl;
 
-    Standard_Real C_1  = Qz * Qz - Qzz * Q1;
-    Standard_Real C_SS = R2 * (Qyz * Qyz - Qyy * Qzz);
-    Standard_Real C_CC = R2 * (Qxz * Qxz - Qxx * Qzz);
-    Standard_Real C_S  = RCyl * (Qyz * Qz - Qy * Qzz);
-    Standard_Real C_C  = RCyl * (Qxz * Qz - Qx * Qzz);
-    Standard_Real C_SC = R2 * (Qxz * Qyz - Qxy * Qzz);
+    double C_1  = Qz * Qz - Qzz * Q1;
+    double C_SS = R2 * (Qyz * Qyz - Qyy * Qzz);
+    double C_CC = R2 * (Qxz * Qxz - Qxx * Qzz);
+    double C_S  = RCyl * (Qyz * Qz - Qy * Qzz);
+    double C_C  = RCyl * (Qxz * Qz - Qx * Qzz);
+    double C_SC = R2 * (Qxz * Qyz - Qxy * Qzz);
     //
     MyTrigonometricFunction MTF(C_CC, C_SS, C_SC, C_C, C_S, C_1);
     TrigonometricRoots      PolDIS(C_CC - C_SS, C_SC, C_C + C_C, C_S + C_S, C_1 + C_SS, 0., PIpPI);
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    if (PolDIS.IsDone() == Standard_False)
+    if (!PolDIS.IsDone())
     {
-      done = Standard_False;
+      done = false;
       return;
     }
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -504,7 +508,7 @@ void IntAna_IntQuadQuad::Perform(const gp_Cylinder&    Cyl,
       //---------------------------------------------------------------
       //-- La Recherche des Zero de DIS a reussi
       //---------------------------------------------------------------
-      Standard_Integer nbsolDIS = PolDIS.NbSolutions();
+      int nbsolDIS = PolDIS.NbSolutions();
       if (nbsolDIS == 0)
       {
         //--------------------------------------------------------------
@@ -620,8 +624,8 @@ void IntAna_IntQuadQuad::Perform(const gp_Cylinder&    Cyl,
             //------------------------------------------------------------
             //-- On a simplement un Point de tangence
             //------------------------------------------------------------
-            //--Standard_Real Theta = PolDIS(1);
-            //--Standard_Real SecPar= -0.5 * MTFZ1.Value(Theta) / MTFZ2.Value(Theta);
+            //--double Theta = PolDIS(1);
+            //--double SecPar= -0.5 * MTFZ1.Value(Theta) / MTFZ2.Value(Theta);
             //--Thepoints[Nbpoints] =
             // ElSLib::CylinderValue(Theta,SecPar,Cyl.Position(),Cyl.Radius());
             //--Nbpoints++;
@@ -649,9 +653,9 @@ void IntAna_IntQuadQuad::Perform(const gp_Cylinder&    Cyl,
           //-- On a au plus nbsol intervalles ( en fait 2 )
           //--  (1,2) (2,3) .. (nbsol,1+2PI)
           //-------------------------------------------------------------
-          Standard_Integer i;
-          Standard_Real    Theta1, Theta2, Theta3, autrepar, qwet;
-          Standard_Boolean UnPtTg = Standard_False;
+          int    i;
+          double Theta1, Theta2, Theta3, autrepar, qwet;
+          bool   UnPtTg = false;
           //
           NbCurves = 0;
           if (nbsolDIS == 2)
@@ -664,9 +668,9 @@ void IntAna_IntQuadQuad::Perform(const gp_Cylinder&    Cyl,
               //-- On detecte les racines doubles
               //-- Si il n y a que 2 racines alors on prend tout l interval
               //----------------------------------------------------------------
-              if (Abs(Theta2 - Theta1) <= aRealEpsilon)
+              if (std::abs(Theta2 - Theta1) <= aRealEpsilon)
               {
-                UnPtTg   = Standard_True;
+                UnPtTg   = true;
                 autrepar = Theta1 - 0.1;
                 if (autrepar < 0.)
                 {
@@ -676,7 +680,7 @@ void IntAna_IntQuadQuad::Perform(const gp_Cylinder&    Cyl,
                 qwet = MTF.Value(autrepar);
                 if (qwet >= 0.)
                 {
-                  Standard_Real aParam = Theta1 + PIpPI;
+                  double aParam = Theta1 + PIpPI;
                   AddSpecialPoints(Quad, Cyl, Theta1, aParam);
                   TheCurve[NbCurves].SetCylinderQuadValues(Cyl,
                                                            Qxx,
@@ -717,7 +721,7 @@ void IntAna_IntQuadQuad::Perform(const gp_Cylinder&    Cyl,
             }
           }
 
-          for (i = 1; UnPtTg == (Standard_False) && (i <= nbsolDIS); i++)
+          for (i = 1; !UnPtTg && (i <= nbsolDIS); i++)
           {
             Theta1 = PolDIS.Value(i);
             Theta2 = (i < nbsolDIS) ? PolDIS.Value(i + 1) : (PolDIS.Value(1) + PIpPI);
@@ -725,7 +729,7 @@ void IntAna_IntQuadQuad::Perform(const gp_Cylinder&    Cyl,
             //-- On detecte les racines doubles
             //-- Si il n y a que 2 racines alors on prend tout l interval
             //----------------------------------------------------------------
-            if (Abs(Theta2 - Theta1) <= 1e-12)
+            if (std::abs(Theta2 - Theta1) <= 1e-12)
             {
               //-- std::cout<<"\n####### Un Point de Tangence en Theta = "<<Theta1<<std::endl;
               //-- i++;
@@ -813,7 +817,7 @@ void IntAna_IntQuadQuad::Perform(const gp_Cylinder&    Cyl,
                 }
               } // if(qwet >= 0.)
             } // else {  //-- On evite les pbs numerique ...
-          } // for(i=1; UnPtTg == (Standard_False) && (i<=nbsolDIS) ; i++) {
+          } // for(i=1; UnPtTg == (false) && (i<=nbsolDIS) ; i++) {
         } // else { // #3
       } // else { //#2
     } // else { //#1
@@ -825,7 +829,7 @@ void IntAna_IntQuadQuad::Perform(const gp_Cylinder&    Cyl,
 
 IntAna_IntQuadQuad::IntAna_IntQuadQuad(const gp_Cone&        Cone,
                                        const IntAna_Quadric& Quad,
-                                       const Standard_Real   Tol)
+                                       const double          Tol)
 {
   myNbMaxCurves          = 12;
   myEpsilon              = 0.00000001;
@@ -835,24 +839,22 @@ IntAna_IntQuadQuad::IntAna_IntQuadQuad(const gp_Cone&        Cone,
 
 //=================================================================================================
 
-void IntAna_IntQuadQuad::Perform(const gp_Cone&        Cone,
-                                 const IntAna_Quadric& Quad,
-                                 const Standard_Real)
+void IntAna_IntQuadQuad::Perform(const gp_Cone& Cone, const IntAna_Quadric& Quad, const double)
 {
   //
-  Standard_Boolean UN_SEUL_Z_PAR_THETA, Z_POSITIF, Z_NEGATIF;
+  bool UN_SEUL_Z_PAR_THETA, Z_POSITIF, Z_NEGATIF;
   //
-  UN_SEUL_Z_PAR_THETA = Standard_False;
-  Z_POSITIF           = Standard_True;
-  Z_NEGATIF           = Standard_False;
+  UN_SEUL_Z_PAR_THETA = false;
+  Z_POSITIF           = true;
+  Z_NEGATIF           = false;
   //
-  Standard_Integer i;
-  Standard_Real    Qxx, Qyy, Qzz, Qxy, Qxz, Qyz, Qx, Qy, Qz, Q1;
-  Standard_Real    Theta1, Theta2, TgAngle;
-  Standard_Real    PIpPI = M_PI + M_PI;
+  int    i;
+  double Qxx, Qyy, Qzz, Qxy, Qxz, Qyz, Qx, Qy, Qz, Q1;
+  double Theta1, Theta2, TgAngle;
+  double PIpPI = M_PI + M_PI;
   //
-  done      = Standard_True;
-  identical = Standard_False;
+  done      = true;
+  identical = false;
   NbCurves  = 0;
   Nbpoints  = 0;
   //
@@ -868,7 +870,7 @@ void IntAna_IntQuadQuad::Perform(const gp_Cone&        Cone,
   tAx3.SetLocation(Cone.Apex());
   Quad.NewCoefficients(Qxx, Qyy, Qzz, Qxy, Qxz, Qyz, Qx, Qy, Qz, Q1, tAx3);
   //
-  TgAngle = 1. / (Tan(Cone.SemiAngle()));
+  TgAngle = 1. / (std::tan(Cone.SemiAngle()));
   //
   // The parametrization of the Cone
   //
@@ -884,10 +886,10 @@ void IntAna_IntQuadQuad::Perform(const gp_Cone&        Cone,
   //
   // 1. Try to solve A(t)=0 -> PolZ2
   //
-  Standard_Integer nbsol, nbsol1, nbsolZ2;
-  Standard_Real    Z2CC, Z2SS, Z2Cte, Z2SC, Z2C, Z2S;
-  Standard_Real    Z1CC, Z1SS, Z1Cte, Z1SC, Z1C, Z1S;
-  Standard_Real    C_1, C_SS, C_CC, C_S, C_C, C_SC;
+  int    nbsol, nbsol1, nbsolZ2;
+  double Z2CC, Z2SS, Z2Cte, Z2SC, Z2C, Z2S;
+  double Z1CC, Z1SS, Z1Cte, Z1SC, Z1C, Z1S;
+  double C_1, C_SS, C_CC, C_S, C_C, C_SC;
   //
   Z2CC  = Qxx;
   Z2SS  = Qyy;
@@ -949,26 +951,10 @@ void IntAna_IntQuadQuad::Perform(const gp_Cone&        Cone,
                                       Z_POSITIF);
         NbCurves = 1;
       }
-      else
-      {
-        /*
-        Standard_Integer ii;
-        for(ii=1; ii<= nbsol1 ; ++ii) {
-          Standard_Real Theta=PolZ1.Value(ii);
-          if(Abs(MTFZ1.Value(Theta))<=myEpsilon) {
-            //-- Une droite Solution  Z=  -INF -> +INF  pour Theta
-            //-- std::cout<<"######## Droite Solution Pour Theta = "<<Theta<<std::endl;
-          }
-          else {
-            //-- std::cout<<"\n#### _+_+_+_+_+ CAS A(t) Z + B = 0   avec A et B ==0 "<<std::endl;
-          }
-        }
-        */
-      }
     }
     else
     {
-      if (Abs(Q1) <= myEpsilon)
+      if (std::abs(Q1) <= myEpsilon)
       {
         done = !done;
         return;
@@ -1068,11 +1054,11 @@ void IntAna_IntQuadQuad::Perform(const gp_Cone&        Cone,
   //
   //-- On Traite le cas : Discriminant(t) > 0 pour tout t en simulant 1
   //    racine double en 0
-  Standard_Boolean DiscriminantConstantPositif = Standard_False;
+  bool DiscriminantConstantPositif = false;
   if (!nbsol)
   {
     nbsol                       = 1;
-    DiscriminantConstantPositif = Standard_True;
+    DiscriminantConstantPositif = true;
   }
   //----------------------------------------------------------------------
   //-- Le discriminant admet au moins une racine ( -> Point de Tangence )
@@ -1091,14 +1077,14 @@ void IntAna_IntQuadQuad::Perform(const gp_Cone&        Cone,
       Theta2 = (i < nbsol) ? Pol.Value(i + 1) : (Pol.Value(1) + PIpPI);
     }
     //
-    if (Abs(Theta2 - Theta1) <= myEpsilon)
+    if (std::abs(Theta2 - Theta1) <= myEpsilon)
     {
-      done = Standard_False;
+      done = false;
       return; // !!! pkv
     }
     // else {// #2
-    Standard_Real qwet = MTF.Value(0.5 * (Theta1 + Theta2)) + MTF.Value(0.4 * Theta1 + 0.6 * Theta2)
-                         + MTF.Value(0.6 * Theta1 + 0.4 * Theta2);
+    double qwet = MTF.Value(0.5 * (Theta1 + Theta2)) + MTF.Value(0.4 * Theta1 + 0.6 * Theta2)
+                  + MTF.Value(0.6 * Theta1 + 0.4 * Theta2);
     if (qwet < 0.)
     {
       continue;
@@ -1114,25 +1100,25 @@ void IntAna_IntQuadQuad::Perform(const gp_Cone&        Cone,
     //--
     //-- Seule la courbe Z_NEGATIF est affectee
     //----------------------------------------------------------------------
-    Standard_Boolean RacinesdePolZ2DansTheta1Theta2;
-    Standard_Integer i2;
-    Standard_Real    r;
+    bool   RacinesdePolZ2DansTheta1Theta2;
+    int    i2;
+    double r;
     //
     // nbsolZ2=PolZ2.NbSolutions();
-    RacinesdePolZ2DansTheta1Theta2 = Standard_False;
+    RacinesdePolZ2DansTheta1Theta2 = false;
     for (i2 = 1; i2 <= nbsolZ2 && !RacinesdePolZ2DansTheta1Theta2; ++i2)
     {
       r = PolZ2.Value(i2);
       if (r > Theta1 && r < Theta2)
       {
-        RacinesdePolZ2DansTheta1Theta2 = Standard_True;
+        RacinesdePolZ2DansTheta1Theta2 = true;
       }
       else
       {
         r += PIpPI;
         if (r > Theta1 && r < Theta2)
         {
-          RacinesdePolZ2DansTheta1Theta2 = Standard_True;
+          RacinesdePolZ2DansTheta1Theta2 = true;
         }
       }
     }
@@ -1179,12 +1165,12 @@ void IntAna_IntQuadQuad::Perform(const gp_Cone&        Cone,
 
     else
     { // #1
-      Standard_Boolean NoChanges;
-      Standard_Real    NewMin, NewMax, to;
+      bool   NoChanges;
+      double NewMin, NewMax, to;
       //
       NewMin    = Theta1;
       NewMax    = Theta2;
-      NoChanges = Standard_True;
+      NoChanges = true;
       //
       for (i2 = 1; i2 <= (nbsolZ2 + nbsolZ2); ++i2)
       {
@@ -1208,7 +1194,7 @@ void IntAna_IntQuadQuad::Perform(const gp_Cone&        Cone,
           //-----------------------------------------------------------------
           //-- On coupe au moins une fois le domaine Theta1 Theta2
           //-----------------------------------------------------------------
-          NoChanges = Standard_False;
+          NoChanges = false;
           TheCurve[NbCurves].SetConeQuadValues(Cone,
                                                Qxx,
                                                Qyy,
@@ -1252,20 +1238,20 @@ void IntAna_IntQuadQuad::Perform(const gp_Cone&        Cone,
           {
             if (MTFZ1.Value(NewMin) < 0.)
             {
-              TheCurve[NbCurves].SetIsFirstOpen(Standard_True);
+              TheCurve[NbCurves].SetIsFirstOpen(true);
             }
             else
             {
-              TheCurve[NbCurves - 1].SetIsFirstOpen(Standard_True);
+              TheCurve[NbCurves - 1].SetIsFirstOpen(true);
             }
           }
           if (MTFZ1.Value(to) < 0.)
           {
-            TheCurve[NbCurves].SetIsLastOpen(Standard_True);
+            TheCurve[NbCurves].SetIsLastOpen(true);
           }
           else
           {
-            TheCurve[NbCurves - 1].SetIsLastOpen(Standard_True);
+            TheCurve[NbCurves - 1].SetIsLastOpen(true);
           }
           //------------------------------------------------------------
           NbCurves++;
@@ -1317,22 +1303,22 @@ void IntAna_IntQuadQuad::Perform(const gp_Cone&        Cone,
         {
           if (MTFZ1.Value(Theta1) < 0.)
           {
-            TheCurve[NbCurves].SetIsFirstOpen(Standard_True);
+            TheCurve[NbCurves].SetIsFirstOpen(true);
           }
           else
           {
-            TheCurve[NbCurves - 1].SetIsFirstOpen(Standard_True);
+            TheCurve[NbCurves - 1].SetIsFirstOpen(true);
           }
         }
         if (PolZ2.IsARoot(Theta2))
         {
           if (MTFZ1.Value(Theta2) < 0.)
           {
-            TheCurve[NbCurves].SetIsLastOpen(Standard_True);
+            TheCurve[NbCurves].SetIsLastOpen(true);
           }
           else
           {
-            TheCurve[NbCurves - 1].SetIsLastOpen(Standard_True);
+            TheCurve[NbCurves - 1].SetIsLastOpen(true);
           }
         }
         //------------------------------------------------------------
@@ -1382,22 +1368,22 @@ void IntAna_IntQuadQuad::Perform(const gp_Cone&        Cone,
         {
           if (MTFZ1.Value(NewMin) < 0.)
           {
-            TheCurve[NbCurves].SetIsFirstOpen(Standard_True);
+            TheCurve[NbCurves].SetIsFirstOpen(true);
           }
           else
           {
-            TheCurve[NbCurves - 1].SetIsFirstOpen(Standard_True);
+            TheCurve[NbCurves - 1].SetIsFirstOpen(true);
           }
         }
         if (PolZ2.IsARoot(Theta2))
         {
           if (MTFZ1.Value(Theta2) < 0.)
           {
-            TheCurve[NbCurves].SetIsLastOpen(Standard_True);
+            TheCurve[NbCurves].SetIsLastOpen(true);
           }
           else
           {
-            TheCurve[NbCurves - 1].SetIsLastOpen(Standard_True);
+            TheCurve[NbCurves - 1].SetIsLastOpen(true);
           }
         }
         //------------------------------------------------------------
@@ -1424,10 +1410,10 @@ void IntAna_IntQuadQuad::Perform(const gp_Cone&        Cone,
 //=======================================================================
 void IntAna_IntQuadQuad::InternalSetNextAndPrevious()
 {
-  Standard_Boolean NotLastOpenC2, NotFirstOpenC2;
-  Standard_Integer c1, c2;
-  Standard_Real    aEps, aEPSILON_DISTANCE;
-  Standard_Real    DInfC1, DSupC1, DInfC2, DSupC2;
+  bool   NotLastOpenC2, NotFirstOpenC2;
+  int    c1, c2;
+  double aEps, aEPSILON_DISTANCE;
+  double DInfC1, DSupC1, DInfC2, DSupC2;
   //
   aEps              = 0.0000001;
   aEPSILON_DISTANCE = 0.0000000001;
@@ -1448,11 +1434,11 @@ void IntAna_IntQuadQuad::InternalSetNextAndPrevious()
       NotLastOpenC2  = !TheCurve[c2].IsLastOpen();
       NotFirstOpenC2 = !TheCurve[c2].IsFirstOpen();
       TheCurve[c2].Domain(DInfC2, DSupC2);
-      if (TheCurve[c1].IsFirstOpen() == Standard_False)
+      if (!TheCurve[c1].IsFirstOpen())
       {
         if (NotLastOpenC2)
         {
-          if (Abs(DInfC1 - DSupC2) <= aEps
+          if (std::abs(DInfC1 - DSupC2) <= aEps
               && (TheCurve[c1].Value(DInfC1).Distance(TheCurve[c2].Value(DSupC2))
                   < aEPSILON_DISTANCE))
           {
@@ -1462,7 +1448,7 @@ void IntAna_IntQuadQuad::InternalSetNextAndPrevious()
         }
         if (NotFirstOpenC2)
         {
-          if (Abs(DInfC1 - DInfC2) <= aEps
+          if (std::abs(DInfC1 - DInfC2) <= aEps
               && (TheCurve[c1].Value(DInfC1).Distance(TheCurve[c2].Value(DInfC2))
                   < aEPSILON_DISTANCE))
           {
@@ -1471,11 +1457,11 @@ void IntAna_IntQuadQuad::InternalSetNextAndPrevious()
           }
         }
       }
-      if (TheCurve[c1].IsLastOpen() == Standard_False)
+      if (!TheCurve[c1].IsLastOpen())
       {
         if (NotLastOpenC2)
         {
-          if (Abs(DSupC1 - DSupC2) <= aEps
+          if (std::abs(DSupC1 - DSupC2) <= aEps
               && (TheCurve[c1].Value(DSupC1).Distance(TheCurve[c2].Value(DSupC2))
                   < aEPSILON_DISTANCE))
           {
@@ -1486,7 +1472,7 @@ void IntAna_IntQuadQuad::InternalSetNextAndPrevious()
         }
         if (NotFirstOpenC2)
         {
-          if (Abs(DSupC1 - DInfC2) <= aEps
+          if (std::abs(DSupC1 - DInfC2) <= aEps
               && (TheCurve[c1].Value(DSupC1).Distance(TheCurve[c2].Value(DInfC2))
                   < aEPSILON_DISTANCE))
           {
@@ -1501,7 +1487,7 @@ void IntAna_IntQuadQuad::InternalSetNextAndPrevious()
 
 //=================================================================================================
 
-Standard_Boolean IntAna_IntQuadQuad::HasPreviousCurve(const Standard_Integer I) const
+bool IntAna_IntQuadQuad::HasPreviousCurve(const int I) const
 {
   if (!done)
   {
@@ -1517,14 +1503,14 @@ Standard_Boolean IntAna_IntQuadQuad::HasPreviousCurve(const Standard_Integer I) 
   }
   if (previouscurve[I - 1])
   {
-    return Standard_True;
+    return true;
   }
-  return Standard_False;
+  return false;
 }
 
 //=================================================================================================
 
-Standard_Boolean IntAna_IntQuadQuad::HasNextCurve(const Standard_Integer I) const
+bool IntAna_IntQuadQuad::HasNextCurve(const int I) const
 {
   if (!done)
   {
@@ -1540,26 +1526,25 @@ Standard_Boolean IntAna_IntQuadQuad::HasNextCurve(const Standard_Integer I) cons
   }
   if (nextcurve[I - 1])
   {
-    return Standard_True;
+    return true;
   }
-  return (Standard_False);
+  return (false);
 }
 
 //=================================================================================================
 
-Standard_Integer IntAna_IntQuadQuad::PreviousCurve(const Standard_Integer I,
-                                                   Standard_Boolean&      theOpposite) const
+int IntAna_IntQuadQuad::PreviousCurve(const int I, bool& theOpposite) const
 {
   if (HasPreviousCurve(I))
   {
     if (previouscurve[I - 1] > 0)
     {
-      theOpposite = Standard_False;
+      theOpposite = false;
       return (previouscurve[I - 1]);
     }
     else
     {
-      theOpposite = Standard_True;
+      theOpposite = true;
       return (-previouscurve[I - 1]);
     }
   }
@@ -1571,21 +1556,12 @@ Standard_Integer IntAna_IntQuadQuad::PreviousCurve(const Standard_Integer I,
 
 //=================================================================================================
 
-Standard_Integer IntAna_IntQuadQuad::NextCurve(const Standard_Integer I,
-                                               Standard_Boolean&      theOpposite) const
+int IntAna_IntQuadQuad::NextCurve(const int I, bool& theOpposite) const
 {
   if (HasNextCurve(I))
   {
-    if (nextcurve[I] > 0)
-    {
-      theOpposite = Standard_False;
-      return (nextcurve[I - 1]);
-    }
-    else
-    {
-      theOpposite = Standard_True;
-      return (-nextcurve[I - 1]);
-    }
+    theOpposite = nextcurve[I - 1] < 0;
+    return std::abs(nextcurve[I - 1]);
   }
   else
   {
@@ -1595,7 +1571,7 @@ Standard_Integer IntAna_IntQuadQuad::NextCurve(const Standard_Integer I,
 
 //=================================================================================================
 
-const IntAna_Curve& IntAna_IntQuadQuad::Curve(const Standard_Integer i) const
+const IntAna_Curve& IntAna_IntQuadQuad::Curve(const int i) const
 {
   if (!done)
   {
@@ -1614,7 +1590,7 @@ const IntAna_Curve& IntAna_IntQuadQuad::Curve(const Standard_Integer i) const
 
 //=================================================================================================
 
-const gp_Pnt& IntAna_IntQuadQuad::Point(const Standard_Integer i) const
+const gp_Pnt& IntAna_IntQuadQuad::Point(const int i) const
 {
   if (!done)
   {
@@ -1633,9 +1609,9 @@ const gp_Pnt& IntAna_IntQuadQuad::Point(const Standard_Integer i) const
 
 //=================================================================================================
 
-void IntAna_IntQuadQuad::Parameters(const Standard_Integer, // i,
-                                    Standard_Real&,
-                                    Standard_Real&) const
+void IntAna_IntQuadQuad::Parameters(const int, // i,
+                                    double&,
+                                    double&) const
 {
   std::cout << "IntAna_IntQuadQuad::Parameters(...) is not yet implemented" << std::endl;
 }
@@ -1665,8 +1641,6 @@ Out[15]= Q1 + d  Qzz r  + Qxx r  Cos[t]  + Qyy r  Sin[t]  +
 
 In[16]:= QQ=%
 
-
-
 In[17]:= Collect[QQ,r]
 Collect[QQ,r]
 
@@ -1691,23 +1665,23 @@ Out[17]= Q1 + r (2 d Qz + 2 Qx Cos[t] + 2 Qy Sin[t]) +
 //*** + Q1                                                           ***
 //**********************************************************************
 // FortranForm= ( DIS = QQ1 QQ1 - 4 QQ0 QQ2  ) / 4
-//   -  d**2*Qz**2 - d**2*Qzz*Q1 + (Qx**2 - Qxx*Q1)*Cos(t)**2 +
+//   -  d**2*Qz**2 - d**2*Qzz*Q1 + (Qx**2 - Qxx*Q1)*std::cos(t)**2 +
 //   -   (2*d*Qy*Qz - 2*d*Qyz*Q1)*Sin(t) + (Qy**2 - Qyy*Q1)*Sin(t)**2 +
-//   -   Cos(t)*(2*d*Qx*Qz - 2*d*Qxz*Q1 + (2*Qx*Qy - 2*Qxy*Q1)*Sin(t))
+//   -   std::cos(t)*(2*d*Qx*Qz - 2*d*Qxz*Q1 + (2*Qx*Qy - 2*Qxy*Q1)*Sin(t))
 //**********************************************************************
 // modified by NIZNHY-PKV Fri Dec  2 10:56:03 2005f
 /*
 static
-  void DumpCurve(const Standard_Integer aIndex,
+  void DumpCurve(const int aIndex,
          IntAna_Curve& aC);
 //=================================================================================================
 
-void DumpCurve(const Standard_Integer aIndex,
+void DumpCurve(const int aIndex,
            IntAna_Curve& aC)
 {
-  Standard_Boolean bIsOpen, bIsConstant, bIsFirstOpen, bIsLastOpen;
-  Standard_Integer i, aNb;
-  Standard_Real aT1, aT2, aT, dT;
+  bool bIsOpen, bIsConstant, bIsFirstOpen, bIsLastOpen;
+  int i, aNb;
+  double aT1, aT2, aT, dT;
   gp_Pnt aP;
   //
   aC.Domain(aT1, aT2);

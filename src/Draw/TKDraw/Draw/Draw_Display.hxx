@@ -28,9 +28,9 @@ class gp_Pnt2d;
 class gp_Circ;
 class gp_Circ2d;
 
-//! Use to  draw in a 3d or a 2d view.
+//! Use to draw in a 3d or a 2d view.
 //!
-//! * The  3d methods draw in the 3d  system,  in a 2d
+//! * The 3d methods draw in the 3d system, in a 2d
 //! view the drawing is projected on X,Y.
 //!
 //! * The 2d methods draw in the projection plane.
@@ -48,7 +48,7 @@ public:
   Standard_EXPORT void SetColor(const Draw_Color& col) const;
 
   //! Set the drawing mode, 3 = copy, 6 = xor
-  Standard_EXPORT void SetMode(const Standard_Integer M) const;
+  Standard_EXPORT void SetMode(const int M) const;
 
   Standard_EXPORT void Flush() const;
 
@@ -64,51 +64,43 @@ public:
 
   Standard_EXPORT void Draw(const gp_Pnt2d& p1, const gp_Pnt2d& p2);
 
-  //! Draw  a  circle   <C> from  angle <A1>   to  <A2>
-  //! (Radians). if ModifyWithZoom  = 0,  then
+  //! Draw a circle <C> from angle <A1> to <A2>
+  //! (Radians). if ModifyWithZoom = 0, then
   //! rayon of circle is convert to Integer.
-  Standard_EXPORT void Draw(const gp_Circ&         C,
-                            const Standard_Real    A1,
-                            const Standard_Real    A2,
-                            const Standard_Boolean ModifyWithZoom = Standard_True);
+  Standard_EXPORT void Draw(const gp_Circ& C,
+                            const double   A1,
+                            const double   A2,
+                            const bool     ModifyWithZoom = true);
 
-  //! Draw  a 2D circle  <C>  from angle   <A1> to <A2>
-  //! (Radians). if ModifyWithZoom  = 0,  then
+  //! Draw a 2D circle <C> from angle <A1> to <A2>
+  //! (Radians). if ModifyWithZoom = 0, then
   //! rayon of circle is convert to Integer.
-  Standard_EXPORT void Draw(const gp_Circ2d&       C,
-                            const Standard_Real    A1,
-                            const Standard_Real    A2,
-                            const Standard_Boolean ModifyWithZoom = Standard_True);
+  Standard_EXPORT void Draw(const gp_Circ2d& C,
+                            const double     A1,
+                            const double     A2,
+                            const bool       ModifyWithZoom = true);
 
-  Standard_EXPORT void DrawMarker(const gp_Pnt&          pt,
-                                  const Draw_MarkerShape S,
-                                  const Standard_Integer Size = 5);
+  Standard_EXPORT void DrawMarker(const gp_Pnt& pt, const Draw_MarkerShape S, const int Size = 5);
 
-  Standard_EXPORT void DrawMarker(const gp_Pnt2d&        pt,
-                                  const Draw_MarkerShape S,
-                                  const Standard_Integer Size = 5);
+  Standard_EXPORT void DrawMarker(const gp_Pnt2d& pt, const Draw_MarkerShape S, const int Size = 5);
 
-  Standard_EXPORT void DrawMarker(const gp_Pnt&          pt,
-                                  const Draw_MarkerShape S,
-                                  const Standard_Real    Size);
+  Standard_EXPORT void DrawMarker(const gp_Pnt& pt, const Draw_MarkerShape S, const double Size);
 
-  Standard_EXPORT void DrawMarker(const gp_Pnt2d&        pt,
-                                  const Draw_MarkerShape S,
-                                  const Standard_Real    Size);
+  Standard_EXPORT void DrawMarker(const gp_Pnt2d& pt, const Draw_MarkerShape S, const double Size);
 
-  Standard_EXPORT void DrawString(const gp_Pnt& pt, const Standard_CString S);
+  Standard_EXPORT void DrawString(const gp_Pnt& pt, const char* S);
 
-  Standard_EXPORT void DrawString(const gp_Pnt2d& pt, const Standard_CString S);
+  Standard_EXPORT void DrawString(const gp_Pnt2d& pt, const char* S);
 
-  Standard_EXPORT void DrawString(const gp_Pnt&          pt,
-                                  const Standard_CString S,
-                                  const Standard_Real    moveX,
-                                  const Standard_Real    moveY);
+  Standard_EXPORT void DrawString(const gp_Pnt& pt,
+                                  const char*   S,
+                                  const double  moveX,
+                                  const double  moveY);
 
-  Standard_EXPORT void DrawString(const gp_Pnt2d&        pt,
-                                  const Standard_CString S,
-                                  const Standard_Real    moveX,
-                                  const Standard_Real    moveY);
+  Standard_EXPORT void DrawString(const gp_Pnt2d& pt,
+                                  const char*     S,
+                                  const double    moveX,
+                                  const double    moveY);
 
   //! Returns the 2D projection of a 3D point.
   Standard_EXPORT gp_Pnt2d Project(const gp_Pnt& pt) const;
@@ -117,22 +109,19 @@ public:
   Standard_EXPORT void Project(const gp_Pnt& pt, gp_Pnt2d& pt2d) const;
 
   //! Returns the current Zoom value.
-  Standard_EXPORT Standard_Real Zoom() const;
+  Standard_EXPORT double Zoom() const;
 
-  //! Returns the   identifier  of the  view   where the
+  //! Returns the identifier of the view where the
   //! display is drawing.
-  Standard_EXPORT Standard_Integer ViewId() const;
+  Standard_EXPORT int ViewId() const;
 
-  //! Returns  True  if  the  last   drawing   operations
-  //! generated  a pick hit.  When HasPicked is True the
+  //! Returns True if the last drawing operations
+  //! generated a pick hit. When HasPicked is True the
   //! Drawing should be resumed.
   //!
-  //! This function is used to shorten the  drawing when
+  //! This function is used to shorten the drawing when
   //! picking and to save the picked sub-parts.
-  Standard_EXPORT Standard_Boolean HasPicked() const;
-
-protected:
-private:
+  Standard_EXPORT bool HasPicked() const;
 };
 
 #endif // _Draw_Display_HeaderFile

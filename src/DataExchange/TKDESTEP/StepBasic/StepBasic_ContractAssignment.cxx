@@ -24,11 +24,11 @@ IMPLEMENT_STANDARD_RTTIEXT(StepBasic_ContractAssignment, Standard_Transient)
 
 //=================================================================================================
 
-StepBasic_ContractAssignment::StepBasic_ContractAssignment() {}
+StepBasic_ContractAssignment::StepBasic_ContractAssignment() = default;
 
 //=================================================================================================
 
-void StepBasic_ContractAssignment::Init(const Handle(StepBasic_Contract)& aAssignedContract)
+void StepBasic_ContractAssignment::Init(const occ::handle<StepBasic_Contract>& aAssignedContract)
 {
 
   theAssignedContract = aAssignedContract;
@@ -36,7 +36,7 @@ void StepBasic_ContractAssignment::Init(const Handle(StepBasic_Contract)& aAssig
 
 //=================================================================================================
 
-Handle(StepBasic_Contract) StepBasic_ContractAssignment::AssignedContract() const
+occ::handle<StepBasic_Contract> StepBasic_ContractAssignment::AssignedContract() const
 {
   return theAssignedContract;
 }
@@ -44,7 +44,7 @@ Handle(StepBasic_Contract) StepBasic_ContractAssignment::AssignedContract() cons
 //=================================================================================================
 
 void StepBasic_ContractAssignment::SetAssignedContract(
-  const Handle(StepBasic_Contract)& aAssignedContract)
+  const occ::handle<StepBasic_Contract>& aAssignedContract)
 {
   theAssignedContract = aAssignedContract;
 }

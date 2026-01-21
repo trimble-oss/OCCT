@@ -23,14 +23,14 @@ IMPLEMENT_STANDARD_RTTIEXT(StepFEA_ElementGeometricRelationship, Standard_Transi
 
 //=================================================================================================
 
-StepFEA_ElementGeometricRelationship::StepFEA_ElementGeometricRelationship() {}
+StepFEA_ElementGeometricRelationship::StepFEA_ElementGeometricRelationship() = default;
 
 //=================================================================================================
 
 void StepFEA_ElementGeometricRelationship::Init(
-  const StepFEA_ElementOrElementGroup&                        aElementRef,
-  const Handle(StepElement_AnalysisItemWithinRepresentation)& aItem,
-  const StepElement_ElementAspect&                            aAspect)
+  const StepFEA_ElementOrElementGroup&                             aElementRef,
+  const occ::handle<StepElement_AnalysisItemWithinRepresentation>& aItem,
+  const StepElement_ElementAspect&                                 aAspect)
 {
 
   theElementRef = aElementRef;
@@ -57,8 +57,8 @@ void StepFEA_ElementGeometricRelationship::SetElementRef(
 
 //=================================================================================================
 
-Handle(StepElement_AnalysisItemWithinRepresentation) StepFEA_ElementGeometricRelationship::Item()
-  const
+occ::handle<StepElement_AnalysisItemWithinRepresentation> StepFEA_ElementGeometricRelationship::
+  Item() const
 {
   return theItem;
 }
@@ -66,7 +66,7 @@ Handle(StepElement_AnalysisItemWithinRepresentation) StepFEA_ElementGeometricRel
 //=================================================================================================
 
 void StepFEA_ElementGeometricRelationship::SetItem(
-  const Handle(StepElement_AnalysisItemWithinRepresentation)& aItem)
+  const occ::handle<StepElement_AnalysisItemWithinRepresentation>& aItem)
 {
   theItem = aItem;
 }

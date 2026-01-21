@@ -22,33 +22,31 @@ IMPLEMENT_STANDARD_RTTIEXT(XmlMXCAFDoc_VisMaterialToolDriver, XmlMDF_ADriver)
 //=================================================================================================
 
 XmlMXCAFDoc_VisMaterialToolDriver::XmlMXCAFDoc_VisMaterialToolDriver(
-  const Handle(Message_Messenger)& theMsgDriver)
+  const occ::handle<Message_Messenger>& theMsgDriver)
     : XmlMDF_ADriver(theMsgDriver, "xcaf", "VisMaterialTool")
 {
-  //
 }
 
 //=================================================================================================
 
-Handle(TDF_Attribute) XmlMXCAFDoc_VisMaterialToolDriver::NewEmpty() const
+occ::handle<TDF_Attribute> XmlMXCAFDoc_VisMaterialToolDriver::NewEmpty() const
 {
   return new XCAFDoc_VisMaterialTool();
 }
 
 //=================================================================================================
 
-Standard_Boolean XmlMXCAFDoc_VisMaterialToolDriver::Paste(const XmlObjMgt_Persistent&,
-                                                          const Handle(TDF_Attribute)&,
-                                                          XmlObjMgt_RRelocationTable&) const
+bool XmlMXCAFDoc_VisMaterialToolDriver::Paste(const XmlObjMgt_Persistent&,
+                                              const occ::handle<TDF_Attribute>&,
+                                              XmlObjMgt_RRelocationTable&) const
 {
-  return Standard_True;
+  return true;
 }
 
 //=================================================================================================
 
-void XmlMXCAFDoc_VisMaterialToolDriver::Paste(const Handle(TDF_Attribute)&,
+void XmlMXCAFDoc_VisMaterialToolDriver::Paste(const occ::handle<TDF_Attribute>&,
                                               XmlObjMgt_Persistent&,
                                               XmlObjMgt_SRelocationTable&) const
 {
-  //
 }

@@ -27,7 +27,7 @@
 
 //=================================================================================================
 
-ProjLib_Torus::ProjLib_Torus() {}
+ProjLib_Torus::ProjLib_Torus() = default;
 
 //=================================================================================================
 
@@ -50,8 +50,8 @@ void ProjLib_Torus::Init(const gp_Torus& To)
 {
   myType       = GeomAbs_OtherCurve;
   myTorus      = To;
-  myIsPeriodic = Standard_False;
-  isDone       = Standard_False;
+  myIsPeriodic = false;
+  isDone       = false;
 }
 
 //=======================================================================
@@ -63,18 +63,18 @@ void ProjLib_Torus::Init(const gp_Torus& To)
 //           ( in order to avoid to divide by Radius)
 //                / X = (1+cosV)*cosU        U = Atan(Y/X)
 //            P = | Y = (1+cosV)*sinU   ==>
-//                \ Z = sinV                 V = ASin( Z)
+//                \ Z = sinV                 V = std::asin( Z)
 //=======================================================================
 
 static gp_Pnt2d EvalPnt2d(const gp_Vec& Ve, const gp_Torus& To)
 {
-  Standard_Real X = Ve.Dot(gp_Vec(To.Position().XDirection()));
-  Standard_Real Y = Ve.Dot(gp_Vec(To.Position().YDirection()));
-  Standard_Real U, V;
+  double X = Ve.Dot(gp_Vec(To.Position().XDirection()));
+  double Y = Ve.Dot(gp_Vec(To.Position().YDirection()));
+  double U, V;
 
-  if (Abs(X) > Precision::PConfusion() || Abs(Y) > Precision::PConfusion())
+  if (std::abs(X) > Precision::PConfusion() || std::abs(Y) > Precision::PConfusion())
   {
-    U = ATan2(Y, X);
+    U = std::atan2(Y, X);
   }
   else
   {
@@ -107,24 +107,24 @@ void ProjLib_Torus::Project(const gp_Circ& C)
       || C.Position().Direction().IsParallel(myTorus.Position().Direction(), Precision::Angular()))
   {
     // Iso V
-    gp_Pnt2d      P1 = EvalPnt2d(Xc, myTorus); // evaluate U1
-    gp_Pnt2d      P2 = EvalPnt2d(Yc, myTorus); // evaluate U2
-    Standard_Real Z  = OC.Dot(myTorus.Position().Direction());
+    gp_Pnt2d P1 = EvalPnt2d(Xc, myTorus); // evaluate U1
+    gp_Pnt2d P2 = EvalPnt2d(Yc, myTorus); // evaluate U2
+    double   Z  = OC.Dot(myTorus.Position().Direction());
     Z /= myTorus.MinorRadius();
 
-    Standard_Real V;
+    double V;
 
     if (Z > 1.)
     {
-      V = M_PI / 2.; // protection stupide
-    } // contre les erreurs de calcul
+      V = M_PI / 2.; // simple protection
+    } // against calculation errors
     else if (Z < -1.)
-    {                // il arrive que Z soit legerement
-      V = -M_PI / 2; // superieur a 1.
+    {                // it happens that Z is slightly
+      V = -M_PI / 2; // greater than 1.
     }
     else
     {
-      V = ASin(Z);
+      V = std::asin(Z);
     }
 
     if (C.Radius() < myTorus.MajorRadius())
@@ -138,9 +138,9 @@ void ProjLib_Torus::Project(const gp_Circ& C)
     P1.SetY(V);
     P2.SetY(V);
     gp_Vec2d V2d(P1, P2);
-    // Normalement Abs( P1.X() - P2.X()) = PI/2
+    // Normalement std::abs( P1.X() - P2.X()) = PI/2
     // Si != PI/2, on a traverse la periode => On reverse la Direction
-    if (Abs(P1.X() - P2.X()) > M_PI)
+    if (std::abs(P1.X() - P2.X()) > M_PI)
       V2d.Reverse();
 
     gp_Dir2d D2(V2d);
@@ -151,12 +151,12 @@ void ProjLib_Torus::Project(const gp_Circ& C)
   else
   {
     // Iso U  -> U = angle( Xt, OC)
-    Standard_Real U = Xt.AngleWithRef(OC, Xt ^ Yt);
+    double U = Xt.AngleWithRef(OC, Xt ^ Yt);
     if (U < 0.)
       U += 2 * M_PI;
 
     // Origine de la droite
-    Standard_Real V1 = OC.AngleWithRef(Xc, OC ^ Zt);
+    double V1 = OC.AngleWithRef(Xc, OC ^ Zt);
     if (V1 < 0.)
       V1 += 2 * M_PI;
 
@@ -171,7 +171,7 @@ void ProjLib_Torus::Project(const gp_Circ& C)
 
     myLin = gp_Lin2d(P1, D2);
   }
-  isDone = Standard_True;
+  isDone = true;
 }
 
 void ProjLib_Torus::Project(const gp_Lin& L)

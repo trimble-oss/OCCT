@@ -24,48 +24,50 @@
 #include <IFSelect_ShareOut.hxx>
 #include <IFSelect_Transformer.hxx>
 #include <IFSelect_WorkSession.hxx>
-#include <Interface_Macros.hxx>
+#include <MoniTool_Macros.hxx>
 #include <Message.hxx>
 #include <Message_Messenger.hxx>
 #include <OSD_OpenFile.hxx>
 #include <Standard_Transient.hxx>
 #include <TCollection_AsciiString.hxx>
 #include <TCollection_HAsciiString.hxx>
-#include <TColStd_HSequenceOfInteger.hxx>
+#include <Standard_Integer.hxx>
+#include <NCollection_Sequence.hxx>
+#include <NCollection_HSequence.hxx>
 
-#include <stdio.h>
+#include <cstdio>
 static int deja = 0;
 
-IFSelect_SessionFile::IFSelect_SessionFile(const Handle(IFSelect_WorkSession)& WS)
+IFSelect_SessionFile::IFSelect_SessionFile(const occ::handle<IFSelect_WorkSession>& WS)
 {
   ClearLines();
-  themode = Standard_False;
+  themode = false;
   if (!deja)
-  { // au moins celui-la :
-    Handle(IFSelect_BasicDumper) basedumper = new IFSelect_BasicDumper;
-    deja                                    = 1;
+  { // at least this one :
+    occ::handle<IFSelect_BasicDumper> basedumper = new IFSelect_BasicDumper;
+    deja                                         = 1;
   }
-  thedone    = Standard_False;
+  thedone    = false;
   thelastgen = 0;
   thesess    = WS;
 }
 
-IFSelect_SessionFile::IFSelect_SessionFile(const Handle(IFSelect_WorkSession)& WS,
-                                           const Standard_CString              filename)
+IFSelect_SessionFile::IFSelect_SessionFile(const occ::handle<IFSelect_WorkSession>& WS,
+                                           const char*                              filename)
 {
   ClearLines();
-  themode = Standard_True;
+  themode = true;
   if (!deja)
-  { // au moins celui-la :
-    Handle(IFSelect_BasicDumper) basedumper = new IFSelect_BasicDumper;
-    deja                                    = 1;
+  { // at least this one :
+    occ::handle<IFSelect_BasicDumper> basedumper = new IFSelect_BasicDumper;
+    deja                                         = 1;
   }
-  thedone    = Standard_False;
-  theownflag = Standard_False;
+  thedone    = false;
+  theownflag = false;
   thelastgen = 0;
   thesess    = WS;
   thedone    = (Write(filename) == 0);
-  //  Close fait par Write (selon les cas)
+  //  Close done by Write (depending on cases)
 }
 
 void IFSelect_SessionFile::ClearLines()
@@ -74,17 +76,17 @@ void IFSelect_SessionFile::ClearLines()
   thenl = 0;
 }
 
-Standard_Integer IFSelect_SessionFile::NbLines() const
+int IFSelect_SessionFile::NbLines() const
 {
   return thelist.Length();
 }
 
-const TCollection_AsciiString& IFSelect_SessionFile::Line(const Standard_Integer num) const
+const TCollection_AsciiString& IFSelect_SessionFile::Line(const int num) const
 {
   return thelist.Value(num);
 }
 
-void IFSelect_SessionFile::AddLine(const Standard_CString line)
+void IFSelect_SessionFile::AddLine(const char* line)
 {
   thelist.Append(TCollection_AsciiString(line));
 }
@@ -95,44 +97,44 @@ void IFSelect_SessionFile::RemoveLastLine()
     thelist.Remove(thelist.Length());
 }
 
-Standard_Boolean IFSelect_SessionFile::WriteFile(const Standard_CString filename)
+bool IFSelect_SessionFile::WriteFile(const char* filename)
 {
-  FILE*            lefic = OSD_OpenFile(filename, "w");
-  Standard_Integer nbl   = thelist.Length();
-  for (Standard_Integer i = 1; i <= nbl; i++)
+  FILE* lefic = OSD_OpenFile(filename, "w");
+  int   nbl   = thelist.Length();
+  for (int i = 1; i <= nbl; i++)
     fprintf(lefic, "%s\n", thelist.Value(i).ToCString());
   fclose(lefic);
   ClearLines();
-  return Standard_True;
+  return true;
 }
 
-Standard_Boolean IFSelect_SessionFile::ReadFile(const Standard_CString filename)
+bool IFSelect_SessionFile::ReadFile(const char* filename)
 {
   char  ligne[201];
   FILE* lefic = OSD_OpenFile(filename, "r");
   if (!lefic)
-    return Standard_False;
+    return false;
   ClearLines();
-  //  read mode : lire les lignes
-  //  On charge le fichier dans "thelist"
-  Standard_Boolean header = Standard_False;
+  //  read mode : read the lines
+  //  Load the file into "thelist"
+  bool header = false;
   for (;;)
   {
     ligne[0] = '\0';
-    if (fgets(ligne, 200, lefic) == NULL || feof(lefic) != 0)
+    if (fgets(ligne, 200, lefic) == nullptr || feof(lefic) != 0)
     {
       break;
     }
     if (ligne[0] == '\0')
       continue;
-    //  D abord ligne initiale ?
+    //  First initial line ?
     if (!header)
     {
       if (!RecognizeFile(ligne))
         break;
-      header = Standard_True;
+      header = true;
     }
-    ligne[200] = '\0'; // fin forcee ...
+    ligne[200] = '\0'; // forced end ...
     TCollection_AsciiString onemore(ligne);
     thelist.Append(onemore);
   }
@@ -140,7 +142,7 @@ Standard_Boolean IFSelect_SessionFile::ReadFile(const Standard_CString filename)
   return header;
 }
 
-Standard_Boolean IFSelect_SessionFile::RecognizeFile(const Standard_CString headerline)
+bool IFSelect_SessionFile::RecognizeFile(const char* headerline)
 {
   Message_Messenger::StreamBuffer sout = Message::SendInfo();
 
@@ -148,23 +150,23 @@ Standard_Boolean IFSelect_SessionFile::RecognizeFile(const Standard_CString head
   if (theline.Length() != 4)
   {
     sout << "File Form Incorrect" << std::endl;
-    return Standard_False;
+    return false;
   }
-  Handle(Standard_Type) sesstype = thesess->DynamicType();
+  occ::handle<Standard_Type> sesstype = thesess->DynamicType();
   if (!theline.Value(1).IsEqual("!XSTEP") || !theline.Value(2).IsEqual("SESSION")
       || !theline.Value(4).IsEqual(sesstype->Name()))
   {
     sout << "Lineno." << thenl << " : File Header Description Incorrect" << std::endl;
-    return Standard_False;
+    return false;
   }
-  //   Value(3) definit la VERSION du format de fichier
-  return Standard_True;
+  //   Value(3) defines the VERSION of the file format
+  return true;
 }
 
-Standard_Integer IFSelect_SessionFile::Write(const Standard_CString filename)
+int IFSelect_SessionFile::Write(const char* filename)
 {
-  thenewnum             = 0;
-  Standard_Integer stat = WriteSession();
+  thenewnum = 0;
+  int stat  = WriteSession();
   if (stat != 0)
     return stat;
   stat = WriteEnd();
@@ -173,12 +175,12 @@ Standard_Integer IFSelect_SessionFile::Write(const Standard_CString filename)
   return (WriteFile(filename) ? 0 : -1);
 }
 
-Standard_Integer IFSelect_SessionFile::Read(const Standard_CString filename)
+int IFSelect_SessionFile::Read(const char* filename)
 {
   if (!ReadFile(filename))
     return -1;
-  thenewnum             = 0;
-  Standard_Integer stat = ReadSession();
+  thenewnum = 0;
+  int stat  = ReadSession();
   if (stat != 0)
     return stat;
   stat = ReadEnd();
@@ -186,54 +188,54 @@ Standard_Integer IFSelect_SessionFile::Read(const Standard_CString filename)
 }
 
 //  ##################################################################
-//  ########        WriteSession : Ecriture du contenu        ########
+//  ########        WriteSession : Writing the content        ########
 
-Standard_Integer IFSelect_SessionFile::WriteSession()
+int IFSelect_SessionFile::WriteSession()
 {
   char laligne[200];
-  thedone = Standard_True;
-  //  ...  Preparation Specifique
+  thedone = true;
+  //  ...  Specific Preparation
   thenames.Clear();
-  Standard_Integer nbidents = thesess->MaxIdent();
-  thenums                   = new TColStd_HArray1OfInteger(0, nbidents);
+  int nbidents = thesess->MaxIdent();
+  thenums      = new NCollection_HArray1<int>(0, nbidents);
   thenums->Init(0);
-  Standard_Integer i; // svv Jan11 2000 : porting on DEC
+  int i; // svv Jan11 2000 : porting on DEC
   for (i = 1; i <= nbidents; i++)
   {
-    Handle(Standard_Transient) item = thesess->Item(i);
+    occ::handle<Standard_Transient> item = thesess->Item(i);
     if (!item.IsNull())
       thenums->SetValue(i, -1);
   }
 
-  //  ...  ECRITURE
-  sprintf(laligne, "!XSTEP SESSION V1 %s", thesess->DynamicType()->Name());
+  //  ...  WRITING
+  Sprintf(laligne, "!XSTEP SESSION V1 %s", thesess->DynamicType()->Name());
   WriteLine(laligne, '\n');
-  sprintf(laligne, "!GENERALS");
+  Sprintf(laligne, "!GENERALS");
   WriteLine(laligne, '\n');
-  sprintf(laligne, "ErrorHandle %d", (thesess->ErrorHandle() ? 1 : 0));
+  Sprintf(laligne, "ErrorHandle %d", (thesess->ErrorHandle() ? 1 : 0));
   WriteLine(laligne, '\n');
-  Handle(TColStd_HSequenceOfInteger) idents;
-  Standard_Integer                   nb;
-  Handle(TCollection_HAsciiString)   name;
+  occ::handle<NCollection_HSequence<int>> idents;
+  int                                     nb;
+  occ::handle<TCollection_HAsciiString>   name;
 
   idents = thesess->ItemIdents(STANDARD_TYPE(IFSelect_IntParam));
   nb     = idents->Length();
   if (nb > 0)
     WriteLine("!INTEGERS", '\n');
-  Standard_Integer j; // svv Jan11 2000 : porting on DEC
+  int j; // svv Jan11 2000 : porting on DEC
   for (j = 1; j <= nb; j++)
   {
-    i                           = idents->Value(j);
-    Handle(IFSelect_IntParam) P = thesess->IntParam(i);
-    name                        = thesess->Name(P);
+    i                                = idents->Value(j);
+    occ::handle<IFSelect_IntParam> P = thesess->IntParam(i);
+    name                             = thesess->Name(P);
     if (name.IsNull())
     {
       thenewnum++;
       idents->SetValue(i, thenewnum);
-      sprintf(laligne, " #%d %d", thenewnum, P->Value());
+      Sprintf(laligne, " #%d %d", thenewnum, P->Value());
     }
     else
-      sprintf(laligne, " %s %d", name->ToCString(), P->Value());
+      Sprintf(laligne, " %s %d", name->ToCString(), P->Value());
     WriteLine(laligne, '\n');
   }
 
@@ -243,17 +245,17 @@ Standard_Integer IFSelect_SessionFile::WriteSession()
     WriteLine("!TEXTS", '\n');
   for (j = 1; j <= nb; j++)
   {
-    i                                  = idents->Value(j);
-    Handle(TCollection_HAsciiString) P = thesess->TextParam(i);
-    name                               = thesess->Name(P);
+    i                                       = idents->Value(j);
+    occ::handle<TCollection_HAsciiString> P = thesess->TextParam(i);
+    name                                    = thesess->Name(P);
     if (name.IsNull())
     {
       thenewnum++;
       thenums->SetValue(i, thenewnum);
-      sprintf(laligne, " #%d %s", thenewnum, P->ToCString());
+      Sprintf(laligne, " #%d %s", thenewnum, P->ToCString());
     }
     else
-      sprintf(laligne, " %s %s", name->ToCString(), P->ToCString());
+      Sprintf(laligne, " %s %s", name->ToCString(), P->ToCString());
     WriteLine(laligne, '\n');
   }
 
@@ -263,48 +265,48 @@ Standard_Integer IFSelect_SessionFile::WriteSession()
     WriteLine("!SELECTIONS", '\n');
   for (j = 1; j <= nb; j++)
   {
-    i                            = idents->Value(j);
-    Handle(IFSelect_Selection) P = thesess->Selection(i);
+    i                                 = idents->Value(j);
+    occ::handle<IFSelect_Selection> P = thesess->Selection(i);
     NewItem(i, P);
-    //  ..  Ecritures particulieres
-    //  ->  Traiter les principaux sous-types : Extract,AnyList,AnyType
+    //  ..  Particular writings
+    //  ->  Handle the main sub-types : Extract,AnyList,AnyType
     DeclareAndCast(IFSelect_SelectExtract, sxt, P);
     if (!sxt.IsNull())
     {
-      sprintf(laligne, " %c", (sxt->IsDirect() ? 'D' : 'R'));
+      Sprintf(laligne, " %c", (sxt->IsDirect() ? 'D' : 'R'));
       WriteLine(laligne);
     }
     DeclareAndCast(IFSelect_SelectAnyList, sli, P);
     if (!sli.IsNull())
     {
-      SetOwn(Standard_False);
+      SetOwn(false);
       WriteLine(" LIST");
       SendItem(sli->Lower());
       SendItem(sli->Upper());
-      SetOwn(Standard_True);
+      SetOwn(true);
     }
-    //  ..  Ecritures specifiques selon dumpers
+    //  ..  Specific writings according to dumpers
     WriteOwn(P);
     WriteLine("", '\n');
   }
 
-  SetOwn(Standard_False);
+  SetOwn(false);
   if (nb > 0)
     WriteLine("!SOURCES", '\n');
   for (j = 1; j <= nb; j++)
   {
-    i                              = idents->Value(j);
-    Handle(IFSelect_Selection) P   = thesess->Selection(i);
-    Standard_Integer           nbs = thesess->NbSources(P);
+    i                                   = idents->Value(j);
+    occ::handle<IFSelect_Selection> P   = thesess->Selection(i);
+    int                             nbs = thesess->NbSources(P);
     if (nbs == 0)
       continue;
     name = thesess->Name(P);
     if (name.IsNull())
-      sprintf(laligne, " #%d %d", thenums->Value(i), nbs);
+      Sprintf(laligne, " #%d %d", thenums->Value(i), nbs);
     else
-      sprintf(laligne, " %s %d", name->ToCString(), nbs);
+      Sprintf(laligne, " %s %d", name->ToCString(), nbs);
     WriteLine(laligne);
-    for (Standard_Integer k = 1; k <= nbs; k++)
+    for (int k = 1; k <= nbs; k++)
       SendItem(thesess->Source(P, k));
     WriteLine("", '\n');
   }
@@ -315,12 +317,12 @@ Standard_Integer IFSelect_SessionFile::WriteSession()
     WriteLine("!MODIFIERS", '\n');
   for (j = 1; j <= nb; j++)
   {
-    //  Description de base des Modifiers, donc sans Selection ni Dispatch-Rank
-    i                                  = idents->Value(j);
-    Handle(IFSelect_GeneralModifier) P = thesess->GeneralModifier(i);
+    //  Basic description of Modifiers, so without Selection or Dispatch-Rank
+    i                                       = idents->Value(j);
+    occ::handle<IFSelect_GeneralModifier> P = thesess->GeneralModifier(i);
     NewItem(i, P);
-    SetOwn(Standard_True);
-    //  ..  Ecritures specifiques selon dumpers
+    SetOwn(true);
+    //  ..  Specific writings according to dumpers
     WriteOwn(P);
     WriteLine("", '\n');
   }
@@ -331,38 +333,38 @@ Standard_Integer IFSelect_SessionFile::WriteSession()
     WriteLine("!TRANSFORMERS", '\n');
   for (j = 1; j <= nb; j++)
   {
-    //  Description des Transformers
-    i                              = idents->Value(j);
-    Handle(IFSelect_Transformer) P = thesess->Transformer(i);
+    //  Description of Transformers
+    i                                   = idents->Value(j);
+    occ::handle<IFSelect_Transformer> P = thesess->Transformer(i);
     NewItem(i, P);
-    SetOwn(Standard_True);
-    //  ..  Ecritures specifiques selon dumpers
+    SetOwn(true);
+    //  ..  Specific writings according to dumpers
     WriteOwn(P);
     WriteLine("", '\n');
   }
 
-  SetOwn(Standard_False);
+  SetOwn(false);
   idents = thesess->ItemIdents(STANDARD_TYPE(IFSelect_Dispatch));
   nb     = idents->Length();
   if (nb > 0)
     WriteLine("!DISPATCHES", '\n');
   for (j = 1; j <= nb; j++)
   {
-    i                           = idents->Value(j);
-    Handle(IFSelect_Dispatch) P = thesess->Dispatch(i);
+    i                                = idents->Value(j);
+    occ::handle<IFSelect_Dispatch> P = thesess->Dispatch(i);
     NewItem(i, P);
     //  ..  Final Selection
-    SetOwn(Standard_False);
+    SetOwn(false);
     SendItem(P->FinalSelection());
-    SetOwn(Standard_True);
-    //  ..  Ecritures specifiques selon dumpers
+    SetOwn(true);
+    //  ..  Specific writings according to dumpers
     WriteOwn(P);
     WriteLine("", '\n');
   }
 
   WriteLine("!FILENAMING");
-  SetOwn(Standard_False);
-  Handle(TCollection_HAsciiString) namingpart = thesess->FilePrefix();
+  SetOwn(false);
+  occ::handle<TCollection_HAsciiString> namingpart = thesess->FilePrefix();
   if (namingpart->IsEmpty())
     namingpart.Nullify();
   if (namingpart.IsNull())
@@ -387,25 +389,25 @@ Standard_Integer IFSelect_SessionFile::WriteSession()
 
   for (j = 1; j <= nb; j++)
   {
-    i                           = idents->Value(j);
-    Handle(IFSelect_Dispatch) P = thesess->Dispatch(i);
+    i                                = idents->Value(j);
+    occ::handle<IFSelect_Dispatch> P = thesess->Dispatch(i);
     if (!P->HasRootName())
       continue;
     namingpart = P->RootName();
-    SetOwn(Standard_False);
+    SetOwn(false);
     SendItem(P);
-    sprintf(laligne, " %s", namingpart->ToCString());
+    Sprintf(laligne, " %s", namingpart->ToCString());
     WriteLine(laligne, ' ');
     WriteLine("", '\n');
   }
 
-  //   Pour les Modifiers, ATTENTION car il faut respecter l ORDRE effectif
-  //   Or il y a deux listes : Model Modifiers; File Modifiers
-  //   Les Modifiers eux-memes ont deja ete ecrits
-  //   Ici, on ecrit simplement leur utilisation dans l envoi final
-  for (Standard_Integer formod = 1; formod >= 0; formod--)
+  //   For Modifiers, CAUTION because we must respect the effective ORDER
+  //   Now there are two lists : Model Modifiers; File Modifiers
+  //   The Modifiers themselves have already been written
+  //   Here, we simply write their use in the final sending
+  for (int formod = 1; formod >= 0; formod--)
   {
-    idents = thesess->FinalModifierIdents((formod > 0)); // donnes dans l ordre d application
+    idents = thesess->FinalModifierIdents((formod > 0)); // given in application order
     nb     = idents->Length();
     if (nb == 0)
       continue;
@@ -415,11 +417,11 @@ Standard_Integer IFSelect_SessionFile::WriteSession()
       WriteLine("!FILEMODIFIERS", '\n');
     for (j = 1; j <= nb; j++)
     {
-      i                                  = idents->Value(j);
-      Handle(IFSelect_GeneralModifier) P = thesess->GeneralModifier(i);
-      SetOwn(Standard_False);
+      i                                       = idents->Value(j);
+      occ::handle<IFSelect_GeneralModifier> P = thesess->GeneralModifier(i);
+      SetOwn(false);
       SendItem(P);
-      //  ..  Parametres Generaux (les specifiques ont deja ete envoyes)
+      //  ..  General Parameters (the specific ones have already been sent)
       SendItem(P->Selection());
       SendItem(P->Dispatch());
       WriteLine("", '\n');
@@ -431,13 +433,13 @@ Standard_Integer IFSelect_SessionFile::WriteSession()
   return 0;
 }
 
-Standard_Integer IFSelect_SessionFile::WriteEnd()
+int IFSelect_SessionFile::WriteEnd()
 {
-  WriteLine("!XSTEP END", '\n'); // sinon, cf sous-types de SessionFile ...
+  WriteLine("!XSTEP END", '\n'); // otherwise, see SessionFile sub-types ...
   return 0;
 }
 
-void IFSelect_SessionFile::WriteLine(const Standard_CString line, const Standard_Character follow)
+void IFSelect_SessionFile::WriteLine(const char* line, const char follow)
 {
   if (line[0] != '\0')
     thebuff.AssignCat(line);
@@ -453,34 +455,34 @@ void IFSelect_SessionFile::WriteLine(const Standard_CString line, const Standard
   }
 }
 
-Standard_Boolean IFSelect_SessionFile::WriteOwn(const Handle(Standard_Transient)& item)
+bool IFSelect_SessionFile::WriteOwn(const occ::handle<Standard_Transient>& item)
 {
   if (item.IsNull())
-    return Standard_False;
-  SetOwn(Standard_True);
-  Handle(IFSelect_SessionDumper) dumper = IFSelect_SessionDumper::First();
+    return false;
+  SetOwn(true);
+  occ::handle<IFSelect_SessionDumper> dumper = IFSelect_SessionDumper::First();
   while (!dumper.IsNull())
   {
     if (dumper->WriteOwn(*this, item))
       break;
     dumper = dumper->Next();
   }
-  SetOwn(Standard_False);
+  SetOwn(false);
   return (!dumper.IsNull()); // IsNull -> echec
 }
 
 //  ##################################################################
-//  ########        ReadSession  :  Lecture du contenu        ########
+//  ########        ReadSession  :  Content Reading        ########
 
-Standard_Integer IFSelect_SessionFile::ReadSession()
+int IFSelect_SessionFile::ReadSession()
 {
   Message_Messenger::StreamBuffer sout = Message::SendInfo();
 
-  thedone = Standard_True;
-  //  ...  Preparation Specifique
+  thedone = true;
+  //  ...  Specific Preparation
   thenums.Nullify();
   thenames.Clear();
-  //  ..  Donnees generales, controle
+  //  ..  General data, control
   if (!ReadLine())
     return 1;
   if (theline.Length() != 4)
@@ -488,19 +490,19 @@ Standard_Integer IFSelect_SessionFile::ReadSession()
     sout << "File Form Incorrect" << std::endl;
     return 1;
   }
-  Handle(Standard_Type) sesstype = thesess->DynamicType();
+  occ::handle<Standard_Type> sesstype = thesess->DynamicType();
   if (!theline.Value(1).IsEqual("!XSTEP") || !theline.Value(2).IsEqual("SESSION")
       || !theline.Value(4).IsEqual(sesstype->Name()))
   {
     sout << "Lineno." << thenl << " : File Header Description Incorrect" << std::endl;
     return 1;
   }
-  //   Value(3) definit la VERSION du format de fichier
+  //   Value(3) defines the VERSION of the file format
   if (!ReadLine())
     return 1;
 
-  //  ..  Parametres Generaux
-  Standard_Integer rubr = (theline.Length() == 1 && theline.Value(1).IsEqual("!GENERALS"));
+  //  ..  General Parameters
+  int rubr = (theline.Length() == 1 && theline.Value(1).IsEqual("!GENERALS"));
   while (rubr)
   {
     if (!ReadLine())
@@ -509,7 +511,7 @@ Standard_Integer IFSelect_SessionFile::ReadSession()
       continue;
     const TCollection_AsciiString& ungen = theline.Value(1);
     if (ungen.Value(1) == '!')
-      break; // fin des generaux
+      break; // end of generals
     if (ungen.IsEqual("ErrorHandle"))
     {
       if (theline.Length() != 2)
@@ -518,9 +520,9 @@ Standard_Integer IFSelect_SessionFile::ReadSession()
         continue;
       }
       if (theline.Value(2).IsEqual("0"))
-        thesess->SetErrorHandle(Standard_False);
+        thesess->SetErrorHandle(false);
       else if (theline.Value(2).IsEqual("1"))
-        thesess->SetErrorHandle(Standard_True);
+        thesess->SetErrorHandle(true);
       else
       {
         sout << "Lineno." << thenl << " : ErrorHandle Incorrect : " << theline.Value(2)
@@ -535,7 +537,7 @@ Standard_Integer IFSelect_SessionFile::ReadSession()
   }
 
   //  ..  IntParams
-  //   deja fait  if (!ReadLine()) return 1;
+  //   already done  if (!ReadLine()) return 1;
   rubr = (theline.Length() == 1 && theline.Value(1).IsEqual("!INTEGERS"));
   while (rubr)
   {
@@ -548,12 +550,12 @@ Standard_Integer IFSelect_SessionFile::ReadSession()
       sout << "Lineno." << thenl << " : An Integer Parameter is badly defined" << std::endl;
       continue;
     }
-    Handle(IFSelect_IntParam) par = new IFSelect_IntParam;
+    occ::handle<IFSelect_IntParam> par = new IFSelect_IntParam;
     par->SetValue(atoi(theline.Value(2).ToCString()));
     AddItem(par);
   }
 
-  //  .. TextParams (ligne de garde deja lue)
+  //  .. TextParams (guard line already read)
   rubr = (theline.Length() == 1 && theline.Value(1).IsEqual("!TEXTS"));
   while (rubr)
   {
@@ -566,10 +568,10 @@ Standard_Integer IFSelect_SessionFile::ReadSession()
       sout << "Lineno." << thenl << " : A Text Parameter is badly defined" << std::endl;
       continue;
     }
-    //    Attention, un texte peut contenir des blancs ...  repartir de line(thenl)
+    //    Caution, a text can contain blanks ... restart from line(thenl)
     TCollection_AsciiString oneline = thelist.Value(thenl);
-    Standard_Integer        iw = 0, inc = 0;
-    for (Standard_Integer ic = 1; ic <= oneline.Length(); ic++)
+    int                     iw = 0, inc = 0;
+    for (int ic = 1; ic <= oneline.Length(); ic++)
     {
       char unc = oneline.Value(1);
       inc      = ic;
@@ -582,7 +584,7 @@ Standard_Integer IFSelect_SessionFile::ReadSession()
     AddItem(new TCollection_HAsciiString(oneline.ToCString()));
   }
 
-  //  .. Selections (ligne de garde deja lue)
+  //  .. Selections (guard line already read)
   rubr = (theline.Length() == 1 && theline.Value(1).IsEqual("!SELECTIONS"));
   while (rubr)
   {
@@ -595,11 +597,11 @@ Standard_Integer IFSelect_SessionFile::ReadSession()
       sout << "Lineno." << thenl << " : A Selection is badly defined" << std::endl;
       continue;
     }
-    //  ..  Analyse de certains cas generaux
-    Handle(IFSelect_IntParam) low, up;
-    Standard_Integer          firstown = 3;
-    Standard_Integer          direct   = 0;
-    Standard_Integer          numlist  = 0;
+    //  ..  Analysis of certain general cases
+    occ::handle<IFSelect_IntParam> low, up;
+    int                            firstown = 3;
+    int                            direct   = 0;
+    int                            numlist  = 0;
     if (theline.Length() > 2)
     {
       if (theline.Value(3).IsEqual("D"))
@@ -620,7 +622,7 @@ Standard_Integer IFSelect_SessionFile::ReadSession()
       }
       SetLastGeneral(firstown - 1);
     }
-    Handle(Standard_Transient) item; // a fournir ...
+    occ::handle<Standard_Transient> item; // to be provided ...
     ReadOwn(item);
     if (item.IsNull())
       continue;
@@ -662,8 +664,8 @@ Standard_Integer IFSelect_SessionFile::ReadSession()
       sout << "Lineno." << thenl << " : A Source List is not for a Selection" << std::endl;
       continue;
     }
-    Standard_Integer nbs = atoi(theline.Value(2).ToCString());
-    //  .. Differents cas reconnus
+    int nbs = atoi(theline.Value(2).ToCString());
+    //  .. Different recognized cases
     DeclareAndCast(IFSelect_SelectExtract, sxt, sel);
     if (!sxt.IsNull())
     {
@@ -693,12 +695,12 @@ Standard_Integer IFSelect_SessionFile::ReadSession()
     DeclareAndCast(IFSelect_SelectCombine, sco, sel);
     if (!sco.IsNull())
     {
-      for (Standard_Integer j = 1; j <= nbs; j++)
+      for (int j = 1; j <= nbs; j++)
         sco->Add(GetCasted(IFSelect_Selection, ItemValue(j + 2)));
     }
   }
 
-  //  ... Modifiers en tout genre
+  //  ... Modifiers of all kinds
   rubr = (theline.Length() == 1 && theline.Value(1).IsEqual("!MODIFIERS"));
   while (rubr)
   {
@@ -711,7 +713,7 @@ Standard_Integer IFSelect_SessionFile::ReadSession()
       sout << "Lineno." << thenl << " : A Modifier is badly defined" << std::endl;
       continue;
     }
-    Handle(Standard_Transient) item; // a fournir ...
+    occ::handle<Standard_Transient> item; // to be provided ...
     ReadOwn(item);
     if (item.IsNull())
       continue;
@@ -721,7 +723,7 @@ Standard_Integer IFSelect_SessionFile::ReadSession()
       sout << "Lineno." << thenl << " : A Modifier has not been Recognized" << std::endl;
       continue;
     }
-    AddItem(modif, Standard_False); // active plus tard
+    AddItem(modif, false); // active later
   }
 
   //  ... Transformers
@@ -737,7 +739,7 @@ Standard_Integer IFSelect_SessionFile::ReadSession()
       sout << "Lineno." << thenl << " : A Transformer is badly defined" << std::endl;
       continue;
     }
-    Handle(Standard_Transient) item; // a fournir ...
+    occ::handle<Standard_Transient> item; // to be provided ...
     ReadOwn(item);
     if (item.IsNull())
       continue;
@@ -747,10 +749,10 @@ Standard_Integer IFSelect_SessionFile::ReadSession()
       sout << "Lineno." << thenl << " : A Transformer has not been Recognized" << std::endl;
       continue;
     }
-    AddItem(trf, Standard_False); // active plus tard
+    AddItem(trf, false); // active later
   }
 
-  //  ... Dispatches (ligne de garde deja lue)
+  //  ... Dispatches (guard line already read)
   rubr = (theline.Length() == 1 && theline.Value(1).IsEqual("!DISPATCHES"));
   while (rubr)
   {
@@ -765,7 +767,7 @@ Standard_Integer IFSelect_SessionFile::ReadSession()
     }
     DeclareAndCast(IFSelect_Selection, input, ItemValue(3));
     SetLastGeneral(3);
-    Handle(Standard_Transient) item; // a fournir ...
+    occ::handle<Standard_Transient> item; // to be provided ...
     ReadOwn(item);
     if (item.IsNull())
       continue;
@@ -779,8 +781,8 @@ Standard_Integer IFSelect_SessionFile::ReadSession()
     thesess->SetItemSelection(disp, input);
   }
 
-  //  ... FileNaming (ligne de garde deja lue)
-  //  ..  Modifiers deja lus et charges
+  //  ... FileNaming (guard line already read)
+  //  ..  Modifiers already read and loaded
   rubr = (theline.Length() == 4 && theline.Value(1).IsEqual("!FILENAMING"));
   if (rubr)
   {
@@ -806,9 +808,9 @@ Standard_Integer IFSelect_SessionFile::ReadSession()
     thesess->SetFileRoot(disp, theline.Value(2).ToCString());
   }
 
-  //  ... Modifiers (ligne de garde deja lue)
-  //  ... Attention, deux listes (MODELMODIFIERS et FILEMODIFIERS)
-  for (Standard_Integer formod = 1; formod >= 0; formod--)
+  //  ... Modifiers (guard line already read)
+  //  ... Caution, two lists (MODELMODIFIERS and FILEMODIFIERS)
+  for (int formod = 1; formod >= 0; formod--)
   {
     rubr = (theline.Length() == 1
             && ((formod == 1 && theline.Value(1).IsEqual("!MODELMODIFIERS"))
@@ -846,11 +848,11 @@ Standard_Integer IFSelect_SessionFile::ReadSession()
     }
   }
 
-  //  ...  Conclusion : voir ReadEnd (separe)
+  //  ...  Conclusion: see ReadEnd (separate)
   return 0;
 }
 
-Standard_Integer IFSelect_SessionFile::ReadEnd()
+int IFSelect_SessionFile::ReadEnd()
 {
   Message_Messenger::StreamBuffer sout = Message::SendInfo();
   if (theline.Length() != 2 || !theline.Value(1).IsEqual("!XSTEP")
@@ -862,33 +864,33 @@ Standard_Integer IFSelect_SessionFile::ReadEnd()
   return 0;
 }
 
-Standard_Boolean IFSelect_SessionFile::ReadLine()
+bool IFSelect_SessionFile::ReadLine()
 {
   if (thenl >= thelist.Length())
-    return Standard_False;
+    return false;
   thenl++;
-  Standard_CString ligne = thelist.Value(thenl).ToCString();
-  //   Lignes vides ?
+  const char* ligne = thelist.Value(thenl).ToCString();
+  //   Empty lines?
   if (ligne[0] == '\0')
     return ReadLine();
   SplitLine(ligne);
-  return Standard_True;
+  return true;
 }
 
-void IFSelect_SessionFile::SplitLine(const Standard_CString line)
+void IFSelect_SessionFile::SplitLine(const char* line)
 {
   char mot[80];
   theline.Clear();
-  Standard_Integer nbc  = 0;
-  Standard_Boolean word = (line[0] > ' ');
-  for (Standard_Integer i = 0; line[i] != '\0'; i++)
+  int  nbc  = 0;
+  bool word = (line[0] > ' ');
+  for (int i = 0; line[i] != '\0'; i++)
   {
     if (line[i] > ' ')
     {
       if (!word)
       {
         nbc  = 0;
-        word = Standard_True;
+        word = true;
       }
       mot[nbc] = line[i];
       nbc++;
@@ -897,7 +899,7 @@ void IFSelect_SessionFile::SplitLine(const Standard_CString line)
     {
       if (word)
       {
-        word     = Standard_False;
+        word     = false;
         mot[nbc] = '\0';
         theline.Append(TCollection_AsciiString(mot));
       }
@@ -908,20 +910,20 @@ void IFSelect_SessionFile::SplitLine(const Standard_CString line)
   thelastgen = 0;
 }
 
-Standard_Boolean IFSelect_SessionFile::ReadOwn(Handle(Standard_Transient)& item)
+bool IFSelect_SessionFile::ReadOwn(occ::handle<Standard_Transient>& item)
 {
   Message_Messenger::StreamBuffer sout = Message::SendInfo();
 
   if (theline.Length() < 2)
-    return Standard_False;
+    return false;
   const TCollection_AsciiString& type = theline.Value(2);
   if (thelastgen < 2)
-    thelastgen = 2; // mini : ident+type d abord
+    thelastgen = 2; // mini : ident+type first
                     //  thelastgen = theline.Length();
-                    //  for (Standard_Integer i = theline.Length(); i > 0; i --) {
+                    //  for (int i = theline.Length(); i > 0; i --) {
                     //    if (theline.Value(i).Value(1) == ':') thelastgen = i - 1;
                     //  }
-  Handle(IFSelect_SessionDumper) dumper = IFSelect_SessionDumper::First();
+  occ::handle<IFSelect_SessionDumper> dumper = IFSelect_SessionDumper::First();
   while (!dumper.IsNull())
   {
     if (dumper->ReadOwn(*this, type, item))
@@ -933,13 +935,12 @@ Standard_Boolean IFSelect_SessionFile::ReadOwn(Handle(Standard_Transient)& item)
   return (!dumper.IsNull()); // IsNull -> echec
 }
 
-void IFSelect_SessionFile::AddItem(const Handle(Standard_Transient)& item,
-                                   const Standard_Boolean            active)
+void IFSelect_SessionFile::AddItem(const occ::handle<Standard_Transient>& item, const bool active)
 {
   Message_Messenger::StreamBuffer sout = Message::SendInfo();
 
   const TCollection_AsciiString& name = theline.Value(1);
-  Standard_Integer               id   = 0;
+  int                            id   = 0;
   if (!item.IsNull())
   {
     if (name.Value(1) == '#')
@@ -955,34 +956,33 @@ void IFSelect_SessionFile::AddItem(const Handle(Standard_Transient)& item,
   thenames.Bind(name, id);
 }
 
-Standard_Boolean IFSelect_SessionFile::IsDone() const
+bool IFSelect_SessionFile::IsDone() const
 {
   return thedone;
 }
 
-Handle(IFSelect_WorkSession) IFSelect_SessionFile::WorkSession() const
+occ::handle<IFSelect_WorkSession> IFSelect_SessionFile::WorkSession() const
 {
   return thesess;
 }
 
-//  ########                Actions Unitaires d ECRITURE               ########
+//  ########                Unit WRITING Actions               ########
 
-void IFSelect_SessionFile::NewItem(const Standard_Integer            ident,
-                                   const Handle(Standard_Transient)& par)
+void IFSelect_SessionFile::NewItem(const int ident, const occ::handle<Standard_Transient>& par)
 {
   char laligne[100];
   if (!thesess->HasName(par))
   {
     thenewnum++;
     thenums->SetValue(ident, thenewnum);
-    sprintf(laligne, " #%d %s", thenewnum, par->DynamicType()->Name());
+    Sprintf(laligne, " #%d %s", thenewnum, par->DynamicType()->Name());
   }
   else
-    sprintf(laligne, " %s %s", thesess->Name(par)->ToCString(), par->DynamicType()->Name());
+    Sprintf(laligne, " %s %s", thesess->Name(par)->ToCString(), par->DynamicType()->Name());
   WriteLine(laligne);
 }
 
-void IFSelect_SessionFile::SetOwn(const Standard_Boolean mode)
+void IFSelect_SessionFile::SetOwn(const bool mode)
 {
   theownflag = mode;
 }
@@ -993,13 +993,13 @@ void IFSelect_SessionFile::SendVoid()
   WriteLine(" $");
 }
 
-void IFSelect_SessionFile::SendItem(const Handle(Standard_Transient)& par)
+void IFSelect_SessionFile::SendItem(const occ::handle<Standard_Transient>& par)
 {
   Message_Messenger::StreamBuffer sout = Message::SendInfo();
 
-  char             laligne[100];
-  Standard_Integer filenum = 0;
-  Standard_Integer id      = thesess->ItemIdent(par);
+  char laligne[100];
+  int  filenum = 0;
+  int  id      = thesess->ItemIdent(par);
   if (id != 0)
     filenum = thenums->Value(id);
   if (filenum == 0)
@@ -1008,70 +1008,70 @@ void IFSelect_SessionFile::SendItem(const Handle(Standard_Transient)& par)
       sout << "Lineno " << thenl << " --  Unknown Item : "
            << " Type:" << par->DynamicType()->Name() << std::endl; // sout<<Handle par
     SendVoid();
-    thedone = Standard_False;
+    thedone = false;
     return;
   }
   ////  if (theownflag) WriteLine(" :");
   ////  else            WriteLine(" ");
   if (filenum < 0)
-    sprintf(laligne, " :%s", thesess->Name(par)->ToCString());
+    Sprintf(laligne, " :%s", thesess->Name(par)->ToCString());
   else
-    sprintf(laligne, " #%d", filenum);
+    Sprintf(laligne, " #%d", filenum);
   WriteLine(laligne);
 }
 
-void IFSelect_SessionFile::SendText(const Standard_CString text)
+void IFSelect_SessionFile::SendText(const char* text)
 {
   char laligne[100];
-  ////  if (theownflag) sprintf(laligne," :%s",text);
-  sprintf(laligne, " %s", text);
+  ////  if (theownflag) Sprintf(laligne," :%s",text);
+  Sprintf(laligne, " %s", text);
   WriteLine(laligne);
 }
 
-//  ########                Actions Unitaires de LECTURE               ########
+//  ########                Unit READING Actions               ########
 
-void IFSelect_SessionFile::SetLastGeneral(const Standard_Integer lastgen)
+void IFSelect_SessionFile::SetLastGeneral(const int lastgen)
 {
   thelastgen = lastgen;
 }
 
-Standard_Integer IFSelect_SessionFile::NbParams() const
+int IFSelect_SessionFile::NbParams() const
 {
   return theline.Length() - thelastgen;
 }
 
-Standard_Boolean IFSelect_SessionFile::IsVoid(const Standard_Integer num) const
+bool IFSelect_SessionFile::IsVoid(const int num) const
 {
-  Standard_Integer nm = num + thelastgen;
+  int nm = num + thelastgen;
   if (nm <= 0 || nm > theline.Length())
-    return Standard_True;
+    return true;
   const TCollection_AsciiString& term = theline.Value(nm);
   return (term.IsEqual("$") || term.IsEqual(":$"));
 }
 
-Standard_Boolean IFSelect_SessionFile::IsText(const Standard_Integer num) const
+bool IFSelect_SessionFile::IsText(const int num) const
 {
-  Standard_Integer nm = num + thelastgen;
+  int nm = num + thelastgen;
   if (nm <= 0 || nm > theline.Length())
-    return Standard_False;
+    return false;
   const TCollection_AsciiString& term = theline.Value(nm);
   if (term.Value(1) == ':')
-    return Standard_False;
+    return false;
   if (term.Value(1) == '#')
-    return Standard_False;
+    return false;
   if (term.IsEqual("$"))
-    return Standard_False;
-  return Standard_True;
+    return false;
+  return true;
 }
 
-const TCollection_AsciiString& IFSelect_SessionFile::ParamValue(const Standard_Integer num) const
+const TCollection_AsciiString& IFSelect_SessionFile::ParamValue(const int num) const
 {
   return theline.Value(num + thelastgen);
 }
 
-TCollection_AsciiString IFSelect_SessionFile::TextValue(const Standard_Integer num) const
+TCollection_AsciiString IFSelect_SessionFile::TextValue(const int num) const
 {
-  Standard_Integer        nm = num + thelastgen;
+  int                     nm = num + thelastgen;
   TCollection_AsciiString res;
   if (nm <= 0 || nm > theline.Length())
     return res;
@@ -1085,15 +1085,15 @@ TCollection_AsciiString IFSelect_SessionFile::TextValue(const Standard_Integer n
   return res;
 }
 
-Handle(Standard_Transient) IFSelect_SessionFile::ItemValue(const Standard_Integer num) const
+occ::handle<Standard_Transient> IFSelect_SessionFile::ItemValue(const int num) const
 {
   Message_Messenger::StreamBuffer sout = Message::SendInfo();
 
-  Handle(Standard_Transient) res;
-  Standard_Integer           nm = num + thelastgen;
+  occ::handle<Standard_Transient> res;
+  int                             nm = num + thelastgen;
   if (nm <= 0 || nm > theline.Length())
     return res;
-  Standard_Integer        id;
+  int                     id;
   TCollection_AsciiString name = theline.Value(nm);
   if (name.Value(1) == ':')
     name.Remove(1);
@@ -1108,4 +1108,4 @@ Handle(Standard_Transient) IFSelect_SessionFile::ItemValue(const Standard_Intege
   return thesess->Item(id);
 }
 
-void IFSelect_SessionFile::Destroy() {} // agit si File non ferme, sinon ne fait rien
+void IFSelect_SessionFile::Destroy() {} // acts if File not closed, otherwise does nothing

@@ -22,29 +22,29 @@
 #include <TopoDS_Face.hxx>
 #include <TopoDS_Shape.hxx>
 #include <TopoDS_Wire.hxx>
-#include <TopTools_ListOfShape.hxx>
+#include <NCollection_List.hxx>
 
 //=================================================================================================
 
 BOPAlgo_WireSplitter::BOPAlgo_WireSplitter()
-    : BOPAlgo_Algo(),
-      myWES(NULL),
+    : myWES(nullptr),
       myLCB(myAllocator)
 {
 }
 
 //=================================================================================================
 
-BOPAlgo_WireSplitter::BOPAlgo_WireSplitter(const Handle(NCollection_BaseAllocator)& theAllocator)
+BOPAlgo_WireSplitter::BOPAlgo_WireSplitter(
+  const occ::handle<NCollection_BaseAllocator>& theAllocator)
     : BOPAlgo_Algo(theAllocator),
-      myWES(NULL),
+      myWES(nullptr),
       myLCB(myAllocator)
 {
 }
 
 //=================================================================================================
 
-BOPAlgo_WireSplitter::~BOPAlgo_WireSplitter() {}
+BOPAlgo_WireSplitter::~BOPAlgo_WireSplitter() = default;
 
 //=================================================================================================
 
@@ -62,14 +62,14 @@ BOPAlgo_WireEdgeSet& BOPAlgo_WireSplitter::WES()
 
 //=================================================================================================
 
-void BOPAlgo_WireSplitter::SetContext(const Handle(IntTools_Context)& theContext)
+void BOPAlgo_WireSplitter::SetContext(const occ::handle<IntTools_Context>& theContext)
 {
   myContext = theContext;
 }
 
 //=================================================================================================
 
-const Handle(IntTools_Context)& BOPAlgo_WireSplitter::Context()
+const occ::handle<IntTools_Context>& BOPAlgo_WireSplitter::Context()
 {
   return myContext;
 }
@@ -120,8 +120,8 @@ void BOPAlgo_WireSplitter::Perform(const Message_ProgressRange& theRange)
 class BOPAlgo_WS_ConnexityBlock
 {
 public:
-  BOPAlgo_WS_ConnexityBlock() {};
-  ~BOPAlgo_WS_ConnexityBlock() {};
+  BOPAlgo_WS_ConnexityBlock()  = default;
+  ~BOPAlgo_WS_ConnexityBlock() = default;
 
   void SetFace(const TopoDS_Face& theF) { myFace = theF; }
 
@@ -131,17 +131,17 @@ public:
 
   const BOPTools_ConnexityBlock& ConnexityBlock() const { return myCB; }
 
-  void SetContext(const Handle(IntTools_Context)& aContext) { myContext = aContext; }
+  void SetContext(const occ::handle<IntTools_Context>& aContext) { myContext = aContext; }
 
   //
-  const Handle(IntTools_Context)& Context() const { return myContext; }
+  const occ::handle<IntTools_Context>& Context() const { return myContext; }
 
   //
   void SetProgressRange(const Message_ProgressRange& theRange) { myRange = theRange; }
 
   void Perform()
   {
-    Message_ProgressScope aPS(myRange, NULL, 1);
+    Message_ProgressScope aPS(myRange, nullptr, 1);
     if (!aPS.More())
     {
       return;
@@ -150,10 +150,10 @@ public:
   }
 
 protected:
-  TopoDS_Face              myFace;
-  BOPTools_ConnexityBlock  myCB;
-  Handle(IntTools_Context) myContext;
-  Message_ProgressRange    myRange;
+  TopoDS_Face                   myFace;
+  BOPTools_ConnexityBlock       myCB;
+  occ::handle<IntTools_Context> myContext;
+  Message_ProgressRange         myRange;
 };
 
 typedef NCollection_Vector<BOPAlgo_WS_ConnexityBlock> BOPAlgo_VectorOfConnexityBlock;
@@ -162,14 +162,14 @@ typedef NCollection_Vector<BOPAlgo_WS_ConnexityBlock> BOPAlgo_VectorOfConnexityB
 
 void BOPAlgo_WireSplitter::MakeWires(const Message_ProgressRange& theRange)
 {
-  Standard_Boolean                            bIsRegular;
-  Standard_Integer                            aNbVCB, k;
-  TopoDS_Wire                                 aW;
-  BOPTools_ListIteratorOfListOfConnexityBlock aItCB;
-  TopTools_ListIteratorOfListOfShape          aIt;
-  BOPAlgo_VectorOfConnexityBlock              aVCB;
+  bool                                                bIsRegular;
+  int                                                 aNbVCB, k;
+  TopoDS_Wire                                         aW;
+  NCollection_List<BOPTools_ConnexityBlock>::Iterator aItCB;
+  NCollection_List<TopoDS_Shape>::Iterator            aIt;
+  BOPAlgo_VectorOfConnexityBlock                      aVCB;
   //
-  Message_ProgressScope aPSOuter(theRange, NULL, 1);
+  Message_ProgressScope aPSOuter(theRange, nullptr, 1);
   //
   const TopoDS_Face& aF = myWES->Face();
   //
@@ -185,7 +185,7 @@ void BOPAlgo_WireSplitter::MakeWires(const Message_ProgressRange& theRange)
     bIsRegular                   = aCB.IsRegular();
     if (bIsRegular)
     {
-      TopTools_ListOfShape& aLE = aCB.ChangeShapes();
+      NCollection_List<TopoDS_Shape>& aLE = aCB.ChangeShapes();
       BOPAlgo_WireSplitter::MakeWire(aLE, aW);
       myWES->AddShape(aW);
     }
@@ -197,8 +197,8 @@ void BOPAlgo_WireSplitter::MakeWires(const Message_ProgressRange& theRange)
     }
   }
   aNbVCB = aVCB.Length();
-  Message_ProgressScope aPSParallel(aPSOuter.Next(), NULL, aNbVCB);
-  for (Standard_Integer iW = 0; iW < aNbVCB; ++iW)
+  Message_ProgressScope aPSParallel(aPSOuter.Next(), nullptr, aNbVCB);
+  for (int iW = 0; iW < aNbVCB; ++iW)
   {
     aVCB.ChangeValue(iW).SetProgressRange(aPSParallel.Next());
   }
@@ -207,8 +207,8 @@ void BOPAlgo_WireSplitter::MakeWires(const Message_ProgressRange& theRange)
   //===================================================
   for (k = 0; k < aNbVCB; ++k)
   {
-    const BOPAlgo_WS_ConnexityBlock& aCB = aVCB(k);
-    const TopTools_ListOfShape&      aLW = aCB.ConnexityBlock().Loops();
+    const BOPAlgo_WS_ConnexityBlock&      aCB = aVCB(k);
+    const NCollection_List<TopoDS_Shape>& aLW = aCB.ConnexityBlock().Loops();
     aIt.Initialize(aLW);
     for (; aIt.More(); aIt.Next())
     {

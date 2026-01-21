@@ -17,29 +17,27 @@
 #include <Interface_Graph.hxx>
 #include <Standard_Transient.hxx>
 
-//  Comparateur de deux sous-ensembles d un Modele
-//  Au premier  sous-ensemble, est attribue le Status 1
-//  Au deuxieme sous-ensemble, est attribue le Status 2
-//  La partie commune se voit attribuer le Status 3
+//  Comparator of two subsets of a Model
+//  To the first subset, Status 1 is assigned
+//  To the second subset, Status 2 is assigned
+//  The common part is assigned Status 3
 IFGraph_Compare::IFGraph_Compare(const Interface_Graph& agraph)
     : thegraph(agraph)
 {
 }
 
-void IFGraph_Compare::GetFromEntity(const Handle(Standard_Transient)& ent,
-                                    const Standard_Boolean            first)
+void IFGraph_Compare::GetFromEntity(const occ::handle<Standard_Transient>& ent, const bool first)
 {
   IFGraph_AllShared iter(thegraph.Model(), ent);
   GetFromIter(iter, first);
 }
 
-void IFGraph_Compare::GetFromIter(const Interface_EntityIterator& iter,
-                                  const Standard_Boolean          first)
+void IFGraph_Compare::GetFromIter(const Interface_EntityIterator& iter, const bool first)
 {
-  Standard_Integer stat = 2;
+  int stat = 2;
   if (first)
     stat = 1;
-  thegraph.GetFromIter(iter, stat, 3, Standard_False);
+  thegraph.GetFromIter(iter, stat, 3, false);
 }
 
 void IFGraph_Compare::Merge()
@@ -70,7 +68,7 @@ void IFGraph_Compare::ResetData()
 void IFGraph_Compare::Evaluate()
 {
   Reset();
-  GetFromGraph(thegraph); // Evaluation deja faite par le graphe
+  GetFromGraph(thegraph); // Evaluation already done by the graph
 }
 
 Interface_EntityIterator IFGraph_Compare::Common() const

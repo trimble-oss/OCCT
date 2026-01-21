@@ -24,7 +24,7 @@ IMPLEMENT_STANDARD_RTTIEXT(OpenGl_FrameStats, Graphic3d_FrameStats)
 namespace
 {
 //! Return estimated data size.
-static Standard_Size estimatedDataSize(const Handle(OpenGl_Resource)& theRes)
+static size_t estimatedDataSize(const occ::handle<OpenGl_Resource>& theRes)
 {
   return !theRes.IsNull() ? theRes->EstimatedDataSize() : 0;
 }
@@ -32,21 +32,15 @@ static Standard_Size estimatedDataSize(const Handle(OpenGl_Resource)& theRes)
 
 //=================================================================================================
 
-OpenGl_FrameStats::OpenGl_FrameStats()
-{
-  //
-}
+OpenGl_FrameStats::OpenGl_FrameStats() = default;
 
 //=================================================================================================
 
-OpenGl_FrameStats::~OpenGl_FrameStats()
-{
-  //
-}
+OpenGl_FrameStats::~OpenGl_FrameStats() = default;
 
 //=================================================================================================
 
-bool OpenGl_FrameStats::IsFrameUpdated(Handle(OpenGl_FrameStats)& thePrev) const
+bool OpenGl_FrameStats::IsFrameUpdated(occ::handle<OpenGl_FrameStats>& thePrev) const
 {
   const Graphic3d_FrameStatsData& aFrame = LastDataFrame();
   if (thePrev.IsNull())
@@ -55,11 +49,12 @@ bool OpenGl_FrameStats::IsFrameUpdated(Handle(OpenGl_FrameStats)& thePrev) const
   }
   // check just a couple of major counters
   else if (myLastFrameIndex == thePrev->myLastFrameIndex
-           && Abs(aFrame.FrameRate() - thePrev->myCountersTmp.FrameRate()) <= 0.001
-           && Abs(aFrame.FrameRateCpu() - thePrev->myCountersTmp.FrameRateCpu()) <= 0.001
-           && Abs(aFrame.ImmediateFrameRate() - thePrev->myCountersTmp.ImmediateFrameRate())
+           && std::abs(aFrame.FrameRate() - thePrev->myCountersTmp.FrameRate()) <= 0.001
+           && std::abs(aFrame.FrameRateCpu() - thePrev->myCountersTmp.FrameRateCpu()) <= 0.001
+           && std::abs(aFrame.ImmediateFrameRate() - thePrev->myCountersTmp.ImmediateFrameRate())
                 <= 0.001
-           && Abs(aFrame.ImmediateFrameRateCpu() - thePrev->myCountersTmp.ImmediateFrameRateCpu())
+           && std::abs(aFrame.ImmediateFrameRateCpu()
+                       - thePrev->myCountersTmp.ImmediateFrameRateCpu())
                 <= 0.001
            && aFrame[Graphic3d_FrameStatsCounter_NbLayers]
                 == thePrev->myCountersTmp[Graphic3d_FrameStatsCounter_NbLayers]
@@ -80,11 +75,11 @@ bool OpenGl_FrameStats::IsFrameUpdated(Handle(OpenGl_FrameStats)& thePrev) const
 
 //=================================================================================================
 
-void OpenGl_FrameStats::updateStatistics(const Handle(Graphic3d_CView)& theView,
-                                         bool                           theIsImmediateOnly)
+void OpenGl_FrameStats::updateStatistics(const occ::handle<Graphic3d_CView>& theView,
+                                         bool                                theIsImmediateOnly)
 {
   const OpenGl_View* aView = dynamic_cast<const OpenGl_View*>(theView.get());
-  if (aView == NULL)
+  if (aView == nullptr)
   {
     myCounters.SetValue(myLastFrameIndex, myCountersTmp);
     myCountersTmp.Reset();
@@ -92,30 +87,28 @@ void OpenGl_FrameStats::updateStatistics(const Handle(Graphic3d_CView)& theView,
   }
 
   const Graphic3d_RenderingParams::PerfCounters aBits = theView->RenderingParams().CollectedStats;
-  const Standard_Boolean                        toCountMem =
-    (aBits & Graphic3d_RenderingParams::PerfCounters_EstimMem) != 0;
-  const Standard_Boolean toCountTris =
-    (aBits & Graphic3d_RenderingParams::PerfCounters_Triangles) != 0
-    || (aBits & Graphic3d_RenderingParams::PerfCounters_Lines) != 0
-    || (aBits & Graphic3d_RenderingParams::PerfCounters_Points) != 0;
-  const Standard_Boolean toCountElems =
+  const bool toCountMem  = (aBits & Graphic3d_RenderingParams::PerfCounters_EstimMem) != 0;
+  const bool toCountTris = (aBits & Graphic3d_RenderingParams::PerfCounters_Triangles) != 0
+                           || (aBits & Graphic3d_RenderingParams::PerfCounters_Lines) != 0
+                           || (aBits & Graphic3d_RenderingParams::PerfCounters_Points) != 0;
+  const bool toCountElems =
     (aBits & Graphic3d_RenderingParams::PerfCounters_GroupArrays) != 0 || toCountTris || toCountMem;
-  const Standard_Boolean toCountGroups =
+  const bool toCountGroups =
     (aBits & Graphic3d_RenderingParams::PerfCounters_Groups) != 0 || toCountElems;
-  const Standard_Boolean toCountStructs =
-    (aBits & Graphic3d_RenderingParams::PerfCounters_Structures) != 0
-    || (aBits & Graphic3d_RenderingParams::PerfCounters_Layers) != 0 || toCountGroups;
+  const bool toCountStructs = (aBits & Graphic3d_RenderingParams::PerfCounters_Structures) != 0
+                              || (aBits & Graphic3d_RenderingParams::PerfCounters_Layers) != 0
+                              || toCountGroups;
 
   myCountersTmp[Graphic3d_FrameStatsCounter_NbLayers] = aView->LayerList().Layers().Size();
   if (toCountStructs || (aBits & Graphic3d_RenderingParams::PerfCounters_Layers) != 0)
   {
-    const Standard_Integer aViewId = aView->Identification();
-    for (NCollection_List<Handle(Graphic3d_Layer)>::Iterator aLayerIter(
+    const int aViewId = aView->Identification();
+    for (NCollection_List<occ::handle<Graphic3d_Layer>>::Iterator aLayerIter(
            aView->LayerList().Layers());
          aLayerIter.More();
          aLayerIter.Next())
     {
-      const Handle(OpenGl_Layer)& aLayer = aLayerIter.Value();
+      const occ::handle<OpenGl_Layer>& aLayer = aLayerIter.Value();
       myCountersTmp[Graphic3d_FrameStatsCounter_NbStructs] += aLayer->NbStructures();
       if (theIsImmediateOnly && !aLayer->LayerSettings().IsImmediate())
       {
@@ -160,7 +153,7 @@ void OpenGl_FrameStats::updateStatistics(const Handle(Graphic3d_CView)& theView,
     }
 
     {
-      Standard_Size& aMemFbos = myCountersTmp[Graphic3d_FrameStatsCounter_EstimatedBytesFbos];
+      size_t& aMemFbos = myCountersTmp[Graphic3d_FrameStatsCounter_EstimatedBytesFbos];
       // main FBOs
       aMemFbos += estimatedDataSize(aView->myMainSceneFbos[0]);
       aMemFbos += estimatedDataSize(aView->myMainSceneFbos[1]);
@@ -195,7 +188,7 @@ void OpenGl_FrameStats::updateStatistics(const Handle(Graphic3d_CView)& theView,
     }
     {
       // Ray Tracing geometry
-      Standard_Size& aMemGeom = myCountersTmp[Graphic3d_FrameStatsCounter_EstimatedBytesGeom];
+      size_t& aMemGeom = myCountersTmp[Graphic3d_FrameStatsCounter_EstimatedBytesGeom];
       aMemGeom += estimatedDataSize(aView->mySceneNodeInfoTexture);
       aMemGeom += estimatedDataSize(aView->mySceneMinPointTexture);
       aMemGeom += estimatedDataSize(aView->mySceneMaxPointTexture);
@@ -213,18 +206,18 @@ void OpenGl_FrameStats::updateStatistics(const Handle(Graphic3d_CView)& theView,
 //=================================================================================================
 
 void OpenGl_FrameStats::updateStructures(
-  Standard_Integer                                           theViewId,
+  int                                                        theViewId,
   const NCollection_IndexedMap<const Graphic3d_CStructure*>& theStructures,
-  Standard_Boolean                                           theToCountElems,
-  Standard_Boolean                                           theToCountTris,
-  Standard_Boolean                                           theToCountMem)
+  bool                                                       theToCountElems,
+  bool                                                       theToCountTris,
+  bool                                                       theToCountMem)
 {
   for (OpenGl_Structure::StructIterator aStructIter(theStructures); aStructIter.More();
        aStructIter.Next())
   {
     const OpenGl_Structure* aStruct        = aStructIter.Value();
     const bool              isStructHidden = aStruct->IsCulled() || !aStruct->IsVisible(theViewId);
-    for (; aStruct != NULL; aStruct = aStruct->InstancedStructure())
+    for (; aStruct != nullptr; aStruct = aStruct->InstancedStructure())
     {
       if (isStructHidden)
       {
@@ -234,7 +227,7 @@ void OpenGl_FrameStats::updateStructures(
                aGroupIter.Next())
           {
             const OpenGl_Group* aGroup = aGroupIter.Value();
-            for (const OpenGl_ElementNode* aNodeIter = aGroup->FirstNode(); aNodeIter != NULL;
+            for (const OpenGl_ElementNode* aNodeIter = aGroup->FirstNode(); aNodeIter != nullptr;
                  aNodeIter                           = aNodeIter->next)
             {
               aNodeIter->elem->UpdateMemStats(myCountersTmp);
@@ -254,7 +247,7 @@ void OpenGl_FrameStats::updateStructures(
            aGroupIter.Next())
       {
         const OpenGl_Group* aGroup = aGroupIter.Value();
-        for (const OpenGl_ElementNode* aNodeIter = aGroup->FirstNode(); aNodeIter != NULL;
+        for (const OpenGl_ElementNode* aNodeIter = aGroup->FirstNode(); aNodeIter != nullptr;
              aNodeIter                           = aNodeIter->next)
         {
           if (theToCountMem)

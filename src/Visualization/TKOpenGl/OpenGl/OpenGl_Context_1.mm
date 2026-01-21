@@ -36,11 +36,9 @@
 
 #include <Standard_ProgramError.hxx>
 
-// =======================================================================
-// function : IsCurrent
-// purpose  :
-// =======================================================================
-Standard_Boolean OpenGl_Context::IsCurrent() const
+//=================================================================================================
+
+bool OpenGl_Context::IsCurrent() const
 {
 #if defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE
   return myGContext != NULL
@@ -51,30 +49,26 @@ Standard_Boolean OpenGl_Context::IsCurrent() const
 #endif
 }
 
-// =======================================================================
-// function : MakeCurrent
-// purpose  :
-// =======================================================================
-Standard_Boolean OpenGl_Context::MakeCurrent()
+//=================================================================================================
+
+bool OpenGl_Context::MakeCurrent()
 {
   if (myGContext == NULL)
   {
     Standard_ProgramError_Raise_if (myIsInitialized, "OpenGl_Context::Init() should be called before!");
-    return Standard_False;
+    return false;
   }
 
 #if defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE
   return [EAGLContext setCurrentContext: myGContext] == YES;
 #else
   [myGContext makeCurrentContext];
-  return Standard_True;
+  return true;
 #endif
 }
 
-// =======================================================================
-// function : SwapBuffers
-// purpose  :
-// =======================================================================
+//=================================================================================================
+
 void OpenGl_Context::SwapBuffers()
 {
   if (myGContext == NULL)
@@ -99,15 +93,13 @@ void OpenGl_Context::SwapBuffers()
 #endif
 }
 
-// =======================================================================
-// function : Init
-// purpose  :
-// =======================================================================
-Standard_Boolean OpenGl_Context::Init (const Standard_Boolean theIsCoreProfile)
+//=================================================================================================
+
+bool OpenGl_Context::Init (const bool theIsCoreProfile)
 {
   if (myIsInitialized)
   {
-    return Standard_True;
+    return true;
   }
 
 #if defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE
@@ -117,12 +109,12 @@ Standard_Boolean OpenGl_Context::Init (const Standard_Boolean theIsCoreProfile)
 #endif
   if (myGContext == NULL)
   {
-    return Standard_False;
+    return false;
   }
 
   init (theIsCoreProfile);
-  myIsInitialized = Standard_True;
-  return Standard_True;
+  myIsInitialized = true;
+  return true;
 }
 
 #endif // __APPLE__

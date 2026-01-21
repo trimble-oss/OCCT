@@ -22,14 +22,10 @@
 #define M_INTERNAL(sta) (sta == TopAbs_INTERNAL)
 #define M_EXTERNAL(sta) (sta == TopAbs_EXTERNAL)
 
-#ifdef DRAW
-  #include <TopOpeBRepTool_DRAW.hxx>
-#endif
-
 #ifdef OCCT_DEBUG
-extern TopTools_IndexedMapOfShape         STATIC_PURGE_mapv;
-extern TopTools_IndexedMapOfOrientedShape STATIC_PURGE_mapeds;
-extern Standard_Boolean                   TopOpeBRepTool_GettracePURGE();
+extern NCollection_IndexedMap<TopoDS_Shape, TopTools_ShapeMapHasher> STATIC_PURGE_mapv;
+extern NCollection_IndexedMap<TopoDS_Shape>                          STATIC_PURGE_mapeds;
+extern bool                                                          TopOpeBRepTool_GettracePURGE();
 
 void FUN_REINIT()
 {
@@ -57,7 +53,7 @@ Standard_EXPORT void FUN_tool_tori(const TopAbs_Orientation Or)
 }
 #endif
 
-Standard_EXPORT void FUN_tool_trace(const Standard_Integer Index)
+Standard_EXPORT void FUN_tool_trace(const int Index)
 {
   if (Index == 1)
     std::cout << "FORWARD ";

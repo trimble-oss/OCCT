@@ -15,7 +15,6 @@
 
 #include <DEOBJ_Provider.hxx>
 #include <DE_ConfigurationContext.hxx>
-#include <DE_PluginHolder.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(DEOBJ_ConfigurationNode, DE_ConfigurationNode)
 
@@ -27,20 +26,18 @@ static const TCollection_AsciiString& THE_CONFIGURATION_SCOPE()
   return aScope;
 }
 
-// Wrapper to auto-load DE component
-DE_PluginHolder<DEOBJ_ConfigurationNode> THE_OCCT_OBJ_COMPONENT_PLUGIN;
 } // namespace
 
 //=================================================================================================
 
 DEOBJ_ConfigurationNode::DEOBJ_ConfigurationNode()
-    : DE_ConfigurationNode()
-{
-}
+
+  = default;
 
 //=================================================================================================
 
-DEOBJ_ConfigurationNode::DEOBJ_ConfigurationNode(const Handle(DEOBJ_ConfigurationNode)& theNode)
+DEOBJ_ConfigurationNode::DEOBJ_ConfigurationNode(
+  const occ::handle<DEOBJ_ConfigurationNode>& theNode)
     : DE_ConfigurationNode(theNode)
 {
   InternalParameters = theNode->InternalParameters;
@@ -48,7 +45,7 @@ DEOBJ_ConfigurationNode::DEOBJ_ConfigurationNode(const Handle(DEOBJ_Configuratio
 
 //=================================================================================================
 
-bool DEOBJ_ConfigurationNode::Load(const Handle(DE_ConfigurationContext)& theResource)
+bool DEOBJ_ConfigurationNode::Load(const occ::handle<DE_ConfigurationContext>& theResource)
 {
   TCollection_AsciiString aScope =
     THE_CONFIGURATION_SCOPE() + "." + GetFormat() + "." + GetVendor();
@@ -187,14 +184,14 @@ TCollection_AsciiString DEOBJ_ConfigurationNode::Save() const
 
 //=================================================================================================
 
-Handle(DE_ConfigurationNode) DEOBJ_ConfigurationNode::Copy() const
+occ::handle<DE_ConfigurationNode> DEOBJ_ConfigurationNode::Copy() const
 {
   return new DEOBJ_ConfigurationNode(*this);
 }
 
 //=================================================================================================
 
-Handle(DE_Provider) DEOBJ_ConfigurationNode::BuildProvider()
+occ::handle<DE_Provider> DEOBJ_ConfigurationNode::BuildProvider()
 {
   return new DEOBJ_Provider(this);
 }
@@ -229,9 +226,9 @@ TCollection_AsciiString DEOBJ_ConfigurationNode::GetVendor() const
 
 //=================================================================================================
 
-TColStd_ListOfAsciiString DEOBJ_ConfigurationNode::GetExtensions() const
+NCollection_List<TCollection_AsciiString> DEOBJ_ConfigurationNode::GetExtensions() const
 {
-  TColStd_ListOfAsciiString anExt;
+  NCollection_List<TCollection_AsciiString> anExt;
   anExt.Append("obj");
   return anExt;
 }

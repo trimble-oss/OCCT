@@ -30,7 +30,7 @@ class CLocalePtr
 public:
   CLocalePtr()
   #ifdef OCCT_CLOCALE_POSIX2008
-      : myLocale(newlocale(LC_ALL_MASK, "C", NULL))
+      : myLocale(newlocale(LC_ALL_MASK, "C", nullptr))
   #elif defined(_MSC_VER)
       : myLocale(_create_locale(LC_ALL, "C"))
   #else
@@ -85,8 +85,8 @@ Standard_CLocaleSentry::Standard_CLocaleSentry()
     return;
   }
   // copy string as following setlocale calls may invalidate returned pointer
-  Standard_Size aLen = std::strlen(aPrevLocale) + 1;
-  myPrevLocale       = new char[aLen];
+  size_t aLen  = std::strlen(aPrevLocale) + 1;
+  myPrevLocale = new char[aLen];
   memcpy(myPrevLocale, aPrevLocale, aLen);
 
   setlocale(LC_ALL, "C");

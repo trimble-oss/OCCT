@@ -21,11 +21,11 @@ IMPLEMENT_STANDARD_RTTIEXT(IGESToBRep_ToolContainer, Standard_Transient)
 
 //=================================================================================================
 
-IGESToBRep_ToolContainer::IGESToBRep_ToolContainer() {}
+IGESToBRep_ToolContainer::IGESToBRep_ToolContainer() = default;
 
 //=================================================================================================
 
-Handle(IGESToBRep_IGESBoundary) IGESToBRep_ToolContainer::IGESBoundary() const
+occ::handle<IGESToBRep_IGESBoundary> IGESToBRep_ToolContainer::IGESBoundary() const
 {
   return new IGESToBRep_IGESBoundary;
 }

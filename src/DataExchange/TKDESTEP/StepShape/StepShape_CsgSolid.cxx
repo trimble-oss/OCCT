@@ -16,10 +16,10 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(StepShape_CsgSolid, StepShape_SolidModel)
 
-StepShape_CsgSolid::StepShape_CsgSolid() {}
+StepShape_CsgSolid::StepShape_CsgSolid() = default;
 
-void StepShape_CsgSolid::Init(const Handle(TCollection_HAsciiString)& aName,
-                              const StepShape_CsgSelect&              aTreeRootExpression)
+void StepShape_CsgSolid::Init(const occ::handle<TCollection_HAsciiString>& aName,
+                              const StepShape_CsgSelect&                   aTreeRootExpression)
 {
   // --- classe own fields ---
   treeRootExpression = aTreeRootExpression;

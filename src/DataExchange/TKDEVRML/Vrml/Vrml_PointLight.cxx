@@ -14,18 +14,17 @@
 #include <Vrml_PointLight.hxx>
 
 Vrml_PointLight::Vrml_PointLight()
-    : myOnOff(Standard_True),
+    : myOnOff(true),
       myIntensity(1),
       myColor(Quantity_NOC_WHITE),
       myLocation(0, 0, 1)
 {
-  //
 }
 
-Vrml_PointLight::Vrml_PointLight(const Standard_Boolean aOnOff,
-                                 const Standard_Real    aIntensity,
-                                 const Quantity_Color&  aColor,
-                                 const gp_Vec&          aLocation)
+Vrml_PointLight::Vrml_PointLight(const bool            aOnOff,
+                                 const double          aIntensity,
+                                 const Quantity_Color& aColor,
+                                 const gp_Vec&         aLocation)
 {
   if (aIntensity < 0. || aIntensity > 1.)
   {
@@ -37,17 +36,17 @@ Vrml_PointLight::Vrml_PointLight(const Standard_Boolean aOnOff,
   myLocation  = aLocation;
 }
 
-void Vrml_PointLight::SetOnOff(const Standard_Boolean aOnOff)
+void Vrml_PointLight::SetOnOff(const bool aOnOff)
 {
   myOnOff = aOnOff;
 }
 
-Standard_Boolean Vrml_PointLight::OnOff() const
+bool Vrml_PointLight::OnOff() const
 {
   return myOnOff;
 }
 
-void Vrml_PointLight::SetIntensity(const Standard_Real aIntensity)
+void Vrml_PointLight::SetIntensity(const double aIntensity)
 {
   if (aIntensity < 0. || aIntensity > 1.)
   {
@@ -56,7 +55,7 @@ void Vrml_PointLight::SetIntensity(const Standard_Real aIntensity)
   myIntensity = aIntensity;
 }
 
-Standard_Real Vrml_PointLight::Intensity() const
+double Vrml_PointLight::Intensity() const
 {
   return myIntensity;
 }
@@ -85,29 +84,29 @@ Standard_OStream& Vrml_PointLight::Print(Standard_OStream& anOStream) const
 {
   anOStream << "PointLight {\n";
 
-  if (myOnOff != Standard_True)
+  if (!myOnOff)
   {
     anOStream << "    on\t\tFALSE\n";
     //    anOStream << myOnOff << "\n";
   }
 
-  if (Abs(myIntensity - 1) > 0.0001)
+  if (std::abs(myIntensity - 1) > 0.0001)
   {
     anOStream << "    intensity\t";
     anOStream << myIntensity << "\n";
   }
 
-  if (Abs(myColor.Red() - 1) > 0.0001 || Abs(myColor.Green() - 1) > 0.0001
-      || Abs(myColor.Blue() - 1) > 0.0001)
+  if (std::abs(myColor.Red() - 1) > 0.0001 || std::abs(myColor.Green() - 1) > 0.0001
+      || std::abs(myColor.Blue() - 1) > 0.0001)
   {
-    NCollection_Vec3<Standard_Real> aColor_sRGB;
+    NCollection_Vec3<double> aColor_sRGB;
     myColor.Values(aColor_sRGB.r(), aColor_sRGB.g(), aColor_sRGB.b(), Quantity_TOC_sRGB);
     anOStream << "    color\t";
     anOStream << aColor_sRGB.r() << " " << aColor_sRGB.g() << " " << aColor_sRGB.b() << "\n";
   }
 
-  if (Abs(myLocation.X() - 0) > 0.0001 || Abs(myLocation.Y() - 0) > 0.0001
-      || Abs(myLocation.Z() - 1) > 0.0001)
+  if (std::abs(myLocation.X() - 0) > 0.0001 || std::abs(myLocation.Y() - 0) > 0.0001
+      || std::abs(myLocation.Z() - 1) > 0.0001)
   {
     anOStream << "    location\t";
     anOStream << myLocation.X() << " " << myLocation.Y() << " " << myLocation.Z() << "\n";

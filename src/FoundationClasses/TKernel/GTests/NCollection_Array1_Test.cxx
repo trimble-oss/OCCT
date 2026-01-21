@@ -15,13 +15,16 @@
 #include <Standard_Integer.hxx>
 
 #include <gtest/gtest.h>
+#include <algorithm>
+#include <random>
+#include <vector>
 
 TEST(NCollection_Array1Test, DefaultConstructor)
 {
   // Default constructor should not compile as it's explicitly deleted
-  // NCollection_Array1<Standard_Integer> anArray;
+  // NCollection_Array1<int> anArray;
   // Instead we need to use the parameterized constructor
-  NCollection_Array1<Standard_Integer> anArray(1, 10);
+  NCollection_Array1<int> anArray(1, 10);
 
   EXPECT_EQ(10, anArray.Length());
   EXPECT_EQ(1, anArray.Lower());
@@ -31,7 +34,7 @@ TEST(NCollection_Array1Test, DefaultConstructor)
 TEST(NCollection_Array1Test, ConstructorWithBounds)
 {
   // Test constructor with explicit bounds
-  NCollection_Array1<Standard_Integer> anArray(1, 5);
+  NCollection_Array1<int> anArray(1, 5);
   EXPECT_EQ(5, anArray.Size());
   EXPECT_EQ(1, anArray.Lower());
   EXPECT_EQ(5, anArray.Upper());
@@ -40,7 +43,7 @@ TEST(NCollection_Array1Test, ConstructorWithBounds)
 TEST(NCollection_Array1Test, ConstructorWithNegativeBounds)
 {
   // Test constructor with negative bounds
-  NCollection_Array1<Standard_Integer> anArray(-3, 2);
+  NCollection_Array1<int> anArray(-3, 2);
   EXPECT_EQ(6, anArray.Size());
   EXPECT_EQ(-3, anArray.Lower());
   EXPECT_EQ(2, anArray.Upper());
@@ -48,22 +51,22 @@ TEST(NCollection_Array1Test, ConstructorWithNegativeBounds)
 
 TEST(NCollection_Array1Test, AssignmentValue)
 {
-  NCollection_Array1<Standard_Integer> anArray(1, 5);
+  NCollection_Array1<int> anArray(1, 5);
 
   // Initialize array
-  for (Standard_Integer i = anArray.Lower(); i <= anArray.Upper(); i++)
+  for (int i = anArray.Lower(); i <= anArray.Upper(); i++)
   {
     anArray(i) = i * 10;
   }
 
   // Verify values
-  for (Standard_Integer i = anArray.Lower(); i <= anArray.Upper(); i++)
+  for (int i = anArray.Lower(); i <= anArray.Upper(); i++)
   {
     EXPECT_EQ(i * 10, anArray(i));
   }
 
   // Test Value vs operator()
-  for (Standard_Integer i = anArray.Lower(); i <= anArray.Upper(); i++)
+  for (int i = anArray.Lower(); i <= anArray.Upper(); i++)
   {
     EXPECT_EQ(anArray.Value(i), anArray(i));
   }
@@ -71,23 +74,23 @@ TEST(NCollection_Array1Test, AssignmentValue)
 
 TEST(NCollection_Array1Test, CopyConstructor)
 {
-  NCollection_Array1<Standard_Integer> anArray1(1, 5);
+  NCollection_Array1<int> anArray1(1, 5);
 
   // Initialize array
-  for (Standard_Integer i = anArray1.Lower(); i <= anArray1.Upper(); i++)
+  for (int i = anArray1.Lower(); i <= anArray1.Upper(); i++)
   {
     anArray1(i) = i * 10;
   }
 
   // Copy construct
-  NCollection_Array1<Standard_Integer> anArray2(anArray1);
+  NCollection_Array1<int> anArray2(anArray1);
 
   // Verify copy
   EXPECT_EQ(anArray1.Length(), anArray2.Length());
   EXPECT_EQ(anArray1.Lower(), anArray2.Lower());
   EXPECT_EQ(anArray1.Upper(), anArray2.Upper());
 
-  for (Standard_Integer i = anArray1.Lower(); i <= anArray1.Upper(); i++)
+  for (int i = anArray1.Lower(); i <= anArray1.Upper(); i++)
   {
     EXPECT_EQ(anArray1(i), anArray2(i));
   }
@@ -99,16 +102,16 @@ TEST(NCollection_Array1Test, CopyConstructor)
 
 TEST(NCollection_Array1Test, ValueAccess)
 {
-  NCollection_Array1<Standard_Integer> anArray(1, 5);
+  NCollection_Array1<int> anArray(1, 5);
 
   // Set values
-  for (Standard_Integer i = 1; i <= 5; i++)
+  for (int i = 1; i <= 5; i++)
   {
     anArray.SetValue(i, i * 10);
   }
 
   // Check values
-  for (Standard_Integer i = 1; i <= 5; i++)
+  for (int i = 1; i <= 5; i++)
   {
     EXPECT_EQ(i * 10, anArray.Value(i));
     EXPECT_EQ(i * 10, anArray(i)); // Using operator()
@@ -117,28 +120,28 @@ TEST(NCollection_Array1Test, ValueAccess)
 
 TEST(NCollection_Array1Test, ChangeValueAccess)
 {
-  NCollection_Array1<Standard_Integer> anArray(1, 5);
+  NCollection_Array1<int> anArray(1, 5);
 
   // Set values using ChangeValue
-  for (Standard_Integer i = 1; i <= 5; i++)
+  for (int i = 1; i <= 5; i++)
   {
     anArray.ChangeValue(i) = i * 10;
   }
 
   // Check values
-  for (Standard_Integer i = 1; i <= 5; i++)
+  for (int i = 1; i <= 5; i++)
   {
     EXPECT_EQ(i * 10, anArray(i));
   }
 
   // Modify values through references
-  for (Standard_Integer i = 1; i <= 5; i++)
+  for (int i = 1; i <= 5; i++)
   {
     anArray.ChangeValue(i) += 5;
   }
 
   // Check modified values
-  for (Standard_Integer i = 1; i <= 5; i++)
+  for (int i = 1; i <= 5; i++)
   {
     EXPECT_EQ(i * 10 + 5, anArray(i));
   }
@@ -146,25 +149,25 @@ TEST(NCollection_Array1Test, ChangeValueAccess)
 
 TEST(NCollection_Array1Test, AssignmentOperator)
 {
-  NCollection_Array1<Standard_Integer> anArray1(1, 5);
+  NCollection_Array1<int> anArray1(1, 5);
 
   // Initialize array
-  for (Standard_Integer i = anArray1.Lower(); i <= anArray1.Upper(); i++)
+  for (int i = anArray1.Lower(); i <= anArray1.Upper(); i++)
   {
     anArray1(i) = i * 10;
   }
 
   // Test assignment
-  NCollection_Array1<Standard_Integer> anArray2(11, 15);
+  NCollection_Array1<int> anArray2(11, 15);
   anArray2 = anArray1;
-  anArray2.Resize(1, 5, Standard_True); // Resize to match anArray1
+  anArray2.Resize(1, 5, true); // Resize to match anArray1
 
   // Verify assignment result
   EXPECT_EQ(anArray1.Length(), anArray2.Length());
   EXPECT_EQ(anArray1.Lower(), anArray2.Lower());
   EXPECT_EQ(anArray1.Upper(), anArray2.Upper());
 
-  for (Standard_Integer i = anArray1.Lower(); i <= anArray1.Upper(); i++)
+  for (int i = anArray1.Lower(); i <= anArray1.Upper(); i++)
   {
     EXPECT_EQ(anArray1(i), anArray2(i));
   }
@@ -172,18 +175,18 @@ TEST(NCollection_Array1Test, AssignmentOperator)
 
 TEST(NCollection_Array1Test, Move)
 {
-  NCollection_Array1<Standard_Integer> anArray1(1, 5);
+  NCollection_Array1<int> anArray1(1, 5);
 
   // Initialize array
-  for (Standard_Integer i = anArray1.Lower(); i <= anArray1.Upper(); i++)
+  for (int i = anArray1.Lower(); i <= anArray1.Upper(); i++)
   {
     anArray1(i) = i * 10;
   }
 
   // Test Move method
-  NCollection_Array1<Standard_Integer> anArray2(11, 15);
+  NCollection_Array1<int> anArray2(11, 15);
   anArray2.Move(anArray1);
-  anArray2.Resize(1, 5, Standard_True); // Resize to match anArray1
+  anArray2.Resize(1, 5, true); // Resize to match anArray1
 
   // Verify move result
   EXPECT_EQ(5, anArray2.Length());
@@ -197,13 +200,13 @@ TEST(NCollection_Array1Test, Move)
 
 TEST(NCollection_Array1Test, Init)
 {
-  NCollection_Array1<Standard_Integer> anArray(1, 5);
+  NCollection_Array1<int> anArray(1, 5);
 
   // Test Init method
   anArray.Init(42);
 
   // Verify all values initialized
-  for (Standard_Integer i = anArray.Lower(); i <= anArray.Upper(); i++)
+  for (int i = anArray.Lower(); i <= anArray.Upper(); i++)
   {
     EXPECT_EQ(42, anArray(i));
   }
@@ -211,7 +214,7 @@ TEST(NCollection_Array1Test, Init)
 
 TEST(NCollection_Array1Test, SetValue)
 {
-  NCollection_Array1<Standard_Integer> anArray(1, 5);
+  NCollection_Array1<int> anArray(1, 5);
 
   // Test SetValue method
   anArray.SetValue(3, 123);
@@ -222,7 +225,7 @@ TEST(NCollection_Array1Test, SetValue)
 
 TEST(NCollection_Array1Test, FirstLast)
 {
-  NCollection_Array1<Standard_Integer> anArray(5, 10);
+  NCollection_Array1<int> anArray(5, 10);
 
   anArray(5)  = 55;
   anArray(10) = 1010;
@@ -241,14 +244,14 @@ TEST(NCollection_Array1Test, FirstLast)
 
 TEST(NCollection_Array1Test, STLIteration)
 {
-  NCollection_Array1<Standard_Integer> anArray(1, 5);
-  for (Standard_Integer i = anArray.Lower(); i <= anArray.Upper(); i++)
+  NCollection_Array1<int> anArray(1, 5);
+  for (int i = anArray.Lower(); i <= anArray.Upper(); i++)
   {
     anArray(i) = i * 10;
   }
 
   // Test STL-style iteration
-  Standard_Integer index = 1;
+  int index = 1;
   for (const auto& val : anArray)
   {
     EXPECT_EQ(index * 10, val);
@@ -258,14 +261,14 @@ TEST(NCollection_Array1Test, STLIteration)
 
 TEST(NCollection_Array1Test, Resize)
 {
-  NCollection_Array1<Standard_Integer> anArray(1, 5);
-  for (Standard_Integer i = anArray.Lower(); i <= anArray.Upper(); i++)
+  NCollection_Array1<int> anArray(1, 5);
+  for (int i = anArray.Lower(); i <= anArray.Upper(); i++)
   {
     anArray(i) = i * 10;
   }
 
   // Test Resize method - increasing size
-  anArray.Resize(1, 10, Standard_True);
+  anArray.Resize(1, 10, true);
 
   // Check new size
   EXPECT_EQ(10, anArray.Length());
@@ -273,19 +276,19 @@ TEST(NCollection_Array1Test, Resize)
   EXPECT_EQ(10, anArray.Upper());
 
   // Verify original data preserved
-  for (Standard_Integer i = 1; i <= 5; i++)
+  for (int i = 1; i <= 5; i++)
   {
     EXPECT_EQ(i * 10, anArray(i));
   }
 
   // Test Resize method - decreasing size
-  NCollection_Array1<Standard_Integer> anArray2(1, 10);
-  for (Standard_Integer i = anArray2.Lower(); i <= anArray2.Upper(); i++)
+  NCollection_Array1<int> anArray2(1, 10);
+  for (int i = anArray2.Lower(); i <= anArray2.Upper(); i++)
   {
     anArray2(i) = i * 10;
   }
 
-  anArray2.Resize(1, 5, Standard_True);
+  anArray2.Resize(1, 5, true);
 
   // Check new size
   EXPECT_EQ(5, anArray2.Length());
@@ -293,7 +296,7 @@ TEST(NCollection_Array1Test, Resize)
   EXPECT_EQ(5, anArray2.Upper());
 
   // Verify original data preserved
-  for (Standard_Integer i = 1; i <= 5; i++)
+  for (int i = 1; i <= 5; i++)
   {
     EXPECT_EQ(i * 10, anArray2(i));
   }
@@ -301,7 +304,7 @@ TEST(NCollection_Array1Test, Resize)
 
 TEST(NCollection_Array1Test, ChangeValue)
 {
-  NCollection_Array1<Standard_Integer> anArray(1, 5);
+  NCollection_Array1<int> anArray(1, 5);
   anArray.Init(42);
 
   // Test ChangeValue method
@@ -319,8 +322,8 @@ TEST(NCollection_Array1Test, ChangeValue)
 
 TEST(NCollection_Array1Test, IteratorAccess)
 {
-  NCollection_Array1<Standard_Integer> anArray(1, 5);
-  for (Standard_Integer i = 1; i <= 5; i++)
+  NCollection_Array1<int> anArray(1, 5);
+  for (int i = 1; i <= 5; i++)
   {
     anArray(i) = i * 10;
   }
@@ -339,4 +342,74 @@ TEST(NCollection_Array1Test, IteratorAccess)
     EXPECT_EQ(index * 10, value);
     index++;
   }
+}
+
+TEST(NCollection_Array1Test, STLAlgorithmCompatibility_MinMax)
+{
+  const int               size = 100;
+  NCollection_Array1<int> anArray(1, size);
+  std::vector<int>        aVector;
+
+  std::mt19937                       aGenerator(1); // Fixed seed for reproducible tests
+  std::uniform_int_distribution<int> aDistribution(0, RAND_MAX);
+  for (int anIdx = 1; anIdx <= size; ++anIdx)
+  {
+    int aVal       = aDistribution(aGenerator);
+    anArray(anIdx) = aVal;
+    aVector.push_back(aVal);
+  }
+
+  auto aMinOCCT = std::min_element(anArray.begin(), anArray.end());
+  auto aMinStd  = std::min_element(aVector.begin(), aVector.end());
+
+  auto aMaxOCCT = std::max_element(anArray.begin(), anArray.end());
+  auto aMaxStd  = std::max_element(aVector.begin(), aVector.end());
+
+  EXPECT_EQ(*aMinOCCT, *aMinStd);
+  EXPECT_EQ(*aMaxOCCT, *aMaxStd);
+}
+
+TEST(NCollection_Array1Test, STLAlgorithmCompatibility_Replace)
+{
+  const int               size = 100;
+  NCollection_Array1<int> anArray(1, size);
+  std::vector<int>        aVector;
+
+  std::mt19937                       aGenerator(1); // Fixed seed for reproducible tests
+  std::uniform_int_distribution<int> aDistribution(0, RAND_MAX);
+  for (int anIdx = 1; anIdx <= size; ++anIdx)
+  {
+    int aVal       = aDistribution(aGenerator);
+    anArray(anIdx) = aVal;
+    aVector.push_back(aVal);
+  }
+
+  int aTargetValue = aVector.back();
+  int aNewValue    = -1;
+
+  std::replace(anArray.begin(), anArray.end(), aTargetValue, aNewValue);
+  std::replace(aVector.begin(), aVector.end(), aTargetValue, aNewValue);
+
+  EXPECT_TRUE(std::equal(anArray.begin(), anArray.end(), aVector.begin()));
+}
+
+TEST(NCollection_Array1Test, STLAlgorithmCompatibility_Sort)
+{
+  const int               size = 100;
+  NCollection_Array1<int> anArray(1, size);
+  std::vector<int>        aVector;
+
+  std::mt19937                       aGenerator(1); // Fixed seed for reproducible tests
+  std::uniform_int_distribution<int> aDistribution(0, RAND_MAX);
+  for (int anIdx = 1; anIdx <= size; ++anIdx)
+  {
+    int aVal       = aDistribution(aGenerator);
+    anArray(anIdx) = aVal;
+    aVector.push_back(aVal);
+  }
+
+  std::sort(anArray.begin(), anArray.end());
+  std::sort(aVector.begin(), aVector.end());
+
+  EXPECT_TRUE(std::equal(anArray.begin(), anArray.end(), aVector.begin()));
 }

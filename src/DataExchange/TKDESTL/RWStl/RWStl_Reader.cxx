@@ -46,7 +46,7 @@ class MergeNodeTool : public Poly_MergeNodesTool
 {
 public:
   //! Constructor
-  MergeNodeTool(RWStl_Reader* theReader, const Standard_Integer theNbFacets = -1)
+  MergeNodeTool(RWStl_Reader* theReader, const int theNbFacets = -1)
       : Poly_MergeNodesTool(theReader->MergeAngle(), 0.0, theNbFacets),
         myReader(theReader),
         myNodeIndexMap(1024, new NCollection_IncAllocator(1024 * 1024))
@@ -82,8 +82,8 @@ public:
   }
 
 private:
-  RWStl_Reader*                                           myReader;
-  NCollection_DataMap<Standard_Integer, Standard_Integer> myNodeIndexMap;
+  RWStl_Reader*                 myReader;
+  NCollection_DataMap<int, int> myNodeIndexMap;
 };
 
 //! Read a Little Endian 32 bits float
@@ -123,20 +123,19 @@ RWStl_Reader::RWStl_Reader()
     : myMergeAngle(M_PI / 2.0),
       myMergeTolearance(0.0)
 {
-  //
 }
 
 //=================================================================================================
 
-Standard_Boolean RWStl_Reader::Read(const char* theFile, const Message_ProgressRange& theProgress)
+bool RWStl_Reader::Read(const char* theFile, const Message_ProgressRange& theProgress)
 {
-  const Handle(OSD_FileSystem)& aFileSystem = OSD_FileSystem::DefaultFileSystem();
-  std::shared_ptr<std::istream> aStream =
+  const occ::handle<OSD_FileSystem>& aFileSystem = OSD_FileSystem::DefaultFileSystem();
+  std::shared_ptr<std::istream>      aStream =
     aFileSystem->OpenIStream(theFile, std::ios::in | std::ios::binary);
-  if (aStream.get() == NULL)
+  if (aStream.get() == nullptr)
   {
     Message::SendFail(TCollection_AsciiString("Error: file '") + theFile + "' is not found");
-    return Standard_False;
+    return false;
   }
   // get length of file to feed progress indicator in Ascii mode
   aStream->seekg(0, aStream->end);
@@ -156,7 +155,7 @@ Standard_Boolean RWStl_Reader::Read(const char* theFile, const Message_ProgressR
   // running translation in cycle.
   // For this reason use infinite (logarithmic) progress scale,
   // but in special mode so that the first cycle will take ~ 70% of it
-  Message_ProgressScope aPS(theProgress, NULL, 1, true);
+  Message_ProgressScope aPS(theProgress, nullptr, 1, true);
   while (aStream->good())
   {
     if (isAscii)
@@ -181,7 +180,7 @@ Standard_Boolean RWStl_Reader::Read(const char* theFile, const Message_ProgressR
 
 //=================================================================================================
 
-Standard_Boolean RWStl_Reader::IsAscii(Standard_IStream& theStream, const bool isSeekgAvailable)
+bool RWStl_Reader::IsAscii(Standard_IStream& theStream, const bool isSeekgAvailable)
 {
   // read first 134 bytes to detect file format
   char            aBuffer[THE_STL_MIN_FILE_SIZE];
@@ -195,7 +194,7 @@ Standard_Boolean RWStl_Reader::IsAscii(Standard_IStream& theStream, const bool i
   if (isSeekgAvailable)
   {
     // get back to the beginning
-    theStream.seekg(0, theStream.beg);
+    theStream.seekg(0, Standard_IStream::beg);
   }
   else
   {
@@ -214,7 +213,7 @@ Standard_Boolean RWStl_Reader::IsAscii(Standard_IStream& theStream, const bool i
 
   // otherwise, detect binary format by presence of non-ascii symbols in first 128 bytes
   // (note that binary STL file may start with the same bytes "solid " as Ascii one)
-  for (Standard_Integer aByteIter = 0; aByteIter < aNbRead; ++aByteIter)
+  for (int aByteIter = 0; aByteIter < aNbRead; ++aByteIter)
   {
     if ((unsigned char)aBuffer[aByteIter] > (unsigned char)'~')
     {
@@ -224,7 +223,7 @@ Standard_Boolean RWStl_Reader::IsAscii(Standard_IStream& theStream, const bool i
   return true;
 }
 
-// adapted from Standard_CString.cxx
+// adapted from const char*.cxx
 #ifdef __APPLE__
   // There are a lot of *_l functions available on Mac OS X - we use them
   #define SAVE_TL()
@@ -278,10 +277,10 @@ static bool ReadVertex(const char* theStr, double& theX, double& theY, double& t
 
 //=================================================================================================
 
-Standard_Boolean RWStl_Reader::ReadAscii(Standard_IStream&            theStream,
-                                         Standard_ReadLineBuffer&     theBuffer,
-                                         const std::streampos         theUntilPos,
-                                         const Message_ProgressRange& theProgress)
+bool RWStl_Reader::ReadAscii(Standard_IStream&            theStream,
+                             Standard_ReadLineBuffer&     theBuffer,
+                             const std::streampos         theUntilPos,
+                             const Message_ProgressRange& theProgress)
 {
   // use method seekpos() to get true 64-bit offset to enable
   // handling of large files (VS 2010 64-bit)
@@ -296,7 +295,7 @@ Standard_Boolean RWStl_Reader::ReadAscii(Standard_IStream&            theStream,
   {
     aLine = theBuffer.ReadLine(theStream, aLineLen);
   }
-  if (aLine == NULL)
+  if (aLine == nullptr)
   {
     Message::SendFail("Error: premature end of file");
     return false;
@@ -311,9 +310,8 @@ Standard_Boolean RWStl_Reader::ReadAscii(Standard_IStream&            theStream,
   SAVE_TL()      // for GCC only, set C locale globally
 
   // report progress every 1 MiB of read data
-  const int              aStepB = 1024 * 1024;
-  const Standard_Integer aNbSteps =
-    1 + Standard_Integer((GETPOS(theUntilPos) - aStartPos) / aStepB);
+  const int             aStepB   = 1024 * 1024;
+  const int             aNbSteps = 1 + int((GETPOS(theUntilPos) - aStartPos) / aStepB);
   Message_ProgressScope aPS(theProgress, "Reading text STL file", aNbSteps);
   int64_t               aProgressPos = aStartPos + aStepB;
   int                   aNbLine      = 1;
@@ -327,7 +325,7 @@ Standard_Boolean RWStl_Reader::ReadAscii(Standard_IStream&            theStream,
     }
 
     aLine = theBuffer.ReadLine(theStream, aLineLen); // "facet normal nx ny nz"
-    if (aLine == NULL)
+    if (aLine == nullptr)
     {
       Message::SendFail("Error: premature end of file");
       return false;
@@ -345,19 +343,19 @@ Standard_Boolean RWStl_Reader::ReadAscii(Standard_IStream&            theStream,
     }
 
     aLine = theBuffer.ReadLine(theStream, aLineLen); // "outer loop"
-    if (aLine == NULL || !str_starts_with(aLine, "outer", 5))
+    if (aLine == nullptr || !str_starts_with(aLine, "outer", 5))
     {
       Message::SendFail(TCollection_AsciiString("Error: unexpected format of facet at line ")
                         + (aNbLine + 1));
       return false;
     }
 
-    gp_XYZ           aVertex[3];
-    Standard_Boolean isEOF = false;
-    for (Standard_Integer i = 0; i < 3; i++)
+    gp_XYZ aVertex[3];
+    bool   isEOF = false;
+    for (int i = 0; i < 3; i++)
     {
       aLine = theBuffer.ReadLine(theStream, aLineLen);
-      if (aLine == NULL)
+      if (aLine == nullptr)
       {
         isEOF = true;
         break;
@@ -398,8 +396,7 @@ Standard_Boolean RWStl_Reader::ReadAscii(Standard_IStream&            theStream,
 
 //=================================================================================================
 
-Standard_Boolean RWStl_Reader::ReadBinary(Standard_IStream&            theStream,
-                                          const Message_ProgressRange& theProgress)
+bool RWStl_Reader::ReadBinary(Standard_IStream& theStream, const Message_ProgressRange& theProgress)
 {
   /*
     // the size of the file (minus the header size)
@@ -408,9 +405,9 @@ Standard_Boolean RWStl_Reader::ReadBinary(Standard_IStream&            theStream
      || (theFileLen < THE_STL_MIN_FILE_SIZE))
     {
       Message::SendFail ("Error: Corrupted binary STL file (inconsistent file size)");
-      return Standard_False;
+      return false;
     }
-    const Standard_Integer  aNbFacets = Standard_Integer((theFileLen - THE_STL_HEADER_SIZE) /
+    const int  aNbFacets = int((theFileLen - THE_STL_HEADER_SIZE) /
     THE_STL_SIZEOF_FACET);
   */
 
@@ -423,7 +420,7 @@ Standard_Boolean RWStl_Reader::ReadBinary(Standard_IStream&            theStream
   }
 
   // number of facets is stored as 32-bit integer at position 80
-  const Standard_Integer aNbFacets = *(int32_t*)(aHeader + 80);
+  const int aNbFacets = *(int32_t*)(aHeader + 80);
 
   MergeNodeTool aMergeTool(this, aNbFacets);
   aMergeTool.SetMergeAngle(myMergeAngle);
@@ -432,24 +429,24 @@ Standard_Boolean RWStl_Reader::ReadBinary(Standard_IStream&            theStream
   // don't trust the number of triangles which is coded in the file
   // sometimes it is wrong, and with this technique we don't need to swap endians for integer
   Message_ProgressScope aPS(theProgress, "Reading binary STL file", aNbFacets);
-  Standard_Integer      aNbRead = 0;
+  int                   aNbRead = 0;
 
   // allocate buffer for 80 triangles
   const int THE_CHUNK_NBFACETS = 80;
   char      aBuffer[THE_STL_SIZEOF_FACET * THE_CHUNK_NBFACETS];
 
   // normal + 3 nodes + 2 extra bytes
-  const size_t     aVec3Size        = sizeof(float) * 3;
-  const size_t     aFaceDataLen     = aVec3Size * 4 + 2;
-  const char*      aBufferPtr       = aBuffer;
-  Standard_Integer aNbFacesInBuffer = 0;
-  for (Standard_Integer aNbFacetRead = 0; aNbFacetRead < aNbFacets && aPS.More();
+  const size_t aVec3Size        = sizeof(float) * 3;
+  const size_t aFaceDataLen     = aVec3Size * 4 + 2;
+  const char*  aBufferPtr       = aBuffer;
+  int          aNbFacesInBuffer = 0;
+  for (int aNbFacetRead = 0; aNbFacetRead < aNbFacets && aPS.More();
        ++aNbFacetRead, ++aNbRead, --aNbFacesInBuffer, aBufferPtr += aFaceDataLen, aPS.Next())
   {
     // read more data
     if (aNbFacesInBuffer <= 0)
     {
-      aNbFacesInBuffer                  = Min(THE_CHUNK_NBFACETS, aNbFacets - aNbFacetRead);
+      aNbFacesInBuffer                  = std::min(THE_CHUNK_NBFACETS, aNbFacets - aNbFacetRead);
       const std::streamsize aDataToRead = aNbFacesInBuffer * aFaceDataLen;
       if (theStream.read(aBuffer, aDataToRead).gcount() != aDataToRead)
       {

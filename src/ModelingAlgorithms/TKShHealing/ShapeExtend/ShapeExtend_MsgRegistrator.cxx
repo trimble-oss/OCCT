@@ -24,14 +24,13 @@ IMPLEMENT_STANDARD_RTTIEXT(ShapeExtend_MsgRegistrator, ShapeExtend_BasicMsgRegis
 //=================================================================================================
 
 ShapeExtend_MsgRegistrator::ShapeExtend_MsgRegistrator()
-    : ShapeExtend_BasicMsgRegistrator()
-{
-}
+
+  = default;
 
 //=================================================================================================
 
-void ShapeExtend_MsgRegistrator::Send(const Handle(Standard_Transient)& object,
-                                      const Message_Msg&                message,
+void ShapeExtend_MsgRegistrator::Send(const occ::handle<Standard_Transient>& object,
+                                      const Message_Msg&                     message,
                                       const Message_Gravity)
 {
   if (object.IsNull())
@@ -43,12 +42,12 @@ void ShapeExtend_MsgRegistrator::Send(const Handle(Standard_Transient)& object,
   }
   if (myMapTransient.IsBound(object))
   {
-    Message_ListOfMsg& list = myMapTransient.ChangeFind(object);
+    NCollection_List<Message_Msg>& list = myMapTransient.ChangeFind(object);
     list.Append(message);
   }
   else
   {
-    Message_ListOfMsg list;
+    NCollection_List<Message_Msg> list;
     list.Append(message);
     myMapTransient.Bind(object, list);
   }
@@ -69,12 +68,12 @@ void ShapeExtend_MsgRegistrator::Send(const TopoDS_Shape& shape,
   }
   if (myMapShape.IsBound(shape))
   {
-    Message_ListOfMsg& list = myMapShape.ChangeFind(shape);
+    NCollection_List<Message_Msg>& list = myMapShape.ChangeFind(shape);
     list.Append(message);
   }
   else
   {
-    Message_ListOfMsg list;
+    NCollection_List<Message_Msg> list;
     list.Append(message);
     myMapShape.Bind(shape, list);
   }

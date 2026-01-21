@@ -23,15 +23,13 @@ IMPLEMENT_STANDARD_RTTIEXT(StepShape_DimensionalCharacteristicRepresentation, St
 //=================================================================================================
 
 StepShape_DimensionalCharacteristicRepresentation::
-  StepShape_DimensionalCharacteristicRepresentation()
-{
-}
+  StepShape_DimensionalCharacteristicRepresentation() = default;
 
 //=================================================================================================
 
 void StepShape_DimensionalCharacteristicRepresentation::Init(
-  const StepShape_DimensionalCharacteristic&            aDimension,
-  const Handle(StepShape_ShapeDimensionRepresentation)& aRepresentation)
+  const StepShape_DimensionalCharacteristic&                 aDimension,
+  const occ::handle<StepShape_ShapeDimensionRepresentation>& aRepresentation)
 {
 
   theDimension = aDimension;
@@ -57,8 +55,8 @@ void StepShape_DimensionalCharacteristicRepresentation::SetDimension(
 
 //=================================================================================================
 
-Handle(StepShape_ShapeDimensionRepresentation) StepShape_DimensionalCharacteristicRepresentation::
-  Representation() const
+occ::handle<StepShape_ShapeDimensionRepresentation>
+  StepShape_DimensionalCharacteristicRepresentation::Representation() const
 {
   return theRepresentation;
 }
@@ -66,7 +64,7 @@ Handle(StepShape_ShapeDimensionRepresentation) StepShape_DimensionalCharacterist
 //=================================================================================================
 
 void StepShape_DimensionalCharacteristicRepresentation::SetRepresentation(
-  const Handle(StepShape_ShapeDimensionRepresentation)& aRepresentation)
+  const occ::handle<StepShape_ShapeDimensionRepresentation>& aRepresentation)
 {
   theRepresentation = aRepresentation;
 }

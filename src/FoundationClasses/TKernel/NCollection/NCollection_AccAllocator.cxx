@@ -22,7 +22,7 @@ IMPLEMENT_STANDARD_RTTIEXT(NCollection_AccAllocator, NCollection_BaseAllocator)
 
 NCollection_AccAllocator::NCollection_AccAllocator(const size_t theBlockSize)
     : myBlockSize(theBlockSize),
-      mypLastBlock(0L)
+      mypLastBlock(nullptr)
 {
   allocateNewBlock(myBlockSize);
 }
@@ -57,14 +57,14 @@ void* NCollection_AccAllocator::Allocate(const size_t theSize)
   else
   {
     // Search for a block in the list with enough free space
-    Standard_Integer aBlocksRest = MaxLookupBlocks;
-    for (aBlock = mypLastBlock->prevBlock; aBlock != 0L && --aBlocksRest;
+    int aBlocksRest = MaxLookupBlocks;
+    for (aBlock = mypLastBlock->prevBlock; aBlock != nullptr && --aBlocksRest;
          aBlock = aBlock->prevBlock)
     {
       if (aSize <= aBlock->FreeSize())
         break;
     }
-    if (aBlock == 0L || !aBlocksRest)
+    if (aBlock == nullptr || !aBlocksRest)
       // There is no available block with enough free space, create a new one
       aBlock = allocateNewBlock(myBlockSize);
   }
@@ -88,7 +88,7 @@ void NCollection_AccAllocator::Free(void* theAddress)
   Block* aBlock = findBlock(theAddress, aKey);
 
 #if !defined No_Exception && !defined No_Standard_ProgramError
-  if (aBlock == 0L || aBlock->IsEmpty())
+  if (aBlock == nullptr || aBlock->IsEmpty())
   {
     throw Standard_ProgramError("NCollection_AccAllocator::Free: \
                                 Trying to free an invalid address");
@@ -98,14 +98,14 @@ void NCollection_AccAllocator::Free(void* theAddress)
   aBlock->Free();
   if (aBlock->IsEmpty())
   {
-    Standard_Address anAddress = aBlock->address;
+    void* anAddress = aBlock->address;
 
     // Deallocate and remove the free block if there are more blocks
     if (myBlocks.Size() > 1)
     {
       Standard::Free(anAddress);
       Block** appBlock;
-      for (appBlock = &mypLastBlock; *appBlock != 0L; appBlock = &(*appBlock)->prevBlock)
+      for (appBlock = &mypLastBlock; *appBlock != nullptr; appBlock = &(*appBlock)->prevBlock)
       {
         if (*appBlock == aBlock)
         {
@@ -118,8 +118,8 @@ void NCollection_AccAllocator::Free(void* theAddress)
     // If there are no more blocks, reallocate the block to the default size
     else
     {
-      const Standard_Size aRoundSize  = (myBlockSize + 3) & ~0x3;
-      Standard_Address    aNewAddress = Standard::Reallocate(anAddress, aRoundSize);
+      const size_t aRoundSize  = (myBlockSize + 3) & ~0x3;
+      void*        aNewAddress = Standard::Reallocate(anAddress, aRoundSize);
       if (aNewAddress == anAddress)
       {
         // Normally, the reallocation keeps the block at the same address
@@ -145,7 +145,7 @@ void NCollection_AccAllocator::Free(void* theAddress)
         {
           // If the new address have different key,
           // rebind the block to the map of blocks with the new key.
-          myBlocks.Clear(Standard_False);
+          myBlocks.Clear(false);
           mypLastBlock = myBlocks.Bound(aNewKey, Block(aNewAddress, myBlockSize));
         }
       }
@@ -157,9 +157,8 @@ void NCollection_AccAllocator::Free(void* theAddress)
 // function : findBlock
 // purpose  : Find a block that the given allocation unit belongs to
 //=======================================================================
-NCollection_AccAllocator::Block* NCollection_AccAllocator::findBlock(
-  const Standard_Address theAddress,
-  Key&                   theKey)
+NCollection_AccAllocator::Block* NCollection_AccAllocator::findBlock(void* const theAddress,
+                                                                     Key&        theKey) noexcept
 {
   theKey = getKey(theAddress);
 
@@ -171,30 +170,28 @@ NCollection_AccAllocator::Block* NCollection_AccAllocator::findBlock(
 
   theKey.Value--;
   aBlock = myBlocks.ChangeSeek(theKey);
-  if (aBlock && (Standard_Byte*)aBlock->address + (Standard_Size)myBlockSize > theAddress)
+  if (aBlock && (uint8_t*)aBlock->address + (size_t)myBlockSize > theAddress)
   {
     return aBlock;
   }
 
-  return 0L;
+  return nullptr;
 }
 
 //=======================================================================
 // function : allocateNewBlock
 // purpose  : Allocate a new block and return a pointer to it
 //=======================================================================
-NCollection_AccAllocator::Block* NCollection_AccAllocator::allocateNewBlock(
-  const Standard_Size theSize)
+NCollection_AccAllocator::Block* NCollection_AccAllocator::allocateNewBlock(const size_t theSize)
 {
-  const Standard_Size aRoundSize = (theSize + 3) & ~0x3;
-  Standard_Address    anAddress  = Standard::Allocate(aRoundSize);
+  const size_t aRoundSize = (theSize + 3) & ~0x3;
+  void*        anAddress  = Standard::Allocate(aRoundSize);
   // we depend on the fact that Standard::Allocate always returns
   // a pointer aligned to a 4 byte boundary
   mypLastBlock = myBlocks.Bound(getKey(anAddress), Block(anAddress, theSize, mypLastBlock));
 #ifdef OCCT_DEBUG_FINDBLOCK
   Key aKey;
-  Standard_ASSERT_VOID(mypLastBlock
-                         == findBlock((Standard_Byte*)mypLastBlock->allocStart - 1, aKey),
+  Standard_ASSERT_VOID(mypLastBlock == findBlock((uint8_t*)mypLastBlock->allocStart - 1, aKey),
                        "improper work of NCollection_AccAllocator::findBlock");
 #endif
   return mypLastBlock;

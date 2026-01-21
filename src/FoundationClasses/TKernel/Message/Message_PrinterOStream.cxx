@@ -35,8 +35,8 @@ IMPLEMENT_STANDARD_RTTIEXT(Message_PrinterOStream, Message_Printer)
 //=======================================================================
 Message_PrinterOStream::Message_PrinterOStream(const Message_Gravity theTraceLevel)
     : myStream(&std::cout),
-      myIsFile(Standard_False),
-      myToColorize(Standard_True)
+      myIsFile(false),
+      myToColorize(true)
 {
   myTraceLevel = theTraceLevel;
 }
@@ -46,12 +46,12 @@ Message_PrinterOStream::Message_PrinterOStream(const Message_Gravity theTraceLev
 // purpose  : Opening a file as an std::ostream
 //           for specific file names standard streams are created
 //=======================================================================
-Message_PrinterOStream::Message_PrinterOStream(const Standard_CString theFileName,
-                                               const Standard_Boolean theToAppend,
-                                               const Message_Gravity  theTraceLevel)
+Message_PrinterOStream::Message_PrinterOStream(const char*           theFileName,
+                                               const bool            theToAppend,
+                                               const Message_Gravity theTraceLevel)
     : myStream(&std::cout),
-      myIsFile(Standard_False),
-      myToColorize(Standard_True)
+      myIsFile(false),
+      myToColorize(true)
 {
   myTraceLevel = theTraceLevel;
   if (strcasecmp(theFileName, "cerr") == 0)
@@ -77,8 +77,8 @@ Message_PrinterOStream::Message_PrinterOStream(const Standard_CString theFileNam
   if (aFile->is_open())
   {
     myStream     = (Standard_OStream*)aFile;
-    myIsFile     = Standard_True;
-    myToColorize = Standard_False;
+    myIsFile     = true;
+    myToColorize = false;
   }
   else
   {
@@ -97,7 +97,7 @@ void Message_PrinterOStream::Close()
   if (!myStream)
     return;
   Standard_OStream* ostr = (Standard_OStream*)myStream;
-  myStream               = 0;
+  myStream               = nullptr;
 
   ostr->flush();
   if (myIsFile)
@@ -105,7 +105,7 @@ void Message_PrinterOStream::Close()
     std::ofstream* ofile = (std::ofstream*)ostr;
     ofile->close();
     delete ofile;
-    myIsFile = Standard_False;
+    myIsFile = false;
   }
 }
 
@@ -114,7 +114,7 @@ void Message_PrinterOStream::Close()
 void Message_PrinterOStream::send(const TCollection_AsciiString& theString,
                                   const Message_Gravity          theGravity) const
 {
-  if (theGravity < myTraceLevel || myStream == NULL)
+  if (theGravity < myTraceLevel || myStream == nullptr)
   {
     return;
   }
@@ -213,7 +213,7 @@ void Message_PrinterOStream::SetConsoleTextColor(Standard_OStream*    theOStream
   (void)theTextColor;
   (void)theIsIntenseText;
 #else
-  if (theOStream == NULL)
+  if (theOStream == nullptr)
   {
     return;
   }

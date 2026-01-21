@@ -36,9 +36,7 @@ IMPLEMENT_STANDARD_RTTIEXT(Aspect_Window, Standard_Transient)
 //-Destructors
 //-Constructors
 Aspect_Window::Aspect_Window()
-    : MyBackground(),
-      MyGradientBackground(),
-      MyBackgroundFillMethod(Aspect_FM_NONE)
+    : MyBackgroundFillMethod(Aspect_FM_NONE)
 {
 }
 
@@ -57,12 +55,12 @@ Aspect_GradientBackground Aspect_Window::GradientBackground() const
   return MyGradientBackground;
 }
 
-Standard_Boolean Aspect_Window::IsVirtual() const
+bool Aspect_Window::IsVirtual() const
 {
   return MyIsVirtual;
 }
 
-void Aspect_Window::SetVirtual(const Standard_Boolean theVirtual)
+void Aspect_Window::SetVirtual(const bool theVirtual)
 {
   MyIsVirtual = theVirtual;
 }
@@ -93,7 +91,7 @@ void Aspect_Window::SetBackground(const Quantity_Color&           theFirstColor,
 
 //=================================================================================================
 
-void Aspect_Window::DumpJson(Standard_OStream& theOStream, Standard_Integer theDepth) const
+void Aspect_Window::DumpJson(Standard_OStream& theOStream, int theDepth) const
 {
   OCCT_DUMP_TRANSIENT_CLASS_BEGIN(theOStream)
 

@@ -12,8 +12,8 @@
 // commercial license or contractual agreement.
 
 // modif du 14/09/95 mjm
-// prise en compte de l'unite choisi par l'utilisateur
-// pour l'ecriture du fichier IGES.
+// taking into account the unit chosen by the user
+// for writing the IGES file.
 
 #include <Geom_Direction.hxx>
 #include <Geom_Vector.hxx>
@@ -22,15 +22,14 @@
 #include <gp_XYZ.hxx>
 #include <IGESGeom_CopiousData.hxx>
 #include <IGESGeom_Direction.hxx>
-#include <Interface_Macros.hxx>
+#include <MoniTool_Macros.hxx>
 
 //=============================================================================
 // GeomToIGES_GeomVector
 //=============================================================================
 GeomToIGES_GeomVector::GeomToIGES_GeomVector()
-    : GeomToIGES_GeomEntity()
-{
-}
+
+  = default;
 
 //=============================================================================
 // GeomToIGES_GeomVector
@@ -42,13 +41,14 @@ GeomToIGES_GeomVector::GeomToIGES_GeomVector(const GeomToIGES_GeomEntity& GE)
 }
 
 //=============================================================================
-// Transfer des Entites Vector de Geom vers IGES
+// Transfer of Vector Entities from Geom to IGES
 // TransferVector
 //=============================================================================
 
-Handle(IGESGeom_Direction) GeomToIGES_GeomVector::TransferVector(const Handle(Geom_Vector)& start)
+occ::handle<IGESGeom_Direction> GeomToIGES_GeomVector::TransferVector(
+  const occ::handle<Geom_Vector>& start)
 {
-  Handle(IGESGeom_Direction) res;
+  occ::handle<IGESGeom_Direction> res;
   if (start.IsNull())
   {
     return res;
@@ -69,41 +69,41 @@ Handle(IGESGeom_Direction) GeomToIGES_GeomVector::TransferVector(const Handle(Ge
 }
 
 //=============================================================================
-// Transfer des Entites VectorWithMagnitude de Geom vers IGES
+// Transfer of VectorWithMagnitude Entities from Geom to IGES
 // TransferVector
 //=============================================================================
 
-Handle(IGESGeom_Direction) GeomToIGES_GeomVector::TransferVector(
-  const Handle(Geom_VectorWithMagnitude)& start)
+occ::handle<IGESGeom_Direction> GeomToIGES_GeomVector::TransferVector(
+  const occ::handle<Geom_VectorWithMagnitude>& start)
 {
-  Handle(IGESGeom_Direction) Dir = new IGESGeom_Direction;
+  occ::handle<IGESGeom_Direction> Dir = new IGESGeom_Direction;
   if (start.IsNull())
   {
     return Dir;
   }
 
-  Standard_Real X, Y, Z;
+  double X, Y, Z;
   start->Coord(X, Y, Z);
-  Standard_Real M = start->Magnitude();
+  double M = start->Magnitude();
   Dir->Init(gp_XYZ(X / (M * GetUnit()), Y / (M * GetUnit()), Z / (M * GetUnit())));
   return Dir;
 }
 
 //=============================================================================
-// Transfer des Entites Direction de Geom vers IGES
+// Transfer of Direction Entities from Geom to IGES
 // TransferVector
 //=============================================================================
 
-Handle(IGESGeom_Direction) GeomToIGES_GeomVector::TransferVector(
-  const Handle(Geom_Direction)& start)
+occ::handle<IGESGeom_Direction> GeomToIGES_GeomVector::TransferVector(
+  const occ::handle<Geom_Direction>& start)
 {
-  Handle(IGESGeom_Direction) Dir = new IGESGeom_Direction;
+  occ::handle<IGESGeom_Direction> Dir = new IGESGeom_Direction;
   if (start.IsNull())
   {
     return Dir;
   }
 
-  Standard_Real X, Y, Z;
+  double X, Y, Z;
   start->Coord(X, Y, Z);
   Dir->Init(gp_XYZ(X / GetUnit(), Y / GetUnit(), Z / GetUnit()));
   return Dir;

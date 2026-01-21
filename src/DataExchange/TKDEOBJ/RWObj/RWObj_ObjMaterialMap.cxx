@@ -22,16 +22,15 @@ IMPLEMENT_STANDARD_RTTIEXT(RWObj_ObjMaterialMap, RWMesh_MaterialMap)
 
 RWObj_ObjMaterialMap::RWObj_ObjMaterialMap(const TCollection_AsciiString& theFile)
     : RWMesh_MaterialMap(theFile),
-      myFile(NULL)
+      myFile(nullptr)
 {
-  //
 }
 
 //=================================================================================================
 
 RWObj_ObjMaterialMap::~RWObj_ObjMaterialMap()
 {
-  if (myFile != NULL)
+  if (myFile != nullptr)
   {
     if (::fclose(myFile) != 0)
     {
@@ -49,16 +48,16 @@ RWObj_ObjMaterialMap::~RWObj_ObjMaterialMap()
 
 TCollection_AsciiString RWObj_ObjMaterialMap::AddMaterial(const XCAFPrs_Style& theStyle)
 {
-  if (myFile == NULL && !myIsFailed)
+  if (myFile == nullptr && !myIsFailed)
   {
     myFile     = OSD_OpenFile(myFileName.ToCString(), "wb");
-    myIsFailed = myFile == NULL;
-    if (myFile != NULL)
+    myIsFailed = myFile == nullptr;
+    if (myFile != nullptr)
     {
       Fprintf(myFile, "# Exported by Open CASCADE Technology [dev.opencascade.org]\n");
     }
   }
-  if (myFile == NULL)
+  if (myFile == nullptr)
   {
     return TCollection_AsciiString();
   }
@@ -81,8 +80,8 @@ void RWObj_ObjMaterialMap::DefineMaterial(const XCAFPrs_Style&           theStyl
                                                   : XCAFDoc_VisMaterialCommon();
   Quantity_Color                  anAmbQ(aDefMat.AmbientColor), aDiffQ(aDefMat.DiffuseColor),
     aSpecQ(aDefMat.SpecularColor);
-  Standard_ShortReal aTransp   = 0.0f;
-  Standard_ShortReal aSpecular = aDefMat.Shininess * 1000.0f;
+  float aTransp   = 0.0f;
+  float aSpecular = aDefMat.Shininess * 1000.0f;
   if (!theStyle.Material().IsNull() && !theStyle.Material()->IsEmpty())
   {
     hasMaterial                             = true;
@@ -97,7 +96,7 @@ void RWObj_ObjMaterialMap::DefineMaterial(const XCAFPrs_Style&           theStyl
   {
     hasMaterial = true;
     aDiffQ      = theStyle.GetColorSurf();
-    anAmbQ      = Quantity_Color((Graphic3d_Vec3)theStyle.GetColorSurf() * 0.25f);
+    anAmbQ      = Quantity_Color((NCollection_Vec3<float>)theStyle.GetColorSurf() * 0.25f);
     if (theStyle.GetColorSurfRGBA().Alpha() < 1.0f)
     {
       aTransp = 1.0f - theStyle.GetColorSurfRGBA().Alpha();
@@ -106,7 +105,7 @@ void RWObj_ObjMaterialMap::DefineMaterial(const XCAFPrs_Style&           theStyl
 
   if (hasMaterial)
   {
-    Graphic3d_Vec3d anAmb, aDiff, aSpec;
+    NCollection_Vec3<double> anAmb, aDiff, aSpec;
     anAmbQ.Values(anAmb.r(), anAmb.g(), anAmb.b(), Quantity_TOC_sRGB);
     aDiffQ.Values(aDiff.r(), aDiff.g(), aDiff.b(), Quantity_TOC_sRGB);
     aSpecQ.Values(aSpec.r(), aSpec.g(), aSpec.b(), Quantity_TOC_sRGB);
@@ -121,7 +120,7 @@ void RWObj_ObjMaterialMap::DefineMaterial(const XCAFPrs_Style&           theStyl
     }
   }
 
-  if (const Handle(Image_Texture)& aBaseTexture = theStyle.BaseColorTexture())
+  if (const occ::handle<Image_Texture>& aBaseTexture = theStyle.BaseColorTexture())
   {
     TCollection_AsciiString aTexture;
     if (!myImageMap.Find(aBaseTexture, aTexture) && !myImageFailMap.Contains(aBaseTexture))

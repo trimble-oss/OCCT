@@ -19,45 +19,45 @@ IMPLEMENT_STANDARD_RTTIEXT(OSD_FileSystem, Standard_Transient)
 
 //=================================================================================================
 
-static Handle(OSD_FileSystem) createDefaultFileSystem()
+static occ::handle<OSD_FileSystem> createDefaultFileSystem()
 {
-  Handle(OSD_FileSystemSelector) aSystem = new OSD_FileSystemSelector();
+  occ::handle<OSD_FileSystemSelector> aSystem = new OSD_FileSystemSelector();
   aSystem->AddProtocol(new OSD_LocalFileSystem());
   return aSystem;
 }
 
 //=================================================================================================
 
-OSD_FileSystem::OSD_FileSystem() {}
+OSD_FileSystem::OSD_FileSystem() = default;
 
 //=================================================================================================
 
-OSD_FileSystem::~OSD_FileSystem() {}
+OSD_FileSystem::~OSD_FileSystem() = default;
 
 //=================================================================================================
 
-const Handle(OSD_FileSystem)& OSD_FileSystem::DefaultFileSystem()
+const occ::handle<OSD_FileSystem>& OSD_FileSystem::DefaultFileSystem()
 {
-  static const Handle(OSD_FileSystem) aDefSystem = createDefaultFileSystem();
+  static const occ::handle<OSD_FileSystem> aDefSystem = createDefaultFileSystem();
   return aDefSystem;
 }
 
 //=================================================================================================
 
-void OSD_FileSystem::AddDefaultProtocol(const Handle(OSD_FileSystem)& theFileSystem,
-                                        bool                          theIsPreferred)
+void OSD_FileSystem::AddDefaultProtocol(const occ::handle<OSD_FileSystem>& theFileSystem,
+                                        bool                               theIsPreferred)
 {
-  Handle(OSD_FileSystemSelector) aFileSelector =
-    Handle(OSD_FileSystemSelector)::DownCast(DefaultFileSystem());
+  occ::handle<OSD_FileSystemSelector> aFileSelector =
+    occ::down_cast<OSD_FileSystemSelector>(DefaultFileSystem());
   aFileSelector->AddProtocol(theFileSystem, theIsPreferred);
 }
 
 //=================================================================================================
 
-void OSD_FileSystem::RemoveDefaultProtocol(const Handle(OSD_FileSystem)& theFileSystem)
+void OSD_FileSystem::RemoveDefaultProtocol(const occ::handle<OSD_FileSystem>& theFileSystem)
 {
-  Handle(OSD_FileSystemSelector) aFileSelector =
-    Handle(OSD_FileSystemSelector)::DownCast(DefaultFileSystem());
+  occ::handle<OSD_FileSystemSelector> aFileSelector =
+    occ::down_cast<OSD_FileSystemSelector>(DefaultFileSystem());
   aFileSelector->RemoveProtocol(theFileSystem);
 }
 
@@ -75,7 +75,7 @@ std::shared_ptr<std::istream> OSD_FileSystem::OpenIStream(
   std::shared_ptr<std::istream>      aNewStream;
   std::shared_ptr<OSD_IStreamBuffer> anOldStream =
     std::dynamic_pointer_cast<OSD_IStreamBuffer>(theOldStream);
-  if (anOldStream.get() != NULL && theUrl.IsEqual(anOldStream->Url().c_str())
+  if (anOldStream.get() != nullptr && theUrl.IsEqual(anOldStream->Url().c_str())
       && IsOpenIStream(anOldStream))
   {
     if (!anOldStream->good())
@@ -89,11 +89,11 @@ std::shared_ptr<std::istream> OSD_FileSystem::OpenIStream(
       aNewStream->seekg((std::streamoff)theOffset, std::ios_base::beg);
     }
   }
-  if (aNewStream.get() == NULL)
+  if (aNewStream.get() == nullptr)
   {
     std::shared_ptr<std::streambuf> aFileBuf =
       OpenStreamBuffer(theUrl, theMode | std::ios_base::in);
-    if (aFileBuf.get() == NULL)
+    if (aFileBuf.get() == nullptr)
     {
       return std::shared_ptr<std::istream>();
     }
@@ -114,7 +114,7 @@ std::shared_ptr<std::ostream> OSD_FileSystem::OpenOStream(const TCollection_Asci
 {
   std::shared_ptr<std::ostream>   aNewStream;
   std::shared_ptr<std::streambuf> aFileBuf = OpenStreamBuffer(theUrl, theMode | std::ios_base::out);
-  if (aFileBuf.get() == NULL)
+  if (aFileBuf.get() == nullptr)
   {
     return std::shared_ptr<std::ostream>();
   }

@@ -16,7 +16,6 @@
 
 #include <Interface_EntityIterator.hxx>
 #include <Interface_Graph.hxx>
-#include <Standard_Mutex.hxx>
 #include <Standard_Transient.hxx>
 #include <Standard_Type.hxx>
 #include <StepGeom_CompositeCurve.hxx>
@@ -28,7 +27,10 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(STEPSelections_SelectGSCurves, IFSelect_SelectExplore)
 
-static Standard_Integer flag;
+namespace
+{
+thread_local int flag;
+} // namespace
 
 STEPSelections_SelectGSCurves::STEPSelections_SelectGSCurves()
     : IFSelect_SelectExplore(-1)
@@ -36,44 +38,41 @@ STEPSelections_SelectGSCurves::STEPSelections_SelectGSCurves()
   flag = 1;
 }
 
-Standard_Boolean STEPSelections_SelectGSCurves::Explore(const Standard_Integer /*level*/,
-                                                        const Handle(Standard_Transient)& start,
-                                                        const Interface_Graph&            G,
-                                                        Interface_EntityIterator& explored) const
+bool STEPSelections_SelectGSCurves::Explore(const int /*level*/,
+                                            const occ::handle<Standard_Transient>& start,
+                                            const Interface_Graph&                 G,
+                                            Interface_EntityIterator&              explored) const
 {
   if (start.IsNull())
-    return Standard_False;
+    return false;
 
   if (start->IsKind(STANDARD_TYPE(StepGeom_Curve)))
   {
     if (start->IsKind(STANDARD_TYPE(StepGeom_CompositeCurve)))
     {
       Interface_EntityIterator subs        = G.Sharings(start);
-      Standard_Boolean         isInGeomSet = Standard_False;
+      bool                     isInGeomSet = false;
       for (subs.Start(); subs.More() && !isInGeomSet; subs.Next())
         if (subs.Value()->IsKind(STANDARD_TYPE(StepShape_GeometricSet)))
         {
-          static Standard_Mutex aMutex;
-          aMutex.Lock();
           if (flag)
           {
             explored.AddItem(subs.Value());
             flag = 0;
           }
-          aMutex.Unlock();
-          isInGeomSet = Standard_True;
+          isInGeomSet = true;
         }
       if (isInGeomSet)
       {
         Interface_EntityIterator aSubsShareds = G.Shareds(start);
         aSubsShareds.Start();
-        Standard_Boolean isSome = aSubsShareds.More();
+        bool isSome = aSubsShareds.More();
         for (; aSubsShareds.More(); aSubsShareds.Next())
           explored.AddItem(aSubsShareds.Value());
         return isSome;
       }
       else
-        return Standard_False;
+        return false;
     }
     else
     {
@@ -82,14 +81,14 @@ Standard_Boolean STEPSelections_SelectGSCurves::Explore(const Standard_Integer /
       {
         if (subs.Value()->IsKind(STANDARD_TYPE(StepShape_GeometricSet))
             || subs.Value()->IsKind(STANDARD_TYPE(StepGeom_CompositeCurveSegment)))
-          return Standard_True;
+          return true;
       }
     }
   }
 
   Interface_EntityIterator subs = G.Shareds(start);
   subs.Start();
-  Standard_Boolean isSome = subs.More();
+  bool isSome = subs.More();
   for (; subs.More(); subs.Next())
     explored.AddItem(subs.Value());
 

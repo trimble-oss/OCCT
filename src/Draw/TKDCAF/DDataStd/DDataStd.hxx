@@ -41,13 +41,13 @@ public:
   //! to set and get NamedShape
   Standard_EXPORT static void NamedShapeCommands(Draw_Interpretor& I);
 
-  //! to set and get Integer, Real,  Reference, Geometry
+  //! to set and get Integer, Real, Reference, Geometry
   Standard_EXPORT static void BasicCommands(Draw_Interpretor& I);
 
   //! to set and get Datum attributes
   Standard_EXPORT static void DatumCommands(Draw_Interpretor& I);
 
-  //! to set and get Constraint and Constraint  attributes
+  //! to set and get Constraint and Constraint attributes
   Standard_EXPORT static void ConstraintCommands(Draw_Interpretor& I);
 
   //! to set and get Objects attributes
@@ -64,8 +64,8 @@ public:
   //! ===============
   Standard_EXPORT static void TreeCommands(Draw_Interpretor& I);
 
-  Standard_EXPORT static void DumpConstraint(const Handle(TDataXtd_Constraint)& C,
-                                             Standard_OStream&                  S);
+  Standard_EXPORT static void DumpConstraint(const occ::handle<TDataXtd_Constraint>& C,
+                                             Standard_OStream&                       S);
 };
 
 #endif // _DDataStd_HeaderFile

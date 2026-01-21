@@ -21,44 +21,44 @@
 GeomFill_CornerState::GeomFill_CornerState()
     : gap(RealLast()),
       tgtang(0.0),
-      isconstrained(0),
+      isconstrained(false),
       norang(0.0),
       scal(1.),
-      coonscnd(1)
+      coonscnd(true)
 {
 }
 
 //=================================================================================================
 
-Standard_Real GeomFill_CornerState::Gap() const
+double GeomFill_CornerState::Gap() const
 {
   return gap;
 }
 
 //=================================================================================================
 
-void GeomFill_CornerState::Gap(const Standard_Real G)
+void GeomFill_CornerState::Gap(const double G)
 {
   gap = G;
 }
 
 //=================================================================================================
 
-Standard_Real GeomFill_CornerState::TgtAng() const
+double GeomFill_CornerState::TgtAng() const
 {
   return tgtang;
 }
 
 //=================================================================================================
 
-void GeomFill_CornerState::TgtAng(const Standard_Real Ang)
+void GeomFill_CornerState::TgtAng(const double Ang)
 {
   tgtang = Ang;
 }
 
 //=================================================================================================
 
-Standard_Boolean GeomFill_CornerState::HasConstraint() const
+bool GeomFill_CornerState::HasConstraint() const
 {
   return isconstrained;
 }
@@ -67,37 +67,37 @@ Standard_Boolean GeomFill_CornerState::HasConstraint() const
 
 void GeomFill_CornerState::Constraint()
 {
-  isconstrained = 1;
+  isconstrained = true;
 }
 
 //=================================================================================================
 
-Standard_Real GeomFill_CornerState::NorAng() const
+double GeomFill_CornerState::NorAng() const
 {
   return norang;
 }
 
 //=================================================================================================
 
-void GeomFill_CornerState::NorAng(const Standard_Real Ang)
+void GeomFill_CornerState::NorAng(const double Ang)
 {
   norang = Ang;
 }
 
 //=================================================================================================
 
-Standard_Boolean GeomFill_CornerState::IsToKill(Standard_Real& Scal) const
+bool GeomFill_CornerState::IsToKill(double& Scal) const
 {
   Scal = scal;
   if (!isconstrained)
-    return 0;
+    return false;
   return !coonscnd;
 }
 
 //=================================================================================================
 
-void GeomFill_CornerState::DoKill(const Standard_Real Scal)
+void GeomFill_CornerState::DoKill(const double Scal)
 {
   scal     = Scal;
-  coonscnd = 0;
+  coonscnd = false;
 }

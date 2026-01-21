@@ -19,11 +19,12 @@ IMPLEMENT_STANDARD_RTTIEXT(StepShape_ValueFormatTypeQualifier, Standard_Transien
 
 //=================================================================================================
 
-StepShape_ValueFormatTypeQualifier::StepShape_ValueFormatTypeQualifier() {}
+StepShape_ValueFormatTypeQualifier::StepShape_ValueFormatTypeQualifier() = default;
 
 //=================================================================================================
 
-void StepShape_ValueFormatTypeQualifier::Init(const Handle(TCollection_HAsciiString)& theFormatType)
+void StepShape_ValueFormatTypeQualifier::Init(
+  const occ::handle<TCollection_HAsciiString>& theFormatType)
 {
   // --- classe own fields ---
   formatType = theFormatType;

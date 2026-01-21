@@ -16,14 +16,15 @@
 #include <Prs3d_ToolSphere.hxx>
 
 #include <Graphic3d_ArrayOfTriangles.hxx>
-#include <Poly_Array1OfTriangle.hxx>
+#include <Poly_Triangle.hxx>
+#include <NCollection_Array1.hxx>
 #include <Prs3d_ToolQuadric.hxx>
 
 //=================================================================================================
 
-Prs3d_ToolSphere::Prs3d_ToolSphere(const Standard_Real    theRadius,
-                                   const Standard_Integer theNbSlices,
-                                   const Standard_Integer theNbStacks)
+Prs3d_ToolSphere::Prs3d_ToolSphere(const double theRadius,
+                                   const int    theNbSlices,
+                                   const int    theNbStacks)
     : myRadius(theRadius)
 {
   mySlicesNb = theNbSlices;
@@ -32,31 +33,33 @@ Prs3d_ToolSphere::Prs3d_ToolSphere(const Standard_Real    theRadius,
 
 //=================================================================================================
 
-gp_Pnt Prs3d_ToolSphere::Vertex(const Standard_Real theU, const Standard_Real theV) const
+gp_Pnt Prs3d_ToolSphere::Vertex(const double theU, const double theV) const
 {
-  const Standard_Real aU = theU * M_PI * 2.0;
-  const Standard_Real aV = theV * M_PI;
-  return gp_Pnt(myRadius * Cos(aU) * Sin(aV), -myRadius * Sin(aU) * Sin(aV), myRadius * Cos(aV));
+  const double aU = theU * M_PI * 2.0;
+  const double aV = theV * M_PI;
+  return gp_Pnt(myRadius * std::cos(aU) * std::sin(aV),
+                -myRadius * std::sin(aU) * std::sin(aV),
+                myRadius * std::cos(aV));
 }
 
 //=================================================================================================
 
-gp_Dir Prs3d_ToolSphere::Normal(const Standard_Real theU, const Standard_Real theV) const
+gp_Dir Prs3d_ToolSphere::Normal(const double theU, const double theV) const
 {
-  const Standard_Real aU = theU * M_PI * 2.0;
-  const Standard_Real aV = theV * M_PI;
-  return gp_Dir(Cos(aU) * Sin(aV), -Sin(aU) * Sin(aV), Cos(aV));
+  const double aU = theU * M_PI * 2.0;
+  const double aV = theV * M_PI;
+  return gp_Dir(std::cos(aU) * std::sin(aV), -std::sin(aU) * std::sin(aV), std::cos(aV));
 }
 
 //=================================================================================================
 
-Handle(Graphic3d_ArrayOfTriangles) Prs3d_ToolSphere::Create(const Standard_Real    theRadius,
-                                                            const Standard_Integer theNbSlices,
-                                                            const Standard_Integer theNbStacks,
-                                                            const gp_Trsf&         theTrsf)
+occ::handle<Graphic3d_ArrayOfTriangles> Prs3d_ToolSphere::Create(const double   theRadius,
+                                                                 const int      theNbSlices,
+                                                                 const int      theNbStacks,
+                                                                 const gp_Trsf& theTrsf)
 {
-  Handle(Graphic3d_ArrayOfTriangles) anArray;
-  Prs3d_ToolSphere                   aTool(theRadius, theNbSlices, theNbStacks);
+  occ::handle<Graphic3d_ArrayOfTriangles> anArray;
+  Prs3d_ToolSphere                        aTool(theRadius, theNbSlices, theNbStacks);
   aTool.FillArray(anArray, theTrsf);
   return anArray;
 }

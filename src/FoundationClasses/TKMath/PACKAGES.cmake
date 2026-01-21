@@ -1,6 +1,13 @@
 # Auto-generated list of packages for TKMath toolkit
 set(OCCT_TKMath_LIST_OF_PACKAGES
   math
+  MathUtils
+  MathPoly
+  MathLin
+  MathOpt
+  MathRoot
+  MathInteg
+  MathSys
   ElCLib
   ElSLib
   BSplCLib
@@ -13,6 +20,5 @@ set(OCCT_TKMath_LIST_OF_PACKAGES
   Bnd
   BVH
   gp
-  TColgp
   TopLoc
 )

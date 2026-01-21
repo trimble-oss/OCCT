@@ -21,27 +21,27 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(Interface_EntityCluster, Standard_Transient)
 
-// Un Cluster, ce sont 4 entites qui se suivent (dans le principe, nombre fixe,
-// meme si pas 4). Elles sont remplies depuis 0. Il y a donc autant d Entites
-// que de Handles non Nuls, plus le fait qu ils sont remplis dans l ordre
-// Ainsi (avec Next), on consomme 5 Handles pour 4 Entites, avec une pointe
-// pour 1 et 2 Entites (on reste a 5 Handles)
-// Suppression : On retasse le Cluster pour que les Nulls soient tjrs a la fin
+// A Cluster is 4 entities that follow each other (in principle, fixed number,
+// even if not 4). They are filled from 0. There are therefore as many Entities
+// as there are non-Null Handles, plus the fact that they are filled in order
+// Thus (with Next), we consume 5 Handles for 4 Entities, with a spike
+// for 1 and 2 Entities (we stay at 5 Handles)
+// Deletion: We compact the Cluster so that the Nulls are always at the end
 //  ....                        CONSTRUCTEURS                        ....
-Interface_EntityCluster::Interface_EntityCluster() {}
+Interface_EntityCluster::Interface_EntityCluster() = default;
 
-Interface_EntityCluster::Interface_EntityCluster(const Handle(Standard_Transient)& ent)
+Interface_EntityCluster::Interface_EntityCluster(const occ::handle<Standard_Transient>& ent)
 {
   theents[0] = ent;
 }
 
-Interface_EntityCluster::Interface_EntityCluster(const Handle(Interface_EntityCluster)& ec)
+Interface_EntityCluster::Interface_EntityCluster(const occ::handle<Interface_EntityCluster>& ec)
 {
   thenext = ec;
 }
 
-Interface_EntityCluster::Interface_EntityCluster(const Handle(Standard_Transient)&      ent,
-                                                 const Handle(Interface_EntityCluster)& ec)
+Interface_EntityCluster::Interface_EntityCluster(const occ::handle<Standard_Transient>&      ent,
+                                                 const occ::handle<Interface_EntityCluster>& ec)
 {
   theents[0] = ent;
   thenext    = ec;
@@ -49,7 +49,7 @@ Interface_EntityCluster::Interface_EntityCluster(const Handle(Standard_Transient
 
 //  ....                        AJOUT - SUPPRESSION                        ....
 
-void Interface_EntityCluster::Append(const Handle(Standard_Transient)& ent)
+void Interface_EntityCluster::Append(const occ::handle<Standard_Transient>& ent)
 {
   if (ent.IsNull())
     throw Standard_NullObject("Interface_EntityCluster Append");
@@ -62,12 +62,12 @@ void Interface_EntityCluster::Append(const Handle(Standard_Transient)& ent)
   else if (theents[3].IsNull())
     theents[3] = ent;
   else
-  { // Si celui-ci est plein ...
+  { // If this one is full ...
     if (thenext.IsNull())
       thenext = new Interface_EntityCluster(ent);
     else
     {
-      Handle(Interface_EntityCluster) aCurEntClust = thenext;
+      occ::handle<Interface_EntityCluster> aCurEntClust = thenext;
       while (aCurEntClust->HasNext() && aCurEntClust->IsLocalFull())
         aCurEntClust = aCurEntClust->thenext;
       aCurEntClust->Append(ent);
@@ -75,12 +75,12 @@ void Interface_EntityCluster::Append(const Handle(Standard_Transient)& ent)
   }
 }
 
-Standard_Boolean Interface_EntityCluster::Remove(const Handle(Standard_Transient)& ent)
+bool Interface_EntityCluster::Remove(const occ::handle<Standard_Transient>& ent)
 {
   if (ent.IsNull())
     throw Standard_NullObject("Interface_EntityCluster Remove");
-  Standard_Integer i;
-  //  <ent> est-il ici ? si oui, on a son rang
+  int i;
+  //  Is <ent> here? if yes, we have its rank
   if (ent == theents[0])
     i = 1;
   else if (ent == theents[1])
@@ -90,58 +90,58 @@ Standard_Boolean Interface_EntityCluster::Remove(const Handle(Standard_Transient
   else if (ent == theents[3])
     i = 4;
 
-  //  Sinon, passer au suivant, qui peut du coup devenir vide ->
-  //  On enleve le cluster vide de la liste (en principe cest le dernier)
+  //  Otherwise, go to the next one, which can then become empty ->
+  //  We remove the empty cluster from the list (in principle it's the last one)
   else
-  { // Pas trouve dans celui-ci ...
+  { // Not found in this one ...
     if (thenext.IsNull())
-      return Standard_False;
-    Standard_Integer res = thenext->Remove(ent);
+      return false;
+    int res = thenext->Remove(ent);
     if (res)
       thenext = thenext->Next();
-    return Standard_False;
+    return false;
   }
   return Remove(i);
 }
 
-Standard_Boolean Interface_EntityCluster::Remove(const Standard_Integer num)
+bool Interface_EntityCluster::Remove(const int num)
 {
   if (num < 1)
     throw Standard_OutOfRange("EntityCluster : Remove");
-  Standard_Integer n = NbLocal();
+  int n = NbLocal();
   if (num > n)
   {
     if (thenext.IsNull())
       throw Standard_OutOfRange("EntityCluster : Remove");
-    Standard_Boolean res = thenext->Remove(num - n);
+    bool res = thenext->Remove(num - n);
     if (res)
       thenext = thenext->Next();
-    return Standard_False;
+    return false;
   }
-  for (Standard_Integer j = num; j < n; j--)
+  for (int j = num; j < n; j--)
     theents[j - 1] = theents[j];
-  theents[3].Nullify(); // On Nullify par la fin
-  return (n == 1);      // Ancien NbLocal == 1  -> devient nul
+  theents[3].Nullify(); // We Nullify at the end
+  return (n == 1);      // Old NbLocal == 1  -> becomes null
 }
 
-//  ....                        ACCES AUX DONNEES                        ....
+//  ....                        DATA ACCESS                        ....
 
-Standard_Integer Interface_EntityCluster::NbEntities() const
+int Interface_EntityCluster::NbEntities() const
 {
-  Standard_Integer nb = NbLocal();
+  int nb = NbLocal();
   if (!thenext.IsNull())
     nb += thenext->NbEntities();
   return nb;
 }
 
-const Handle(Standard_Transient)& Interface_EntityCluster::Value(const Standard_Integer num) const
+const occ::handle<Standard_Transient>& Interface_EntityCluster::Value(const int num) const
 {
-  Standard_Integer nb = NbLocal(), aLocalNum = num;
+  int nb = NbLocal(), aLocalNum = num;
   if (num <= 0)
     throw Standard_OutOfRange("Interface EntityCluster : Value");
   if (num > nb)
   {
-    Handle(Interface_EntityCluster) aCurEntClust = thenext;
+    occ::handle<Interface_EntityCluster> aCurEntClust = thenext;
     aLocalNum -= nb;
     while (aLocalNum > aCurEntClust->NbLocal())
     {
@@ -152,20 +152,19 @@ const Handle(Standard_Transient)& Interface_EntityCluster::Value(const Standard_
     }
     return aCurEntClust->theents[aLocalNum - 1];
   }
-  return theents[num - 1]; // numerotation a partir de 0
+  return theents[num - 1]; // numbering from 0
 }
 
-void Interface_EntityCluster::SetValue(const Standard_Integer            num,
-                                       const Handle(Standard_Transient)& ent)
+void Interface_EntityCluster::SetValue(const int num, const occ::handle<Standard_Transient>& ent)
 {
   if (ent.IsNull())
     throw Standard_NullObject("Interface_EntityCluster SetValue");
-  Standard_Integer nb = NbLocal(), aLocalNum = num;
+  int nb = NbLocal(), aLocalNum = num;
   if (num <= 0)
     throw Standard_OutOfRange("Interface EntityCluster : SetValue");
   if (num > nb)
   {
-    Handle(Interface_EntityCluster) aCurEntClust = thenext;
+    occ::handle<Interface_EntityCluster> aCurEntClust = thenext;
     aLocalNum -= nb;
     while (aLocalNum > aCurEntClust->NbLocal())
     {
@@ -177,7 +176,7 @@ void Interface_EntityCluster::SetValue(const Standard_Integer            num,
     aCurEntClust->theents[aLocalNum - 1] = ent;
   }
   else
-    theents[num - 1] = ent; // numerotation a partir de 0
+    theents[num - 1] = ent; // numbering from 0
 }
 
 void Interface_EntityCluster::FillIterator(Interface_EntityIterator& iter) const
@@ -196,17 +195,17 @@ void Interface_EntityCluster::FillIterator(Interface_EntityIterator& iter) const
 
 //  ....                    Actions atomiques internes                    ....
 
-Standard_Boolean Interface_EntityCluster::IsLocalFull() const
+bool Interface_EntityCluster::IsLocalFull() const
 {
   // Solaris Forte C++ compiler insisted it couldn't cast this,
   // even though it seems to do so elsewhere
-  Handle(Standard_Transient) tmp = Handle(Standard_Transient)(theents[3]);
+  occ::handle<Standard_Transient> tmp = occ::handle<Standard_Transient>(theents[3]);
   return (!tmp.IsNull());
 }
 
-Standard_Integer Interface_EntityCluster::NbLocal() const
+int Interface_EntityCluster::NbLocal() const
 {
-  Standard_Integer nb;
+  int nb;
   if (!theents[3].IsNull())
     nb = 4;
   else if (!theents[2].IsNull())
@@ -220,12 +219,12 @@ Standard_Integer Interface_EntityCluster::NbLocal() const
   return nb;
 }
 
-Standard_Boolean Interface_EntityCluster::HasNext() const
+bool Interface_EntityCluster::HasNext() const
 {
   return (!thenext.IsNull());
 }
 
-Handle(Interface_EntityCluster) Interface_EntityCluster::Next() const
+occ::handle<Interface_EntityCluster> Interface_EntityCluster::Next() const
 {
   return thenext;
 }
@@ -236,8 +235,8 @@ Interface_EntityCluster::~Interface_EntityCluster()
   {
     // Loading entities into the collection
     // for deletion in reverse order(avoiding the recursion)
-    NCollection_Sequence<Handle(Interface_EntityCluster)> aNColOfEntClust;
-    Handle(Interface_EntityCluster)                       aCurEntClust = thenext;
+    NCollection_Sequence<occ::handle<Interface_EntityCluster>> aNColOfEntClust;
+    occ::handle<Interface_EntityCluster>                       aCurEntClust = thenext;
     while (aCurEntClust->HasNext())
     {
       aNColOfEntClust.Append(aCurEntClust);
@@ -245,20 +244,20 @@ Interface_EntityCluster::~Interface_EntityCluster()
     }
     aNColOfEntClust.Append(aCurEntClust);
     aNColOfEntClust.Reverse();
-    for (NCollection_Sequence<Handle(Interface_EntityCluster)>::Iterator anEntClustIter(
+    for (NCollection_Sequence<occ::handle<Interface_EntityCluster>>::Iterator anEntClustIter(
            aNColOfEntClust);
          anEntClustIter.More();
          anEntClustIter.Next())
     {
       // Nullifying and destruction all fields of each entity in the collection
-      for (Standard_Integer anInd = 0; anInd < anEntClustIter.ChangeValue()->NbLocal(); ++anInd)
+      for (int anInd = 0; anInd < anEntClustIter.ChangeValue()->NbLocal(); ++anInd)
       {
         anEntClustIter.ChangeValue()->theents[anInd].Nullify();
       }
       anEntClustIter.ChangeValue()->thenext.Nullify();
     }
   }
-  for (Standard_Integer anInd = 0; anInd < NbLocal(); ++anInd)
+  for (int anInd = 0; anInd < NbLocal(); ++anInd)
   {
     theents[anInd].Nullify();
   }

@@ -15,7 +15,8 @@
 #include <Standard.hxx>
 
 #include <Message.hxx>
-#include <Standard_Mutex.hxx>
+
+#include <mutex>
 
 #include <Standard_WarningDisableFunctionCast.hxx>
 
@@ -34,6 +35,7 @@
 #elif defined(_WIN32) && !defined(OCCT_UWP)
 
   #include <Standard_WarningsDisable.hxx>
+  #include <windows.h>
   #include <dbghelp.h>
   #include <Standard_WarningsRestore.hxx>
 
@@ -71,9 +73,9 @@ public:
   }
 
   //! Return global mutex.
-  static Standard_Mutex& Mutex()
+  static std::mutex& Mutex()
   {
-    static Standard_Mutex THE_MUTEX_LOCK;
+    static std::mutex THE_MUTEX_LOCK;
     return THE_MUTEX_LOCK;
   }
 
@@ -182,14 +184,14 @@ private:
 
 //=================================================================================================
 
-Standard_Boolean Standard::StackTrace(char*     theBuffer,
-                                      const int theBufferSize,
-                                      const int theNbTraces = 10,
-                                      void*     theContext,
-                                      const int theNbTopSkip)
+bool Standard::StackTrace(char*     theBuffer,
+                          const int theBufferSize,
+                          const int theNbTraces = 10,
+                          void*     theContext,
+                          const int theNbTopSkip)
 {
   (void)theContext;
-  if (theBufferSize < 1 || theNbTraces < 1 || theBuffer == NULL || theNbTopSkip < 0)
+  if (theBufferSize < 1 || theNbTraces < 1 || theBuffer == nullptr || theNbTopSkip < 0)
   {
     return false;
   }
@@ -234,8 +236,8 @@ Standard_Boolean Standard::StackTrace(char*     theBuffer,
   }
 
   // DbgHelp is not thread-safe library, hence global lock is used for serial access
-  Standard_Mutex::Sentry aSentry(Standard_DbgHelper::Mutex());
-  Standard_DbgHelper&    aDbgHelp = Standard_DbgHelper::GetDbgHelper();
+  std::lock_guard<std::mutex> aLock(Standard_DbgHelper::Mutex());
+  Standard_DbgHelper&         aDbgHelp = Standard_DbgHelper::GetDbgHelper();
   if (!aDbgHelp.IsLoaded())
   {
     strcat_s(theBuffer, theBufferSize, "\n==Backtrace==\n");
@@ -324,7 +326,7 @@ Standard_Boolean Standard::StackTrace(char*     theBuffer,
   const int aTopSkip  = theNbTopSkip + 1; // skip this function call and specified extra number
   int       aNbTraces = theNbTraces + aTopSkip;
   void**    aStackArr = (void**)alloca(sizeof(void*) * aNbTraces);
-  if (aStackArr == NULL)
+  if (aStackArr == nullptr)
   {
     return false;
   }
@@ -337,7 +339,7 @@ Standard_Boolean Standard::StackTrace(char*     theBuffer,
 
   aNbTraces -= aTopSkip;
   char** aStrings = ::backtrace_symbols(aStackArr + aTopSkip, aNbTraces);
-  if (aStrings == NULL)
+  if (aStrings == nullptr)
   {
     return false;
   }

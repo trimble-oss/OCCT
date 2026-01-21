@@ -23,12 +23,12 @@
 
 const OSD_WhoAmI Iam = OSD_WHost;
 
-  #include <errno.h>
+  #include <cerrno>
 
   #include <sys/utsname.h> // For 'uname'
   #include <netdb.h>       // This is for 'gethostbyname'
   #include <unistd.h>
-  #include <stdio.h>
+  #include <cstdio>
 
   #if defined(__osf__) || defined(DECOSF1)
     #include <sys/types.h>
@@ -49,7 +49,7 @@ extern "C"
 
 // =========================================================================
 
-OSD_Host::OSD_Host() {}
+OSD_Host::OSD_Host() = default;
 
 // =========================================================================
 
@@ -114,9 +114,9 @@ TCollection_AsciiString OSD_Host::HostName()
 
 // =========================================================================
 
-Standard_Integer OSD_Host::AvailableMemory()
+int OSD_Host::AvailableMemory()
 {
-  Standard_Integer result;
+  int result;
 
   #if defined(__osf__) || defined(DECOSF1)
   char buffer[16];
@@ -152,7 +152,7 @@ TCollection_AsciiString OSD_Host::InternetAddress()
   b = (unsigned char)internet_address.h_addr_list[0][1];
   c = (unsigned char)internet_address.h_addr_list[0][2];
   d = (unsigned char)internet_address.h_addr_list[0][3];
-  sprintf(buffer, "%d.%d.%d.%d", a, b, c, d);
+  Sprintf(buffer, "%d.%d.%d.%d", a, b, c, d);
   result = buffer;
   return (result);
 }
@@ -194,7 +194,7 @@ void OSD_Host::Reset()
   myError.Reset();
 }
 
-Standard_Boolean OSD_Host::Failed() const
+bool OSD_Host::Failed() const
 {
   return (myError.Failed());
 }
@@ -204,7 +204,7 @@ void OSD_Host::Perror()
   myError.Perror();
 }
 
-Standard_Integer OSD_Host::Error() const
+int OSD_Host::Error() const
 {
   return (myError.Error());
 }
@@ -219,17 +219,13 @@ Standard_Integer OSD_Host::Error() const
 
   #include <OSD_Host.hxx>
 
-  #if defined(_MSC_VER)
-    #pragma comment(lib, "WSOCK32.LIB")
-  #endif
-
-void _osd_wnt_set_error(OSD_Error&, Standard_Integer, ...);
+void _osd_wnt_set_error(OSD_Error&, int, ...);
 
 static BOOL                    fInit = FALSE;
 static TCollection_AsciiString hostName;
 static TCollection_AsciiString version;
 static TCollection_AsciiString interAddr;
-static Standard_Integer        memSize;
+static int                     memSize;
 
 OSD_Host ::OSD_Host()
 {
@@ -272,7 +268,7 @@ OSD_Host ::OSD_Host()
       if (!Failed())
     {
 
-      memSize = (Standard_Integer)ms.dwAvailPageFile;
+      memSize = (int)ms.dwAvailPageFile;
 
       if (WSAStartup(MAKEWORD(1, 1), &wd))
       {
@@ -298,7 +294,7 @@ OSD_Host ::OSD_Host()
     {
 
       hostName                         = szHostName;
-      interAddr                        = Standard_CString(hostAddr);
+      interAddr                        = static_cast<const char*>(hostAddr);
       TCollection_AsciiString aVersion = TCollection_AsciiString("Windows NT Version ")
                                          + (int)osVerInfo.dwMajorVersion + "."
                                          + (int)osVerInfo.dwMinorVersion;
@@ -341,7 +337,7 @@ TCollection_AsciiString OSD_Host ::HostName()
 
 } // end OSD_Host :: HostName
 
-Standard_Integer OSD_Host ::AvailableMemory()
+int OSD_Host ::AvailableMemory()
 {
 
   return memSize;
@@ -362,7 +358,7 @@ OSD_OEMType OSD_Host ::MachineType()
 
 } // end OSD_Host :: MachineTYpe
 
-Standard_Boolean OSD_Host ::Failed() const
+bool OSD_Host ::Failed() const
 {
 
   return myError.Failed();
@@ -383,7 +379,7 @@ void OSD_Host ::Perror()
 
 } // end OSD_Host :: Perror
 
-Standard_Integer OSD_Host ::Error() const
+int OSD_Host ::Error() const
 {
 
   return myError.Error();

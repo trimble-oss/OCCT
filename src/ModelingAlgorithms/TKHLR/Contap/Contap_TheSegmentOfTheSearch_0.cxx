@@ -21,12 +21,23 @@
 #include <Adaptor3d_HVertex.hxx>
 #include <Contap_ThePathPointOfTheSearch.hxx>
 
-#define TheVertex Handle(Adaptor3d_HVertex)
-#define TheVertex_hxx <Adaptor3d_HVertex.hxx>
-#define TheArc Handle(Adaptor2d_Curve2d)
-#define TheArc_hxx <Adaptor2d_Curve2d.hxx>
-#define ThePathPoint Contap_ThePathPointOfTheSearch
-#define ThePathPoint_hxx <Contap_ThePathPointOfTheSearch.hxx>
-#define IntStart_Segment Contap_TheSegmentOfTheSearch
-#define IntStart_Segment_hxx <Contap_TheSegmentOfTheSearch.hxx>
-#include <IntStart_Segment.gxx>
+Contap_TheSegmentOfTheSearch::Contap_TheSegmentOfTheSearch()
+    : hasfp(false),
+      haslp(false)
+{
+}
+
+void Contap_TheSegmentOfTheSearch::SetLimitPoint(const Contap_ThePathPointOfTheSearch& V,
+                                                 const bool                            First)
+{
+  if (First)
+  {
+    hasfp = true;
+    thefp = V;
+  }
+  else
+  {
+    haslp = true;
+    thelp = V;
+  }
+}

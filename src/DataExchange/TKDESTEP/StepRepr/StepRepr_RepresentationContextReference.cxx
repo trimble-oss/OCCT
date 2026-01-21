@@ -20,12 +20,12 @@ IMPLEMENT_STANDARD_RTTIEXT(StepRepr_RepresentationContextReference, Standard_Tra
 
 //=================================================================================================
 
-StepRepr_RepresentationContextReference::StepRepr_RepresentationContextReference() {}
+StepRepr_RepresentationContextReference::StepRepr_RepresentationContextReference() = default;
 
 //=================================================================================================
 
 void StepRepr_RepresentationContextReference::Init(
-  const Handle(TCollection_HAsciiString)& theContextIdentifier)
+  const occ::handle<TCollection_HAsciiString>& theContextIdentifier)
 {
 
   myContextIdentifier = theContextIdentifier;
@@ -33,7 +33,8 @@ void StepRepr_RepresentationContextReference::Init(
 
 //=================================================================================================
 
-Handle(TCollection_HAsciiString) StepRepr_RepresentationContextReference::ContextIdentifier() const
+occ::handle<TCollection_HAsciiString> StepRepr_RepresentationContextReference::ContextIdentifier()
+  const
 {
   return myContextIdentifier;
 }
@@ -41,7 +42,7 @@ Handle(TCollection_HAsciiString) StepRepr_RepresentationContextReference::Contex
 //=================================================================================================
 
 void StepRepr_RepresentationContextReference::SetContextIdentifier(
-  const Handle(TCollection_HAsciiString)& theContextIdentifier)
+  const occ::handle<TCollection_HAsciiString>& theContextIdentifier)
 {
   myContextIdentifier = theContextIdentifier;
 }

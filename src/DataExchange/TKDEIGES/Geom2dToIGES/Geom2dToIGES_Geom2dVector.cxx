@@ -20,15 +20,14 @@
 #include <Geom2dToIGES_Geom2dVector.hxx>
 #include <gp_XYZ.hxx>
 #include <IGESGeom_Direction.hxx>
-#include <Interface_Macros.hxx>
+#include <MoniTool_Macros.hxx>
 
 //=============================================================================
 // Geom2dToIGES_Geom2dVector
 //=============================================================================
 Geom2dToIGES_Geom2dVector::Geom2dToIGES_Geom2dVector()
-    : Geom2dToIGES_Geom2dEntity()
-{
-}
+
+  = default;
 
 //=============================================================================
 // Geom2dToIGES_Geom2dVector
@@ -40,14 +39,14 @@ Geom2dToIGES_Geom2dVector::Geom2dToIGES_Geom2dVector(const Geom2dToIGES_Geom2dEn
 }
 
 //=============================================================================
-// Transfer des Entites Vector de Geom2d vers IGES
+// Transfer of Vector Entities from Geom2d to IGES
 // Transfer2dVector
 //=============================================================================
 
-Handle(IGESGeom_Direction) Geom2dToIGES_Geom2dVector::Transfer2dVector(
-  const Handle(Geom2d_Vector)& start)
+occ::handle<IGESGeom_Direction> Geom2dToIGES_Geom2dVector::Transfer2dVector(
+  const occ::handle<Geom2d_Vector>& start)
 {
-  Handle(IGESGeom_Direction) res;
+  occ::handle<IGESGeom_Direction> res;
   if (start.IsNull())
   {
     return res;
@@ -68,41 +67,41 @@ Handle(IGESGeom_Direction) Geom2dToIGES_Geom2dVector::Transfer2dVector(
 }
 
 //=============================================================================
-// Transfer des Entites VectorWithMagnitude de Geom2d vers IGES
+// Transfer of VectorWithMagnitude Entities from Geom2d to IGES
 // Transfer2dVector
 //=============================================================================
 
-Handle(IGESGeom_Direction) Geom2dToIGES_Geom2dVector::Transfer2dVector(
-  const Handle(Geom2d_VectorWithMagnitude)& start)
+occ::handle<IGESGeom_Direction> Geom2dToIGES_Geom2dVector::Transfer2dVector(
+  const occ::handle<Geom2d_VectorWithMagnitude>& start)
 {
-  Handle(IGESGeom_Direction) Dir = new IGESGeom_Direction;
+  occ::handle<IGESGeom_Direction> Dir = new IGESGeom_Direction;
   if (start.IsNull())
   {
     return Dir;
   }
 
-  Standard_Real X, Y;
+  double X, Y;
   start->Coord(X, Y);
-  Standard_Real M = start->Magnitude();
+  double M = start->Magnitude();
   Dir->Init(gp_XYZ(X / M, Y / M, 0.));
   return Dir;
 }
 
 //=============================================================================
-// Transfer des Entites Direction de Geom2d vers IGES
+// Transfer of Direction Entities from Geom2d to IGES
 // Transfer2dVector
 //=============================================================================
 
-Handle(IGESGeom_Direction) Geom2dToIGES_Geom2dVector::Transfer2dVector(
-  const Handle(Geom2d_Direction)& start)
+occ::handle<IGESGeom_Direction> Geom2dToIGES_Geom2dVector::Transfer2dVector(
+  const occ::handle<Geom2d_Direction>& start)
 {
-  Handle(IGESGeom_Direction) Dir = new IGESGeom_Direction;
+  occ::handle<IGESGeom_Direction> Dir = new IGESGeom_Direction;
   if (start.IsNull())
   {
     return Dir;
   }
 
-  Standard_Real X, Y;
+  double X, Y;
   start->Coord(X, Y);
   Dir->Init(gp_XYZ(X, Y, 0.));
   return Dir;

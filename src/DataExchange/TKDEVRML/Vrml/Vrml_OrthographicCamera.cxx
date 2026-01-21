@@ -28,8 +28,8 @@ Vrml_OrthographicCamera::Vrml_OrthographicCamera()
 
 Vrml_OrthographicCamera::Vrml_OrthographicCamera(const gp_Vec&          aPosition,
                                                  const Vrml_SFRotation& aOrientation,
-                                                 const Standard_Real    aFocalDistance,
-                                                 const Standard_Real    aHeight)
+                                                 const double           aFocalDistance,
+                                                 const double           aHeight)
 {
   myPosition      = aPosition;
   myOrientation   = aOrientation;
@@ -57,22 +57,22 @@ Vrml_SFRotation Vrml_OrthographicCamera::Orientation() const
   return myOrientation;
 }
 
-void Vrml_OrthographicCamera::SetFocalDistance(const Standard_Real aFocalDistance)
+void Vrml_OrthographicCamera::SetFocalDistance(const double aFocalDistance)
 {
   myFocalDistance = aFocalDistance;
 }
 
-Standard_Real Vrml_OrthographicCamera::FocalDistance() const
+double Vrml_OrthographicCamera::FocalDistance() const
 {
   return myFocalDistance;
 }
 
-void Vrml_OrthographicCamera::SetHeight(const Standard_Real aHeight)
+void Vrml_OrthographicCamera::SetHeight(const double aHeight)
 {
   myHeight = aHeight;
 }
 
-Standard_Real Vrml_OrthographicCamera::Height() const
+double Vrml_OrthographicCamera::Height() const
 {
   return myHeight;
 }
@@ -80,27 +80,29 @@ Standard_Real Vrml_OrthographicCamera::Height() const
 Standard_OStream& Vrml_OrthographicCamera::Print(Standard_OStream& anOStream) const
 {
   anOStream << "OrthographicCamera {\n";
-  if (Abs(myPosition.X() - 0) > 0.0001 || Abs(myPosition.Y() - 0) > 0.0001
-      || Abs(myPosition.Z() - 1) > 0.0001)
+  if (std::abs(myPosition.X() - 0) > 0.0001 || std::abs(myPosition.Y() - 0) > 0.0001
+      || std::abs(myPosition.Z() - 1) > 0.0001)
   {
     anOStream << "    position\t\t";
     anOStream << myPosition.X() << " " << myPosition.Y() << " " << myPosition.Z() << "\n";
   }
 
-  if (Abs(myOrientation.RotationX() - 0) > 0.0001 || Abs(myOrientation.RotationY() - 0) > 0.0001
-      || Abs(myOrientation.RotationZ() - 1) > 0.0001 || Abs(myOrientation.Angle() - 0) > 0.0001)
+  if (std::abs(myOrientation.RotationX() - 0) > 0.0001
+      || std::abs(myOrientation.RotationY() - 0) > 0.0001
+      || std::abs(myOrientation.RotationZ() - 1) > 0.0001
+      || std::abs(myOrientation.Angle() - 0) > 0.0001)
   {
     anOStream << "    orientation\t\t";
     anOStream << myOrientation.RotationX() << " " << myOrientation.RotationY() << " ";
     anOStream << myOrientation.RotationZ() << " " << myOrientation.Angle() << "\n";
   }
 
-  if (Abs(myFocalDistance - 5) > 0.0001)
+  if (std::abs(myFocalDistance - 5) > 0.0001)
   {
     anOStream << "    focalDistance\t";
     anOStream << myFocalDistance << "\n";
   }
-  if (Abs(myHeight - 2) > 0.0001)
+  if (std::abs(myHeight - 2) > 0.0001)
   {
     anOStream << "    height\t\t";
     anOStream << myHeight << "\n";

@@ -51,11 +51,24 @@
 #include <ViewerTest.hxx>
 #include <XmlDrivers_DocumentRetrievalDriver.hxx>
 #include <XmlDrivers_DocumentStorageDriver.hxx>
+#include <TDataStd_Name.hxx>
 #include <TDataStd_Real.hxx>
+#include <TDocStd_Application.hxx>
+#include <TDocStd_Document.hxx>
+#include <TDF_Label.hxx>
+#include <DDocStd.hxx>
+#include <XCAFDoc_ShapeTool.hxx>
+#include <XCAFDoc_DocumentTool.hxx>
 #include <Draw.hxx>
 #include <GeomInt_IntSS.hxx>
+#include <IntTools_FaceFace.hxx>
+#include <IntTools_PntOn2Faces.hxx>
+#include <NCollection_Sequence.hxx>
+#include <IntTools_Curve.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
+#include <Geom_CylindricalSurface.hxx>
+#include <Geom_ConicalSurface.hxx>
 #include <GeomAdaptor_Curve.hxx>
 #include <Extrema_FuncPSNorm.hxx>
 #include <BRepAdaptor_Curve.hxx>
@@ -73,12 +86,31 @@ Standard_DISABLE_DEPRECATION_WARNINGS
 #include <cmath>
 #include <iostream>
 #include <random>
+#include <vector>
 
 #define QCOMPARE(val1, val2)                                                                       \
   di << "Checking " #val1 " == " #val2 << ((val1) == (val2) ? ": OK\n" : ": Error\n")
 
-  static Standard_Integer
-  OCC230(Draw_Interpretor& di, Standard_Integer argc, const char** argv)
+#define QVERIFY(val)                                                                               \
+  if (!(val))                                                                                      \
+  {                                                                                                \
+    std::cout << "Error: " #val " is false\n";                                                     \
+  }
+
+  // Helper function to create conical surface
+  static occ::handle<Geom_Surface>
+  CreateCone(const gp_Pnt& theApex,
+             const gp_Dir& theDir,
+             const gp_Dir& theXDir,
+             double        theR,
+             double        theSemiAngle,
+             double /*theH*/)
+{
+  gp_Ax3 anAxis(theApex, theDir, theXDir);
+  return new Geom_ConicalSurface(anAxis, theSemiAngle, theR);
+}
+
+static int OCC230(Draw_Interpretor& di, int argc, const char** argv)
 {
   if (argc != 4)
   {
@@ -98,134 +130,15 @@ Standard_DISABLE_DEPRECATION_WARNINGS
     return 1;
   }
 
-  GCE2d_MakeSegment                  MakeSegment(P1, P2);
-  const Handle(Geom2d_TrimmedCurve)& TrimmedCurve = MakeSegment.Value();
+  GCE2d_MakeSegment                       MakeSegment(P1, P2);
+  const occ::handle<Geom2d_TrimmedCurve>& TrimmedCurve = MakeSegment.Value();
   DrawTrSurf::Set(argv[1], TrimmedCurve);
-  return 0;
-}
-
-static Standard_Integer OCC23361(Draw_Interpretor& di,
-                                 Standard_Integer /*argc*/,
-                                 const char** /*argv*/)
-{
-  gp_Pnt p(0, 0, 2);
-
-  gp_Trsf t1, t2;
-  t1.SetRotation(gp_Ax1(p, gp_Dir(0, 1, 0)), -0.49328285294022267);
-  t2.SetRotation(gp_Ax1(p, gp_Dir(0, 0, 1)), 0.87538474718473880);
-
-  gp_Trsf tComp = t2 * t1;
-
-  gp_Pnt p1(10, 3, 4);
-  gp_Pnt p2 = p1.Transformed(tComp);
-  gp_Pnt p3 = p1.Transformed(t1);
-  p3.Transform(t2);
-
-  // points must be equal
-  if (!p2.IsEqual(p3, Precision::Confusion()))
-    di << "ERROR OCC23361: equivalent transformations does not produce equal points\n";
-  else
-    di << "OCC23361: OK\n";
-
-  return 0;
-}
-
-class IncrementerDecrementer
-{
-public:
-  IncrementerDecrementer(std::atomic<int>* theVal, Standard_Boolean thePositive)
-      : myVal(theVal),
-        myPositive(thePositive)
-  {
-  }
-
-  void operator()(const size_t) const
-  {
-    if (myPositive)
-      ++(*myVal);
-    else
-      --(*myVal);
-  }
-
-private:
-  std::atomic<int>* myVal;
-  Standard_Boolean  myPositive;
-};
-
-static Standard_Integer OCC22980(Draw_Interpretor& di,
-                                 Standard_Integer /*argc*/,
-                                 const char** /*argv*/)
-{
-  std::atomic<int> aSum(0);
-
-  // check returned value
-  QCOMPARE(aSum.fetch_sub(1) - 1, -1);
-  QCOMPARE(aSum.fetch_add(1) + 1, 0);
-  QCOMPARE(aSum.fetch_add(1) + 1, 1);
-  QCOMPARE(aSum.fetch_add(1) + 1, 2);
-  //  QCOMPARE (Standard_Atomic_DecrementTest (&aSum), 0);
-  //  QCOMPARE (Standard_Atomic_DecrementTest (&aSum), 1);
-
-  // check atomicity
-  aSum        = 0;
-  const int N = 1 << 24; // big enough to ensure concurrency
-
-  // increment
-  OSD_Parallel::For(0, N, IncrementerDecrementer(&aSum, true));
-  QCOMPARE(aSum, N);
-
-  // decrement
-  OSD_Parallel::For(0, N, IncrementerDecrementer(&aSum, false));
-  QCOMPARE(aSum, 0);
-
-  return 0;
-}
-
-#include <TDocStd_Application.hxx>
-#include <TDocStd_Document.hxx>
-#include <XCAFDoc_ShapeTool.hxx>
-#include <XCAFDoc_DocumentTool.hxx>
-#include <TDF_Label.hxx>
-#include <TDataStd_Name.hxx>
-#include <DDocStd.hxx>
-
-static Standard_Integer OCC23595(Draw_Interpretor& di,
-                                 Standard_Integer /*argc*/,
-                                 const char** /*argv*/)
-{
-  Handle(TDocStd_Application) anApp = DDocStd::GetApplication();
-  Handle(TDocStd_Document)    aDoc;
-  anApp->NewDocument("XmlXCAF", aDoc);
-  QCOMPARE(!aDoc.IsNull(), Standard_True);
-
-  Handle(XCAFDoc_ShapeTool) aShTool = XCAFDoc_DocumentTool::ShapeTool(aDoc->Main());
-
-  // check default value
-  Standard_Boolean aValue = XCAFDoc_ShapeTool::AutoNaming();
-  QCOMPARE(aValue, Standard_True);
-
-  // true
-  XCAFDoc_ShapeTool::SetAutoNaming(Standard_True);
-  TopoDS_Shape          aShape = BRepPrimAPI_MakeBox(100., 200., 300.).Shape();
-  TDF_Label             aLabel = aShTool->AddShape(aShape);
-  Handle(TDataStd_Name) anAttr;
-  QCOMPARE(aLabel.FindAttribute(TDataStd_Name::GetID(), anAttr), Standard_True);
-
-  // false
-  XCAFDoc_ShapeTool::SetAutoNaming(Standard_False);
-  aShape = BRepPrimAPI_MakeBox(300., 200., 100.).Shape();
-  aLabel = aShTool->AddShape(aShape);
-  QCOMPARE(!aLabel.FindAttribute(TDataStd_Name::GetID(), anAttr), Standard_True);
-
-  // restore
-  XCAFDoc_ShapeTool::SetAutoNaming(aValue);
-
   return 0;
 }
 
 #include <ExprIntrp_GenExp.hxx>
 
-Standard_Integer OCC22611(Draw_Interpretor& di, Standard_Integer argc, const char** argv)
+int OCC22611(Draw_Interpretor& di, int argc, const char** argv)
 {
 
   if (argc != 3)
@@ -235,25 +148,15 @@ Standard_Integer OCC22611(Draw_Interpretor& di, Standard_Integer argc, const cha
   }
 
   TCollection_AsciiString aToken = argv[1];
-  Standard_Integer        aNb    = atoi(argv[2]);
+  int                     aNb    = atoi(argv[2]);
 
-  Handle(ExprIntrp_GenExp) aGen = ExprIntrp_GenExp::Create();
-  for (Standard_Integer i = 0; i < aNb; i++)
+  occ::handle<ExprIntrp_GenExp> aGen = ExprIntrp_GenExp::Create();
+  for (int i = 0; i < aNb; i++)
   {
     aGen->Process(aToken);
-    Handle(Expr_GeneralExpression) aExpr = aGen->Expression();
+    occ::handle<Expr_GeneralExpression> aExpr = aGen->Expression();
   }
 
-  return 0;
-}
-
-Standard_Integer OCC22595(Draw_Interpretor& di, Standard_Integer /*argc*/, const char** /*argv*/)
-{
-  gp_Mat M0;
-  di << "M0 = "
-     << " {" << M0(1, 1) << "} {" << M0(1, 2) << "} {" << M0(1, 3) << "}"
-     << " {" << M0(2, 1) << "} {" << M0(2, 2) << "} {" << M0(2, 3) << "}"
-     << " {" << M0(1, 1) << "} {" << M0(1, 2) << "} {" << M0(1, 3) << "}";
   return 0;
 }
 
@@ -263,21 +166,21 @@ Standard_Integer OCC22595(Draw_Interpretor& di, Standard_Integer /*argc*/, const
 #include <BRepExtrema_DistShapeShape.hxx>
 #include <BRepTools.hxx>
 
-static Standard_Boolean OCC23774Test(const TopoDS_Face&  grossPlateFace,
-                                     const TopoDS_Shape& originalWire,
-                                     Draw_Interpretor&   di)
+static bool OCC23774Test(const TopoDS_Face&  grossPlateFace,
+                         const TopoDS_Shape& originalWire,
+                         Draw_Interpretor&   di)
 {
   BRepExtrema_DistShapeShape distShapeShape(grossPlateFace, originalWire, Extrema_ExtFlag_MIN);
   if (!distShapeShape.IsDone())
   {
     di << "Distance ShapeShape is Not Done\n";
-    return Standard_False;
+    return false;
   }
 
   if (distShapeShape.Value() > 0.01)
   {
     di << "Wrong Dist = " << distShapeShape.Value() << "\n";
-    return Standard_False;
+    return false;
   }
   else
     di << "Dist0 = " << distShapeShape.Value() << "\n";
@@ -297,7 +200,7 @@ static Standard_Boolean OCC23774Test(const TopoDS_Face&  grossPlateFace,
   if (!transformer1.IsDone())
   {
     di << "Not Done1 \n";
-    return Standard_False;
+    return false;
   }
   TopoDS_Shape step1ModifiedShape = transformer1.ModifiedShape(originalWire);
 
@@ -305,11 +208,11 @@ static Standard_Boolean OCC23774Test(const TopoDS_Face&  grossPlateFace,
                                              step1ModifiedShape,
                                              Extrema_ExtFlag_MIN);
   if (!distShapeShape1.IsDone())
-    return Standard_False;
+    return false;
   if (distShapeShape1.Value() > 0.01)
   {
     di << "Dist = " << distShapeShape1.Value() << "\n";
-    return Standard_False;
+    return false;
   }
   else
     di << "Dist1 = " << distShapeShape1.Value() << "\n";
@@ -320,7 +223,7 @@ static Standard_Boolean OCC23774Test(const TopoDS_Face&  grossPlateFace,
   if (!transformer1.IsDone())
   {
     di << "Not Done1 \n";
-    return Standard_False;
+    return false;
   }
   TopoDS_Shape step2ModifiedShape = transformer1.ModifiedShape(step1ModifiedShape);
 
@@ -332,26 +235,26 @@ static Standard_Boolean OCC23774Test(const TopoDS_Face&  grossPlateFace,
   BRepExtrema_DistShapeShape distShapeShape2(grossPlateFace,step2ModifiedShape);//,Extrema_ExtFlag_MIN);
   // clang-format on
   if (!distShapeShape2.IsDone())
-    return Standard_False;
+    return false;
 
   // This last test case give error (the value is 1008.8822038689706)
   if (distShapeShape2.Value() > 0.01)
   {
     di << "Wrong Dist2 = " << distShapeShape2.Value() << "\n";
-    Standard_Integer N = distShapeShape2.NbSolution();
+    int N = distShapeShape2.NbSolution();
     di << "Nb = " << N << "\n";
-    for (Standard_Integer i = 1; i <= N; i++)
+    for (int i = 1; i <= N; i++)
       di << "Sol(" << i
          << ") = " << distShapeShape2.PointOnShape1(i).Distance(distShapeShape2.PointOnShape2(i))
          << "\n";
-    return Standard_False;
+    return false;
   }
   di << "Distance2 = " << distShapeShape2.Value() << "\n";
 
-  return Standard_True;
+  return true;
 }
 
-static Standard_Integer OCC23774(Draw_Interpretor& di, Standard_Integer n, const char** a)
+static int OCC23774(Draw_Interpretor& di, int n, const char** a)
 {
 
   if (n != 3)
@@ -385,11 +288,11 @@ struct GeomConvertTest_Data
   {
   }
 
-  Standard_Integer     nbupoles;
-  Handle(Geom_Surface) surf;
+  int                       nbupoles;
+  occ::handle<Geom_Surface> surf;
 };
 
-static Standard_Address GeomConvertTest(Standard_Address data)
+static void* GeomConvertTest(void* data)
 {
   GeomConvertTest_Data* info = (GeomConvertTest_Data*)data;
 
@@ -397,13 +300,13 @@ static Standard_Address GeomConvertTest(Standard_Address data)
   if (!aGAS.IsDone())
   {
     std::cout << "Error: ApproxSurface is not done!" << std::endl;
-    return 0;
+    return nullptr;
   }
-  const Handle(Geom_BSplineSurface)& aBSurf = aGAS.Surface();
+  const occ::handle<Geom_BSplineSurface>& aBSurf = aGAS.Surface();
   if (aBSurf.IsNull())
   {
     std::cout << "Error: BSplineSurface is not created!" << std::endl;
-    return 0;
+    return nullptr;
   }
   std::cout << "Number of UPoles:" << aBSurf->NbUPoles();
   if (aBSurf->NbUPoles() == info->nbupoles)
@@ -414,13 +317,11 @@ static Standard_Address GeomConvertTest(Standard_Address data)
   else
   {
     std::cout << ": Error, must be " << info->nbupoles << std::endl;
-    return 0;
+    return nullptr;
   }
 }
 
-static Standard_Integer OCC23952sweep(Draw_Interpretor& di,
-                                      Standard_Integer  argc,
-                                      const char**      argv)
+static int OCC23952sweep(Draw_Interpretor& di, int argc, const char** argv)
 {
   if (argc != 3)
   {
@@ -450,7 +351,7 @@ static Standard_Integer OCC23952sweep(Draw_Interpretor& di,
   // check results
   for (int i = 0; i < NBTHREADS; i++)
   {
-    Standard_Address aResult = 0;
+    void* aResult = nullptr;
     if (!aThread[i].Wait(aResult))
       di << "Error: Failed waiting for thread << " << i << "\n";
     if (!aResult)
@@ -467,19 +368,19 @@ struct GeomIntSSTest_Data
   {
   }
 
-  Standard_Integer     nbsol;
-  Handle(Geom_Surface) surf1, surf2;
+  int                       nbsol;
+  occ::handle<Geom_Surface> surf1, surf2;
 };
 
-static Standard_Address GeomIntSSTest(Standard_Address data)
+static void* GeomIntSSTest(void* data)
 {
   GeomIntSSTest_Data* info = (GeomIntSSTest_Data*)data;
   GeomInt_IntSS       anInter;
-  anInter.Perform(info->surf1, info->surf2, Precision::Confusion(), Standard_True);
+  anInter.Perform(info->surf1, info->surf2, Precision::Confusion(), true);
   if (!anInter.IsDone())
   {
     std::cout << "An intersection is not done!" << std::endl;
-    return 0;
+    return nullptr;
   }
 
   std::cout << "Number of Lines:" << anInter.NbLines();
@@ -491,13 +392,11 @@ static Standard_Address GeomIntSSTest(Standard_Address data)
   else
   {
     std::cout << ": Error, must be " << info->nbsol << std::endl;
-    return 0;
+    return nullptr;
   }
 }
 
-static Standard_Integer OCC23952intersect(Draw_Interpretor& di,
-                                          Standard_Integer  argc,
-                                          const char**      argv)
+static int OCC23952intersect(Draw_Interpretor& di, int argc, const char** argv)
 {
   if (argc != 4)
   {
@@ -529,7 +428,7 @@ static Standard_Integer OCC23952intersect(Draw_Interpretor& di,
   // check results
   for (int i = 0; i < NBTHREADS; i++)
   {
-    Standard_Address aResult = 0;
+    void* aResult = nullptr;
     if (!aThread[i].Wait(aResult))
       di << "Error: Failed waiting for thread << " << i << "\n";
     if (!aResult)
@@ -541,7 +440,7 @@ static Standard_Integer OCC23952intersect(Draw_Interpretor& di,
 
 #include <Geom_SurfaceOfRevolution.hxx>
 
-static Standard_Integer OCC23683(Draw_Interpretor& di, Standard_Integer argc, const char** argv)
+static int OCC23683(Draw_Interpretor& di, int argc, const char** argv)
 {
   if (argc < 2)
   {
@@ -549,12 +448,12 @@ static Standard_Integer OCC23683(Draw_Interpretor& di, Standard_Integer argc, co
     return 1;
   }
 
-  Standard_Integer ucontinuity = 1;
-  Standard_Integer vcontinuity = 1;
-  Standard_Boolean iscnu       = false;
-  Standard_Boolean iscnv       = false;
+  int  ucontinuity = 1;
+  int  vcontinuity = 1;
+  bool iscnu       = false;
+  bool iscnv       = false;
 
-  Handle(Geom_Surface) aSurf = DrawTrSurf::GetSurface(argv[1]);
+  occ::handle<Geom_Surface> aSurf = DrawTrSurf::GetSurface(argv[1]);
 
   QCOMPARE(aSurf->IsCNu(ucontinuity), iscnu);
   QCOMPARE(aSurf->IsCNv(vcontinuity), iscnv);
@@ -562,13 +461,12 @@ static Standard_Integer OCC23683(Draw_Interpretor& di, Standard_Integer argc, co
   return 0;
 }
 
-#include <gp_Ax1.hxx>
 #include <Geom_Plane.hxx>
 #include <Geom2d_Circle.hxx>
 #include <BRepPrimAPI_MakeRevol.hxx>
 #include <Geom2d_OffsetCurve.hxx>
 
-static int test_offset(Draw_Interpretor& di, Standard_Integer argc, const char** argv)
+static int test_offset(Draw_Interpretor& di, int argc, const char** argv)
 {
   // Check the command arguments
   if (argc != 1)
@@ -578,16 +476,16 @@ static int test_offset(Draw_Interpretor& di, Standard_Integer argc, const char**
     return 1; // TCL_ERROR
   }
 
-  gp_Ax1               RotoAx(gp::Origin(), gp::DZ());
-  gp_Ax22d             Ax2(gp::Origin2d(), gp::DY2d(), gp::DX2d());
-  Handle(Geom_Surface) Plane = new Geom_Plane(gp::YOZ());
+  gp_Ax1                    RotoAx(gp::Origin(), gp::DZ());
+  gp_Ax22d                  Ax2(gp::Origin2d(), gp::DY2d(), gp::DX2d());
+  occ::handle<Geom_Surface> Plane = new Geom_Plane(gp::YOZ());
 
   di << "<<<< Preparing sample surface of revolution based on trimmed curve >>>>\n";
   di << "-----------------------------------------------------------------------\n";
 
-  Handle(Geom2d_Circle)       C2d1        = new Geom2d_Circle(Ax2, 1.0);
-  Handle(Geom2d_TrimmedCurve) C2d1Trimmed = new Geom2d_TrimmedCurve(C2d1, 0.0, M_PI / 2.0);
-  TopoDS_Edge                 E1          = BRepBuilderAPI_MakeEdge(C2d1Trimmed, Plane);
+  occ::handle<Geom2d_Circle>       C2d1        = new Geom2d_Circle(Ax2, 1.0);
+  occ::handle<Geom2d_TrimmedCurve> C2d1Trimmed = new Geom2d_TrimmedCurve(C2d1, 0.0, M_PI / 2.0);
+  TopoDS_Edge                      E1          = BRepBuilderAPI_MakeEdge(C2d1Trimmed, Plane);
 
   DBRep::Set("e1", E1);
 
@@ -601,8 +499,8 @@ static int test_offset(Draw_Interpretor& di, Standard_Integer argc, const char**
   di << "<<<< Preparing sample surface of revolution based on offset curve  >>>>\n";
   di << "-----------------------------------------------------------------------\n";
 
-  Handle(Geom2d_OffsetCurve) C2d2Offset = new Geom2d_OffsetCurve(C2d1Trimmed, -0.5);
-  TopoDS_Edge                E2         = BRepBuilderAPI_MakeEdge(C2d2Offset, Plane);
+  occ::handle<Geom2d_OffsetCurve> C2d2Offset = new Geom2d_OffsetCurve(C2d1Trimmed, -0.5);
+  TopoDS_Edge                     E2         = BRepBuilderAPI_MakeEdge(C2d2Offset, Plane);
 
   DBRep::Set("e2", E2);
 
@@ -622,15 +520,15 @@ static int test_offset(Draw_Interpretor& di, Standard_Integer argc, const char**
 
 //=================================================================================================
 
-static Standard_Integer OCC24008(Draw_Interpretor& di, Standard_Integer argc, const char** argv)
+static int OCC24008(Draw_Interpretor& di, int argc, const char** argv)
 {
   if (argc != 3)
   {
     di << "Usage: " << argv[0] << " invalid number of arguments\n";
     return 1;
   }
-  Handle(Geom_Curve)   aCurve = DrawTrSurf::GetCurve(argv[1]);
-  Handle(Geom_Surface) aSurf  = DrawTrSurf::GetSurface(argv[2]);
+  occ::handle<Geom_Curve>   aCurve = DrawTrSurf::GetCurve(argv[1]);
+  occ::handle<Geom_Surface> aSurf  = DrawTrSurf::GetSurface(argv[2]);
   if (aCurve.IsNull())
   {
     di << "Curve was not read\n";
@@ -645,7 +543,7 @@ static Standard_Integer OCC24008(Draw_Interpretor& di, Standard_Integer argc, co
   aProj.Init(aSurf, Precision::Confusion());
   try
   {
-    Handle(Geom2d_Curve) aPCurve;
+    occ::handle<Geom2d_Curve> aPCurve;
     aProj.Perform(aCurve, aCurve->FirstParameter(), aCurve->LastParameter(), aPCurve);
     if (aPCurve.IsNull())
     {
@@ -660,25 +558,23 @@ static Standard_Integer OCC24008(Draw_Interpretor& di, Standard_Integer argc, co
   return 0;
 }
 
-#include <Draw.hxx>
-
 //=================================================================================================
 
-static Standard_Integer OCC23945(Draw_Interpretor& /*di*/, Standard_Integer n, const char** a)
+static int OCC23945(Draw_Interpretor& /*di*/, int n, const char** a)
 {
   if (n < 5)
     return 1;
 
-  Handle(Geom_Surface) aS = DrawTrSurf::GetSurface(a[1]);
+  occ::handle<Geom_Surface> aS = DrawTrSurf::GetSurface(a[1]);
   if (aS.IsNull())
     return 1;
 
   GeomAdaptor_Surface GS(aS);
 
-  Standard_Real U = Draw::Atof(a[2]);
-  Standard_Real V = Draw::Atof(a[3]);
+  double U = Draw::Atof(a[2]);
+  double V = Draw::Atof(a[3]);
 
-  Standard_Boolean DrawPoint = (n % 3 == 2);
+  bool DrawPoint = (n % 3 == 2);
   if (DrawPoint)
     n--;
 
@@ -729,485 +625,7 @@ static Standard_Integer OCC23945(Draw_Interpretor& /*di*/, Standard_Integer n, c
 
 //=================================================================================================
 
-static Standard_Integer OCC11758(Draw_Interpretor& di, Standard_Integer n, const char**)
-{
-  if (n != 1)
-    return 1;
-
-  const char*      theStr = "0123456789";
-  Standard_Integer i, j;
-  for (i = 0; i < 5; ++i)
-  {
-    // TCollection_AsciiString(const Standard_CString astring)
-    TCollection_AsciiString a(theStr + i);
-    // IsEqual (const Standard_CString other)const
-    // assert( a == theStr+i );
-    QCOMPARE(a, theStr + i);
-
-    // TCollection_AsciiString(const Standard_CString astring,const Standard_Integer aLen )
-    TCollection_AsciiString b(theStr + i, 3);
-    // assert( b.Length() == 3 );
-    // assert( strncmp( b.ToCString(), theStr+i, 3 ) == 0 );
-    // assert( strlen( b.ToCString() ) == 3 );
-    QCOMPARE(b.Length(), 3);
-    QCOMPARE(strncmp(b.ToCString(), theStr + i, 3), 0);
-    QCOMPARE(b.Length(), 3);
-
-    // TCollection_AsciiString(const Standard_Integer aValue)
-    TCollection_AsciiString c(i);
-    // assert( c.IsIntegerValue() );
-    // assert( c.IntegerValue() == i );
-    QCOMPARE(c.IsIntegerValue(), Standard_True);
-    QCOMPARE(c.IntegerValue(), i);
-
-    // TCollection_AsciiString(const Standard_Real aValue)
-    TCollection_AsciiString d(0.1 * i);
-    // assert( d.IsRealValue() );
-    // assert( TCollection_AsciiString(3.3) == "3.3");
-    QCOMPARE(d.IsRealValue(Standard_True), Standard_True);
-    QCOMPARE(TCollection_AsciiString("3.3!").IsRealValue(Standard_True), Standard_False);
-    QCOMPARE(TCollection_AsciiString("3.3!").IsRealValue(Standard_False), Standard_True);
-    QCOMPARE(TCollection_AsciiString(3.3), "3.3");
-
-    // TCollection_AsciiString(const TCollection_AsciiString& astring)
-    TCollection_AsciiString e(d);
-    // assert( e == d );
-    // assert( e.Length() == d.Length() );
-    // assert( strcmp( e.ToCString(), d.ToCString() ) == 0 );
-    QCOMPARE(e, d);
-    QCOMPARE(e.Length(), d.Length());
-    QCOMPARE(strcmp(e.ToCString(), d.ToCString()), 0);
-
-    // TCollection_AsciiString(const TCollection_AsciiString& astring ,
-    //                         const Standard_Character other )
-    TCollection_AsciiString f(e, '\a');
-    // assert( f.Length() == e.Length() + 1 );
-    // assert( strncmp( f.ToCString(), e.ToCString(), e.Length() ) == 0 );
-    // assert( f.Value( f.Length() ) == '\a');
-    QCOMPARE(f.Length(), e.Length() + 1);
-    QCOMPARE(strncmp(f.ToCString(), e.ToCString(), e.Length()), 0);
-    QCOMPARE(f.Value(f.Length()), '\a');
-
-    // TCollection_AsciiString(const TCollection_AsciiString& astring ,
-    //                         const Standard_CString other )
-    TCollection_AsciiString g(f, theStr);
-    // assert( g.Length() == f.Length() + strlen( theStr ));
-    // assert( strncmp( g.ToCString(), f.ToCString(), f.Length() ) == 0 );
-    // assert( g.Search( theStr ) == f.Length() + 1 );
-    QCOMPARE(g.Length(), f.Length() + (Standard_Integer)strlen(theStr));
-    QCOMPARE(strncmp(g.ToCString(), f.ToCString(), f.Length()), 0);
-    QCOMPARE(g.Search(theStr), f.Length() + 1);
-
-    // TCollection_AsciiString(const TCollection_AsciiString& astring ,
-    //                         const TCollection_AsciiString& other )
-    TCollection_AsciiString h(d, a);
-    // assert( h.Length() == d.Length() + a.Length() );
-    // assert( strncmp( h.ToCString(), d.ToCString(), d.Length() ) == 0 );
-    // assert( strncmp( h.ToCString() + d.Length(), a.ToCString(), a.Length() ) == 0 );
-    QCOMPARE(h.Length(), d.Length() + a.Length());
-    QCOMPARE(strncmp(h.ToCString(), d.ToCString(), d.Length()), 0);
-    QCOMPARE(strncmp(h.ToCString() + d.Length(), a.ToCString(), a.Length()), 0);
-
-    // AssignCat(const Standard_CString other)
-    c.AssignCat(a.ToCString());
-    // assert( c.Length() == 1 + a.Length() );
-    // assert( c.Search( a ) == 2 );
-    QCOMPARE(c.Length(), 1 + a.Length());
-    QCOMPARE(c.Search(a), 2);
-
-    // AssignCat(const TCollection_AsciiString& other)
-    Standard_Integer dl = d.Length();
-    d.AssignCat(a);
-    // assert( d.Length() == dl + a.Length() );
-    // assert( d.Search( a ) == dl + 1 );
-    QCOMPARE(d.Length(), dl + a.Length());
-    QCOMPARE(d.Search(a), dl + 1);
-
-    // Capitalize()
-    TCollection_AsciiString capitalize("aBC");
-    capitalize.Capitalize();
-    // assert( capitalize == "Abc" );
-    QCOMPARE(capitalize, "Abc");
-
-    // Copy(const Standard_CString fromwhere)
-    d = theStr + i;
-    // assert( d == theStr+i );
-    QCOMPARE(d, theStr + i);
-
-    // Copy(const TCollection_AsciiString& fromwhere)
-    d = h;
-    // IsEqual (const TCollection_AsciiString& other)const
-    // assert( d == h );
-    QCOMPARE(d, h);
-
-    // Insert(const Standard_Integer where, const Standard_CString what)
-    dl = d.Length();
-    d.Insert(2, theStr);
-    // assert( d.Length() == dl + strlen( theStr ));
-    // assert( strncmp( d.ToCString() + 1, theStr, strlen( theStr )) == 0 );
-    QCOMPARE(d.Length(), dl + (Standard_Integer)strlen(theStr));
-    QCOMPARE(strncmp(d.ToCString() + 1, theStr, strlen(theStr)), 0);
-
-    // Insert(const Standard_Integer where,const Standard_Character what)
-    d = theStr;
-    d.Insert(i + 1, 'i');
-    // assert( d.Length() == strlen( theStr ) + 1 );
-    // assert( d.Value( i+1 ) == 'i');
-    // assert( strcmp( d.ToCString() + i + 1, theStr+i ) == 0 );
-    QCOMPARE(d.Length(), (Standard_Integer)strlen(theStr) + 1);
-    QCOMPARE(d.Value(i + 1), 'i');
-    QCOMPARE(strcmp(d.ToCString() + i + 1, theStr + i), 0);
-
-    // Insert(const Standard_Integer where,const TCollection_AsciiString& what)
-    d = theStr;
-    d.Insert(i + 1, TCollection_AsciiString("i"));
-    // assert( d.Length() == strlen( theStr ) + 1 );
-    // assert( d.Value( i+1 ) == 'i');
-    // assert( strcmp( d.ToCString() + i + 1, theStr+i ) == 0 );
-    QCOMPARE(d.Length(), (Standard_Integer)strlen(theStr) + 1);
-    QCOMPARE(d.Value(i + 1), 'i');
-    QCOMPARE(strcmp(d.ToCString() + i + 1, theStr + i), 0);
-
-    // IsDifferent (const Standard_CString other)const
-    // assert( d.IsDifferent( theStr ));
-    // assert( d.IsDifferent( "theStr" ));
-    // assert( d.IsDifferent( "" ));
-    // assert( !d.IsDifferent( d.ToCString() ));
-    QCOMPARE(d.IsDifferent(theStr), Standard_True);
-    QCOMPARE(d.IsDifferent("theStr"), Standard_True);
-    QCOMPARE(d.IsDifferent(""), Standard_True);
-    QCOMPARE(!d.IsDifferent(d.ToCString()), Standard_True);
-
-    // IsDifferent (const TCollection_AsciiString& other)const
-    // assert( d.IsDifferent( TCollection_AsciiString() ));
-    // assert( d.IsDifferent( a ));
-    // assert( d.IsDifferent( h ));
-    // assert( !d.IsDifferent( d ));
-    QCOMPARE(d.IsDifferent(TCollection_AsciiString()), Standard_True);
-    QCOMPARE(d.IsDifferent(a), Standard_True);
-    QCOMPARE(d.IsDifferent(h), Standard_True);
-    QCOMPARE(!d.IsDifferent(d), Standard_True);
-
-    // IsLess (const Standard_CString other)const
-    // assert( TCollection_AsciiString ("0"). IsLess("1"));
-    // assert( TCollection_AsciiString ("0"). IsLess("00"));
-    // assert( TCollection_AsciiString ("").  IsLess("0"));
-    // assert( !TCollection_AsciiString("1"). IsLess("0"));
-    // assert( !TCollection_AsciiString("00").IsLess("0"));
-    // assert( !TCollection_AsciiString("0"). IsLess(""));
-    // assert( TCollection_AsciiString (theStr+i).IsLess(theStr+i+1));
-    QCOMPARE(TCollection_AsciiString("0").IsLess("1"), Standard_True);
-    QCOMPARE(TCollection_AsciiString("0").IsLess("00"), Standard_True);
-    QCOMPARE(TCollection_AsciiString("").IsLess("0"), Standard_True);
-    QCOMPARE(!TCollection_AsciiString("1").IsLess("0"), Standard_True);
-    QCOMPARE(!TCollection_AsciiString("00").IsLess("0"), Standard_True);
-    QCOMPARE(!TCollection_AsciiString("0").IsLess(""), Standard_True);
-    QCOMPARE(TCollection_AsciiString(theStr + i).IsLess(theStr + i + 1), Standard_True);
-
-    // IsLess (const TCollection_AsciiString& other)const
-    // assert( TCollection_AsciiString ("0"). IsLess(TCollection_AsciiString("1" )));
-    // assert( TCollection_AsciiString ("0"). IsLess(TCollection_AsciiString("00")));
-    // assert( TCollection_AsciiString ("").  IsLess(TCollection_AsciiString("0" )));
-    // assert( !TCollection_AsciiString("1"). IsLess(TCollection_AsciiString("0" )));
-    // assert( !TCollection_AsciiString("00").IsLess(TCollection_AsciiString("0" )));
-    // assert( !TCollection_AsciiString("0"). IsLess(TCollection_AsciiString(""  )));
-    // assert( TCollection_AsciiString (theStr+i).IsLess(TCollection_AsciiString(theStr+i+1)));
-    QCOMPARE(TCollection_AsciiString("0").IsLess(TCollection_AsciiString("1")), Standard_True);
-    QCOMPARE(TCollection_AsciiString("0").IsLess(TCollection_AsciiString("00")), Standard_True);
-    QCOMPARE(TCollection_AsciiString("").IsLess(TCollection_AsciiString("0")), Standard_True);
-    QCOMPARE(!TCollection_AsciiString("1").IsLess(TCollection_AsciiString("0")), Standard_True);
-    QCOMPARE(!TCollection_AsciiString("00").IsLess(TCollection_AsciiString("0")), Standard_True);
-    QCOMPARE(!TCollection_AsciiString("0").IsLess(TCollection_AsciiString("")), Standard_True);
-    QCOMPARE(TCollection_AsciiString(theStr + i).IsLess(TCollection_AsciiString(theStr + i + 1)),
-             Standard_True);
-
-    // IsGreater (const Standard_CString other)const
-    // assert( !TCollection_AsciiString("0"). IsGreater("1"));
-    // assert( !TCollection_AsciiString("0"). IsGreater("00"));
-    // assert( !TCollection_AsciiString("").  IsGreater("0"));
-    // assert( TCollection_AsciiString ("1"). IsGreater("0"));
-    // assert( TCollection_AsciiString ("00").IsGreater("0"));
-    // assert( TCollection_AsciiString ("0"). IsGreater(""));
-    // assert( TCollection_AsciiString (theStr+i+1).IsGreater(theStr+i));
-    QCOMPARE(!TCollection_AsciiString("0").IsGreater("1"), Standard_True);
-    QCOMPARE(!TCollection_AsciiString("0").IsGreater("00"), Standard_True);
-    QCOMPARE(!TCollection_AsciiString("").IsGreater("0"), Standard_True);
-    QCOMPARE(TCollection_AsciiString("1").IsGreater("0"), Standard_True);
-    QCOMPARE(TCollection_AsciiString("00").IsGreater("0"), Standard_True);
-    QCOMPARE(TCollection_AsciiString("0").IsGreater(""), Standard_True);
-    QCOMPARE(TCollection_AsciiString(theStr + i + 1).IsGreater(theStr + i), Standard_True);
-
-    // IsGreater (const TCollection_AsciiString& other)const
-    // assert( !TCollection_AsciiString("0"). IsGreater(TCollection_AsciiString("1" )));
-    // assert( !TCollection_AsciiString("0"). IsGreater(TCollection_AsciiString("00")));
-    // assert( !TCollection_AsciiString("").  IsGreater(TCollection_AsciiString("0" )));
-    // assert( TCollection_AsciiString ("1"). IsGreater(TCollection_AsciiString("0" )));
-    // assert( TCollection_AsciiString ("00").IsGreater(TCollection_AsciiString("0" )));
-    // assert( TCollection_AsciiString ("0"). IsGreater(TCollection_AsciiString(""  )));
-    // assert( TCollection_AsciiString (theStr+i+1).IsGreater(TCollection_AsciiString(theStr+i)));
-    QCOMPARE(!TCollection_AsciiString("0").IsGreater(TCollection_AsciiString("1")), Standard_True);
-    QCOMPARE(!TCollection_AsciiString("0").IsGreater(TCollection_AsciiString("00")), Standard_True);
-    QCOMPARE(!TCollection_AsciiString("").IsGreater(TCollection_AsciiString("0")), Standard_True);
-    QCOMPARE(TCollection_AsciiString("1").IsGreater(TCollection_AsciiString("0")), Standard_True);
-    QCOMPARE(TCollection_AsciiString("00").IsGreater(TCollection_AsciiString("0")), Standard_True);
-    QCOMPARE(TCollection_AsciiString("0").IsGreater(TCollection_AsciiString("")), Standard_True);
-    QCOMPARE(TCollection_AsciiString(theStr + i + 1).IsGreater(TCollection_AsciiString(theStr + i)),
-             Standard_True);
-
-    // void Read(Standard_IStream& astream)
-    std::istringstream is(theStr);
-    e.Read(is);
-    // assert( e == theStr );
-    QCOMPARE(e, theStr);
-
-    // Standard_Integer SearchFromEnd (const Standard_CString what)const
-    // assert( e.SearchFromEnd( theStr + i ) == i + 1 );
-    QCOMPARE(e.SearchFromEnd(theStr + i), i + 1);
-
-    // SetValue(const Standard_Integer where, const Standard_CString what)
-    e.SetValue(i + 1, "what");
-    // assert( e.Search( "what" ) == i+1 );
-    // assert( e.Length() == strlen( theStr ));
-    QCOMPARE(e.Search("what"), i + 1);
-    QCOMPARE(e.Length(), (Standard_Integer)strlen(theStr));
-
-    // TCollection_AsciiString Split (const Standard_Integer where)
-    e = theStr;
-    d = e.Split(i + 1);
-    // assert( d.Length() + e.Length() == strlen( theStr ));
-    QCOMPARE(d.Length() + e.Length(), (Standard_Integer)strlen(theStr));
-
-    // TCollection_AsciiString SubString (const Standard_Integer FromIndex,
-    //                                    const Standard_Integer ToIndex) const
-    e = theStr;
-    d = e.SubString((unsigned int)i + 1, (unsigned int)i + 3);
-    // assert( d.Length() == 3 );
-    // assert( d.Value(1) == theStr[ i ]);
-    QCOMPARE(d.Length(), 3);
-    QCOMPARE(d.Value(1), theStr[i]);
-
-    // TCollection_AsciiString Token (const Standard_CString separators,
-    //                                const Standard_Integer whichone) const
-    e = " ";
-    for (j = 0; j < i; ++j)
-    {
-      e += TCollection_AsciiString(theStr[j]) + " ";
-      // assert( e.Token(" ", j+1 ) == TCollection_AsciiString( theStr+j, 1 ));
-      QCOMPARE(e.Token(" ", j + 1), TCollection_AsciiString(theStr + j, 1));
-    }
-  }
-  for (i = 0; i < 5; ++i)
-  {
-    // TCollection_ExtendedString (const Standard_CString astring,
-    //                             const Standard_Boolean isMultiByte)
-    const TCollection_ExtendedString a(theStr + i);
-    // assert( TCollection_AsciiString( a ) == theStr+i );
-    QCOMPARE(TCollection_AsciiString(a), theStr + i);
-
-    // TCollection_ExtendedString (const Standard_ExtString astring)
-    const TCollection_ExtendedString b(a.ToExtString());
-    // assert( a == b );
-    QCOMPARE(a, b);
-
-    // TCollection_ExtendedString (const Standard_Integer      length,
-    //                             const Standard_ExtCharacter filler )
-    const TCollection_ExtendedString c(i, 1);
-    // assert( c.Length() == i );
-    QCOMPARE(c.Length(), i);
-    if (c.Length() > 0)
-    {
-      // assert( c.Value( i ) == 1 );
-      QCOMPARE(c.Value(i), 1);
-    }
-
-    // TCollection_ExtendedString (const Standard_Integer aValue)
-    TCollection_ExtendedString    d(i);
-    const TCollection_AsciiString da(d);
-    // assert( da.IsIntegerValue() );
-    // assert( da.IntegerValue() == i );
-    QCOMPARE(da.IsIntegerValue(), Standard_True);
-    QCOMPARE(da.IntegerValue(), i);
-
-    // TCollection_ExtendedString (const Standard_Real aValue)
-    const TCollection_ExtendedString e(0.1 * i);
-    const TCollection_AsciiString    ea(e);
-    // assert( ea.IsRealValue() );
-    // assert( Abs( ea.RealValue() - 0.1 * i ) < 1e-10 );
-    QCOMPARE(ea.IsRealValue(), Standard_True);
-    QCOMPARE(Abs(ea.RealValue() - 0.1 * i) < 1e-10, Standard_True);
-
-    // TCollection_ExtendedString (const TCollection_ExtendedString& astring)
-    const TCollection_ExtendedString& f(e);
-    // assert( f.Length() == e.Length());
-    // assert( f == e );
-    QCOMPARE(f.Length(), e.Length());
-    QCOMPARE(f, e);
-
-    // TCollection_ExtendedString (const TCollection_AsciiString& astring)
-    const TCollection_ExtendedString g(ea);
-    // assert( g.Length() == ea.Length() );
-    // assert( TCollection_AsciiString( g ) == ea );
-    QCOMPARE(g.Length(), ea.Length());
-    QCOMPARE(TCollection_AsciiString(g), ea);
-
-    // AssignCat (const TCollection_ExtendedString& other)
-    const TCollection_ExtendedString sep(",");
-    d.AssignCat(sep);
-    d.AssignCat(g);
-    // assert( d.Length() == 2 + g.Length() );
-    // assert( d.Token( sep.ToExtString(), 1 ) == TCollection_ExtendedString( i ));
-    // assert( d.Token( sep.ToExtString(), 2 ) == g );
-    QCOMPARE(d.Length(), 2 + g.Length());
-    QCOMPARE(d.Token(sep.ToExtString(), 1), TCollection_ExtendedString(i));
-    QCOMPARE(d.Token(sep.ToExtString(), 2), g);
-
-    // TCollection_ExtendedString Cat (const TCollection_ExtendedString& other) const
-    const TCollection_ExtendedString cat = a.Cat(sep);
-    // assert( cat.Length() == a.Length() + sep.Length() );
-    // assert( cat.Search( a ) == 1 );
-    // assert( cat.Search( sep ) == a.Length() + 1 );
-    QCOMPARE(cat.Length(), a.Length() + sep.Length());
-    QCOMPARE(cat.Search(a), 1);
-    QCOMPARE(cat.Search(sep), a.Length() + 1);
-
-    // Copy (const TCollection_ExtendedString& fromwhere)
-    d = cat;
-    // assert( d.Length() == cat.Length() );
-    // assert( d == cat );
-    QCOMPARE(d.Length(), cat.Length());
-    QCOMPARE(d, cat);
-
-    // IsEqual (const Standard_ExtString other) const
-    // assert( d.IsEqual( d.ToExtString() ));
-    QCOMPARE(d.IsEqual(d.ToExtString()), Standard_True);
-
-    // IsDifferent (const Standard_ExtString other ) const
-    // assert( d.IsDifferent( a.ToExtString() ));
-    QCOMPARE(d.IsDifferent(a.ToExtString()), Standard_True);
-
-    // IsDifferent (const TCollection_ExtendedString& other) const
-    // assert( d.IsDifferent( a ));
-    QCOMPARE(d.IsDifferent(a), Standard_True);
-
-    // IsLess (const Standard_ExtString other) const
-    const TCollection_ExtendedString l0("0"), l1("1"), l00("00"), l, ls(theStr + i),
-      ls1(theStr + i + 1);
-    // assert( l0. IsLess( l1.ToExtString() ));
-    // assert( l0. IsLess( l00.ToExtString() ));
-    // assert( l.  IsLess( l0.ToExtString() ));
-    // assert( ! l1. IsLess( l0.ToExtString() ));
-    // assert( ! l00.IsLess( l0.ToExtString() ));
-    // assert( ! l0. IsLess( l.ToExtString() ));
-    // assert( ls.IsLess( ls1.ToExtString() ));
-    QCOMPARE(l0.IsLess(l1.ToExtString()), Standard_True);
-    QCOMPARE(l0.IsLess(l00.ToExtString()), Standard_True);
-    QCOMPARE(l.IsLess(l0.ToExtString()), Standard_True);
-    QCOMPARE(!l1.IsLess(l0.ToExtString()), Standard_True);
-    QCOMPARE(!l00.IsLess(l0.ToExtString()), Standard_True);
-    QCOMPARE(!l0.IsLess(l.ToExtString()), Standard_True);
-    QCOMPARE(ls.IsLess(ls1.ToExtString()), Standard_True);
-
-    // IsLess (const TCollection_ExtendedString& other) const
-    // assert( l0. IsLess( l1 ));
-    // assert( l0. IsLess( l00 ));
-    // assert( l.  IsLess( l0 ));
-    // assert( ! l1. IsLess( l0 ));
-    // assert( ! l00.IsLess( l0 ));
-    // assert( ! l0. IsLess( l ));
-    // assert( ls.IsLess( ls1 ));
-    QCOMPARE(l0.IsLess(l1), Standard_True);
-    QCOMPARE(l0.IsLess(l00), Standard_True);
-    QCOMPARE(l.IsLess(l0), Standard_True);
-    QCOMPARE(!l1.IsLess(l0), Standard_True);
-    QCOMPARE(!l00.IsLess(l0), Standard_True);
-    QCOMPARE(!l0.IsLess(l), Standard_True);
-    QCOMPARE(ls.IsLess(ls1), Standard_True);
-
-    // IsGreater (const Standard_ExtString other) const
-    // assert( ! l0.IsGreater( l1.ToExtString() ));
-    // assert( ! l0.IsGreater( l00.ToExtString() ));
-    // assert( ! l. IsGreater( l0.ToExtString() ));
-    // assert(  l1. IsGreater( l0.ToExtString() ));
-    // assert(  l00.IsGreater( l0.ToExtString() ));
-    // assert(  l0. IsGreater( l.ToExtString() ));
-    // assert(  ls1.IsGreater( ls.ToExtString() ));
-    QCOMPARE(!l0.IsGreater(l1.ToExtString()), Standard_True);
-    QCOMPARE(!l0.IsGreater(l00.ToExtString()), Standard_True);
-    QCOMPARE(!l.IsGreater(l0.ToExtString()), Standard_True);
-    QCOMPARE(l1.IsGreater(l0.ToExtString()), Standard_True);
-    QCOMPARE(l00.IsGreater(l0.ToExtString()), Standard_True);
-    QCOMPARE(l0.IsGreater(l.ToExtString()), Standard_True);
-    QCOMPARE(ls1.IsGreater(ls.ToExtString()), Standard_True);
-
-    // IsGreater (const TCollection_ExtendedString& other) const
-    // assert( ! l0.IsGreater( l1));
-    // assert( ! l0.IsGreater( l00));
-    // assert( ! l. IsGreater( l0));
-    // assert(  l1. IsGreater( l0));
-    // assert(  l00.IsGreater( l0));
-    // assert(  l0. IsGreater( l));
-    // assert(  ls1.IsGreater( ls));
-    QCOMPARE(!l0.IsGreater(l1), Standard_True);
-    QCOMPARE(!l0.IsGreater(l00), Standard_True);
-    QCOMPARE(!l.IsGreater(l0), Standard_True);
-    QCOMPARE(l1.IsGreater(l0), Standard_True);
-    QCOMPARE(l00.IsGreater(l0), Standard_True);
-    QCOMPARE(l0.IsGreater(l), Standard_True);
-    QCOMPARE(ls1.IsGreater(ls), Standard_True);
-
-    // ==========================
-    // TCollection_HAsciiString::
-    // ==========================
-
-    // IsDifferent(const Handle(TCollection_HAsciiString)& S)
-    Handle(TCollection_HAsciiString) ha1 = new TCollection_HAsciiString(theStr + i);
-    Handle(TCollection_HAsciiString) ha2 = new TCollection_HAsciiString(theStr + i + 1);
-    // assert( ha1->IsDifferent( ha2 ));
-    // assert( !ha1->IsDifferent( ha1 ));
-    QCOMPARE(ha1->IsDifferent(ha2), Standard_True);
-    QCOMPARE(!ha1->IsDifferent(ha1), Standard_True);
-
-    // IsSameString (const Handle(TCollection_HAsciiString)& S)
-    // assert( !ha1->IsSameString( ha2 ));
-    // assert( ha1->IsSameString( ha1 ));
-    QCOMPARE(!ha1->IsSameString(ha2), Standard_True);
-    QCOMPARE(ha1->IsSameString(ha1), Standard_True);
-
-    // IsSameState (const Handle(TCollection_HAsciiString)& other) const
-    // assert( !ha1->IsSameState( ha2 ));
-    // assert( ha1->IsSameState( ha1 ));
-    QCOMPARE(!ha1->IsSameState(ha2), Standard_True);
-    QCOMPARE(ha1->IsSameState(ha1), Standard_True);
-
-    // IsSameString (const Handle(TCollection_HAsciiString)& S ,
-    //               const Standard_Boolean CaseSensitive) const
-    // assert( !ha1->IsSameString( ha2, true ));
-    // assert( ha1->IsSameString( ha1, true ));
-    // assert( !ha1->IsSameString( ha2, false ));
-    // assert( ha1->IsSameString( ha1, false ));
-    QCOMPARE(!ha1->IsSameString(ha2, Standard_True), Standard_True);
-    QCOMPARE(ha1->IsSameString(ha1, Standard_True), Standard_True);
-    QCOMPARE(!ha1->IsSameString(ha2, Standard_False), Standard_True);
-    QCOMPARE(ha1->IsSameString(ha1, Standard_False), Standard_True);
-
-    ha1->SetValue(1, "AbC0000000");
-    ha2->SetValue(1, "aBc0000000");
-    // assert( !ha1->IsSameString( ha2, true ));
-    // assert( ha1->IsSameString( ha2, false ));
-    QCOMPARE(!ha1->IsSameString(ha2, Standard_True), Standard_True);
-    QCOMPARE(ha1->IsSameString(ha2, Standard_False), Standard_True);
-  }
-  return 0;
-}
-
-#include <Geom_CylindricalSurface.hxx>
-#include <IntTools_FaceFace.hxx>
-#include <IntTools_Curve.hxx>
-#include <IntTools_PntOn2Faces.hxx>
-
-static Standard_Integer OCC24005(Draw_Interpretor& theDI,
-                                 Standard_Integer  theNArg,
-                                 const char**      theArgv)
+static int OCC24005(Draw_Interpretor& theDI, int theNArg, const char** theArgv)
 {
   if (theNArg < 2)
   {
@@ -1215,11 +633,11 @@ static Standard_Integer OCC24005(Draw_Interpretor& theDI,
     return 1;
   }
 
-  Handle(Geom_Plane)              plane(new Geom_Plane(
+  occ::handle<Geom_Plane>              plane(new Geom_Plane(
     gp_Ax3(gp_Pnt(-72.948737453424499, 754.30437716359393, 259.52151854671678),
            gp_Dir(6.2471473085930200e-007, -0.99999999999980493, 0.00000000000000000),
            gp_Dir(0.99999999999980493, 6.2471473085930200e-007, 0.00000000000000000))));
-  Handle(Geom_CylindricalSurface) cylinder(new Geom_CylindricalSurface(
+  occ::handle<Geom_CylindricalSurface> cylinder(new Geom_CylindricalSurface(
     gp_Ax3(gp_Pnt(-6.4812490053250649, 753.39408794522092, 279.16400974257465),
            gp_Dir(1.0000000000000000, 0.0, 0.00000000000000000),
            gp_Dir(0.0, 1.0000000000000000, 0.00000000000000000)),
@@ -1245,40 +663,40 @@ static Standard_Integer OCC24005(Draw_Interpretor& theDI,
     return 1;
   }
 
-  // Handle(Geom_Curve) aResult;
+  // occ::handle<Geom_Curve> aResult;
   // gp_Pnt             aPoint;
 
-  const IntTools_SequenceOfCurves&      aCvsX  = anInters.Lines();
-  const IntTools_SequenceOfPntOn2Faces& aPntsX = anInters.Points();
+  const NCollection_Sequence<IntTools_Curve>&       aCvsX  = anInters.Lines();
+  const NCollection_Sequence<IntTools_PntOn2Faces>& aPntsX = anInters.Points();
 
-  char             buf[1024];
-  Standard_Integer aNbCurves, aNbPoints;
+  char buf[1024];
+  int  aNbCurves, aNbPoints;
 
   aNbCurves = aCvsX.Length();
   aNbPoints = aPntsX.Length();
 
   if (aNbCurves >= 2)
   {
-    for (Standard_Integer i = 1; i <= aNbCurves; ++i)
+    for (int i = 1; i <= aNbCurves; ++i)
     {
       Sprintf(buf, "%s_%d", theArgv[1], i);
       theDI << buf << " ";
 
-      const IntTools_Curve&     aIC  = aCvsX(i);
-      const Handle(Geom_Curve)& aC3D = aIC.Curve();
+      const IntTools_Curve&          aIC  = aCvsX(i);
+      const occ::handle<Geom_Curve>& aC3D = aIC.Curve();
       DrawTrSurf::Set(buf, aC3D);
     }
   }
   else if (aNbCurves == 1)
   {
-    const IntTools_Curve&     aIC  = aCvsX(1);
-    const Handle(Geom_Curve)& aC3D = aIC.Curve();
+    const IntTools_Curve&          aIC  = aCvsX(1);
+    const occ::handle<Geom_Curve>& aC3D = aIC.Curve();
     Sprintf(buf, "%s", theArgv[1]);
     theDI << buf << " ";
     DrawTrSurf::Set(buf, aC3D);
   }
 
-  for (Standard_Integer i = 1; i <= aNbPoints; ++i)
+  for (int i = 1; i <= aNbPoints; ++i)
   {
     const IntTools_PntOn2Faces& aPi = aPntsX(i);
     const gp_Pnt&               aP  = aPi.P1().Pnt();
@@ -1295,7 +713,7 @@ static Standard_Integer OCC24005(Draw_Interpretor& theDI,
 #include <ShapeAnalysis_ShapeContents.hxx>
 #include <BRepAlgo.hxx>
 
-static Standard_Integer OCC24086(Draw_Interpretor& di, Standard_Integer argc, const char** argv)
+static int OCC24086(Draw_Interpretor& di, int argc, const char** argv)
 {
   if (argc != 3)
   {
@@ -1303,7 +721,7 @@ static Standard_Integer OCC24086(Draw_Interpretor& di, Standard_Integer argc, co
     return 1;
   }
 
-  Handle(AIS_InteractiveContext) myAISContext = ViewerTest::GetAISContext();
+  occ::handle<AIS_InteractiveContext> myAISContext = ViewerTest::GetAISContext();
   if (myAISContext.IsNull())
   {
     di << "use 'vinit' command before " << argv[0] << "\n";
@@ -1331,43 +749,8 @@ static Standard_Integer OCC24086(Draw_Interpretor& di, Standard_Integer argc, co
     di << "Result was checked and it is VALID\n";
   }
 
-  Handle(AIS_InteractiveObject) myShape = new AIS_Shape(result);
-  myAISContext->Display(myShape, Standard_True);
-
-  return 0;
-}
-
-#include <Geom_Circle.hxx>
-#include <Extrema_ExtPC.hxx>
-#include <gp_Cylinder.hxx>
-#include <ElSLib.hxx>
-
-static Standard_Integer OCC24945(Draw_Interpretor& di, Standard_Integer argc, const char** argv)
-{
-  if (argc != 1)
-  {
-    di << "Usage: " << argv[0] << " invalid number of arguments\n";
-    return 1;
-  }
-
-  gp_Pnt              aP3D(-1725.97, 843.257, -4.22741e-013);
-  gp_Ax2              aAxis(gp_Pnt(0, 843.257, 0), gp_Dir(0, -1, 0), gp::DX());
-  Handle(Geom_Circle) aCircle = new Geom_Circle(aAxis, 1725.9708621929999);
-  GeomAdaptor_Curve   aC3D(aCircle);
-
-  Extrema_ExtPC aExtPC(aP3D, aC3D);
-  // Standard_Real aParam = (aExtPC.Point(1)).Parameter();
-  gp_Pnt aProj = (aExtPC.Point(1)).Value();
-  di << "Projected point: X = " << aProj.X() << "; Y = " << aProj.Y() << "; Z = " << aProj.Z()
-     << "\n";
-
-  // Result of deviation
-  gp_Ax2      aCylAxis(gp_Pnt(0, 2103.87, 0), -gp::DY(), -gp::DX());
-  gp_Cylinder aCylinder(aCylAxis, 1890.);
-
-  Standard_Real aU = 0., aV = 0.;
-  ElSLib::Parameters(aCylinder, aProj, aU, aV);
-  di << "Parameters on cylinder: U = " << aU << "; V = " << aV << "\n";
+  occ::handle<AIS_InteractiveObject> myShape = new AIS_Shape(result);
+  myAISContext->Display(myShape, true);
 
   return 0;
 }
@@ -1376,11 +759,9 @@ static Standard_Integer OCC24945(Draw_Interpretor& di, Standard_Integer argc, co
 #include <math_Vector.hxx>
 #include <BRepBuilderAPI_MakeVertex.hxx>
 
-static Standard_Integer OCC24137(Draw_Interpretor& theDI,
-                                 Standard_Integer  theNArg,
-                                 const char**      theArgv)
+static int OCC24137(Draw_Interpretor& theDI, int theNArg, const char** theArgv)
 {
-  Standard_Integer anArgIter = 1;
+  int anArgIter = 1;
   if (theNArg < 5)
   {
     theDI << "Usage: " << theArgv[0] << " face vertex U V [N]\n";
@@ -1388,13 +769,13 @@ static Standard_Integer OCC24137(Draw_Interpretor& theDI,
   }
 
   // get target shape
-  Standard_CString       aFaceName = theArgv[anArgIter++];
-  Standard_CString       aVertName = theArgv[anArgIter++];
-  const TopoDS_Shape     aShapeF   = DBRep::Get(aFaceName);
-  const TopoDS_Shape     aShapeV   = DBRep::Get(aVertName);
-  const Standard_Real    aUFrom    = Atof(theArgv[anArgIter++]);
-  const Standard_Real    aVFrom    = Atof(theArgv[anArgIter++]);
-  const Standard_Integer aNbIts    = (anArgIter < theNArg) ? Draw::Atoi(theArgv[anArgIter++]) : 100;
+  const char*        aFaceName = theArgv[anArgIter++];
+  const char*        aVertName = theArgv[anArgIter++];
+  const TopoDS_Shape aShapeF   = DBRep::Get(aFaceName);
+  const TopoDS_Shape aShapeV   = DBRep::Get(aVertName);
+  const double       aUFrom    = Atof(theArgv[anArgIter++]);
+  const double       aVFrom    = Atof(theArgv[anArgIter++]);
+  const int          aNbIts    = (anArgIter < theNArg) ? Draw::Atoi(theArgv[anArgIter++]) : 100;
   if (aShapeF.IsNull() || aShapeF.ShapeType() != TopAbs_FACE)
   {
     std::cout << "Error: " << aFaceName << " shape is null / not a face" << std::endl;
@@ -1442,140 +823,21 @@ static Standard_Integer OCC24137(Draw_Interpretor& theDI,
 }
 
 //! Check boolean operations on NCollection_Map
-static Standard_Integer OCC24271(Draw_Interpretor& di,
-                                 Standard_Integer /*theArgNb*/,
-                                 const char** /*theArgVec*/)
-{
-  // input data
-  const Standard_Integer aLeftLower  = 1;
-  const Standard_Integer aLeftUpper  = 10;
-  const Standard_Integer aRightLower = 5;
-  const Standard_Integer aRightUpper = 15;
-
-  // define arguments
-  NCollection_Map<Standard_Integer> aMapLeft;
-  for (Standard_Integer aKeyIter = aLeftLower; aKeyIter <= aLeftUpper; ++aKeyIter)
-  {
-    aMapLeft.Add(aKeyIter);
-  }
-
-  NCollection_Map<Standard_Integer> aMapRight;
-  for (Standard_Integer aKeyIter = aRightLower; aKeyIter <= aRightUpper; ++aKeyIter)
-  {
-    aMapRight.Add(aKeyIter);
-  }
-
-  QCOMPARE(NCollection_MapAlgo::Contains(aMapLeft, aMapRight), Standard_False);
-  QCOMPARE(NCollection_MapAlgo::Contains(aMapRight, aMapLeft), Standard_False);
-
-  // validate Union operation
-  NCollection_Map<Standard_Integer> aMapUnion;
-  NCollection_MapAlgo::Union(aMapUnion, aMapLeft, aMapRight);
-  QCOMPARE(aMapUnion.Extent(), aRightUpper - aLeftLower + 1);
-  for (Standard_Integer aKeyIter = aLeftLower; aKeyIter <= aRightUpper; ++aKeyIter)
-  {
-    QCOMPARE(aMapUnion.Contains(aKeyIter), Standard_True);
-  }
-
-  // validate Intersection operation
-  NCollection_Map<Standard_Integer> aMapSect;
-  NCollection_MapAlgo::Intersection(aMapSect, aMapLeft, aMapRight);
-  QCOMPARE(aMapSect.Extent(), aLeftUpper - aRightLower + 1);
-  for (Standard_Integer aKeyIter = aRightLower; aKeyIter <= aLeftUpper; ++aKeyIter)
-  {
-    QCOMPARE(aMapSect.Contains(aKeyIter), Standard_True);
-  }
-  QCOMPARE(NCollection_MapAlgo::Contains(aMapLeft, aMapSect), Standard_True);
-  QCOMPARE(NCollection_MapAlgo::Contains(aMapRight, aMapSect), Standard_True);
-
-  // validate Substruction operation
-  NCollection_Map<Standard_Integer> aMapSubsLR;
-  NCollection_MapAlgo::Subtraction(aMapSubsLR, aMapLeft, aMapRight);
-  QCOMPARE(aMapSubsLR.Extent(), aRightLower - aLeftLower);
-  for (Standard_Integer aKeyIter = aLeftLower; aKeyIter < aRightLower; ++aKeyIter)
-  {
-    QCOMPARE(aMapSubsLR.Contains(aKeyIter), Standard_True);
-  }
-
-  NCollection_Map<Standard_Integer> aMapSubsRL;
-  NCollection_MapAlgo::Subtraction(aMapSubsRL, aMapRight, aMapLeft);
-  QCOMPARE(aMapSubsRL.Extent(), aRightUpper - aLeftUpper);
-  for (Standard_Integer aKeyIter = aLeftUpper + 1; aKeyIter < aRightUpper; ++aKeyIter)
-  {
-    QCOMPARE(aMapSubsRL.Contains(aKeyIter), Standard_True);
-  }
-
-  // validate Difference operation
-  NCollection_Map<Standard_Integer> aMapDiff;
-  NCollection_MapAlgo::Difference(aMapDiff, aMapLeft, aMapRight);
-  QCOMPARE(aMapDiff.Extent(), aRightLower - aLeftLower + aRightUpper - aLeftUpper);
-  for (Standard_Integer aKeyIter = aLeftLower; aKeyIter < aRightLower; ++aKeyIter)
-  {
-    QCOMPARE(aMapDiff.Contains(aKeyIter), Standard_True);
-  }
-  for (Standard_Integer aKeyIter = aLeftUpper + 1; aKeyIter < aRightUpper; ++aKeyIter)
-  {
-    QCOMPARE(aMapDiff.Contains(aKeyIter), Standard_True);
-  }
-
-  // validate Exchange operation
-  NCollection_Map<Standard_Integer> aMapSwap;
-  aMapSwap.Exchange(aMapSect);
-  for (Standard_Integer aKeyIter = aRightLower; aKeyIter <= aLeftUpper; ++aKeyIter)
-  {
-    QCOMPARE(aMapSwap.Contains(aKeyIter), Standard_True);
-  }
-  QCOMPARE(aMapSect.IsEmpty(), Standard_True);
-  aMapSwap.Add(34);
-  aMapSect.Add(43);
-
-  NCollection_Map<Standard_Integer> aMapCopy(aMapSwap);
-  QCOMPARE(NCollection_MapAlgo::IsEqual(aMapCopy, aMapSwap), Standard_True);
-  aMapCopy.Remove(34);
-  aMapCopy.Add(43);
-  QCOMPARE(NCollection_MapAlgo::IsEqual(aMapCopy, aMapSwap), Standard_False);
-
-  return 0;
-}
-
-#define QVERIFY(val1)                                                                              \
-  di << "Checking " #val1 " == Standard_True" << ((val1) == Standard_True ? ": OK\n" : ": Error\n")
-
-#include <Geom_ConicalSurface.hxx>
-
-namespace
-{
-static Handle(Geom_ConicalSurface) CreateCone(const gp_Pnt&       theLoc,
-                                              const gp_Dir&       theDir,
-                                              const gp_Dir&       theXDir,
-                                              const Standard_Real theRad,
-                                              const Standard_Real theSin,
-                                              const Standard_Real theCos)
-{
-  const Standard_Real         anA = atan(theSin / theCos);
-  gp_Ax3                      anAxis(theLoc, theDir, theXDir);
-  Handle(Geom_ConicalSurface) aSurf = new Geom_ConicalSurface(anAxis, anA, theRad);
-  return aSurf;
-}
-} // namespace
-
-static Standard_Integer OCC23972(Draw_Interpretor& /*theDI*/,
-                                 Standard_Integer theNArg,
-                                 const char**     theArgs)
+static int OCC23972(Draw_Interpretor& /*theDI*/, int theNArg, const char** theArgs)
 {
   if (theNArg != 3)
     return 1;
 
   // process specific cones, cannot read them from files because
   // due to rounding the original error in math_FunctionRoots gets hidden
-  const Handle(Geom_Surface) aS1 =
+  const occ::handle<Geom_Surface> aS1 =
     CreateCone(gp_Pnt(123.694345356663, 789.9, 68.15),
                gp_Dir(-1, 3.48029791472957e-016, -8.41302743359754e-017),
                gp_Dir(-3.48029791472957e-016, -1, -3.17572289932207e-016),
                3.28206830417112,
                0.780868809443031,
                0.624695047554424);
-  const Handle(Geom_Surface) aS2 =
+  const occ::handle<Geom_Surface> aS2 =
     CreateCone(gp_Pnt(123.694345356663, 784.9, 68.15),
                gp_Dir(-1, -2.5209507537117e-016, -1.49772808948866e-016),
                gp_Dir(1.49772808948866e-016, 3.17572289932207e-016, -1),
@@ -1591,7 +853,7 @@ static Standard_Integer OCC23972(Draw_Interpretor& /*theDI*/,
 
 #include <ShapeFix_EdgeProjAux.hxx>
 
-static Standard_Integer OCC24370(Draw_Interpretor& di, Standard_Integer argc, const char** argv)
+static int OCC24370(Draw_Interpretor& di, int argc, const char** argv)
 {
   if (argc < 5)
   {
@@ -1607,21 +869,21 @@ static Standard_Integer OCC24370(Draw_Interpretor& di, Standard_Integer argc, co
   }
   const TopoDS_Edge& anEdge = TopoDS::Edge(aSh);
 
-  Handle(Geom2d_Curve) aC = DrawTrSurf::GetCurve2d(argv[2]);
+  occ::handle<Geom2d_Curve> aC = DrawTrSurf::GetCurve2d(argv[2]);
   if (aC.IsNull())
   {
     di << argv[0] << " Error: Null input curve\n";
     return 1;
   }
 
-  Handle(Geom_Surface) aS = DrawTrSurf::GetSurface(argv[3]);
+  occ::handle<Geom_Surface> aS = DrawTrSurf::GetSurface(argv[3]);
   if (aS.IsNull())
   {
     di << argv[0] << " Error: Null input surface\n";
     return 1;
   }
 
-  Standard_Real prec = Draw::Atof(argv[4]);
+  double prec = Draw::Atof(argv[4]);
 
   // prepare data
   TopoDS_Face  aFace;
@@ -1634,13 +896,13 @@ static Standard_Integer OCC24370(Draw_Interpretor& di, Standard_Integer argc, co
   ShapeFix_EdgeProjAux aProj(aFace, anEdge);
   aProj.Compute(prec);
 
-  Standard_Boolean isfirstdone = aProj.IsFirstDone();
-  Standard_Boolean islastdone  = aProj.IsLastDone();
+  bool isfirstdone = aProj.IsFirstDone();
+  bool islastdone  = aProj.IsLastDone();
 
-  Standard_Real    first              = 0.;
-  Standard_Real    last               = 0.;
-  Standard_Integer isfirstdoneInteger = 0;
-  Standard_Integer islastdoneInteger  = 0;
+  double first              = 0.;
+  double last               = 0.;
+  int    isfirstdoneInteger = 0;
+  int    islastdoneInteger  = 0;
 
   if (isfirstdone)
   {
@@ -1659,59 +921,22 @@ static Standard_Integer OCC24370(Draw_Interpretor& di, Standard_Integer argc, co
   return 0;
 }
 
-template <typename T, typename HT>
-static void DoIsNull(Draw_Interpretor& di)
-{
-  HT aHandle;
-  //    QVERIFY (aHandle.IsNull());
-  QCOMPARE(aHandle.IsNull(), Standard_True);
-  const T* p = aHandle.get();
-#if OCC_VERSION_HEX > 0x060700
-  // QVERIFY (!p);
-  // QVERIFY (p == 0);
-  QCOMPARE(!p, Standard_True);
-  QCOMPARE(p == 0, Standard_True);
-#endif
-
-  aHandle = new T;
-  // QVERIFY (!aHandle.IsNull());
-  QCOMPARE(!aHandle.IsNull(), Standard_True);
-  p = aHandle.get();
-  // QVERIFY (p);
-  // QVERIFY (p != 0);
-  QCOMPARE(p != NULL, Standard_True);
-  QCOMPARE(p != 0, Standard_True);
-}
-
-//=================================================================================================
-
-static Standard_Integer OCC24533(Draw_Interpretor& di, Standard_Integer n, const char**)
-{
-  if (n != 1)
-    return 1;
-
-  DoIsNull<Standard_Transient, Handle(Standard_Transient)>(di);
-
-  return 0;
-}
-
 // Dummy class to test interface for compilation issues
 class QABugs_HandleClass : public Standard_Transient
 {
 public:
-  Standard_Integer HandleProc(Draw_Interpretor&, Standard_Integer, const char** theArgVec)
+  int HandleProc(Draw_Interpretor&, int, const char** theArgVec)
   {
     std::cerr << "QABugs_HandleClass[" << this << "] " << theArgVec[0] << "\n";
     return 0;
   }
   DEFINE_STANDARD_RTTI_INLINE(QABugs_HandleClass, Standard_Transient) // Type definition
 };
-DEFINE_STANDARD_HANDLE(QABugs_HandleClass, Standard_Transient)
 
 // Dummy class to test interface for compilation issues
 struct QABugs_NHandleClass
 {
-  Standard_Integer NHandleProc(Draw_Interpretor&, Standard_Integer, const char** theArgVec)
+  int NHandleProc(Draw_Interpretor&, int, const char** theArgVec)
   {
     std::cerr << "QABugs_NHandleClass[" << this << "] " << theArgVec[0] << "\n";
     return 0;
@@ -1721,22 +946,22 @@ struct QABugs_NHandleClass
 #include <XCAFDoc_ColorTool.hxx>
 #include <STEPCAFControl_Writer.hxx>
 
-static Standard_Integer OCC23951(Draw_Interpretor& di, Standard_Integer argc, const char** argv)
+static int OCC23951(Draw_Interpretor& di, int argc, const char** argv)
 {
   if (argc != 2)
   {
     di << "Usage: " << argv[0] << " invalid number of arguments\n";
     return 1;
   }
-  Handle(TDocStd_Document) aDoc = new TDocStd_Document("dummy");
-  TopoDS_Shape             s1   = BRepPrimAPI_MakeBox(1, 1, 1).Shape();
-  TDF_Label                lab1 = XCAFDoc_DocumentTool::ShapeTool(aDoc->Main())->NewShape();
+  occ::handle<TDocStd_Document> aDoc = new TDocStd_Document("dummy");
+  TopoDS_Shape                  s1   = BRepPrimAPI_MakeBox(1, 1, 1).Shape();
+  TDF_Label                     lab1 = XCAFDoc_DocumentTool::ShapeTool(aDoc->Main())->NewShape();
   XCAFDoc_DocumentTool::ShapeTool(aDoc->Main())->SetShape(lab1, s1);
   TDataStd_Name::Set(lab1, "Box1");
 
   Quantity_Color yellow(Quantity_NOC_YELLOW);
   XCAFDoc_DocumentTool::ColorTool(aDoc->Main())->SetColor(lab1, yellow, XCAFDoc_ColorGen);
-  XCAFDoc_DocumentTool::ColorTool(aDoc->Main())->SetVisibility(lab1, 0);
+  XCAFDoc_DocumentTool::ColorTool(aDoc->Main())->SetVisibility(lab1, false);
 
   STEPControl_StepModelType mode = STEPControl_AsIs;
   STEPCAFControl_Writer     writer;
@@ -1746,8 +971,8 @@ static Standard_Integer OCC23951(Draw_Interpretor& di, Standard_Integer argc, co
     return 1;
   }
 
-  const Handle(Message_Messenger)& aMsgMgr = Message::DefaultMessenger();
-  Message_SequenceOfPrinters       aPrinters;
+  const occ::handle<Message_Messenger>&              aMsgMgr = Message::DefaultMessenger();
+  NCollection_Sequence<occ::handle<Message_Printer>> aPrinters;
   aPrinters.Append(aMsgMgr->ChangePrinters());
   aMsgMgr->AddPrinter(new Draw_Printer(di));
 
@@ -1761,7 +986,7 @@ static Standard_Integer OCC23951(Draw_Interpretor& di, Standard_Integer argc, co
 
 //=================================================================================================
 
-static Standard_Integer OCC23950(Draw_Interpretor& di, Standard_Integer argc, const char** argv)
+static int OCC23950(Draw_Interpretor& di, int argc, const char** argv)
 {
   if (argc != 2)
   {
@@ -1769,10 +994,10 @@ static Standard_Integer OCC23950(Draw_Interpretor& di, Standard_Integer argc, co
     return 1;
   }
 
-  Handle(TDocStd_Document) aDoc = new TDocStd_Document("dummy");
-  TopoDS_Shape             s6   = BRepBuilderAPI_MakeVertex(gp_Pnt(75, 0, 0));
-  gp_Trsf                  t0;
-  TopLoc_Location          location0(t0);
+  occ::handle<TDocStd_Document> aDoc = new TDocStd_Document("dummy");
+  TopoDS_Shape                  s6   = BRepBuilderAPI_MakeVertex(gp_Pnt(75, 0, 0));
+  gp_Trsf                       t0;
+  TopLoc_Location               location0(t0);
 
   TDF_Label lab1 = XCAFDoc_DocumentTool::ShapeTool(aDoc->Main())->NewShape();
   XCAFDoc_DocumentTool::ShapeTool(aDoc->Main())->SetShape(lab1, s6);
@@ -1787,7 +1012,7 @@ static Standard_Integer OCC23950(Draw_Interpretor& di, Standard_Integer argc, co
 
   Quantity_Color yellow(Quantity_NOC_YELLOW);
   XCAFDoc_DocumentTool::ColorTool(labelA0)->SetColor(component01, yellow, XCAFDoc_ColorGen);
-  XCAFDoc_DocumentTool::ColorTool(labelA0)->SetVisibility(component01, 0);
+  XCAFDoc_DocumentTool::ColorTool(labelA0)->SetVisibility(component01, false);
 
   STEPControl_StepModelType mode = STEPControl_AsIs;
   STEPCAFControl_Writer     writer;
@@ -1797,8 +1022,8 @@ static Standard_Integer OCC23950(Draw_Interpretor& di, Standard_Integer argc, co
     return 1;
   }
 
-  const Handle(Message_Messenger)& aMsgMgr = Message::DefaultMessenger();
-  Message_SequenceOfPrinters       aPrinters;
+  const occ::handle<Message_Messenger>&              aMsgMgr = Message::DefaultMessenger();
+  NCollection_Sequence<occ::handle<Message_Printer>> aPrinters;
   aPrinters.Append(aMsgMgr->ChangePrinters());
   aMsgMgr->AddPrinter(new Draw_Printer(di));
 
@@ -1812,7 +1037,7 @@ static Standard_Integer OCC23950(Draw_Interpretor& di, Standard_Integer argc, co
 
 //=================================================================================================
 
-static Standard_Integer OCC24667(Draw_Interpretor& di, Standard_Integer n, const char** a)
+static int OCC24667(Draw_Interpretor& di, int n, const char** a)
 {
   if (n == 1)
   {
@@ -1838,16 +1063,16 @@ static Standard_Integer OCC24667(Draw_Interpretor& di, Standard_Integer n, const
   GeomFill_Trihedron Mode = GeomFill_IsCorrectedFrenet;
   if (n >= 5)
   {
-    Standard_Integer iMode = atoi(a[4]);
+    int iMode = atoi(a[4]);
     if (iMode == 1)
       Mode = GeomFill_IsFrenet;
     else if (iMode == 2)
       Mode = GeomFill_IsDiscreteTrihedron;
   }
 
-  Standard_Boolean ForceApproxC1 = Standard_False;
+  bool ForceApproxC1 = false;
   if (n >= 6)
-    ForceApproxC1 = Standard_True;
+    ForceApproxC1 = true;
 
   BRepOffsetAPI_MakePipe aPipe(TopoDS::Wire(Spine), Profile, Mode, ForceApproxC1);
 
@@ -1876,7 +1101,8 @@ static TopoDS_Shape CreateTestShape(int& theShapeNb)
   BRep_Builder    aBuilder;
   aBuilder.MakeCompound(aComp);
   // NURBS modifier is used to increase footprint of each shape
-  Handle(BRepTools_NurbsConvertModification) aNurbsModif = new BRepTools_NurbsConvertModification;
+  occ::handle<BRepTools_NurbsConvertModification> aNurbsModif =
+    new BRepTools_NurbsConvertModification;
   TopoDS_Shape       aRefShape = BRepPrimAPI_MakeCylinder(50., 100.).Solid();
   BRepTools_Modifier aModifier(aRefShape, aNurbsModif);
   if (aModifier.IsDone())
@@ -1889,7 +1115,7 @@ static TopoDS_Shape CreateTestShape(int& theShapeNb)
     TopoDS_Shape aShape;
     if (++aSiblingNb <= 100)
     { // number of siblings is limited to avoid long lists
-      aShape = BRepBuilderAPI_Copy(aRefShape, Standard_True /*CopyGeom*/).Shape();
+      aShape = BRepBuilderAPI_Copy(aRefShape, true /*CopyGeom*/).Shape();
     }
     else
     {
@@ -1903,7 +1129,7 @@ static TopoDS_Shape CreateTestShape(int& theShapeNb)
 #include <TDataStd_Integer.hxx>
 #include <TNaming_Builder.hxx>
 
-static Standard_Integer OCC24931(Draw_Interpretor& di, Standard_Integer argc, const char** argv)
+static int OCC24931(Draw_Interpretor& di, int argc, const char** argv)
 {
   if (argc != 2)
   {
@@ -1913,9 +1139,9 @@ static Standard_Integer OCC24931(Draw_Interpretor& di, Standard_Integer argc, co
   TCollection_ExtendedString aFileName(argv[1]);
   PCDM_StoreStatus           aSStatus = PCDM_SS_Failure;
 
-  Handle(TDocStd_Application) anApp = DDocStd::GetApplication();
+  occ::handle<TDocStd_Application> anApp = DDocStd::GetApplication();
   {
-    Handle(TDocStd_Document) aDoc;
+    occ::handle<TDocStd_Document> aDoc;
     anApp->NewDocument("XmlOcaf", aDoc);
     TDF_Label aLab = aDoc->Main();
     TDataStd_Integer::Set(aLab, 0);
@@ -1931,46 +1157,10 @@ static Standard_Integer OCC24931(Draw_Interpretor& di, Standard_Integer argc, co
   return 0;
 }
 
-#include <TDF_AttributeIterator.hxx>
-
-//=================================================================================================
-
-static Standard_Integer OCC24755(Draw_Interpretor& di, Standard_Integer n, const char** a)
-{
-  if (n != 1)
-  {
-    std::cout << "Usage : " << a[0] << "\n";
-    return 1;
-  }
-
-  Handle(TDocStd_Application) anApp = DDocStd::GetApplication();
-  Handle(TDocStd_Document)    aDoc;
-  anApp->NewDocument("BinOcaf", aDoc);
-  TDF_Label aLab = aDoc->Main();
-  // Prepend an int value.
-  TDataStd_Integer::Set(aLab, 0);
-  // Prepend a name.
-  TDataStd_Name::Set(aLab, "test");
-  // Append a double value.
-  aLab.AddAttribute(new TDataStd_Real(), true /*append*/);
-
-  TDF_AttributeIterator i(aLab);
-  Handle(TDF_Attribute) anAttr = i.Value();
-  QCOMPARE(anAttr->IsKind(STANDARD_TYPE(TDataStd_Integer)), Standard_True);
-  i.Next();
-  anAttr = i.Value();
-  QCOMPARE(anAttr->IsKind(STANDARD_TYPE(TDataStd_Name)), Standard_True);
-  i.Next();
-  anAttr = i.Value();
-  QCOMPARE(anAttr->IsKind(STANDARD_TYPE(TDataStd_Real)), Standard_True);
-
-  return 0;
-}
-
 struct MyStubObject
 {
   MyStubObject()
-      : ptr(0L)
+      : ptr(nullptr)
   {
   }
 
@@ -1985,7 +1175,7 @@ struct MyStubObject
 
 //=================================================================================================
 
-static Standard_Integer OCC24834(Draw_Interpretor& di, Standard_Integer n, const char** a)
+static int OCC24834(Draw_Interpretor& di, int n, const char** a)
 {
   if (n != 1)
   {
@@ -2001,8 +1191,8 @@ static Standard_Integer OCC24834(Draw_Interpretor& di, Standard_Integer n, const
   }
 
   NCollection_List<MyStubObject> aList;
-  const Standard_Integer         aSmallBlockSize = 40;
-  const Standard_Integer         aLargeBlockSize = 1500000;
+  const int                      aSmallBlockSize = 40;
+  const int                      aLargeBlockSize = 1500000;
 
   // quick populate memory with large blocks
   try
@@ -2046,50 +1236,6 @@ static Standard_Integer OCC24834(Draw_Interpretor& di, Standard_Integer n, const
   return 0;
 }
 
-#include <Geom2dAPI_InterCurveCurve.hxx>
-#include <IntRes2d_IntersectionPoint.hxx>
-
-//=================================================================================================
-
-static Standard_Integer OCC24889(Draw_Interpretor& theDI,
-                                 Standard_Integer /*theNArg*/,
-                                 const char** /*theArgs*/)
-{
-  // Curves
-  Handle(Geom2d_Circle) aCircle1 =
-    new Geom2d_Circle(gp_Ax22d(gp_Pnt2d(25, -25), gp_Dir2d(1, 0), gp_Dir2d(-0, 1)), 155);
-
-  Handle(Geom2d_Circle) aCircle2 =
-    new Geom2d_Circle(gp_Ax22d(gp_Pnt2d(25, 25), gp_Dir2d(1, 0), gp_Dir2d(-0, 1)), 155);
-
-  Handle(Geom2d_TrimmedCurve) aTrim[2] = {
-    new Geom2d_TrimmedCurve(aCircle1, 1.57079632679490, 2.97959469729228),
-    new Geom2d_TrimmedCurve(aCircle2, 3.30359060633978, 4.71238898038469)};
-
-  DrawTrSurf::Set("c_1", aTrim[0]);
-  DrawTrSurf::Set("c_2", aTrim[1]);
-
-  // Intersection
-  constexpr Standard_Real   aTol = Precision::Confusion();
-  Geom2dAPI_InterCurveCurve aIntTool(aTrim[0], aTrim[1], aTol);
-
-  const IntRes2d_IntersectionPoint& aIntPnt = aIntTool.Intersector().Point(1);
-
-  gp_Pnt2d      aIntRes = aIntTool.Point(1);
-  Standard_Real aPar[2] = {aIntPnt.ParamOnFirst(), aIntPnt.ParamOnSecond()};
-
-  // theDI.precision( 5 );
-  theDI << "Int point: X = " << aIntRes.X() << "; Y = " << aIntRes.Y() << "\n";
-  for (int i = 0; i < 2; ++i)
-  {
-    theDI << "Curve " << i << ": FirstParam = " << aTrim[i]->FirstParameter()
-          << "; LastParam = " << aTrim[i]->LastParameter() << "; IntParameter = " << aPar[i]
-          << "\n";
-  }
-
-  return 0;
-}
-
 #include <math_GlobOptMin.hxx>
 #include <math_MultipleVarFunctionWithHessian.hxx>
 
@@ -2115,68 +1261,63 @@ public:
     t = 1.0 / (8.0 * M_PI);
   }
 
-  virtual Standard_Integer NbVariables() const { return 2; }
+  int NbVariables() const override { return 2; }
 
-  virtual Standard_Boolean Value(const math_Vector& X, Standard_Real& F)
+  bool Value(const math_Vector& X, double& F) override
   {
-    Standard_Real u = X(1);
-    Standard_Real v = X(2);
+    double u = X(1);
+    double v = X(2);
 
-    Standard_Real aSqPt = (v - b * u * u + c * u - r); // Square Part of function.
-    Standard_Real aLnPt = s * (1 - t) * cos(u);        // Linear part of funcrtion.
-    F                   = a * aSqPt * aSqPt + aLnPt + s;
-    return Standard_True;
+    double aSqPt = (v - b * u * u + c * u - r); // Square Part of function.
+    double aLnPt = s * (1 - t) * cos(u);        // Linear part of funcrtion.
+    F            = a * aSqPt * aSqPt + aLnPt + s;
+    return true;
   }
 
-  virtual Standard_Boolean Gradient(const math_Vector& X, math_Vector& G)
+  bool Gradient(const math_Vector& X, math_Vector& G) override
   {
-    Standard_Real u = X(1);
-    Standard_Real v = X(2);
+    double u = X(1);
+    double v = X(2);
 
-    Standard_Real aSqPt = (v - b * u * u + c * u - r); // Square Part of function.
-    G(1)                = 2 * a * aSqPt * (c - 2 * b * u) - s * (1 - t) * sin(u);
-    G(2)                = 2 * a * aSqPt;
+    double aSqPt = (v - b * u * u + c * u - r); // Square Part of function.
+    G(1)         = 2 * a * aSqPt * (c - 2 * b * u) - s * (1 - t) * sin(u);
+    G(2)         = 2 * a * aSqPt;
 
-    return Standard_True;
+    return true;
   }
 
-  virtual Standard_Boolean Values(const math_Vector& X, Standard_Real& F, math_Vector& G)
+  bool Values(const math_Vector& X, double& F, math_Vector& G) override
   {
     Value(X, F);
     Gradient(X, G);
 
-    return Standard_True;
+    return true;
   }
 
-  virtual Standard_Boolean Values(const math_Vector& X,
-                                  Standard_Real&     F,
-                                  math_Vector&       G,
-                                  math_Matrix&       H)
+  bool Values(const math_Vector& X, double& F, math_Vector& G, math_Matrix& H) override
   {
     Value(X, F);
     Gradient(X, G);
 
-    Standard_Real u = X(1);
-    Standard_Real v = X(2);
+    double u = X(1);
+    double v = X(2);
 
-    Standard_Real aSqPt  = (v - b * u * u + c * u - r); // Square Part of function.
-    Standard_Real aTmpPt = c - 2 * b * u;               // Tmp part.
-    H(1, 1)              = 2 * a * aTmpPt * aTmpPt - 4 * a * b * aSqPt - s * (1 - t) * cos(u);
-    H(1, 2)              = 2 * a * aTmpPt;
-    H(2, 1)              = H(1, 2);
-    H(2, 2)              = 2 * a;
+    double aSqPt  = (v - b * u * u + c * u - r); // Square Part of function.
+    double aTmpPt = c - 2 * b * u;               // Tmp part.
+    H(1, 1)       = 2 * a * aTmpPt * aTmpPt - 4 * a * b * aSqPt - s * (1 - t) * cos(u);
+    H(1, 2)       = 2 * a * aTmpPt;
+    H(2, 1)       = H(1, 2);
+    H(2, 2)       = 2 * a;
 
-    return Standard_True;
+    return true;
   }
 
 private:
   // Standard parameters.
-  Standard_Real a, b, c, r, s, t;
+  double a, b, c, r, s, t;
 };
 
-static Standard_Integer OCC25004(Draw_Interpretor& theDI,
-                                 Standard_Integer /*theNArg*/,
-                                 const char** /*theArgs*/)
+static int OCC25004(Draw_Interpretor& theDI, int /*theNArg*/, const char** /*theArgs*/)
 {
   BraninFunction aFunc;
 
@@ -2186,14 +1327,14 @@ static Standard_Integer OCC25004(Draw_Interpretor& theDI,
   aUpper(1) = 10;
   aUpper(2) = 15;
 
-  Standard_Integer aGridOrder = 16;
-  math_Vector      aFuncValues(1, aGridOrder * aGridOrder);
+  int         aGridOrder = 16;
+  math_Vector aFuncValues(1, aGridOrder * aGridOrder);
 
-  Standard_Real aLipConst = 0;
-  math_Vector   aCurrPnt1(1, 2), aCurrPnt2(1, 2);
+  double      aLipConst = 0;
+  math_Vector aCurrPnt1(1, 2), aCurrPnt2(1, 2);
 
   // Get Lipshitz constant estimation on regular grid.
-  Standard_Integer i, j, idx = 1;
+  int i, j, idx = 1;
   for (i = 1; i <= aGridOrder; i++)
   {
     for (j = 1; j <= aGridOrder; j++)
@@ -2206,8 +1347,8 @@ static Standard_Integer OCC25004(Draw_Interpretor& theDI,
     }
   }
 
-  Standard_Integer k, l;
-  Standard_Integer idx1, idx2;
+  int k, l;
+  int idx1, idx2;
   for (i = 1; i <= aGridOrder; i++)
     for (j = 1; j <= aGridOrder; j++)
       for (k = 1; k <= aGridOrder; k++)
@@ -2225,9 +1366,9 @@ static Standard_Integer OCC25004(Draw_Interpretor& theDI,
           idx2         = (k - 1) * aGridOrder + l;
 
           aCurrPnt1.Add(-aCurrPnt2);
-          Standard_Real dist = aCurrPnt1.Norm();
+          double dist = aCurrPnt1.Norm();
 
-          Standard_Real C = Abs(aFuncValues(idx1) - aFuncValues(idx2)) / dist;
+          double C = std::abs(aFuncValues(idx1) - aFuncValues(idx2)) / dist;
           if (C > aLipConst)
             aLipConst = C;
         }
@@ -2236,10 +1377,10 @@ static Standard_Integer OCC25004(Draw_Interpretor& theDI,
   aFinder.Perform();
   //(-pi , 12.275), (pi , 2.275), (9.42478, 2.475)
 
-  Standard_Real anExtValue = aFinder.GetF();
+  double anExtValue = aFinder.GetF();
   theDI << "F = " << anExtValue << "\n";
 
-  Standard_Integer aNbExt = aFinder.NbExtrema();
+  int aNbExt = aFinder.NbExtrema();
   theDI << "NbExtrema = " << aNbExt << "\n";
 
   return 0;
@@ -2269,21 +1410,20 @@ public:
     myResources->SetResource(THE_QATEST_DOC_FORMAT ".FileExtension", "xml");
   }
 
-  virtual Handle(PCDM_Reader) ReaderFromFormat(const TCollection_ExtendedString&) Standard_OVERRIDE
+  occ::handle<PCDM_Reader> ReaderFromFormat(const TCollection_ExtendedString&) override
   {
     return new XmlDrivers_DocumentRetrievalDriver();
   }
 
-  virtual Handle(PCDM_StorageDriver) WriterFromFormat(const TCollection_ExtendedString&)
-    Standard_OVERRIDE
+  occ::handle<PCDM_StorageDriver> WriterFromFormat(const TCollection_ExtendedString&) override
   {
     return new XmlDrivers_DocumentStorageDriver("Test");
   }
 
-  virtual Standard_CString ResourcesName() Standard_OVERRIDE { return ""; }
+  const char* ResourcesName() override { return ""; }
 
   //! Dumps the content of me into the stream
-  void DumpJson(Standard_OStream& theOStream, Standard_Integer theDepth) const
+  void DumpJson(Standard_OStream& theOStream, int theDepth) const
   {
     OCCT_DUMP_TRANSIENT_CLASS_BEGIN(theOStream)
     OCCT_DUMP_BASE_CLASS(theOStream, theDepth, TDocStd_Application)
@@ -2292,9 +1432,7 @@ public:
 
 //=================================================================================================
 
-static Standard_Integer OCC24925(Draw_Interpretor& theDI,
-                                 Standard_Integer  theArgNb,
-                                 const char**      theArgVec)
+static int OCC24925(Draw_Interpretor& theDI, int theArgNb, const char** theArgVec)
 {
   if (theArgNb != 2 && theArgNb != 5)
   {
@@ -2303,7 +1441,7 @@ static Standard_Integer OCC24925(Draw_Interpretor& theDI,
     return 1;
   }
 
-  Standard_Integer           anArgIter = 1;
+  int                        anArgIter = 1;
   TCollection_ExtendedString aFileName = theArgVec[anArgIter++];
   TCollection_AsciiString    aPlugin   = "TKXml";
   // clang-format off
@@ -2320,9 +1458,9 @@ static Standard_Integer OCC24925(Draw_Interpretor& theDI,
   PCDM_StoreStatus  aSStatus = PCDM_SS_Failure;
   PCDM_ReaderStatus aRStatus = PCDM_RS_OpenError;
 
-  Handle(TDocStd_Application) anApp = new Test_TDocStd_Application();
+  occ::handle<TDocStd_Application> anApp = new Test_TDocStd_Application();
   {
-    Handle(TDocStd_Document) aDoc;
+    occ::handle<TDocStd_Document> aDoc;
     anApp->NewDocument(THE_QATEST_DOC_FORMAT, aDoc);
     TDF_Label aLab = aDoc->Main();
     TDataStd_Integer::Set(aLab, 0);
@@ -2334,7 +1472,7 @@ static Standard_Integer OCC24925(Draw_Interpretor& theDI,
   QA_CHECK("SaveAs()", aSStatus == PCDM_SS_OK, true);
 
   {
-    Handle(TDocStd_Document) aDoc;
+    occ::handle<TDocStd_Document> aDoc;
     aRStatus = anApp->Open(aFileName, aDoc);
     anApp->Close(aDoc);
   }
@@ -2346,9 +1484,7 @@ static Standard_Integer OCC24925(Draw_Interpretor& theDI,
 
 #include <BRepAlgoAPI_Check.hxx>
 
-static Standard_Integer OCC25043(Draw_Interpretor& theDI,
-                                 Standard_Integer  theArgNb,
-                                 const char**      theArgVec)
+static int OCC25043(Draw_Interpretor& theDI, int theArgNb, const char** theArgVec)
 {
   if (theArgNb != 2)
   {
@@ -2363,26 +1499,26 @@ static Standard_Integer OCC25043(Draw_Interpretor& theDI,
     return 1;
   }
 
-  BRepAlgoAPI_Check anAlgoApiCheck(aShape, Standard_True, Standard_True);
+  BRepAlgoAPI_Check anAlgoApiCheck(aShape, true, true);
 
   if (!anAlgoApiCheck.IsValid())
   {
-    BOPAlgo_ListIteratorOfListOfCheckResult anCheckIter(anAlgoApiCheck.Result());
+    NCollection_List<BOPAlgo_CheckResult>::Iterator anCheckIter(anAlgoApiCheck.Result());
     for (; anCheckIter.More(); anCheckIter.Next())
     {
-      const BOPAlgo_CheckResult&         aCurCheckRes     = anCheckIter.Value();
-      const TopTools_ListOfShape&        aCurFaultyShapes = aCurCheckRes.GetFaultyShapes1();
-      TopTools_ListIteratorOfListOfShape aFaultyIter(aCurFaultyShapes);
+      const BOPAlgo_CheckResult&               aCurCheckRes     = anCheckIter.Value();
+      const NCollection_List<TopoDS_Shape>&    aCurFaultyShapes = aCurCheckRes.GetFaultyShapes1();
+      NCollection_List<TopoDS_Shape>::Iterator aFaultyIter(aCurFaultyShapes);
       for (; aFaultyIter.More(); aFaultyIter.Next())
       {
         const TopoDS_Shape& aFaultyShape = aFaultyIter.Value();
 
-        Standard_Boolean anIsFaultyShapeFound = Standard_False;
-        TopExp_Explorer  anExp(aShape, aFaultyShape.ShapeType());
+        bool            anIsFaultyShapeFound = false;
+        TopExp_Explorer anExp(aShape, aFaultyShape.ShapeType());
         for (; anExp.More() && !anIsFaultyShapeFound; anExp.Next())
         {
           if (anExp.Current().IsEqual(aFaultyShape))
-            anIsFaultyShapeFound = Standard_True;
+            anIsFaultyShapeFound = true;
         }
 
         if (!anIsFaultyShapeFound)
@@ -2407,9 +1543,7 @@ static Standard_Integer OCC25043(Draw_Interpretor& theDI,
 
 //=================================================================================================
 
-static Standard_Integer OCC24606(Draw_Interpretor& theDI,
-                                 Standard_Integer  theArgNb,
-                                 const char**      theArgVec)
+static int OCC24606(Draw_Interpretor& theDI, int theArgNb, const char** theArgVec)
 {
   if (theArgNb > 1)
   {
@@ -2418,7 +1552,7 @@ static Standard_Integer OCC24606(Draw_Interpretor& theDI,
     return 1;
   }
 
-  Handle(V3d_View) aView = ViewerTest::CurrentView();
+  occ::handle<V3d_View> aView = ViewerTest::CurrentView();
   if (aView.IsNull())
   {
     std::cerr << "Errro: no active view, please call 'vinit'.\n";
@@ -2435,9 +1569,7 @@ static Standard_Integer OCC24606(Draw_Interpretor& theDI,
 
 #include <ShapeBuild_ReShape.hxx>
 
-static Standard_Integer OCC25202(Draw_Interpretor& theDI,
-                                 Standard_Integer  theArgN,
-                                 const char**      theArgVal)
+static int OCC25202(Draw_Interpretor& theDI, int theArgN, const char** theArgVal)
 {
   //  0      1    2     3     4     5     6
   // reshape res shape numF1 face1 numF2 face2
@@ -2447,10 +1579,10 @@ static Standard_Integer OCC25202(Draw_Interpretor& theDI,
     return 1;
   }
 
-  TopoDS_Shape           aShape    = DBRep::Get(theArgVal[2]);
-  const Standard_Integer aNumOfRE1 = Draw::Atoi(theArgVal[3]), aNumOfRE2 = Draw::Atoi(theArgVal[5]);
-  TopoDS_Face            aShapeForRepl1 = TopoDS::Face(DBRep::Get(theArgVal[4])),
-              aShapeForRepl2            = TopoDS::Face(DBRep::Get(theArgVal[6]));
+  TopoDS_Shape aShape    = DBRep::Get(theArgVal[2]);
+  const int    aNumOfRE1 = Draw::Atoi(theArgVal[3]), aNumOfRE2 = Draw::Atoi(theArgVal[5]);
+  TopoDS_Face  aShapeForRepl1 = TopoDS::Face(DBRep::Get(theArgVal[4])),
+              aShapeForRepl2  = TopoDS::Face(DBRep::Get(theArgVal[6]));
 
   if (aShape.IsNull())
   {
@@ -2474,13 +1606,13 @@ static Standard_Integer OCC25202(Draw_Interpretor& theDI,
   ShapeBuild_ReShape aReshape;
 
   //////////////////// explode (begin)
-  TopTools_MapOfShape M;
+  NCollection_Map<TopoDS_Shape, TopTools_ShapeMapHasher> M;
   M.Add(aShape);
-  Standard_Integer aNbShapes = 0;
+  int aNbShapes = 0;
   for (TopExp_Explorer ex(aShape, TopAbs_FACE); ex.More(); ex.Next())
   {
     const TopoDS_Shape& Sx    = ex.Current();
-    Standard_Boolean    added = M.Add(Sx);
+    bool                added = M.Add(Sx);
     if (added)
     {
       aNbShapes++;
@@ -2515,7 +1647,7 @@ static Standard_Integer OCC25202(Draw_Interpretor& theDI,
 
 //=================================================================================================
 
-static Standard_Integer OCC7570(Draw_Interpretor& di, Standard_Integer n, const char** a)
+static int OCC7570(Draw_Interpretor& di, int n, const char** a)
 {
   if (n != 2)
   {
@@ -2524,7 +1656,7 @@ static Standard_Integer OCC7570(Draw_Interpretor& di, Standard_Integer n, const 
   }
   TopoDS_Shape       in_shape(DBRep::Get(a[1]));
   ShapeFix_Wireframe fix_tool(in_shape);
-  fix_tool.ModeDropSmallEdges() = Standard_True;
+  fix_tool.ModeDropSmallEdges() = true;
   fix_tool.SetPrecision(1.e+6);
   fix_tool.SetLimitAngle(0.01);
   fix_tool.FixSmallEdges();
@@ -2536,17 +1668,15 @@ static Standard_Integer OCC7570(Draw_Interpretor& di, Standard_Integer n, const 
 
 //=================================================================================================
 
-static Standard_Integer OCC25340(Draw_Interpretor& /*theDI*/,
-                                 Standard_Integer /*theArgNb*/,
-                                 const char** /*theArgVec*/)
+static int OCC25340(Draw_Interpretor& /*theDI*/, int /*theArgNb*/, const char** /*theArgVec*/)
 {
-  Handle(AIS_InteractiveContext) aCtx = ViewerTest::GetAISContext();
+  occ::handle<AIS_InteractiveContext> aCtx = ViewerTest::GetAISContext();
   if (aCtx.IsNull())
   {
     std::cerr << "Error: No opened viewer!\n";
     return 1;
   }
-  Handle(AIS_TypeFilter) aFilter = new AIS_TypeFilter(AIS_KindOfInteractive_Shape);
+  occ::handle<AIS_TypeFilter> aFilter = new AIS_TypeFilter(AIS_KindOfInteractive_Shape);
   aCtx->AddFilter(aFilter);
   return 0;
 }
@@ -2557,9 +1687,9 @@ class ParallelTest_Saxpy
 {
 public:
   //! Constructor
-  ParallelTest_Saxpy(const NCollection_Array1<Standard_Real>& theX,
-                     NCollection_Array1<Standard_Real>&       theY,
-                     Standard_Real                            theScalar)
+  ParallelTest_Saxpy(const NCollection_Array1<double>& theX,
+                     NCollection_Array1<double>&       theY,
+                     double                            theScalar)
       : myX(theX),
         myY(theY),
         myScalar(theScalar)
@@ -2571,38 +1701,35 @@ public:
   int End() const { return myX.Size(); }
 
   //! Dummy calculation
-  void operator()(Standard_Integer theIndex) const
-  {
-    myY(theIndex) = myScalar * myX(theIndex) + myY(theIndex);
-  }
+  void operator()(int theIndex) const { myY(theIndex) = myScalar * myX(theIndex) + myY(theIndex); }
 
   //! Dummy calculation
-  void operator()(Standard_Integer theThreadIndex, Standard_Integer theIndex) const
+  void operator()(int theThreadIndex, int theIndex) const
   {
     (void)theThreadIndex;
     myY(theIndex) = myScalar * myX(theIndex) + myY(theIndex);
   }
 
 private:
-  ParallelTest_Saxpy(const ParallelTest_Saxpy&);
-  ParallelTest_Saxpy& operator=(ParallelTest_Saxpy&);
+  ParallelTest_Saxpy(const ParallelTest_Saxpy&)      = delete;
+  ParallelTest_Saxpy& operator=(ParallelTest_Saxpy&) = delete;
 
 protected:
-  const NCollection_Array1<Standard_Real>& myX;
-  NCollection_Array1<Standard_Real>&       myY;
-  const Standard_Real                      myScalar;
+  const NCollection_Array1<double>& myX;
+  NCollection_Array1<double>&       myY;
+  const double                      myScalar;
 };
 
 class ParallelTest_SaxpyBatch : private ParallelTest_Saxpy
 {
 public:
-  static const Standard_Integer THE_BATCH_SIZE = 10000000;
+  static const int THE_BATCH_SIZE = 10000000;
 
-  ParallelTest_SaxpyBatch(const NCollection_Array1<Standard_Real>& theX,
-                          NCollection_Array1<Standard_Real>&       theY,
-                          Standard_Real                            theScalar)
+  ParallelTest_SaxpyBatch(const NCollection_Array1<double>& theX,
+                          NCollection_Array1<double>&       theY,
+                          double                            theScalar)
       : ParallelTest_Saxpy(theX, theY, theScalar),
-        myNbBatches((int)Ceiling((double)theX.Size() / THE_BATCH_SIZE))
+        myNbBatches((int)std::ceil((double)theX.Size() / THE_BATCH_SIZE))
   {
   }
 
@@ -2613,7 +1740,7 @@ public:
   void operator()(int theBatchIndex) const
   {
     const int aLower  = theBatchIndex * THE_BATCH_SIZE;
-    const int anUpper = Min(aLower + THE_BATCH_SIZE - 1, myX.Upper());
+    const int anUpper = std::min(aLower + THE_BATCH_SIZE - 1, myX.Upper());
     for (int i = aLower; i <= anUpper; ++i)
     {
       myY(i) = myScalar * myX(i) + myY(i);
@@ -2631,9 +1758,7 @@ private:
 };
 
 //---------------------------------------------------------------------
-static Standard_Integer OCC24826(Draw_Interpretor& theDI,
-                                 Standard_Integer  theArgc,
-                                 const char**      theArgv)
+static int OCC24826(Draw_Interpretor& theDI, int theArgc, const char** theArgv)
 {
   if (theArgc != 2)
   {
@@ -2642,23 +1767,23 @@ static Standard_Integer OCC24826(Draw_Interpretor& theDI,
   }
 
   // Generate data;
-  Standard_Integer aLength = Draw::Atoi(theArgv[1]);
+  int aLength = Draw::Atoi(theArgv[1]);
 
-  NCollection_Array1<Standard_Real> aX(0, aLength - 1);
-  NCollection_Array1<Standard_Real> anY(0, aLength - 1);
-  for (Standard_Integer i = 0; i < aLength; ++i)
+  NCollection_Array1<double> aX(0, aLength - 1);
+  NCollection_Array1<double> anY(0, aLength - 1);
+  for (int i = 0; i < aLength; ++i)
   {
-    aX(i) = anY(i) = (Standard_Real)i;
+    aX(i) = anY(i) = (double)i;
   }
 
   //! Serial processing
-  NCollection_Array1<Standard_Real> anY1     = anY;
-  Standard_Real                     aTimeSeq = 0.0;
+  NCollection_Array1<double> anY1     = anY;
+  double                     aTimeSeq = 0.0;
   {
     OSD_Timer aTimer;
     aTimer.Start();
     const ParallelTest_Saxpy aFunctor(aX, anY1, 1e-6);
-    for (Standard_Integer i = 0; i < aLength; ++i)
+    for (int i = 0; i < aLength; ++i)
     {
       aFunctor(i);
     }
@@ -2670,12 +1795,12 @@ static Standard_Integer OCC24826(Draw_Interpretor& theDI,
   }
 
   // Parallel processing
-  for (Standard_Integer aMode = 0; aMode <= 4; ++aMode)
+  for (int aMode = 0; aMode <= 4; ++aMode)
   {
-    NCollection_Array1<Standard_Real> anY2 = anY;
-    OSD_Timer                         aTimer;
+    NCollection_Array1<double> anY2 = anY;
+    OSD_Timer                  aTimer;
     aTimer.Start();
-    const char*                   aModeDesc = NULL;
+    const char*                   aModeDesc = nullptr;
     const ParallelTest_Saxpy      aFunctor1(aX, anY2, 1e-6);
     const ParallelTest_SaxpyBatch aFunctor2(aX, anY2, 1e-6);
     switch (aMode)
@@ -2717,7 +1842,7 @@ static Standard_Integer OCC24826(Draw_Interpretor& theDI,
               << (aTimer.ElapsedTime() < aTimeSeq ? "[boost]" : "[slow-down]") << "\n";
     aTimer.Show(std::cout);
 
-    for (Standard_Integer i = 0; i < aLength; ++i)
+    for (int i = 0; i < aLength; ++i)
     {
       if (anY2(i) != anY1(i))
       {
@@ -2782,8 +1907,8 @@ public:
   }
 
 private:
-  ParallelTest_MatMult(const ParallelTest_MatMult&);
-  ParallelTest_MatMult& operator=(ParallelTest_MatMult&);
+  ParallelTest_MatMult(const ParallelTest_MatMult&)      = delete;
+  ParallelTest_MatMult& operator=(ParallelTest_MatMult&) = delete;
 
 protected:
   const NCollection_Array2<double>& myMat1;
@@ -2793,7 +1918,7 @@ protected:
 };
 
 //---------------------------------------------------------------------
-static Standard_Integer OCC29935(Draw_Interpretor&, Standard_Integer theArgc, const char** theArgv)
+static int OCC29935(Draw_Interpretor&, int theArgc, const char** theArgv)
 {
   if (theArgc != 2)
   {
@@ -2802,7 +1927,7 @@ static Standard_Integer OCC29935(Draw_Interpretor&, Standard_Integer theArgc, co
   }
 
   // Generate data;
-  Standard_Integer aSize = Draw::Atoi(theArgv[1]);
+  int aSize = Draw::Atoi(theArgv[1]);
 
   std::mt19937               aGen(42);
   NCollection_Array2<double> aMat1(0, aSize - 1, 0, aSize - 1);
@@ -2813,7 +1938,7 @@ static Standard_Integer OCC29935(Draw_Interpretor&, Standard_Integer theArgc, co
   initRandMatrix(aMat2, aGen);
 
   //! Serial processing
-  Standard_Real aTimeSeq = 0.0;
+  double aTimeSeq = 0.0;
   {
     OSD_Timer aTimer;
     aTimer.Start();
@@ -2830,13 +1955,13 @@ static Standard_Integer OCC29935(Draw_Interpretor&, Standard_Integer theArgc, co
   }
 
   // Parallel processing
-  for (Standard_Integer aMode = 0; aMode <= 2; ++aMode)
+  for (int aMode = 0; aMode <= 2; ++aMode)
   {
     aMatRes.Init(0.0);
 
     OSD_Timer aTimer;
     aTimer.Start();
-    const char*          aModeDesc = NULL;
+    const char*          aModeDesc = nullptr;
     ParallelTest_MatMult aFunctor1(aMat1, aMat2, aMatRes, aSize);
     switch (aMode)
     {
@@ -2888,7 +2013,7 @@ static Standard_Integer OCC29935(Draw_Interpretor&, Standard_Integer theArgc, co
 
 //=================================================================================================
 
-static Standard_Integer OCC25100(Draw_Interpretor& di, Standard_Integer argc, const char** argv)
+static int OCC25100(Draw_Interpretor& di, int argc, const char** argv)
 {
   if (argc < 2)
   {
@@ -2903,8 +2028,8 @@ static Standard_Integer OCC25100(Draw_Interpretor& di, Standard_Integer argc, co
     return 1;
   }
 
-  TopExp_Explorer             aFaceExp(S, TopAbs_FACE);
-  const Handle(Geom_Surface)& aSurf = BRep_Tool::Surface(TopoDS::Face(aFaceExp.Current()));
+  TopExp_Explorer                  aFaceExp(S, TopAbs_FACE);
+  const occ::handle<Geom_Surface>& aSurf = BRep_Tool::Surface(TopoDS::Face(aFaceExp.Current()));
 
   GeomAPI_IntSS anIntersector(aSurf, aSurf, Precision::Confusion());
 
@@ -2919,31 +2044,12 @@ static Standard_Integer OCC25100(Draw_Interpretor& di, Standard_Integer argc, co
   return 0;
 }
 
-//=================================================================================================
-
-static Standard_Integer OCC25348(Draw_Interpretor& theDI,
-                                 Standard_Integer /*theArgNb*/,
-                                 const char** /*theArgVec*/)
-{
-  Handle(NCollection_IncAllocator) anAlloc1;
-  NCollection_List<int>            aList1(anAlloc1);
-  for (int i = 0; i < 10; i++)
-  {
-    Handle(NCollection_IncAllocator) anAlloc2;
-    NCollection_List<int>            aList2(anAlloc2);
-    aList2.Append(i);
-    aList1.Assign(aList2);
-  }
-  theDI << "Test complete\n";
-  return 0;
-}
-
 #include <IntCurvesFace_ShapeIntersector.hxx>
 #include <BRepBndLib.hxx>
 
 //=================================================================================================
 
-static Standard_Integer OCC25413(Draw_Interpretor& di, Standard_Integer narg, const char** a)
+static int OCC25413(Draw_Interpretor& di, int narg, const char** a)
 {
   if (narg != 2)
   {
@@ -2958,17 +2064,17 @@ static Standard_Integer OCC25413(Draw_Interpretor& di, Standard_Integer narg, co
   Bnd_Box aBndBox;
   BRepBndLib::Add(aShape, aBndBox);
 
-  gp_Dir        aDir(0., 1., 0.);
-  const int     N     = 250;
-  Standard_Real xMin  = aBndBox.CornerMin().X();
-  Standard_Real zMin  = aBndBox.CornerMin().Z();
-  Standard_Real xMax  = aBndBox.CornerMax().X();
-  Standard_Real zMax  = aBndBox.CornerMax().Z();
-  Standard_Real xStep = (xMax - xMin) / N;
-  Standard_Real zStep = (zMax - zMin) / N;
+  gp_Dir    aDir(gp_Dir::D::Y);
+  const int N     = 250;
+  double    xMin  = aBndBox.CornerMin().X();
+  double    zMin  = aBndBox.CornerMin().Z();
+  double    xMax  = aBndBox.CornerMax().X();
+  double    zMax  = aBndBox.CornerMax().Z();
+  double    xStep = (xMax - xMin) / N;
+  double    zStep = (zMax - zMin) / N;
 
-  for (Standard_Real x = xMin; x <= xMax; x += xStep)
-    for (Standard_Real z = zMin; z <= zMax; z += zStep)
+  for (double x = xMin; x <= xMax; x += xStep)
+    for (double z = zMin; z <= zMax; z += zStep)
     {
       gp_Pnt aPoint(x, 0.0, z);
       gp_Lin aLine(aPoint, aDir);
@@ -2981,15 +2087,14 @@ static Standard_Integer OCC25413(Draw_Interpretor& di, Standard_Integer narg, co
 //
 #include <BRepAlgoAPI_Common.hxx>
 #include <BRepAlgoAPI_Fuse.hxx>
-#include <BRepAlgoAPI_Cut.hxx>
 #include <BRepAlgoAPI_Section.hxx>
 //
 #include <TopExp.hxx>
-#include <TopTools_MapOfShape.hxx>
+#include <TopTools_ShapeMapHasher.hxx>
 
 //=================================================================================================
 
-static Standard_Integer OCC25446(Draw_Interpretor& theDI, Standard_Integer argc, const char** argv)
+static int OCC25446(Draw_Interpretor& theDI, int argc, const char** argv)
 {
   if (argc != 5)
   {
@@ -3011,7 +2116,7 @@ static Standard_Integer OCC25446(Draw_Interpretor& theDI, Standard_Integer argc,
     return 1;
   }
   //
-  Standard_Integer  iOp;
+  int               iOp;
   BOPAlgo_Operation aOp;
   //
   iOp = Draw::Atoi(argv[4]);
@@ -3022,9 +2127,9 @@ static Standard_Integer OCC25446(Draw_Interpretor& theDI, Standard_Integer argc,
   }
   aOp = (BOPAlgo_Operation)iOp;
   //
-  Standard_Integer     iErr;
-  TopTools_ListOfShape aLS;
-  BOPAlgo_PaveFiller   aPF;
+  int                            iErr;
+  NCollection_List<TopoDS_Shape> aLS;
+  BOPAlgo_PaveFiller             aPF;
   //
   aLS.Append(aS1);
   aLS.Append(aS2);
@@ -3038,7 +2143,7 @@ static Standard_Integer OCC25446(Draw_Interpretor& theDI, Standard_Integer argc,
     return 1;
   }
   //
-  BRepAlgoAPI_BooleanOperation* pBuilder = NULL;
+  BRepAlgoAPI_BooleanOperation* pBuilder = nullptr;
   //
   switch (aOp)
   {
@@ -3052,7 +2157,7 @@ static Standard_Integer OCC25446(Draw_Interpretor& theDI, Standard_Integer argc,
       pBuilder = new BRepAlgoAPI_Cut(aS1, aS2, aPF);
       break;
     case BOPAlgo_CUT21:
-      pBuilder = new BRepAlgoAPI_Cut(aS1, aS2, aPF, Standard_False);
+      pBuilder = new BRepAlgoAPI_Cut(aS1, aS2, aPF, false);
       break;
     case BOPAlgo_SECTION:
       pBuilder = new BRepAlgoAPI_Section(aS1, aS2, aPF);
@@ -3071,10 +2176,10 @@ static Standard_Integer OCC25446(Draw_Interpretor& theDI, Standard_Integer argc,
   const TopoDS_Shape& aRes = pBuilder->Shape();
   DBRep::Set(argv[1], aRes);
   //
-  TopTools_MapOfShape              aMapArgs, aMapShape;
-  TopTools_MapIteratorOfMapOfShape aIt;
-  Standard_Boolean                 bIsDeletedHist, bIsDeletedMap;
-  TopAbs_ShapeEnum                 aType;
+  NCollection_Map<TopoDS_Shape, TopTools_ShapeMapHasher>           aMapArgs, aMapShape;
+  NCollection_Map<TopoDS_Shape, TopTools_ShapeMapHasher>::Iterator aIt;
+  bool                                                             bIsDeletedHist, bIsDeletedMap;
+  TopAbs_ShapeEnum                                                 aType;
   //
   TopExp::MapShapes(aS1, aMapArgs);
   TopExp::MapShapes(aS2, aMapArgs);
@@ -3085,8 +2190,8 @@ static Standard_Integer OCC25446(Draw_Interpretor& theDI, Standard_Integer argc,
   {
     const TopoDS_Shape& aS = aIt.Value();
     aType                  = aS.ShapeType();
-    if (!(aType == TopAbs_EDGE || aType == TopAbs_FACE || aType == TopAbs_VERTEX
-          || aType == TopAbs_SOLID))
+    if (aType != TopAbs_EDGE && aType != TopAbs_FACE && aType != TopAbs_VERTEX
+        && aType != TopAbs_SOLID)
     {
       continue;
     }
@@ -3105,165 +2210,23 @@ static Standard_Integer OCC25446(Draw_Interpretor& theDI, Standard_Integer argc,
   return 0;
 }
 
-//====================================================
-// Auxiliary functor class for the command OCC25545;
-// it gets access to a vertex with the given index and
-// checks that X coordinate of the point is equal to index;
-// if it is not so then a data race is reported.
-//====================================================
-struct OCC25545_Functor
-{
-  OCC25545_Functor(const std::vector<TopoDS_Shape>& theShapeVec)
-      : myShapeVec(&theShapeVec),
-        myIsRaceDetected(0)
-  {
-  }
-
-  void operator()(size_t i) const
-  {
-    if (!myIsRaceDetected)
-    {
-      const TopoDS_Vertex& aV = TopoDS::Vertex(myShapeVec->at(i));
-      gp_Pnt               aP = BRep_Tool::Pnt(aV);
-      if (aP.X() != static_cast<double>(i))
-      {
-        ++myIsRaceDetected;
-      }
-    }
-  }
-
-  const std::vector<TopoDS_Shape>* myShapeVec;
-  mutable std::atomic<int>         myIsRaceDetected;
-};
-
-//=======================================================================
-// function : OCC25545
-// purpose  : Tests data race when concurrently accessing TopLoc_Location::Transformation()
-//=======================================================================
-
-static Standard_Integer OCC25545(Draw_Interpretor& di, Standard_Integer, const char**)
-{
-  // Place vertices in a vector, giving the i-th vertex the
-  // transformation that translates it on the vector (i,0,0) from the origin.
-  Standard_Integer             n = 1000;
-  std::vector<TopoDS_Shape>    aShapeVec(n);
-  std::vector<TopLoc_Location> aLocVec(n);
-  TopoDS_Shape                 aShape = BRepBuilderAPI_MakeVertex(gp::Origin());
-  aShapeVec[0]                        = aShape;
-  for (Standard_Integer i = 1; i < n; ++i)
-  {
-    gp_Trsf aT;
-    aT.SetTranslation(gp_Vec(1, 0, 0));
-    aLocVec[i]   = aLocVec[i - 1] * aT;
-    aShapeVec[i] = aShape.Moved(aLocVec[i]);
-  }
-
-  // Evaluator function will access vertices geometry
-  // concurrently
-  OCC25545_Functor aFunc(aShapeVec);
-
-  // concurrently process
-  OSD_Parallel::For(0, n, aFunc);
-
-  QVERIFY(!aFunc.myIsRaceDetected);
-  return 0;
-}
-
-//=================================================================================================
-
-#include <BRepMesh_GeomTool.hxx>
-#include <Geom_TrimmedCurve.hxx>
-#include <BRepBuilderAPI_MakeFace.hxx>
-#include <BRepAdaptor_Surface.hxx>
-
-static Standard_Integer OCC25547(Draw_Interpretor& theDI,
-                                 Standard_Integer /*argc*/,
-                                 const char** /*argv*/)
-{
-  // The general aim of this test is to prevent linkage errors due to missed
-  // Standard_EXPORT attribute for static methods.
-
-  // However, start checking the main functionality at first.
-  const Standard_Real       aFirstP = 0., aLastP = M_PI;
-  Handle(Geom_Circle)       aCircle = new Geom_Circle(gp_Ax2(gp::Origin(), gp::DZ()), 10);
-  Handle(Geom_TrimmedCurve) aHalf   = new Geom_TrimmedCurve(aCircle, aFirstP, aLastP);
-  TopoDS_Edge               aEdge   = BRepBuilderAPI_MakeEdge(aHalf);
-  BRepAdaptor_Curve         aAdaptor(aEdge);
-  BRepMesh_GeomTool         aGeomTool(aAdaptor, aFirstP, aLastP, 0.1, 0.5);
-
-  if (aGeomTool.NbPoints() == 0)
-  {
-    theDI << "Error. BRepMesh_GeomTool failed to discretize an arc.\n";
-    return 1;
-  }
-
-  // Test static methods.
-  TopoDS_Face                 aFace = BRepBuilderAPI_MakeFace(gp_Pln(gp::Origin(), gp::DZ()));
-  BRepAdaptor_Surface         aSurf(aFace);
-  Handle(BRepAdaptor_Surface) aHSurf = new BRepAdaptor_Surface(aSurf);
-
-  gp_Pnt aPnt;
-  gp_Dir aNormal;
-  if (!BRepMesh_GeomTool::Normal(aHSurf, 10., 10., aPnt, aNormal))
-  {
-    theDI << "Error. BRepMesh_GeomTool failed to take a normal of surface.\n";
-    return 1;
-  }
-
-  gp_XY aRefPnts[4] = {gp_XY(-10., -10.), gp_XY(10., 10.), gp_XY(-10., 10.), gp_XY(10., -10.)};
-
-  gp_Pnt2d                   aIntPnt;
-  Standard_Real              aParams[2];
-  BRepMesh_GeomTool::IntFlag aIntFlag = BRepMesh_GeomTool::IntLinLin(aRefPnts[0],
-                                                                     aRefPnts[1],
-                                                                     aRefPnts[2],
-                                                                     aRefPnts[3],
-                                                                     aIntPnt.ChangeCoord(),
-                                                                     aParams);
-
-  Standard_Real aDiff = aIntPnt.Distance(gp::Origin2d());
-  if (aIntFlag != BRepMesh_GeomTool::Cross || aDiff > Precision::PConfusion())
-  {
-    theDI << "Error. BRepMesh_GeomTool failed to intersect two lines.\n";
-    return 1;
-  }
-
-  aIntFlag = BRepMesh_GeomTool::IntSegSeg(aRefPnts[0],
-                                          aRefPnts[1],
-                                          aRefPnts[2],
-                                          aRefPnts[3],
-                                          Standard_False,
-                                          Standard_False,
-                                          aIntPnt);
-
-  aDiff = aIntPnt.Distance(gp::Origin2d());
-  if (aIntFlag != BRepMesh_GeomTool::Cross || aDiff > Precision::PConfusion())
-  {
-    theDI << "Error. BRepMesh_GeomTool failed to intersect two segments.\n";
-    return 1;
-  }
-
-  theDI << "Test complete\n";
-  return 0;
-}
-
-static Standard_Integer OCC26139(Draw_Interpretor& theDI, Standard_Integer argc, const char** argv)
+static int OCC26139(Draw_Interpretor& theDI, int argc, const char** argv)
 {
 
-  Handle(AIS_InteractiveContext) aCtx = ViewerTest::GetAISContext();
+  occ::handle<AIS_InteractiveContext> aCtx = ViewerTest::GetAISContext();
   if (aCtx.IsNull())
   {
     theDI << "Use 'vinit' command before " << argv[0] << "\n";
     return 1;
   }
 
-  Standard_Integer aBoxGridSize  = 100;
-  Standard_Integer aCompGridSize = 3;
-  Standard_Real    aBoxSize      = 5.0;
+  int    aBoxGridSize  = 100;
+  int    aCompGridSize = 3;
+  double aBoxSize      = 5.0;
 
   if (argc > 1)
   {
-    for (Standard_Integer anArgIdx = 1; anArgIdx < argc; ++anArgIdx)
+    for (int anArgIdx = 1; anArgIdx < argc; ++anArgIdx)
     {
       TCollection_AsciiString anArg(argv[anArgIdx]);
       anArg.LowerCase();
@@ -3282,17 +2245,17 @@ static Standard_Integer OCC26139(Draw_Interpretor& theDI, Standard_Integer argc,
     }
   }
 
-  NCollection_List<Handle(AIS_Shape)> aCompounds;
-  for (Standard_Integer aCompGridX = 0; aCompGridX < aCompGridSize; ++aCompGridX)
+  NCollection_List<occ::handle<AIS_Shape>> aCompounds;
+  for (int aCompGridX = 0; aCompGridX < aCompGridSize; ++aCompGridX)
   {
-    for (Standard_Integer aCompGridY = 0; aCompGridY < aCompGridSize; ++aCompGridY)
+    for (int aCompGridY = 0; aCompGridY < aCompGridSize; ++aCompGridY)
     {
       BRep_Builder    aBuilder;
       TopoDS_Compound aComp;
       aBuilder.MakeCompound(aComp);
-      for (Standard_Integer aBoxGridX = 0; aBoxGridX < aBoxGridSize; ++aBoxGridX)
+      for (int aBoxGridX = 0; aBoxGridX < aBoxGridSize; ++aBoxGridX)
       {
-        for (Standard_Integer aBoxGridY = 0; aBoxGridY < aBoxGridSize; ++aBoxGridY)
+        for (int aBoxGridY = 0; aBoxGridY < aBoxGridSize; ++aBoxGridY)
         {
           BRepPrimAPI_MakeBox aBox(gp_Pnt(aBoxGridX * aBoxSize, aBoxGridY * aBoxSize, 0.0),
                                    aBoxSize,
@@ -3311,11 +2274,11 @@ static Standard_Integer OCC26139(Draw_Interpretor& theDI, Standard_Integer argc,
   }
 
   OSD_Timer aTimer;
-  for (NCollection_List<Handle(AIS_Shape)>::Iterator aCompIter(aCompounds); aCompIter.More();
+  for (NCollection_List<occ::handle<AIS_Shape>>::Iterator aCompIter(aCompounds); aCompIter.More();
        aCompIter.Next())
   {
     aTimer.Start();
-    aCtx->Display(aCompIter.Value(), Standard_False);
+    aCtx->Display(aCompIter.Value(), false);
     aTimer.Stop();
     theDI << "Display time: " << aTimer.ElapsedTime() << "\n";
     aTimer.Reset();
@@ -3323,10 +2286,10 @@ static Standard_Integer OCC26139(Draw_Interpretor& theDI, Standard_Integer argc,
 
   aTimer.Reset();
   aTimer.Start();
-  for (NCollection_List<Handle(AIS_Shape)>::Iterator aCompIter(aCompounds); aCompIter.More();
+  for (NCollection_List<occ::handle<AIS_Shape>>::Iterator aCompIter(aCompounds); aCompIter.More();
        aCompIter.Next())
   {
-    aCtx->Remove(aCompIter.Value(), Standard_False);
+    aCtx->Remove(aCompIter.Value(), false);
   }
   aTimer.Stop();
   theDI << "Remove time: " << aTimer.ElapsedTime() << "\n";
@@ -3334,8 +2297,9 @@ static Standard_Integer OCC26139(Draw_Interpretor& theDI, Standard_Integer argc,
   return 0;
 }
 
-#include <TColStd_DataMapIteratorOfDataMapOfIntegerInteger.hxx>
-#include <TColStd_DataMapOfIntegerInteger.hxx>
+#include <Standard_Integer.hxx>
+
+#include <NCollection_DataMap.hxx>
 #include <OSD.hxx>
 #include <ShapeFix_Wire.hxx>
 #include <ShapeExtend_Status.hxx>
@@ -3345,12 +2309,11 @@ static Standard_Integer OCC26139(Draw_Interpretor& theDI, Standard_Integer argc,
   #define EXCEPTION Standard_Failure const&
 #endif
 
-static ShapeExtend_Status getStatusGap(const Handle(ShapeFix_Wire)& theFix,
-                                       const Standard_Boolean       theIs3d)
+static ShapeExtend_Status getStatusGap(const occ::handle<ShapeFix_Wire>& theFix, const bool theIs3d)
 {
-  for (Standard_Integer i = ShapeExtend_OK; i <= ShapeExtend_FAIL; i++)
+  for (int i = ShapeExtend_OK; i <= ShapeExtend_FAIL; i++)
   {
-    Standard_Boolean isFound;
+    bool isFound;
     if (theIs3d)
       isFound = theFix->StatusGaps3d((ShapeExtend_Status)i);
     else
@@ -3363,7 +2326,7 @@ static ShapeExtend_Status getStatusGap(const Handle(ShapeFix_Wire)& theFix,
 
 //=================================================================================================
 
-static Standard_Integer OCC24881(Draw_Interpretor& di, Standard_Integer narg, const char** a)
+static int OCC24881(Draw_Interpretor& di, int narg, const char** a)
 {
   if (narg < 2)
   {
@@ -3375,11 +2338,11 @@ static Standard_Integer OCC24881(Draw_Interpretor& di, Standard_Integer narg, co
   TopoDS_Shape aShape = DBRep::Get(a[1]);
 
   OSD::SetSignal();
-  Handle(ShapeFix_Wire) aWireFix = new ShapeFix_Wire;
+  occ::handle<ShapeFix_Wire> aWireFix = new ShapeFix_Wire;
 
   // map FixStatus - NbSuchStatuses
-  TColStd_DataMapOfIntegerInteger aStatusNbDMap;
-  Standard_Integer                nbFixed = 0, nbOk = 0;
+  NCollection_DataMap<int, int> aStatusNbDMap;
+  int                           nbFixed = 0, nbOk = 0;
 
   // Begin: STEP 7
   ShapeExtend_Status aStatus = ShapeExtend_OK;
@@ -3393,8 +2356,8 @@ static Standard_Integer OCC24881(Draw_Interpretor& di, Standard_Integer narg, co
       TopoDS_Iterator aWireItr(aFace);
       for (; aWireItr.More(); aWireItr.Next())
       {
-        Standard_Boolean wasOk    = Standard_False;
-        TopoDS_Wire      aSrcWire = TopoDS::Wire(aWireItr.Value());
+        bool        wasOk    = false;
+        TopoDS_Wire aSrcWire = TopoDS::Wire(aWireItr.Value());
 
         aWireFix->Load(aSrcWire);
         aWireFix->SetFace(TopoDS::Face(aFace));
@@ -3403,9 +2366,9 @@ static Standard_Integer OCC24881(Draw_Interpretor& di, Standard_Integer narg, co
         if (!aWireFix->FixGaps3d())
         {
           // not fixed, why?
-          aStatus = getStatusGap(aWireFix, Standard_True);
+          aStatus = getStatusGap(aWireFix, true);
           if (aStatus == ShapeExtend_OK)
-            wasOk = Standard_True;
+            wasOk = true;
           else
           {
             // keep 3d fail status
@@ -3422,7 +2385,7 @@ static Standard_Integer OCC24881(Draw_Interpretor& di, Standard_Integer narg, co
           nbFixed++;
         else
         {
-          aStatus = getStatusGap(aWireFix, Standard_False);
+          aStatus = getStatusGap(aWireFix, false);
           if (aStatus == ShapeExtend_OK)
           {
             if (wasOk)
@@ -3436,7 +2399,7 @@ static Standard_Integer OCC24881(Draw_Interpretor& di, Standard_Integer narg, co
           else
           {
             // keep 2d fail status
-            Standard_Integer aStatus2d = aStatus + ShapeExtend_FAIL;
+            int aStatus2d = aStatus + ShapeExtend_FAIL;
             if (aStatusNbDMap.IsBound(aStatus2d))
               aStatusNbDMap(aStatus2d)++;
             else
@@ -3463,7 +2426,7 @@ static Standard_Integer OCC24881(Draw_Interpretor& di, Standard_Integer narg, co
   {
     di << "Fix_FillGaps_NothingToDo\n";
   }
-  TColStd_DataMapIteratorOfDataMapOfIntegerInteger aStatusItr(aStatusNbDMap);
+  NCollection_DataMap<int, int>::Iterator aStatusItr(aStatusNbDMap);
   for (; aStatusItr.More(); aStatusItr.Next())
   {
     switch ((ShapeExtend_Status)aStatusItr.Key())
@@ -3498,9 +2461,7 @@ static Standard_Integer OCC24881(Draw_Interpretor& di, Standard_Integer narg, co
 
 //=================================================================================================
 
-static Standard_Integer OCC26284(Draw_Interpretor& theDI,
-                                 Standard_Integer  theArgNb,
-                                 const char**      theArgVec)
+static int OCC26284(Draw_Interpretor& theDI, int theArgNb, const char** theArgVec)
 {
   if (theArgNb != 1)
   {
@@ -3509,7 +2470,7 @@ static Standard_Integer OCC26284(Draw_Interpretor& theDI,
     return 1;
   }
 
-  Handle(AIS_InteractiveContext) anAISContext = ViewerTest::GetAISContext();
+  occ::handle<AIS_InteractiveContext> anAISContext = ViewerTest::GetAISContext();
   if (anAISContext.IsNull())
   {
     std::cerr << "Error: no active view. Please call vinit.\n";
@@ -3517,14 +2478,14 @@ static Standard_Integer OCC26284(Draw_Interpretor& theDI,
   }
 
   BRepPrimAPI_MakeSphere aSphereBuilder(gp_Pnt(0.0, 0.0, 0.0), 1.0);
-  Handle(AIS_Shape)      aSphere = new AIS_Shape(aSphereBuilder.Shape());
-  anAISContext->Display(aSphere, Standard_False);
-  for (Standard_Integer aChildIdx = 0; aChildIdx < 5; ++aChildIdx)
+  occ::handle<AIS_Shape> aSphere = new AIS_Shape(aSphereBuilder.Shape());
+  anAISContext->Display(aSphere, false);
+  for (int aChildIdx = 0; aChildIdx < 5; ++aChildIdx)
   {
     BRepPrimAPI_MakeSphere aBuilder(gp_Pnt(1.0 + aChildIdx, 1.0 + aChildIdx, 1.0 + aChildIdx), 1.0);
-    Handle(AIS_Shape)      aChild = new AIS_Shape(aBuilder.Shape());
+    occ::handle<AIS_Shape> aChild = new AIS_Shape(aBuilder.Shape());
     aSphere->AddChild(aChild);
-    anAISContext->Display(aChild, Standard_False);
+    anAISContext->Display(aChild, false);
   }
 
   anAISContext->RecomputeSelectionOnly(aSphere);
@@ -3538,7 +2499,7 @@ static Standard_Integer OCC26284(Draw_Interpretor& theDI,
 
 //=================================================================================================
 
-Standard_Integer xprojponf(Draw_Interpretor& di, Standard_Integer n, const char** a)
+int xprojponf(Draw_Interpretor& di, int n, const char** a)
 {
   if (n != 3)
   {
@@ -3546,10 +2507,10 @@ Standard_Integer xprojponf(Draw_Interpretor& di, Standard_Integer n, const char*
     return 0;
   }
   //
-  gp_Pnt                   aP, aPS;
-  TopoDS_Shape             aS;
-  TopoDS_Face              aF;
-  Handle(IntTools_Context) aCtx;
+  gp_Pnt                        aP, aPS;
+  TopoDS_Shape                  aS;
+  TopoDS_Face                   aF;
+  occ::handle<IntTools_Context> aCtx;
   //
   DrawTrSurf::GetPoint(a[1], aP);
   aS = DBRep::Get(a[2]);
@@ -3589,34 +2550,29 @@ Standard_Integer xprojponf(Draw_Interpretor& di, Standard_Integer n, const char*
 #include <BRepMesh_CircleTool.hxx>
 #include <SelectMgr_EntityOwner.hxx>
 
-static Standard_Boolean inspect_point(const gp_XY&        thePoint,
-                                      const gp_XY&        theCenter,
-                                      const Standard_Real theRadius)
+static bool inspect_point(const gp_XY& thePoint, const gp_XY& theCenter, const double theRadius)
 {
-  static Standard_Real aPrecision   = Precision::PConfusion();
-  static Standard_Real aSqPrecision = aPrecision * aPrecision;
-  const gp_XY          aDistVec     = thePoint - theCenter;
-  if (aDistVec.SquareModulus() - (theRadius * theRadius) < aSqPrecision)
-    return Standard_True;
-  else
-    return Standard_False;
+  static double aPrecision   = Precision::PConfusion();
+  static double aSqPrecision = aPrecision * aPrecision;
+  const gp_XY   aDistVec     = thePoint - theCenter;
+  return aDistVec.SquareModulus() - (theRadius * theRadius) < aSqPrecision;
 }
 
-static Standard_Integer OCC24923(Draw_Interpretor& theDI, Standard_Integer argc, const char** argv)
+static int OCC24923(Draw_Interpretor& theDI, int argc, const char** argv)
 {
-  srand(static_cast<unsigned int>(time(NULL)));
+  srand(static_cast<unsigned int>(time(nullptr)));
 
-  const Standard_Real    aMaxDeviation = (argc > 1) ? Draw::Atof(argv[1]) : 0.01;
-  const Standard_Integer aPointsNb     = 10000000;
-  const Standard_Real    aMinAngle     = 5 * M_PI / 180.;
-  static Standard_Real   aSqPrecision  = Precision::PConfusion() * Precision::PConfusion();
+  const double  aMaxDeviation = (argc > 1) ? Draw::Atof(argv[1]) : 0.01;
+  const int     aPointsNb     = 10000000;
+  const double  aMinAngle     = 5 * M_PI / 180.;
+  static double aSqPrecision  = Precision::PConfusion() * Precision::PConfusion();
 
-  Standard_Integer aFailedNb = 0;
-  for (Standard_Integer i = 0; i < aPointsNb; ++i)
+  int aFailedNb = 0;
+  for (int i = 0; i < aPointsNb; ++i)
   {
     gp_XY p[3];
-    for (Standard_Integer j = 0; j < 3; ++j)
-      p[j].SetCoord(((Standard_Real)rand()) / RAND_MAX, ((Standard_Real)rand()) / RAND_MAX);
+    for (int j = 0; j < 3; ++j)
+      p[j].SetCoord(((double)rand()) / RAND_MAX, ((double)rand()) / RAND_MAX);
 
     // Check that points do not compose degenerated triangle.
     gp_XY aVec1 = p[1] - p[0];
@@ -3624,8 +2580,8 @@ static Standard_Integer OCC24923(Draw_Interpretor& theDI, Standard_Integer argc,
     if (aVec1.SquareModulus() > aSqPrecision && aVec2.SquareModulus() > aSqPrecision
         && (aVec1 ^ aVec2) > aMinAngle)
     {
-      gp_XY         aCenter;
-      Standard_Real aRadius;
+      gp_XY  aCenter;
+      double aRadius;
       if (BRepMesh_CircleTool::MakeCircle(p[0], p[1], p[2], aCenter, aRadius))
       {
         if (!inspect_point(p[0], aCenter, aRadius) || !inspect_point(p[1], aCenter, aRadius)
@@ -3649,8 +2605,7 @@ static Standard_Integer OCC24923(Draw_Interpretor& theDI, Standard_Integer argc,
     --i;
   }
 
-  const Standard_Real aDeviation =
-    1. - (Standard_Real)(aPointsNb - aFailedNb) / (Standard_Real)aPointsNb;
+  const double aDeviation = 1. - (double)(aPointsNb - aFailedNb) / (double)aPointsNb;
 
   theDI << "Number of incorrect cases: " << aFailedNb << " (Total " << aPointsNb << ")\n";
   if (aDeviation > aMaxDeviation)
@@ -3671,18 +2626,16 @@ static Standard_Integer OCC24923(Draw_Interpretor& theDI, Standard_Integer argc,
 // purpose  : check implementation of Euler angles in gp_Quaternion
 //=======================================================================
 
-static Standard_Integer OCC25574(Draw_Interpretor& theDI,
-                                 Standard_Integer /*argc*/,
-                                 const char** /*argv*/)
+static int OCC25574(Draw_Interpretor& theDI, int /*argc*/, const char** /*argv*/)
 {
-  Standard_Boolean isTestOk = Standard_True;
+  bool isTestOk = true;
 
   // Check consistency of Get and Set operations for Euler angles
   gp_Quaternion aQuat;
   aQuat.Set(0.06766916507860499, 0.21848101129786085, 0.11994599260380681, 0.9660744746954637);
-  Standard_Real alpha, beta, gamma;
-  gp_Mat        aRinv = aQuat.GetMatrix().Inverted();
-  gp_Mat        aI;
+  double alpha, beta, gamma;
+  gp_Mat aRinv = aQuat.GetMatrix().Inverted();
+  gp_Mat aI;
   aI.SetIdentity();
   const char* names[] = {"Extrinsic_XYZ", "Extrinsic_XZY", "Extrinsic_YZX", "Extrinsic_YXZ",
                          "Extrinsic_ZXY", "Extrinsic_ZYX", "Intrinsic_XYZ", "Intrinsic_XZY",
@@ -3703,7 +2656,7 @@ static Standard_Integer OCC25574(Draw_Interpretor& theDI,
     {
       theDI << "Error: Euler angles conversion incorrect for sequence "
             << names[i - gp_Extrinsic_XYZ] << "\n";
-      isTestOk = Standard_False;
+      isTestOk = false;
     }
   }
 
@@ -3716,7 +2669,7 @@ static Standard_Integer OCC25574(Draw_Interpretor& theDI,
   alpha = 0.1517461713131;
   beta  = 1.5162198410141;
   gamma = 1.9313156236541;
-  Standard_Real    alpha2, beta2, gamma2;
+  double           alpha2, beta2, gamma2;
   gp_EulerSequence pairs[][2] = {{gp_Extrinsic_XYZ, gp_Intrinsic_ZYX},
                                  {gp_Extrinsic_XZY, gp_Intrinsic_YZX},
                                  {gp_Extrinsic_YZX, gp_Intrinsic_XZY},
@@ -3728,11 +2681,12 @@ static Standard_Integer OCC25574(Draw_Interpretor& theDI,
     aQuat.SetEulerAngles(pairs[i][0], alpha, beta, gamma);
     aQuat.GetEulerAngles(pairs[i][1], gamma2, beta2, alpha2);
 
-    if (Abs(alpha - alpha2) > 1e-5 || Abs(beta - beta2) > 1e-5 || Abs(gamma - gamma2) > 1e-5)
+    if (std::abs(alpha - alpha2) > 1e-5 || std::abs(beta - beta2) > 1e-5
+        || std::abs(gamma - gamma2) > 1e-5)
     {
       theDI << "Error: intrinsic and extrinsic conversion incorrect for sequence " << names[i]
             << "\n";
-      isTestOk = Standard_False;
+      isTestOk = false;
     }
   }
 
@@ -3774,10 +2728,10 @@ static Standard_Integer OCC25574(Draw_Interpretor& theDI,
       {
         // avoid reporting small coordinates
         for (int k = 1; k <= 3; k++)
-          if (Abs(v2.Coord(k)) < Precision::Confusion())
+          if (std::abs(v2.Coord(k)) < Precision::Confusion())
             v2.SetCoord(k, 0.);
 
-        isTestOk = Standard_False;
+        isTestOk = false;
         theDI << "Error: Euler sequence " << names[i - gp_Extrinsic_XYZ] << " is incorrect:\n";
         theDI << "rotating by angle 90 deg around "
               << (anAxis == 0   ? "X"
@@ -3791,7 +2745,7 @@ static Standard_Integer OCC25574(Draw_Interpretor& theDI,
 
   // Check correspondence of enumeration and actual rotation it defines,
   // by comparing cumulative rotation matrix with sequence of rotations by axes
-  const Standard_Real anAngle[3] = {0.1, 0.2, 0.3};
+  const double anAngle[3] = {0.1, 0.2, 0.3};
   for (int i = gp_Extrinsic_XYZ; i <= gp_Intrinsic_ZYZ; i++)
   {
     // Sequence of rotations
@@ -3832,7 +2786,7 @@ static Standard_Integer OCC25574(Draw_Interpretor& theDI,
     {
       theDI << "Error: Euler angles conversion does not correspond to sequential rotations for "
             << names[i - gp_Extrinsic_XYZ] << "\n";
-      isTestOk = Standard_False;
+      isTestOk = false;
     }
   }
 
@@ -3866,9 +2820,9 @@ static Standard_Integer OCC25574(Draw_Interpretor& theDI,
     gp_Trsf transformation;
     transformation.SetDisplacement(gp_Ax2(), result);
 
-    Standard_Real computedAlpha;
-    Standard_Real computedBeta;
-    Standard_Real computedGamma;
+    double computedAlpha;
+    double computedBeta;
+    double computedGamma;
 
     transformation.GetRotation().GetEulerAngles(gp_YawPitchRoll,
                                                 computedAlpha,
@@ -3876,8 +2830,8 @@ static Standard_Integer OCC25574(Draw_Interpretor& theDI,
                                                 computedGamma);
 
     // We expect now to get the same angles as we have used for our rotations
-    if (Abs(alpha - computedAlpha) > 1e-5 || Abs(beta - computedBeta) > 1e-5
-        || Abs(gamma - computedGamma) > 1e-5)
+    if (std::abs(alpha - computedAlpha) > 1e-5 || std::abs(beta - computedBeta) > 1e-5
+        || std::abs(gamma - computedGamma) > 1e-5)
     {
       theDI << "Error: unexpected values of Euler angles for YawPitchRoll sequence:\n";
       theDI << "alpha: " << alpha / M_PI * 180.0
@@ -3886,7 +2840,7 @@ static Standard_Integer OCC25574(Draw_Interpretor& theDI,
             << " and computed beta: " << computedBeta / M_PI * 180.0 << "\n";
       theDI << "gamma: " << gamma / M_PI * 180.0
             << " and computed gamma: " << computedGamma / M_PI * 180.0 << "\n";
-      isTestOk = Standard_False;
+      isTestOk = false;
     }
   }
 
@@ -3900,14 +2854,15 @@ static Standard_Integer OCC25574(Draw_Interpretor& theDI,
 
     // gp_Intrinsic_ZYX and gp_Extrinsic_XYZ should produce the same values of angles but in
     // opposite order
-    if (Abs(alpha - gamma2) > 1e-5 || Abs(beta - beta2) > 1e-5 || Abs(gamma - alpha2) > 1e-5)
+    if (std::abs(alpha - gamma2) > 1e-5 || std::abs(beta - beta2) > 1e-5
+        || std::abs(gamma - alpha2) > 1e-5)
     {
       theDI
         << "Error: Euler angles computed for gp_Intrinsic_ZYX and gp_Extrinsic_XYZ do not match:\n";
       theDI << "alpha: " << alpha / M_PI * 180.0 << " and " << alpha2 / M_PI * 180.0 << "\n";
       theDI << "beta: " << beta / M_PI * 180.0 << " and " << beta2 / M_PI * 180.0 << "\n";
       theDI << "gamma: " << gamma / M_PI * 180.0 << " and " << gamma2 / M_PI * 180.0 << "\n";
-      isTestOk = Standard_False;
+      isTestOk = false;
     }
   }
 
@@ -3915,12 +2870,12 @@ static Standard_Integer OCC25574(Draw_Interpretor& theDI,
   return 0;
 }
 
-#include <TColStd_Array1OfReal.hxx>
+#include <NCollection_Array1.hxx>
 #include <GeomConvert.hxx>
 
 //=================================================================================================
 
-Standard_Integer OCC26446(Draw_Interpretor& di, Standard_Integer n, const char** a)
+int OCC26446(Draw_Interpretor& di, int n, const char** a)
 {
   if (n != 4)
   {
@@ -3928,10 +2883,10 @@ Standard_Integer OCC26446(Draw_Interpretor& di, Standard_Integer n, const char**
     return 1;
   }
 
-  Handle(Geom_BSplineCurve) aCurve1 =
-    Handle(Geom_BSplineCurve)::DownCast(DrawTrSurf::GetCurve(a[2]));
-  Handle(Geom_BSplineCurve) aCurve2 =
-    Handle(Geom_BSplineCurve)::DownCast(DrawTrSurf::GetCurve(a[3]));
+  occ::handle<Geom_BSplineCurve> aCurve1 =
+    occ::down_cast<Geom_BSplineCurve>(DrawTrSurf::GetCurve(a[2]));
+  occ::handle<Geom_BSplineCurve> aCurve2 =
+    occ::down_cast<Geom_BSplineCurve>(DrawTrSurf::GetCurve(a[3]));
 
   if (aCurve1.IsNull())
   {
@@ -3945,51 +2900,33 @@ Standard_Integer OCC26446(Draw_Interpretor& di, Standard_Integer n, const char**
     return 1;
   }
 
-  TColGeom_Array1OfBSplineCurve          aCurves(0, 1);
-  TColStd_Array1OfReal                   aTolerances(0, 0);
-  Standard_Real                          aTolConf    = 1.e-3;
-  constexpr Standard_Real                aTolClosure = Precision::Confusion();
-  Handle(TColGeom_HArray1OfBSplineCurve) aConcatCurves;
-  Handle(TColStd_HArray1OfInteger)       anIndices;
+  NCollection_Array1<occ::handle<Geom_BSplineCurve>> aCurves(0, 1);
+  NCollection_Array1<double>                         aTolerances(0, 0);
+  double                                             aTolConf    = 1.e-3;
+  constexpr double                                   aTolClosure = Precision::Confusion();
+  occ::handle<NCollection_HArray1<occ::handle<Geom_BSplineCurve>>> aConcatCurves;
+  occ::handle<NCollection_HArray1<int>>                            anIndices;
 
   aCurves.SetValue(0, aCurve1);
   aCurves.SetValue(1, aCurve2);
   aTolerances.SetValue(0, aTolConf);
 
-  Standard_Boolean closed_flag = Standard_False;
+  bool closed_flag = false;
   GeomConvert::ConcatC1(aCurves, aTolerances, anIndices, aConcatCurves, closed_flag, aTolClosure);
 
-  Handle(Geom_BSplineCurve) aResult = aConcatCurves->Value(aConcatCurves->Lower());
+  occ::handle<Geom_BSplineCurve> aResult = aConcatCurves->Value(aConcatCurves->Lower());
 
   DrawTrSurf::Set(a[1], aResult);
   return 0;
 }
 
-static Standard_Integer OCC26448(Draw_Interpretor& theDI, Standard_Integer, const char**)
-{
-  TColStd_SequenceOfReal aSeq1, aSeq2;
-  aSeq1.Append(11.);
-  aSeq1.Prepend(aSeq2);
-  theDI << "TCollection: 11 -> " << aSeq1.First() << "\n";
-
-  NCollection_Sequence<Standard_Real> nSeq1, nSeq2;
-  nSeq1.Append(11.);
-  nSeq1.Prepend(nSeq2);
-  theDI << "NCollection: 11 -> " << nSeq1.First() << "\n";
-
-  theDI << "OK";
-  return 0;
-}
-
 //=================================================================================================
 
-#include <BRepBuilderAPI_MakeEdge.hxx>
+#include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepMesh_IncrementalMesh.hxx>
 #include <TCollection_AsciiString.hxx>
 
-static Standard_Integer OCC26407(Draw_Interpretor& theDI,
-                                 Standard_Integer  theArgNb,
-                                 const char**      theArgVec)
+static int OCC26407(Draw_Interpretor& theDI, int theArgNb, const char** theArgVec)
 {
   if (theArgNb != 2)
   {
@@ -4045,10 +2982,10 @@ static Standard_Integer OCC26407(Draw_Interpretor& theDI,
   }
   DBRep::Set(theArgVec[1], face);
   char buf[256];
-  sprintf(buf, "isos %s 0", theArgVec[1]);
+  Sprintf(buf, "isos %s 0", theArgVec[1]);
   theDI.Eval(buf);
 
-  sprintf(buf, "triangles %s", theArgVec[1]);
+  Sprintf(buf, "triangles %s", theArgVec[1]);
   theDI.Eval(buf);
 
   theDI.Eval("smallview; fit");
@@ -4061,9 +2998,7 @@ static Standard_Integer OCC26407(Draw_Interpretor& theDI,
 
 #include <Poly.hxx>
 
-static Standard_Integer OCC26485(Draw_Interpretor& theDI,
-                                 Standard_Integer  theArgNb,
-                                 const char**      theArgVec)
+static int OCC26485(Draw_Interpretor& theDI, int theArgNb, const char** theArgVec)
 {
   if (theArgNb != 2)
   {
@@ -4079,13 +3014,13 @@ static Standard_Integer OCC26485(Draw_Interpretor& theDI,
     return 1;
   }
 
-  Standard_Boolean isFailed = Standard_False;
-  TopExp_Explorer  aExplorer(aShape, TopAbs_FACE);
+  bool            isFailed = false;
+  TopExp_Explorer aExplorer(aShape, TopAbs_FACE);
   for (; aExplorer.More(); aExplorer.Next())
   {
-    const TopoDS_Face&                aFace = TopoDS::Face(aExplorer.Current());
-    TopLoc_Location                   L     = TopLoc_Location();
-    const Handle(Poly_Triangulation)& aT    = BRep_Tool::Triangulation(aFace, L);
+    const TopoDS_Face&                     aFace = TopoDS::Face(aExplorer.Current());
+    TopLoc_Location                        L     = TopLoc_Location();
+    const occ::handle<Poly_Triangulation>& aT    = BRep_Tool::Triangulation(aFace, L);
 
     if (aT.IsNull())
       continue;
@@ -4104,7 +3039,7 @@ static Standard_Integer OCC26485(Draw_Interpretor& theDI,
       if (aNormal.X() == 0 && aNormal.Y() == 0 && aNormal.Z() == 1)
       {
         char buf[256];
-        sprintf(buf, "fail_%d", i + 1);
+        Sprintf(buf, "fail_%d", i + 1);
         theDI << "Failed. Point " << buf << ": " << aPoint.X() << " " << aPoint.Y() << " "
               << aPoint.Z() << "\n";
 
@@ -4119,11 +3054,7 @@ static Standard_Integer OCC26485(Draw_Interpretor& theDI,
 
 //=================================================================================================
 
-#include <BRepBuilderAPI_MakeWire.hxx>
-
-static Standard_Integer OCC26553(Draw_Interpretor& theDI,
-                                 Standard_Integer  theArgc,
-                                 const char**      theArgv)
+static int OCC26553(Draw_Interpretor& theDI, int theArgc, const char** theArgv)
 {
   if (theArgc < 2)
   {
@@ -4175,9 +3106,7 @@ static Standard_Integer OCC26553(Draw_Interpretor& theDI,
 #include <AIS_Line.hxx>
 #include <Aspect_Window.hxx>
 
-static Standard_Integer OCC26195(Draw_Interpretor& theDI,
-                                 Standard_Integer  theArgNb,
-                                 const char**      theArgVec)
+static int OCC26195(Draw_Interpretor& theDI, int theArgNb, const char** theArgVec)
 {
   if (theArgNb < 3)
   {
@@ -4200,7 +3129,7 @@ static Standard_Integer OCC26195(Draw_Interpretor& theDI,
     aPxPnt2.SetX(Draw::Atof(theArgVec[3]));
     aPxPnt2.SetY(Draw::Atof(theArgVec[4]));
   }
-  Standard_Boolean toPrint = Standard_False;
+  bool toPrint = false;
   if (theArgNb % 2 == 0)
   {
     toPrint = Draw::Atoi(theArgVec[theArgNb - 1]) != 0;
@@ -4217,7 +3146,7 @@ static Standard_Integer OCC26195(Draw_Interpretor& theDI,
   }
   aMgr->SetCamera(ViewerTest::CurrentView()->Camera());
   aMgr->SetPixelTolerance(ViewerTest::GetAISContext()->PixelTolerance());
-  Standard_Integer aWidth, aHeight;
+  int aWidth, aHeight;
   ViewerTest::CurrentView()->View()->Window()->Size(aWidth, aHeight);
   aMgr->SetWindowSize(aWidth, aHeight);
   aMgr->BuildSelectingVolume();
@@ -4252,15 +3181,15 @@ static Standard_Integer OCC26195(Draw_Interpretor& theDI,
   TopoDS_Compound aComp;
   BRep_Builder    aCompBuilder;
   aCompBuilder.MakeCompound(aComp);
-  for (Standard_Integer aWireIdx = 0; aWireIdx < 4; ++aWireIdx)
+  for (int aWireIdx = 0; aWireIdx < 4; ++aWireIdx)
   {
     aCompBuilder.Add(aComp, aWireBldrs[aWireIdx].Shape());
   }
   DBRep::Set("c", aComp);
 
-  Handle(AIS_InteractiveObject) aCmp = new AIS_Shape(aComp);
+  occ::handle<AIS_InteractiveObject> aCmp = new AIS_Shape(aComp);
   aCmp->SetColor(Quantity_NOC_GREEN);
-  ViewerTest::Display("c", aCmp, Standard_True, Standard_True);
+  ViewerTest::Display("c", aCmp, true, true);
 
   gp_Pnt aNearPnt = aMgr->GetNearPickedPnt();
   gp_Pnt aFarPnt  = aMgr->GetFarPickedPnt();
@@ -4272,11 +3201,11 @@ static Standard_Integer OCC26195(Draw_Interpretor& theDI,
     return 0;
   }
 
-  Handle(Geom_CartesianPoint) aPnt1 = new Geom_CartesianPoint(aNearPnt);
-  Handle(Geom_CartesianPoint) aPnt2 = new Geom_CartesianPoint(aFarPnt);
+  occ::handle<Geom_CartesianPoint> aPnt1 = new Geom_CartesianPoint(aNearPnt);
+  occ::handle<Geom_CartesianPoint> aPnt2 = new Geom_CartesianPoint(aFarPnt);
 
-  Handle(AIS_Line) aLine = new AIS_Line(aPnt1, aPnt2);
-  ViewerTest::Display("l", aLine, Standard_True, Standard_True);
+  occ::handle<AIS_Line> aLine = new AIS_Line(aPnt1, aPnt2);
+  ViewerTest::Display("l", aLine, true, true);
 
   if (toPrint)
   {
@@ -4289,9 +3218,7 @@ static Standard_Integer OCC26195(Draw_Interpretor& theDI,
 
 //=================================================================================================
 
-static Standard_Integer OCC26462(Draw_Interpretor& theDI,
-                                 Standard_Integer /*theArgNb*/,
-                                 const char** /*theArgVec*/)
+static int OCC26462(Draw_Interpretor& theDI, int /*theArgNb*/, const char** /*theArgVec*/)
 {
   if (ViewerTest::GetAISContext().IsNull())
   {
@@ -4299,21 +3226,21 @@ static Standard_Integer OCC26462(Draw_Interpretor& theDI,
     return 1;
   }
 
-  BRepPrimAPI_MakeBox           aBuilder1(gp_Pnt(10.0, 10.0, 0.0), 10.0, 10.0, 10.0);
-  BRepPrimAPI_MakeBox           aBuilder2(10.0, 10.0, 10.0);
-  Handle(AIS_InteractiveObject) aBox1 = new AIS_Shape(aBuilder1.Shape());
-  Handle(AIS_InteractiveObject) aBox2 = new AIS_Shape(aBuilder2.Shape());
+  BRepPrimAPI_MakeBox                aBuilder1(gp_Pnt(10.0, 10.0, 0.0), 10.0, 10.0, 10.0);
+  BRepPrimAPI_MakeBox                aBuilder2(10.0, 10.0, 10.0);
+  occ::handle<AIS_InteractiveObject> aBox1 = new AIS_Shape(aBuilder1.Shape());
+  occ::handle<AIS_InteractiveObject> aBox2 = new AIS_Shape(aBuilder2.Shape());
 
-  const Handle(AIS_InteractiveContext) aCtx = ViewerTest::GetAISContext();
-  aCtx->Display(aBox1, 0, 2, Standard_False);
-  aCtx->Display(aBox2, 0, 2, Standard_False);
+  const occ::handle<AIS_InteractiveContext> aCtx = ViewerTest::GetAISContext();
+  aCtx->Display(aBox1, 0, 2, false);
+  aCtx->Display(aBox2, 0, 2, false);
   ViewerTest::CurrentView()->FitAll();
-  aCtx->SetWidth(aBox1, 3, Standard_False);
-  aCtx->SetWidth(aBox2, 3, Standard_False);
+  aCtx->SetWidth(aBox1, 3, false);
+  aCtx->SetWidth(aBox2, 3, false);
 
-  aCtx->MoveTo(305, 322, ViewerTest::CurrentView(), Standard_False);
+  aCtx->MoveTo(305, 322, ViewerTest::CurrentView(), false);
   aCtx->SelectDetected(AIS_SelectionScheme_XOR);
-  aCtx->MoveTo(103, 322, ViewerTest::CurrentView(), Standard_False);
+  aCtx->MoveTo(103, 322, ViewerTest::CurrentView(), false);
   aCtx->SelectDetected(AIS_SelectionScheme_XOR);
   if (aCtx->NbSelected() != 0)
   {
@@ -4323,14 +3250,14 @@ static Standard_Integer OCC26462(Draw_Interpretor& theDI,
 
   aCtx->SetSelectionSensitivity(aBox1, 2, 5);
 
-  aCtx->MoveTo(305, 322, ViewerTest::CurrentView(), Standard_False);
+  aCtx->MoveTo(305, 322, ViewerTest::CurrentView(), false);
   aCtx->SelectDetected(AIS_SelectionScheme_XOR);
   if (aCtx->NbSelected() != 1)
   {
     theDI << "ERROR: b1 was not selected\n";
     return 1;
   }
-  aCtx->MoveTo(103, 322, ViewerTest::CurrentView(), Standard_False);
+  aCtx->MoveTo(103, 322, ViewerTest::CurrentView(), false);
   aCtx->SelectDetected(AIS_SelectionScheme_XOR);
   if (aCtx->NbSelected() != 1)
   {
@@ -4343,7 +3270,7 @@ static Standard_Integer OCC26462(Draw_Interpretor& theDI,
 
 #include <BRepBuilderAPI_GTransform.hxx>
 
-static Standard_Integer OCC26313(Draw_Interpretor& di, Standard_Integer n, const char** a)
+static int OCC26313(Draw_Interpretor& di, int n, const char** a)
 {
   if (n <= 1)
     return 1;
@@ -4388,10 +3315,9 @@ static Standard_Integer OCC26313(Draw_Interpretor& di, Standard_Integer n, const
 // function : OCC26525
 // purpose  : check number of intersection points
 //=======================================================================
-#include <BRepAdaptor_Curve.hxx>
 #include <IntCurveSurface_HInter.hxx>
 
-Standard_Integer OCC26525(Draw_Interpretor& di, Standard_Integer n, const char** a)
+int OCC26525(Draw_Interpretor& di, int n, const char** a)
 {
   TopoDS_Shape aS1, aS2;
   TopoDS_Edge  aE;
@@ -4426,9 +3352,9 @@ Standard_Integer OCC26525(Draw_Interpretor& di, Standard_Integer n, const char**
   aF = TopoDS::Face(aS2);
 
   char                              buf[128];
-  Standard_Boolean                  bIsDone;
-  Standard_Integer                  i, aNbPoints;
-  Standard_Real                     aU, aV, aT;
+  bool                              bIsDone;
+  int                               i, aNbPoints;
+  double                            aU, aV, aT;
   gp_Pnt                            aP;
   BRepAdaptor_Curve                 aBAC;
   BRepAdaptor_Surface               aBAS;
@@ -4438,8 +3364,8 @@ Standard_Integer OCC26525(Draw_Interpretor& di, Standard_Integer n, const char**
   aBAC.Initialize(aE);
   aBAS.Initialize(aF);
 
-  Handle(BRepAdaptor_Curve)   aHBAC = new BRepAdaptor_Curve(aBAC);
-  Handle(BRepAdaptor_Surface) aHBAS = new BRepAdaptor_Surface(aBAS);
+  occ::handle<BRepAdaptor_Curve>   aHBAC = new BRepAdaptor_Curve(aBAC);
+  occ::handle<BRepAdaptor_Surface> aHBAS = new BRepAdaptor_Surface(aBAS);
 
   aHInter.Perform(aHBAC, aHBAS);
   bIsDone = aHInter.IsDone();
@@ -4450,14 +3376,14 @@ Standard_Integer OCC26525(Draw_Interpretor& di, Standard_Integer n, const char**
   }
 
   aNbPoints = aHInter.NbPoints();
-  sprintf(buf, " Number of intersection points found: %d", aNbPoints);
+  Sprintf(buf, " Number of intersection points found: %d", aNbPoints);
   di << buf << "\n";
   for (i = 1; i <= aNbPoints; ++i)
   {
     const IntCurveSurface_IntersectionPoint& aIP = aHInter.Point(i);
     aIP.Values(aP, aU, aV, aT, aTC);
     //
-    sprintf(buf, "point %s_%d %lg %lg %lg  ", a[1], i, aP.X(), aP.Y(), aP.Z());
+    Sprintf(buf, "point %s_%d %lg %lg %lg  ", a[1], i, aP.X(), aP.Y(), aP.Z());
     di << buf << "\n";
   }
 
@@ -4496,7 +3422,7 @@ inline const unsigned char* SizeRef<4>()
   return aSizeRef;
 }
 
-static Standard_Integer OCC24537(Draw_Interpretor& theDI, Standard_Integer argc, const char** argv)
+static int OCC24537(Draw_Interpretor& theDI, int argc, const char** argv)
 {
   std::ofstream aF;
   if (argc > 1)
@@ -4508,30 +3434,30 @@ static Standard_Integer OCC24537(Draw_Interpretor& theDI, Standard_Integer argc,
       return 1;
     }
   }
-  Standard_Boolean isErr = Standard_False;
+  bool isErr = false;
   // 1. InverseInt
   const unsigned char anIntRef[] = {0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00,
                                     0x00, 0x03, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x05,
                                     0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x07, 0x00, 0x00,
                                     0x00, 0x08, 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00, 0x00};
-  Standard_Integer    anIntArr[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
+  int                 anIntArr[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
   if (aF.is_open())
   {
     for (int i = 0; i < 10; ++i)
     {
-      Standard_Integer anInv = FSD_BinaryFile::InverseInt(anIntArr[i]);
+      int anInv = FSD_BinaryFile::InverseInt(anIntArr[i]);
       aF.write(reinterpret_cast<char*>(&anInv), sizeof(anInv));
     }
   }
   else
   {
-    Standard_Integer anInv[10];
+    int anInv[10];
     for (int i = 0; i < 10; ++i)
       anInv[i] = FSD_BinaryFile::InverseInt(anIntArr[i]);
     if (memcmp(anInv, anIntRef, sizeof(anIntRef)) != 0)
     {
       theDI << "Error: incorrect conversion of an integer value\n";
-      isErr = Standard_True;
+      isErr = true;
     }
   }
 
@@ -4540,24 +3466,24 @@ static Standard_Integer OCC24537(Draw_Interpretor& theDI, Standard_Integer argc,
                                       0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x04, 0xD2,
                                       0x00, 0x00, 0x04, 0xD3, 0xFF, 0xFF, 0xFD, 0x1E, 0xFF, 0xFF,
                                       0xFF, 0xFB, 0x00, 0x00, 0x03, 0x8D, 0x00, 0x3D, 0x09, 0x00};
-  Standard_Integer    aRndIntArr[] = {-4000000, -1234, 0, 1, 1234, 1235, -738, -5, 909, 4000000};
+  int                 aRndIntArr[] = {-4000000, -1234, 0, 1, 1234, 1235, -738, -5, 909, 4000000};
   if (aF.is_open())
   {
     for (int i = 0; i < 10; ++i)
     {
-      Standard_Integer anInv = FSD_BinaryFile::InverseInt(aRndIntArr[i]);
+      int anInv = FSD_BinaryFile::InverseInt(aRndIntArr[i]);
       aF.write(reinterpret_cast<char*>(&anInv), sizeof(anInv));
     }
   }
   else
   {
-    Standard_Integer anInv[10];
+    int anInv[10];
     for (int i = 0; i < 10; ++i)
       anInv[i] = FSD_BinaryFile::InverseInt(aRndIntArr[i]);
     if (memcmp(anInv, aRndIntRef, sizeof(aRndIntRef)) != 0)
     {
       theDI << "Error: incorrect conversion of a dispersed integer value\n";
-      isErr = Standard_True;
+      isErr = true;
     }
   }
 
@@ -4568,24 +3494,24 @@ static Standard_Integer OCC24537(Draw_Interpretor& theDI, Standard_Integer argc,
     0x40, 0x14, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x40, 0x1C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x40, 0x22, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-  const Standard_Real aRealArr[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 0.0};
+  const double aRealArr[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 0.0};
   if (aF.is_open())
   {
     for (int i = 0; i < 10; ++i)
     {
-      Standard_Real anInv = FSD_BinaryFile::InverseReal(aRealArr[i]);
+      double anInv = FSD_BinaryFile::InverseReal(aRealArr[i]);
       aF.write(reinterpret_cast<char*>(&anInv), sizeof(anInv));
     }
   }
   else
   {
-    Standard_Real anInv[10];
+    double anInv[10];
     for (int i = 0; i < 10; ++i)
       anInv[i] = FSD_BinaryFile::InverseReal(aRealArr[i]);
     if (memcmp(anInv, aRealRef, sizeof(aRealRef)) != 0)
     {
       theDI << "Error: incorrect conversion of a real value\n";
-      isErr = Standard_True;
+      isErr = true;
     }
   }
 
@@ -4596,25 +3522,24 @@ static Standard_Integer OCC24537(Draw_Interpretor& theDI, Standard_Integer argc,
     0x3F, 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x09, 0x21, 0xDA, 0x45, 0x5B, 0x53, 0xE4,
     0x54, 0xB2, 0x49, 0xAD, 0x25, 0x94, 0xC3, 0x7D, 0x40, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0xC0, 0x23, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCD, 0x40, 0x23, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCD};
-  const Standard_Real aRndRealArr[] =
-    {-1e300, -1.e-9, 0., 1.e-9, 1., 3.1415296, 1.e100, 8.0, -9.9, 9.9};
+  const double aRndRealArr[] = {-1e300, -1.e-9, 0., 1.e-9, 1., 3.1415296, 1.e100, 8.0, -9.9, 9.9};
   if (aF.is_open())
   {
     for (int i = 0; i < 10; ++i)
     {
-      Standard_Real anInv = FSD_BinaryFile::InverseReal(aRndRealArr[i]);
+      double anInv = FSD_BinaryFile::InverseReal(aRndRealArr[i]);
       aF.write(reinterpret_cast<char*>(&anInv), sizeof(anInv));
     }
   }
   else
   {
-    Standard_Real anInv[10];
+    double anInv[10];
     for (int i = 0; i < 10; ++i)
       anInv[i] = FSD_BinaryFile::InverseReal(aRndRealArr[i]);
     if (memcmp(anInv, aRndRealRef, sizeof(aRndRealRef)) != 0)
     {
       theDI << "Error: incorrect conversion of a dispersed real value\n";
-      isErr = Standard_True;
+      isErr = true;
     }
   }
 
@@ -4623,25 +3548,24 @@ static Standard_Integer OCC24537(Draw_Interpretor& theDI, Standard_Integer argc,
     0x3F, 0x80, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x40, 0x40, 0x00, 0x00, 0x40, 0x80,
     0x00, 0x00, 0x40, 0xA0, 0x00, 0x00, 0x40, 0xC0, 0x00, 0x00, 0x40, 0xE0, 0x00, 0x00,
     0x41, 0x00, 0x00, 0x00, 0x41, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-  const Standard_ShortReal aShortRealArr[] =
-    {1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 0.0f};
+  const float aShortRealArr[] = {1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 0.0f};
   if (aF.is_open())
   {
     for (int i = 0; i < 10; ++i)
     {
-      Standard_ShortReal anInv = FSD_BinaryFile::InverseShortReal(aShortRealArr[i]);
+      float anInv = FSD_BinaryFile::InverseShortReal(aShortRealArr[i]);
       aF.write(reinterpret_cast<char*>(&anInv), sizeof(anInv));
     }
   }
   else
   {
-    Standard_ShortReal anInv[10];
+    float anInv[10];
     for (int i = 0; i < 10; ++i)
       anInv[i] = FSD_BinaryFile::InverseShortReal(aShortRealArr[i]);
     if (memcmp(anInv, aShortRealRef, sizeof(aShortRealRef)) != 0)
     {
       theDI << "Error: incorrect conversion of a short real value\n";
-      isErr = Standard_True;
+      isErr = true;
     }
   }
 
@@ -4650,48 +3574,48 @@ static Standard_Integer OCC24537(Draw_Interpretor& theDI, Standard_Integer argc,
     0xB0, 0x89, 0x70, 0x5F, 0x00, 0x00, 0x00, 0x00, 0x30, 0x89, 0x70, 0x5F, 0x3F, 0x80,
     0x00, 0x00, 0x40, 0x49, 0x0E, 0x56, 0xC0, 0xD6, 0x66, 0x66, 0x40, 0xD6, 0x66, 0x66,
     0x42, 0xC5, 0xCC, 0xCD, 0xC2, 0xC7, 0xCC, 0xCD, 0x42, 0xC7, 0xCC, 0xCD};
-  const Standard_ShortReal aRndShortRealArr[] =
+  const float aRndShortRealArr[] =
     {-1.e-9f, 0.f, 1.e-9f, 1.f, 3.1415f, -6.7f, 6.7f, 98.9f, -99.9f, 99.9f};
   if (aF.is_open())
   {
     for (int i = 0; i < 10; ++i)
     {
-      Standard_ShortReal anInv = FSD_BinaryFile::InverseShortReal(aRndShortRealArr[i]);
+      float anInv = FSD_BinaryFile::InverseShortReal(aRndShortRealArr[i]);
       aF.write(reinterpret_cast<char*>(&anInv), sizeof(anInv));
     }
   }
   else
   {
-    Standard_ShortReal anInv[10];
+    float anInv[10];
     for (int i = 0; i < 10; ++i)
       anInv[i] = FSD_BinaryFile::InverseShortReal(aRndShortRealArr[i]);
     if (memcmp(anInv, aRndShortRealRef, sizeof(aRndShortRealRef)) != 0)
     {
       theDI << "Error: incorrect conversion of a dispersed short real value\n";
-      isErr = Standard_True;
+      isErr = true;
     }
   }
 
   // 4. InverseSize
-  const Standard_Size aSizeArr[] = {1ul, 2ul, 3ul, 4ul, 5ul, 6ul, 7ul, 8ul, 9ul, 0ul};
+  const size_t aSizeArr[] = {1ul, 2ul, 3ul, 4ul, 5ul, 6ul, 7ul, 8ul, 9ul, 0ul};
   if (aF.is_open())
   {
     for (int i = 0; i < 10; ++i)
     {
-      Standard_Size anInv = FSD_BinaryFile::InverseSize(aSizeArr[i]);
+      size_t anInv = FSD_BinaryFile::InverseSize(aSizeArr[i]);
       aF.write(reinterpret_cast<char*>(&anInv), sizeof(anInv));
     }
   }
   else
   {
-    Standard_Size        anInv[10];
-    const unsigned char* aSizeRef = SizeRef<sizeof(Standard_Size)>();
+    size_t               anInv[10];
+    const unsigned char* aSizeRef = SizeRef<sizeof(size_t)>();
     for (int i = 0; i < 10; ++i)
       anInv[i] = FSD_BinaryFile::InverseSize(aSizeArr[i]);
-    if (memcmp(anInv, aSizeRef, sizeof(Standard_Size) * 10) != 0)
+    if (memcmp(anInv, aSizeRef, sizeof(size_t) * 10) != 0)
     {
       theDI << "Error: incorrect conversion of a size value\n";
-      isErr = Standard_True;
+      isErr = true;
     }
   }
 
@@ -4705,38 +3629,36 @@ static Standard_Integer OCC24537(Draw_Interpretor& theDI, Standard_Integer argc,
   return 0;
 }
 
-#include <TopExp.hxx>
 #include <BRepOffsetAPI_DraftAngle.hxx>
-#include <vector>
 
 static TopoDS_Shape taper(const TopoDS_Shape& shape,
                           const TopoDS_Face&  face_a,
                           const TopoDS_Face&  face_b,
-                          Standard_Real       angle)
+                          double              angle)
 {
   // Use maximum face-to-taper z-offset.
-  const gp_Pln neutral_plane(gp_Ax3(gp_Pnt(0.0, 0.0, 140.0), gp_Dir(0.0, 0.0, 1.0)));
+  const gp_Pln neutral_plane(gp_Ax3(gp_Pnt(0.0, 0.0, 140.0), gp_Dir(gp_Dir::D::Z)));
 
   // Draft angle needs to be in radians, and flipped to adhere to our own (arbitrary) draft
   // angle definition.
-  const Standard_Real draft_angle = -(angle / 180.0) * M_PI;
+  const double draft_angle = -(angle / 180.0) * M_PI;
 
   // Add face to draft. The first argument indicates that all material added/removed during
   // drafting is located below the neutral plane
   BRepOffsetAPI_DraftAngle drafter(shape);
-  drafter.Add(face_a, gp_Dir(0.0, 0.0, -1.0), draft_angle, neutral_plane);
-  drafter.Add(face_b, gp_Dir(0.0, 0.0, -1.0), draft_angle, neutral_plane);
+  drafter.Add(face_a, gp_Dir(gp_Dir::D::NZ), draft_angle, neutral_plane);
+  drafter.Add(face_b, gp_Dir(gp_Dir::D::NZ), draft_angle, neutral_plane);
   drafter.Build();
 
   return drafter.Shape();
 }
 
-static void dumpShapeVertices(const TopoDS_Shape& shape, std::vector<Standard_Real>& coords)
+static void dumpShapeVertices(const TopoDS_Shape& shape, std::vector<double>& coords)
 {
-  TopTools_IndexedMapOfShape shape_vertices;
+  NCollection_IndexedMap<TopoDS_Shape, TopTools_ShapeMapHasher> shape_vertices;
   TopExp::MapShapes(shape, TopAbs_VERTEX, shape_vertices);
 
-  for (Standard_Integer i = 1; i <= shape_vertices.Extent(); i++)
+  for (int i = 1; i <= shape_vertices.Extent(); i++)
   {
     gp_Pnt p = BRep_Tool::Pnt(TopoDS::Vertex(shape_vertices(i)));
     coords.push_back(p.X());
@@ -4745,21 +3667,19 @@ static void dumpShapeVertices(const TopoDS_Shape& shape, std::vector<Standard_Re
   }
 }
 
-static void GetCoords(const Standard_CString& path_to_file, std::vector<Standard_Real>& coords)
+static void GetCoords(const char*& path_to_file, std::vector<double>& coords)
 {
   TopoDS_Shape shape;
   BRep_Builder builder;
   BRepTools::Read(shape, path_to_file, builder);
-  TopTools_IndexedMapOfShape shape_faces;
+  NCollection_IndexedMap<TopoDS_Shape, TopTools_ShapeMapHasher> shape_faces;
   TopExp::MapShapes(shape, TopAbs_FACE, shape_faces);
   TopoDS_Face face_a = TopoDS::Face(shape_faces(1));
   TopoDS_Face face_b = TopoDS::Face(shape_faces(5));
   dumpShapeVertices(taper(shape, face_a, face_b, 5.0), coords);
 }
 
-static Standard_Integer OCC26396(Draw_Interpretor& theDI,
-                                 Standard_Integer  theArgc,
-                                 const char**      theArgv)
+static int OCC26396(Draw_Interpretor& theDI, int theArgc, const char** theArgv)
 {
   if (theArgc < 2)
   {
@@ -4769,26 +3689,26 @@ static Standard_Integer OCC26396(Draw_Interpretor& theDI,
 
   const int maxInd = 50;
 
-  std::vector<Standard_Real> ref_coords;
+  std::vector<double> ref_coords;
   ref_coords.reserve(100);
-  Standard_Boolean Stat = Standard_True;
+  bool Stat = true;
 
   GetCoords(theArgv[1], ref_coords);
 
-  std::vector<Standard_Real> coords;
+  std::vector<double> coords;
   coords.reserve(100);
   for (int i = 1; i < maxInd; i++)
   {
     GetCoords(theArgv[1], coords);
     if (coords.size() != ref_coords.size())
     {
-      Stat = Standard_False;
+      Stat = false;
       break;
     }
     for (size_t j = 0; j < coords.size(); j++)
-      if (Abs(ref_coords[j] - coords[j]) > RealEpsilon())
+      if (std::abs(ref_coords[j] - coords[j]) > RealEpsilon())
       {
-        Stat = Standard_False;
+        Stat = false;
         break;
       }
     coords.clear();
@@ -4803,9 +3723,7 @@ static Standard_Integer OCC26396(Draw_Interpretor& theDI,
 
 //=================================================================================================
 
-static Standard_Integer OCC26750(Draw_Interpretor& theDI,
-                                 Standard_Integer /*theNArg*/,
-                                 const char** /*theArgVal*/)
+static int OCC26750(Draw_Interpretor& theDI, int /*theNArg*/, const char** /*theArgVal*/)
 {
   const gp_Vec2d aVec1(1.0, 0.0);
   const gp_Vec2d aVec2(0.0, -1.0);
@@ -4819,8 +3737,8 @@ static Standard_Integer OCC26750(Draw_Interpretor& theDI,
     theDI << "Error in gp_Vec2d. Vectors should be normal.\n";
   }
 
-  const gp_Dir2d aD1(1.0, 0.0);
-  const gp_Dir2d aD2(0.0, -1.0);
+  const gp_Dir2d aD1(gp_Dir2d::D::X);
+  const gp_Dir2d aD2(gp_Dir2d::D::NY);
 
   if (aD1.IsNormal(aD2, Precision::Angular()))
   {
@@ -4841,9 +3759,7 @@ static Standard_Integer OCC26750(Draw_Interpretor& theDI,
 #include <Geom_ToroidalSurface.hxx>
 #include <Geom_BSplineCurve.hxx>
 
-static Standard_Integer OCC26746(Draw_Interpretor& theDI,
-                                 Standard_Integer  theNArg,
-                                 const char**      theArgVal)
+static int OCC26746(Draw_Interpretor& theDI, int theNArg, const char** theArgVal)
 {
   if (theNArg < 2)
   {
@@ -4851,76 +3767,76 @@ static Standard_Integer OCC26746(Draw_Interpretor& theDI,
     return 1;
   }
 
-  const Handle(Geom_ToroidalSurface) aGtor =
-    Handle(Geom_ToroidalSurface)::DownCast(DrawTrSurf::GetSurface(theArgVal[1]));
+  const occ::handle<Geom_ToroidalSurface> aGtor =
+    occ::down_cast<Geom_ToroidalSurface>(DrawTrSurf::GetSurface(theArgVal[1]));
 
-  const Standard_Real    aToler     = (theNArg >= 3) ? Draw::Atof(theArgVal[2]) : 1.0e-7;
-  const Standard_Integer aNbPntsMax = (theNArg >= 4) ? Draw::Atoi(theArgVal[3]) : 5;
+  const double aToler     = (theNArg >= 3) ? Draw::Atof(theArgVal[2]) : 1.0e-7;
+  const int    aNbPntsMax = (theNArg >= 4) ? Draw::Atoi(theArgVal[3]) : 5;
 
-  const Standard_Integer aLowIndex = 5;
-  const Standard_Real    aStep     = 2.0 * M_PI / aNbPntsMax;
+  const int    aLowIndex = 5;
+  const double aStep     = 2.0 * M_PI / aNbPntsMax;
 
-  TColStd_Array1OfReal anArrCoeffs(aLowIndex, aLowIndex + 34);
+  NCollection_Array1<double> anArrCoeffs(aLowIndex, aLowIndex + 34);
   aGtor->Torus().Coefficients(anArrCoeffs);
 
-  Standard_Real aUpar = 0.0, aVpar = 0.0;
-  for (Standard_Integer aUind = 0; aUind <= aNbPntsMax; aUind++)
+  double aUpar = 0.0, aVpar = 0.0;
+  for (int aUind = 0; aUind <= aNbPntsMax; aUind++)
   {
-    for (Standard_Integer aVind = 0; aVind <= aNbPntsMax; aVind++)
+    for (int aVind = 0; aVind <= aNbPntsMax; aVind++)
     {
-      const gp_Pnt        aPt(aGtor->Value(aUpar, aVpar));
-      const Standard_Real aX1 = aPt.X();
-      const Standard_Real aX2 = aX1 * aX1;
-      const Standard_Real aX3 = aX2 * aX1;
-      const Standard_Real aX4 = aX2 * aX2;
-      const Standard_Real aY1 = aPt.Y();
-      const Standard_Real aY2 = aY1 * aY1;
-      const Standard_Real aY3 = aY2 * aY1;
-      const Standard_Real aY4 = aY2 * aY2;
-      const Standard_Real aZ1 = aPt.Z();
-      const Standard_Real aZ2 = aZ1 * aZ1;
-      const Standard_Real aZ3 = aZ2 * aZ1;
-      const Standard_Real aZ4 = aZ2 * aZ2;
+      const gp_Pnt aPt(aGtor->Value(aUpar, aVpar));
+      const double aX1 = aPt.X();
+      const double aX2 = aX1 * aX1;
+      const double aX3 = aX2 * aX1;
+      const double aX4 = aX2 * aX2;
+      const double aY1 = aPt.Y();
+      const double aY2 = aY1 * aY1;
+      const double aY3 = aY2 * aY1;
+      const double aY4 = aY2 * aY2;
+      const double aZ1 = aPt.Z();
+      const double aZ2 = aZ1 * aZ1;
+      const double aZ3 = aZ2 * aZ1;
+      const double aZ4 = aZ2 * aZ2;
 
-      Standard_Integer i = aLowIndex;
+      int i = aLowIndex;
 
-      Standard_Real aDelta = anArrCoeffs(i++) * aX4; // 1
-      aDelta += anArrCoeffs(i++) * aY4;              // 2
-      aDelta += anArrCoeffs(i++) * aZ4;              // 3
-      aDelta += anArrCoeffs(i++) * aX3 * aY1;        // 4
-      aDelta += anArrCoeffs(i++) * aX3 * aZ1;        // 5
-      aDelta += anArrCoeffs(i++) * aY3 * aX1;        // 6
-      aDelta += anArrCoeffs(i++) * aY3 * aZ1;        // 7
-      aDelta += anArrCoeffs(i++) * aZ3 * aX1;        // 8
-      aDelta += anArrCoeffs(i++) * aZ3 * aY1;        // 9
-      aDelta += anArrCoeffs(i++) * aX2 * aY2;        // 10
-      aDelta += anArrCoeffs(i++) * aX2 * aZ2;        // 11
-      aDelta += anArrCoeffs(i++) * aY2 * aZ2;        // 12
-      aDelta += anArrCoeffs(i++) * aX2 * aY1 * aZ1;  // 13
-      aDelta += anArrCoeffs(i++) * aX1 * aY2 * aZ1;  // 14
-      aDelta += anArrCoeffs(i++) * aX1 * aY1 * aZ2;  // 15
-      aDelta += anArrCoeffs(i++) * aX3;              // 16
-      aDelta += anArrCoeffs(i++) * aY3;              // 17
-      aDelta += anArrCoeffs(i++) * aZ3;              // 18
-      aDelta += anArrCoeffs(i++) * aX2 * aY1;        // 19
-      aDelta += anArrCoeffs(i++) * aX2 * aZ1;        // 20
-      aDelta += anArrCoeffs(i++) * aY2 * aX1;        // 21
-      aDelta += anArrCoeffs(i++) * aY2 * aZ1;        // 22
-      aDelta += anArrCoeffs(i++) * aZ2 * aX1;        // 23
-      aDelta += anArrCoeffs(i++) * aZ2 * aY1;        // 24
-      aDelta += anArrCoeffs(i++) * aX1 * aY1 * aZ1;  // 25
-      aDelta += anArrCoeffs(i++) * aX2;              // 26
-      aDelta += anArrCoeffs(i++) * aY2;              // 27
-      aDelta += anArrCoeffs(i++) * aZ2;              // 28
-      aDelta += anArrCoeffs(i++) * aX1 * aY1;        // 29
-      aDelta += anArrCoeffs(i++) * aX1 * aZ1;        // 30
-      aDelta += anArrCoeffs(i++) * aY1 * aZ1;        // 31
-      aDelta += anArrCoeffs(i++) * aX1;              // 32
-      aDelta += anArrCoeffs(i++) * aY1;              // 33
-      aDelta += anArrCoeffs(i++) * aZ1;              // 34
-      aDelta += anArrCoeffs(i++);                    // 35
+      double aDelta = anArrCoeffs(i++) * aX4;       // 1
+      aDelta += anArrCoeffs(i++) * aY4;             // 2
+      aDelta += anArrCoeffs(i++) * aZ4;             // 3
+      aDelta += anArrCoeffs(i++) * aX3 * aY1;       // 4
+      aDelta += anArrCoeffs(i++) * aX3 * aZ1;       // 5
+      aDelta += anArrCoeffs(i++) * aY3 * aX1;       // 6
+      aDelta += anArrCoeffs(i++) * aY3 * aZ1;       // 7
+      aDelta += anArrCoeffs(i++) * aZ3 * aX1;       // 8
+      aDelta += anArrCoeffs(i++) * aZ3 * aY1;       // 9
+      aDelta += anArrCoeffs(i++) * aX2 * aY2;       // 10
+      aDelta += anArrCoeffs(i++) * aX2 * aZ2;       // 11
+      aDelta += anArrCoeffs(i++) * aY2 * aZ2;       // 12
+      aDelta += anArrCoeffs(i++) * aX2 * aY1 * aZ1; // 13
+      aDelta += anArrCoeffs(i++) * aX1 * aY2 * aZ1; // 14
+      aDelta += anArrCoeffs(i++) * aX1 * aY1 * aZ2; // 15
+      aDelta += anArrCoeffs(i++) * aX3;             // 16
+      aDelta += anArrCoeffs(i++) * aY3;             // 17
+      aDelta += anArrCoeffs(i++) * aZ3;             // 18
+      aDelta += anArrCoeffs(i++) * aX2 * aY1;       // 19
+      aDelta += anArrCoeffs(i++) * aX2 * aZ1;       // 20
+      aDelta += anArrCoeffs(i++) * aY2 * aX1;       // 21
+      aDelta += anArrCoeffs(i++) * aY2 * aZ1;       // 22
+      aDelta += anArrCoeffs(i++) * aZ2 * aX1;       // 23
+      aDelta += anArrCoeffs(i++) * aZ2 * aY1;       // 24
+      aDelta += anArrCoeffs(i++) * aX1 * aY1 * aZ1; // 25
+      aDelta += anArrCoeffs(i++) * aX2;             // 26
+      aDelta += anArrCoeffs(i++) * aY2;             // 27
+      aDelta += anArrCoeffs(i++) * aZ2;             // 28
+      aDelta += anArrCoeffs(i++) * aX1 * aY1;       // 29
+      aDelta += anArrCoeffs(i++) * aX1 * aZ1;       // 30
+      aDelta += anArrCoeffs(i++) * aY1 * aZ1;       // 31
+      aDelta += anArrCoeffs(i++) * aX1;             // 32
+      aDelta += anArrCoeffs(i++) * aY1;             // 33
+      aDelta += anArrCoeffs(i++) * aZ1;             // 34
+      aDelta += anArrCoeffs(i++);                   // 35
 
-      if (Abs(aDelta) > aToler)
+      if (std::abs(aDelta) > aToler)
       {
         theDI << "(" << aUpar << ", " << aVpar
               << "): Error in torus coefficients computation (Delta = " << aDelta << ").\n";
@@ -4944,9 +3860,7 @@ static Standard_Integer OCC26746(Draw_Interpretor& theDI,
 // function : OCC27048
 // purpose  : Calculate value of B-spline surface N times
 //=======================================================================
-static Standard_Integer OCC27048(Draw_Interpretor& theDI,
-                                 Standard_Integer  theArgc,
-                                 const char**      theArgv)
+static int OCC27048(Draw_Interpretor& theDI, int theArgc, const char** theArgv)
 {
   if (theArgc != 5)
   {
@@ -4955,12 +3869,12 @@ static Standard_Integer OCC27048(Draw_Interpretor& theDI,
     return 1;
   }
 
-  Handle(Geom_Surface) aSurf = DrawTrSurf::GetSurface(theArgv[1]);
-  GeomAdaptor_Surface  anAdaptor(aSurf);
+  occ::handle<Geom_Surface> aSurf = DrawTrSurf::GetSurface(theArgv[1]);
+  GeomAdaptor_Surface       anAdaptor(aSurf);
 
-  Standard_Real    aU = Draw::Atof(theArgv[2]);
-  Standard_Real    aV = Draw::Atof(theArgv[3]);
-  Standard_Integer aN = Draw::Atoi(theArgv[4]);
+  double aU = Draw::Atof(theArgv[2]);
+  double aV = Draw::Atof(theArgv[3]);
+  int    aN = Draw::Atoi(theArgv[4]);
 
   for (; aN > 0; --aN)
     anAdaptor.Value(aU, aV);
@@ -4972,20 +3886,18 @@ static Standard_Integer OCC27048(Draw_Interpretor& theDI,
 // function : OCC27318
 // purpose  : Creates a box that is not listed in map of AIS objects of ViewerTest
 //========================================================================
-static Standard_Integer OCC27318(Draw_Interpretor& /*theDI*/,
-                                 Standard_Integer /*theArgc*/,
-                                 const char** theArgv)
+static int OCC27318(Draw_Interpretor& /*theDI*/, int /*theArgc*/, const char** theArgv)
 {
-  const Handle(AIS_InteractiveContext)& aCtx = ViewerTest::GetAISContext();
+  const occ::handle<AIS_InteractiveContext>& aCtx = ViewerTest::GetAISContext();
   if (aCtx.IsNull())
   {
     std::cout << "No interactive context. Use 'vinit' command before " << theArgv[0] << "\n";
     return 1;
   }
 
-  TopoDS_Shape      aBox    = BRepPrimAPI_MakeBox(20, 20, 20).Shape();
-  Handle(AIS_Shape) aBoxObj = new AIS_Shape(aBox);
-  aCtx->Display(aBoxObj, Standard_True);
+  TopoDS_Shape           aBox    = BRepPrimAPI_MakeBox(20, 20, 20).Shape();
+  occ::handle<AIS_Shape> aBoxObj = new AIS_Shape(aBox);
+  aCtx->Display(aBoxObj, true);
 
   return 0;
 }
@@ -4994,9 +3906,7 @@ static Standard_Integer OCC27318(Draw_Interpretor& /*theDI*/,
 // function : OCC27523
 // purpose  : Checks recomputation of deactivated selection mode after object's redisplaying
 //========================================================================
-static Standard_Integer OCC27523(Draw_Interpretor& theDI,
-                                 Standard_Integer  theArgNb,
-                                 const char**      theArgVec)
+static int OCC27523(Draw_Interpretor& theDI, int theArgNb, const char** theArgVec)
 {
   if (theArgNb != 1)
   {
@@ -5005,22 +3915,22 @@ static Standard_Integer OCC27523(Draw_Interpretor& theDI,
     return 1;
   }
 
-  Handle(AIS_InteractiveContext) anAISContext = ViewerTest::GetAISContext();
+  occ::handle<AIS_InteractiveContext> anAISContext = ViewerTest::GetAISContext();
   if (anAISContext.IsNull())
   {
     std::cerr << "Error: no active view. Please call vinit.\n";
     return 1;
   }
 
-  gp_Pnt                        aStart(100, 100, 100);
-  gp_Pnt                        anEnd(300, 400, 600);
-  BRepBuilderAPI_MakeEdge       anEdgeBuilder(aStart, anEnd);
-  TopoDS_Edge                   anEdge        = anEdgeBuilder.Edge();
-  Handle(AIS_InteractiveObject) aTestAISShape = new AIS_Shape(anEdge);
-  anAISContext->Display(aTestAISShape, Standard_False);
+  gp_Pnt                             aStart(100, 100, 100);
+  gp_Pnt                             anEnd(300, 400, 600);
+  BRepBuilderAPI_MakeEdge            anEdgeBuilder(aStart, anEnd);
+  TopoDS_Edge                        anEdge        = anEdgeBuilder.Edge();
+  occ::handle<AIS_InteractiveObject> aTestAISShape = new AIS_Shape(anEdge);
+  anAISContext->Display(aTestAISShape, false);
 
   // activate it in selection modes
-  TColStd_SequenceOfInteger aModes;
+  NCollection_Sequence<int> aModes;
   aModes.Append(AIS_Shape::SelectionMode((TopAbs_ShapeEnum)TopAbs_VERTEX));
 
   anAISContext->Deactivate(aTestAISShape);
@@ -5029,23 +3939,23 @@ static Standard_Integer OCC27523(Draw_Interpretor& theDI,
   anAISContext->Deactivate(aTestAISShape, 0);
 
   // activate in vertices mode
-  for (Standard_Integer anIt = 1; anIt <= aModes.Length(); ++anIt)
+  for (int anIt = 1; anIt <= aModes.Length(); ++anIt)
   {
     anAISContext->Activate(aTestAISShape, aModes(anIt));
   }
 
   TopoDS_Shape     aVertexShape     = BRepBuilderAPI_MakeVertex(gp_Pnt(75, 0, 0));
   TopAbs_ShapeEnum aVertexShapeType = aVertexShape.ShapeType();
-  Handle(AIS_Shape)::DownCast(aTestAISShape)->Set(aVertexShape);
+  occ::down_cast<AIS_Shape>(aTestAISShape)->Set(aVertexShape);
   aTestAISShape->Redisplay();
 
-  anAISContext->AddOrRemoveSelected(aTestAISShape, Standard_True);
+  anAISContext->AddOrRemoveSelected(aTestAISShape, true);
 
   bool aValidShapeType = false;
   for (anAISContext->InitSelected(); anAISContext->MoreSelected(); anAISContext->NextSelected())
   {
-    Handle(SelectMgr_EntityOwner) anOwner = anAISContext->SelectedOwner();
-    Handle(StdSelect_BRepOwner)   aBRO    = Handle(StdSelect_BRepOwner)::DownCast(anOwner);
+    occ::handle<SelectMgr_EntityOwner> anOwner = anAISContext->SelectedOwner();
+    occ::handle<StdSelect_BRepOwner>   aBRO    = occ::down_cast<StdSelect_BRepOwner>(anOwner);
     if (!aBRO.IsNull() && aBRO->HasShape())
     {
       TopoDS_Shape aShape = aBRO->Shape();
@@ -5073,11 +3983,11 @@ class OCC27700_Text : public AIS_InteractiveObject
 public:
   DEFINE_STANDARD_RTTI_INLINE(OCC27700_Text, AIS_InteractiveObject)
 
-  virtual void Compute(const Handle(PrsMgr_PresentationManager)&,
-                       const Handle(Prs3d_Presentation)& thePresentation,
-                       const Standard_Integer) Standard_OVERRIDE
+  void Compute(const occ::handle<PrsMgr_PresentationManager>&,
+               const occ::handle<Prs3d_Presentation>& thePresentation,
+               const int) override
   {
-    Handle(Graphic3d_ArrayOfTriangles) aFrame = new Graphic3d_ArrayOfTriangles(6, 6);
+    occ::handle<Graphic3d_ArrayOfTriangles> aFrame = new Graphic3d_ArrayOfTriangles(6, 6);
     aFrame->AddVertex(gp_Pnt(-1, 0, 0));
     aFrame->AddVertex(gp_Pnt(-1, 1, 0));
     aFrame->AddVertex(gp_Pnt(3, 1, 0));
@@ -5091,39 +4001,37 @@ public:
     aFrame->AddEdge(3);
     aFrame->AddEdge(4);
 
-    Handle(Graphic3d_AspectFillArea3d) aFillAspect =
+    occ::handle<Graphic3d_AspectFillArea3d> aFillAspect =
       new Graphic3d_AspectFillArea3d(*myDrawer->ShadingAspect()->Aspect().get());
     aFillAspect->SetInteriorStyle(Aspect_IS_POINT);
 
     // create separate group for frame elements
-    Handle(Graphic3d_Group) aFrameGroup = thePresentation->NewGroup();
+    occ::handle<Graphic3d_Group> aFrameGroup = thePresentation->NewGroup();
     aFrameGroup->AddPrimitiveArray(aFrame);
     aFrameGroup->SetGroupPrimitivesAspect(aFillAspect);
 
     // create separate group for text elements
-    Handle(Graphic3d_Group)    aTextGroup = thePresentation->NewGroup();
-    TCollection_ExtendedString aString("YOU SHOULD SEE THIS TEXT", Standard_True);
+    occ::handle<Graphic3d_Group> aTextGroup = thePresentation->NewGroup();
+    TCollection_ExtendedString   aString("YOU SHOULD SEE THIS TEXT", true);
     Prs3d_Text::Draw(aTextGroup, myDrawer->TextAspect(), aString, gp_Ax2(gp::Origin(), gp::DZ()));
   }
 
-  virtual void ComputeSelection(const Handle(SelectMgr_Selection)& /*theSelection*/,
-                                const Standard_Integer /*theMode*/) Standard_OVERRIDE
+  void ComputeSelection(const occ::handle<SelectMgr_Selection>& /*theSelection*/,
+                        const int /*theMode*/) override
   {
   }
 };
 
-static Standard_Integer OCC27700(Draw_Interpretor& /*theDI*/,
-                                 Standard_Integer /*theArgNb*/,
-                                 const char** /*theArgVec*/)
+static int OCC27700(Draw_Interpretor& /*theDI*/, int /*theArgNb*/, const char** /*theArgVec*/)
 {
-  Handle(AIS_InteractiveContext) aContext = ViewerTest::GetAISContext();
+  occ::handle<AIS_InteractiveContext> aContext = ViewerTest::GetAISContext();
   if (aContext.IsNull())
   {
     std::cout << "Error: no view available, call 'vinit' before!" << std::endl;
     return 1;
   }
-  Handle(OCC27700_Text) aPresentation = new OCC27700_Text();
-  aContext->Display(aPresentation, Standard_True);
+  occ::handle<OCC27700_Text> aPresentation = new OCC27700_Text();
+  aContext->Display(aPresentation, true);
   return 0;
 }
 
@@ -5131,11 +4039,9 @@ static Standard_Integer OCC27700(Draw_Interpretor& /*theDI*/,
 // function : OCC27757
 // purpose  : Creates a box that has a sphere as child object and displays it
 //========================================================================
-static Standard_Integer OCC27757(Draw_Interpretor& /*theDI*/,
-                                 Standard_Integer /*theArgc*/,
-                                 const char** theArgv)
+static int OCC27757(Draw_Interpretor& /*theDI*/, int /*theArgc*/, const char** theArgv)
 {
-  const Handle(AIS_InteractiveContext)& aCtx = ViewerTest::GetAISContext();
+  const occ::handle<AIS_InteractiveContext>& aCtx = ViewerTest::GetAISContext();
   if (aCtx.IsNull())
   {
     std::cout << "No interactive context. Use 'vinit' command before " << theArgv[0] << "\n";
@@ -5148,10 +4054,10 @@ static Standard_Integer OCC27757(Draw_Interpretor& /*theDI*/,
   aTrsf.SetTranslationPart(gp_Vec(20.0, 20.0, 0.0));
   aSphere.Located(TopLoc_Location(aTrsf));
 
-  Handle(AIS_Shape) aBoxObj    = new AIS_Shape(aBox);
-  Handle(AIS_Shape) aSphereObj = new AIS_Shape(aSphere);
+  occ::handle<AIS_Shape> aBoxObj    = new AIS_Shape(aBox);
+  occ::handle<AIS_Shape> aSphereObj = new AIS_Shape(aSphere);
   aBoxObj->AddChild(aSphereObj);
-  aCtx->Display(aBoxObj, 1, 0, Standard_False);
+  aCtx->Display(aBoxObj, 1, 0, false);
   aCtx->UpdateCurrentViewer();
 
   return 0;
@@ -5161,19 +4067,17 @@ static Standard_Integer OCC27757(Draw_Interpretor& /*theDI*/,
 // function : OCC27818
 // purpose  : Creates three boxes and highlights one of them with own style
 //========================================================================
-static Standard_Integer OCC27818(Draw_Interpretor& /*theDI*/,
-                                 Standard_Integer /*theArgc*/,
-                                 const char** theArgv)
+static int OCC27818(Draw_Interpretor& /*theDI*/, int /*theArgc*/, const char** theArgv)
 {
-  const Handle(AIS_InteractiveContext)& aCtx = ViewerTest::GetAISContext();
+  const occ::handle<AIS_InteractiveContext>& aCtx = ViewerTest::GetAISContext();
   if (aCtx.IsNull())
   {
     std::cout << "No interactive context. Use 'vinit' command before " << theArgv[0] << "\n";
     return 1;
   }
 
-  Handle(AIS_Shape) aBoxObjs[3];
-  for (Standard_Integer aBoxIdx = 0; aBoxIdx < 3; ++aBoxIdx)
+  occ::handle<AIS_Shape> aBoxObjs[3];
+  for (int aBoxIdx = 0; aBoxIdx < 3; ++aBoxIdx)
   {
     TopoDS_Shape aBox = BRepPrimAPI_MakeBox(20.0, 20.0, 20.0).Shape();
     aBoxObjs[aBoxIdx] = new AIS_Shape(aBox);
@@ -5184,14 +4088,14 @@ static Standard_Integer OCC27818(Draw_Interpretor& /*theDI*/,
   }
 
   {
-    Handle(Prs3d_Drawer) aHiStyle = new Prs3d_Drawer();
+    occ::handle<Prs3d_Drawer> aHiStyle = new Prs3d_Drawer();
     aBoxObjs[1]->SetDynamicHilightAttributes(aHiStyle);
     aHiStyle->SetDisplayMode(AIS_Shaded);
     aHiStyle->SetColor(Quantity_NOC_RED);
     aHiStyle->SetTransparency(0.8f);
   }
   {
-    Handle(Prs3d_Drawer) aSelStyle = new Prs3d_Drawer();
+    occ::handle<Prs3d_Drawer> aSelStyle = new Prs3d_Drawer();
     aBoxObjs[2]->SetHilightAttributes(aSelStyle);
     aSelStyle->SetDisplayMode(AIS_Shaded);
     aSelStyle->SetColor(Quantity_NOC_RED);
@@ -5199,9 +4103,9 @@ static Standard_Integer OCC27818(Draw_Interpretor& /*theDI*/,
     aSelStyle->SetZLayer(Graphic3d_ZLayerId_Topmost);
   }
 
-  for (Standard_Integer aBoxIdx = 0; aBoxIdx < 3; ++aBoxIdx)
+  for (int aBoxIdx = 0; aBoxIdx < 3; ++aBoxIdx)
   {
-    aCtx->Display(aBoxObjs[aBoxIdx], AIS_Shaded, 0, Standard_False);
+    aCtx->Display(aBoxObjs[aBoxIdx], AIS_Shaded, 0, false);
   }
 
   aCtx->UpdateCurrentViewer();
@@ -5213,21 +4117,19 @@ static Standard_Integer OCC27818(Draw_Interpretor& /*theDI*/,
 // function : OCC27893
 // purpose  : Creates a box and selects it via AIS_InteractiveContext API
 //========================================================================
-static Standard_Integer OCC27893(Draw_Interpretor& /*theDI*/,
-                                 Standard_Integer /*theArgc*/,
-                                 const char** theArgv)
+static int OCC27893(Draw_Interpretor& /*theDI*/, int /*theArgc*/, const char** theArgv)
 {
-  const Handle(AIS_InteractiveContext)& aCtx = ViewerTest::GetAISContext();
+  const occ::handle<AIS_InteractiveContext>& aCtx = ViewerTest::GetAISContext();
   if (aCtx.IsNull())
   {
     std::cout << "No interactive context. Use 'vinit' command before " << theArgv[0] << "\n";
     return 1;
   }
 
-  TopoDS_Shape                  aBox    = BRepPrimAPI_MakeBox(10.0, 10.0, 10.0).Shape();
-  Handle(AIS_InteractiveObject) aBoxObj = new AIS_Shape(aBox);
-  aCtx->Display(aBoxObj, AIS_Shaded, 0, Standard_False);
-  aCtx->SetSelected(aBoxObj, Standard_True);
+  TopoDS_Shape                       aBox    = BRepPrimAPI_MakeBox(10.0, 10.0, 10.0).Shape();
+  occ::handle<AIS_InteractiveObject> aBoxObj = new AIS_Shape(aBox);
+  aCtx->Display(aBoxObj, AIS_Shaded, 0, false);
+  aCtx->SetSelected(aBoxObj, true);
 
   return 0;
 }
@@ -5237,26 +4139,24 @@ static Standard_Integer OCC27893(Draw_Interpretor& /*theDI*/,
 // purpose  : Tests validness of iterator in AIS_InteractiveContext after
 // an removing object from it
 //========================================================================
-static Standard_Integer OCC28310(Draw_Interpretor& /*theDI*/,
-                                 Standard_Integer /*theArgc*/,
-                                 const char** theArgv)
+static int OCC28310(Draw_Interpretor& /*theDI*/, int /*theArgc*/, const char** theArgv)
 {
-  const Handle(AIS_InteractiveContext)& aCtx = ViewerTest::GetAISContext();
+  const occ::handle<AIS_InteractiveContext>& aCtx = ViewerTest::GetAISContext();
   if (aCtx.IsNull())
   {
     std::cout << "No interactive context. Use 'vinit' command before " << theArgv[0] << "\n";
     return 1;
   }
 
-  TopoDS_Shape                  aBox    = BRepPrimAPI_MakeBox(10.0, 10.0, 10.0).Shape();
-  Handle(AIS_InteractiveObject) aBoxObj = new AIS_Shape(aBox);
-  aCtx->Display(aBoxObj, AIS_Shaded, 0, Standard_False);
+  TopoDS_Shape                       aBox    = BRepPrimAPI_MakeBox(10.0, 10.0, 10.0).Shape();
+  occ::handle<AIS_InteractiveObject> aBoxObj = new AIS_Shape(aBox);
+  aCtx->Display(aBoxObj, AIS_Shaded, 0, false);
   ViewerTest::CurrentView()->FitAll();
-  aCtx->MoveTo(200, 200, ViewerTest::CurrentView(), Standard_True);
+  aCtx->MoveTo(200, 200, ViewerTest::CurrentView(), true);
   aCtx->SelectDetected();
   aCtx->UpdateCurrentViewer();
 
-  aCtx->Remove(aBoxObj, Standard_True);
+  aCtx->Remove(aBoxObj, true);
   // nullify the object explicitly to simulate situation in project,
   // when ::Remove is called from another method and the object is destroyed
   // before ::DetectedInteractive is called
@@ -5264,7 +4164,7 @@ static Standard_Integer OCC28310(Draw_Interpretor& /*theDI*/,
 
   for (aCtx->InitDetected(); aCtx->MoreDetected(); aCtx->NextDetected())
   {
-    Handle(AIS_InteractiveObject) anObj = aCtx->DetectedInteractive();
+    occ::handle<AIS_InteractiveObject> anObj = aCtx->DetectedInteractive();
   }
 
   return 0;
@@ -5272,11 +4172,9 @@ static Standard_Integer OCC28310(Draw_Interpretor& /*theDI*/,
 
 // repetitive display and removal of multiple small objects in the viewer for
 // test of memory leak in visualization (OCCT 6.9.0 - 7.0.0)
-static Standard_Integer OCC29412(Draw_Interpretor& /*theDI*/,
-                                 Standard_Integer theArgNb,
-                                 const char**     theArgVec)
+static int OCC29412(Draw_Interpretor& /*theDI*/, int theArgNb, const char** theArgVec)
 {
-  Handle(AIS_InteractiveContext) aCtx = ViewerTest::GetAISContext();
+  occ::handle<AIS_InteractiveContext> aCtx = ViewerTest::GetAISContext();
   if (aCtx.IsNull())
   {
     std::cout << "Error: no active view.\n";
@@ -5290,9 +4188,9 @@ static Standard_Integer OCC29412(Draw_Interpretor& /*theDI*/,
     gp_Pnt pos;
     gp_Vec dir(0, 0, 1);
 
-    gp_Ax2            center(pos, dir);
-    gp_Circ           circle(center, 1);
-    Handle(AIS_Shape) feature;
+    gp_Ax2                 center(pos, dir);
+    gp_Circ                circle(center, 1);
+    occ::handle<AIS_Shape> feature;
 
     BRepBuilderAPI_MakeEdge builder(circle);
 
@@ -5318,82 +4216,13 @@ static Standard_Integer OCC29412(Draw_Interpretor& /*theDI*/,
   return 0;
 }
 
-#include <math_FRPR.hxx>
-#include <math_BFGS.hxx>
-
-//=======================================================================
-// function : OCC30492
-// purpose  : BFGS and FRPR fail if starting point is exactly the minimum.
-//=======================================================================
-// Function is:
-// f(x) = x^2
-class SquareFunction : public math_MultipleVarFunctionWithGradient
-{
-public:
-  SquareFunction() {}
-
-  virtual Standard_Integer NbVariables() const { return 1; }
-
-  virtual Standard_Boolean Value(const math_Vector& X, Standard_Real& F)
-  {
-    const Standard_Real x = X(1);
-    F                     = x * x;
-
-    return Standard_True;
-  }
-
-  virtual Standard_Boolean Gradient(const math_Vector& X, math_Vector& G)
-  {
-    const Standard_Real x = X(1);
-    G(1)                  = 2 * x;
-
-    return Standard_True;
-  }
-
-  virtual Standard_Boolean Values(const math_Vector& X, Standard_Real& F, math_Vector& G)
-  {
-    Value(X, F);
-    Gradient(X, G);
-
-    return Standard_True;
-  }
-
-private:
-};
-
-static Standard_Integer OCC30492(Draw_Interpretor& /*theDI*/,
-                                 Standard_Integer /*theNArg*/,
-                                 const char** /*theArgs*/)
-{
-  SquareFunction aFunc;
-  math_Vector    aStartPnt(1, 1);
-  aStartPnt(1) = 0.0;
-
-  // BFGS and FRPR fail when if starting point is exactly the minimum.
-  math_FRPR aFRPR(aFunc, Precision::Confusion());
-  aFRPR.Perform(aFunc, aStartPnt);
-  if (!aFRPR.IsDone())
-    std::cout << "OCC30492: Error: FRPR optimization is not done." << std::endl;
-  else
-    std::cout << "OCC30492: OK: FRPR optimization is done." << std::endl;
-
-  math_BFGS aBFGS(1, Precision::Confusion());
-  aBFGS.Perform(aFunc, aStartPnt);
-  if (!aBFGS.IsDone())
-    std::cout << "OCC30492: Error: BFGS optimization is not done." << std::endl;
-  else
-    std::cout << "OCC30492: OK: BFGS optimization is done." << std::endl;
-
-  return 0;
-}
-
 //=================================================================================================
 
 void QABugs::Commands_19(Draw_Interpretor& theCommands)
 {
   const char* group = "QABugs";
 
-  Handle(QABugs_HandleClass) aClassPtr = new QABugs_HandleClass();
+  occ::handle<QABugs_HandleClass> aClassPtr = new QABugs_HandleClass();
   theCommands.Add("OCC24202_1",
                   "Test Handle-based procedure",
                   __FILE__,
@@ -5409,11 +4238,7 @@ void QABugs::Commands_19(Draw_Interpretor& theCommands)
                   group);
 
   theCommands.Add("OCC230", "OCC230 TrimmedCurve Pnt2d Pnt2d", __FILE__, OCC230, group);
-  theCommands.Add("OCC23361", "OCC23361", __FILE__, OCC23361, group);
-  theCommands.Add("OCC22980", "OCC22980", __FILE__, OCC22980, group);
-  theCommands.Add("OCC23595", "OCC23595", __FILE__, OCC23595, group);
   theCommands.Add("OCC22611", "OCC22611 string nb", __FILE__, OCC22611, group);
-  theCommands.Add("OCC22595", "OCC22595", __FILE__, OCC22595, group);
   theCommands.Add("OCC23774", "OCC23774 shape1 shape2", __FILE__, OCC23774, group);
   theCommands.Add("OCC23683", "OCC23683 shape", __FILE__, OCC23683, group);
   theCommands.Add("OCC23952sweep", "OCC23952sweep nbupoles shape", __FILE__, OCC23952sweep, group);
@@ -5430,25 +4255,19 @@ void QABugs::Commands_19(Draw_Interpretor& theCommands)
                   OCC23945,
                   group);
   theCommands.Add("OCC24008", "OCC24008 curve surface", __FILE__, OCC24008, group);
-  theCommands.Add("OCC11758", "OCC11758", __FILE__, OCC11758, group);
   theCommands.Add("OCC24005", "OCC24005 result", __FILE__, OCC24005, group);
   theCommands.Add("OCC24137", "OCC24137 face vertex U V [N]", __FILE__, OCC24137, group);
-  theCommands.Add("OCC24271", "Boolean operations on NCollection_Map", __FILE__, OCC24271, group);
   theCommands.Add("OCC23972", "OCC23972", __FILE__, OCC23972, group);
   theCommands.Add("OCC24370", "OCC24370 edge pcurve surface prec", __FILE__, OCC24370, group);
-  theCommands.Add("OCC24533", "OCC24533", __FILE__, OCC24533, group);
   theCommands.Add("OCC24086", "OCC24086 face wire", __FILE__, OCC24086, group);
   theCommands.Add("OCC24667",
                   "OCC24667 result Wire_spine Profile [Mode [Approx]], no args to get help",
                   __FILE__,
                   OCC24667,
                   group);
-  theCommands.Add("OCC24755", "OCC24755", __FILE__, OCC24755, group);
   theCommands.Add("OCC24834", "OCC24834", __FILE__, OCC24834, group);
-  theCommands.Add("OCC24889", "OCC24889", __FILE__, OCC24889, group);
   theCommands.Add("OCC23951", "OCC23951 path to saved step file", __FILE__, OCC23951, group);
   theCommands.Add("OCC24931", "OCC24931 path to saved xml file", __FILE__, OCC24931, group);
-  theCommands.Add("OCC24945", "OCC24945", __FILE__, OCC24945, group);
   theCommands.Add("OCC23950", "OCC23950 step_file", __FILE__, OCC23950, group);
   theCommands.Add("OCC25004", "OCC25004", __FILE__, OCC25004, group);
   theCommands.Add("OCC24925",
@@ -5483,16 +4302,8 @@ void QABugs::Commands_19(Draw_Interpretor& theCommands)
   theCommands.Add("OCC7570", "OCC7570 shape", __FILE__, OCC7570, group);
   theCommands.Add("OCC25100", "OCC25100 shape", __FILE__, OCC25100, group);
   theCommands.Add("OCC25340", "OCC25340", __FILE__, OCC25340, group);
-  theCommands.Add("OCC25348", "OCC25348", __FILE__, OCC25348, group);
   theCommands.Add("OCC25413", "OCC25413 shape", __FILE__, OCC25413, group);
   theCommands.Add("OCC25446", "OCC25446 res b1 b2 op", __FILE__, OCC25446, group);
-  theCommands.Add("OCC25545",
-                  "no args; tests data race when concurrently accessing \n"
-                  "\t\tTopLoc_Location::Transformation()",
-                  __FILE__,
-                  OCC25545,
-                  group);
-  theCommands.Add("OCC25547", "OCC25547", __FILE__, OCC25547, group);
   theCommands.Add("OCC24881", "OCC24881 shape", __FILE__, OCC24881, group);
   theCommands.Add("xprojponf", "xprojponf p f", __FILE__, xprojponf, group);
   theCommands.Add("OCC24923", "OCC24923", __FILE__, OCC24923, group);
@@ -5503,11 +4314,6 @@ void QABugs::Commands_19(Draw_Interpretor& theCommands)
                   group);
   theCommands.Add("OCC26284", "OCC26284", __FILE__, OCC26284, group);
   theCommands.Add("OCC26446", "OCC26446 r c1 c2", __FILE__, OCC26446, group);
-  theCommands.Add("OCC26448",
-                  "OCC26448: check method Prepend() of sequence",
-                  __FILE__,
-                  OCC26448,
-                  group);
   theCommands.Add("OCC26407", "OCC26407 result_name", __FILE__, OCC26407, group);
   theCommands.Add("OCC26485", "OCC26485 shape", __FILE__, OCC26485, group);
   theCommands.Add("OCC26553", "OCC26553 file_path", __FILE__, OCC26553, group);
@@ -5586,11 +4392,5 @@ void QABugs::Commands_19(Draw_Interpretor& theCommands)
                   __FILE__,
                   OCC29412,
                   group);
-  theCommands.Add(
-    "OCC30492",
-    "OCC30492: Checks whether BFGS and FRPR fail when starting point is exact minimum.",
-    __FILE__,
-    OCC30492,
-    group);
   return;
 }

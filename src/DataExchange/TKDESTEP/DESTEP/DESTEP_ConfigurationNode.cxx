@@ -15,7 +15,6 @@
 
 #include <DESTEP_Provider.hxx>
 #include <DE_ConfigurationContext.hxx>
-#include <DE_PluginHolder.hxx>
 #include <NCollection_Buffer.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(DESTEP_ConfigurationNode, DE_ShapeFixConfigurationNode)
@@ -28,14 +27,12 @@ static const TCollection_AsciiString& THE_CONFIGURATION_SCOPE()
   return aScope;
 }
 
-// Wrapper to auto-load DE component
-DE_PluginHolder<DESTEP_ConfigurationNode> THE_OCCT_STEP_COMPONENT_PLUGIN;
 } // namespace
 
 //=================================================================================================
 
 DESTEP_ConfigurationNode::DESTEP_ConfigurationNode()
-    : DE_ShapeFixConfigurationNode()
+
 {
   DE_ShapeFixConfigurationNode::ShapeFixParameters =
     DESTEP_Parameters::GetDefaultShapeFixParameters();
@@ -43,7 +40,8 @@ DESTEP_ConfigurationNode::DESTEP_ConfigurationNode()
 
 //=================================================================================================
 
-DESTEP_ConfigurationNode::DESTEP_ConfigurationNode(const Handle(DESTEP_ConfigurationNode)& theNode)
+DESTEP_ConfigurationNode::DESTEP_ConfigurationNode(
+  const occ::handle<DESTEP_ConfigurationNode>& theNode)
     : DE_ShapeFixConfigurationNode(theNode),
       InternalParameters(theNode->InternalParameters)
 {
@@ -51,7 +49,7 @@ DESTEP_ConfigurationNode::DESTEP_ConfigurationNode(const Handle(DESTEP_Configura
 
 //=================================================================================================
 
-bool DESTEP_ConfigurationNode::Load(const Handle(DE_ConfigurationContext)& theResource)
+bool DESTEP_ConfigurationNode::Load(const occ::handle<DE_ConfigurationContext>& theResource)
 {
   TCollection_AsciiString aScope =
     THE_CONFIGURATION_SCOPE() + "." + GetFormat() + "." + GetVendor();
@@ -190,6 +188,8 @@ bool DESTEP_ConfigurationNode::Load(const Handle(DE_ConfigurationContext)& theRe
     theResource->BooleanVal("write.layer", InternalParameters.WriteLayer, aScope);
   InternalParameters.WriteProps =
     theResource->BooleanVal("write.props", InternalParameters.WriteProps, aScope);
+  InternalParameters.WriteMetadata =
+    theResource->BooleanVal("write.metadata", InternalParameters.WriteMetadata, aScope);
   InternalParameters.WriteMaterial =
     theResource->BooleanVal("write.material", InternalParameters.WriteMaterial, aScope);
   InternalParameters.WriteVisMaterial =
@@ -563,6 +563,13 @@ TCollection_AsciiString DESTEP_ConfigurationNode::Save() const
   aResult += "!\n";
 
   aResult += "!\n";
+  aResult += "!Setting up the write.metadata parameter which is used to indicate "
+             "write Metadata or not\n";
+  aResult += "!Default value: +. Available values: \"-\", \"+\"\n";
+  aResult += aScope + "write.metadata :\t " + InternalParameters.WriteMetadata + "\n";
+  aResult += "!\n";
+
+  aResult += "!\n";
   aResult += "!Setting up the write.material parameter which is used to indicate write "
              "Material properties or not\n";
   aResult += "!Default value: +. Available values: \"-\", \"+\"\n";
@@ -607,14 +614,14 @@ TCollection_AsciiString DESTEP_ConfigurationNode::Save() const
 
 //=================================================================================================
 
-Handle(DE_ConfigurationNode) DESTEP_ConfigurationNode::Copy() const
+occ::handle<DE_ConfigurationNode> DESTEP_ConfigurationNode::Copy() const
 {
   return new DESTEP_ConfigurationNode(*this);
 }
 
 //=================================================================================================
 
-Handle(DE_Provider) DESTEP_ConfigurationNode::BuildProvider()
+occ::handle<DE_Provider> DESTEP_ConfigurationNode::BuildProvider()
 {
   return new DESTEP_Provider(this);
 }
@@ -635,6 +642,13 @@ bool DESTEP_ConfigurationNode::IsExportSupported() const
 
 //=================================================================================================
 
+bool DESTEP_ConfigurationNode::IsStreamSupported() const
+{
+  return true;
+}
+
+//=================================================================================================
+
 TCollection_AsciiString DESTEP_ConfigurationNode::GetFormat() const
 {
   return TCollection_AsciiString("STEP");
@@ -649,9 +663,9 @@ TCollection_AsciiString DESTEP_ConfigurationNode::GetVendor() const
 
 //=================================================================================================
 
-TColStd_ListOfAsciiString DESTEP_ConfigurationNode::GetExtensions() const
+NCollection_List<TCollection_AsciiString> DESTEP_ConfigurationNode::GetExtensions() const
 {
-  TColStd_ListOfAsciiString anExt;
+  NCollection_List<TCollection_AsciiString> anExt;
   anExt.Append("stp");
   anExt.Append("step");
   anExt.Append("stpz");
@@ -660,7 +674,7 @@ TColStd_ListOfAsciiString DESTEP_ConfigurationNode::GetExtensions() const
 
 //=================================================================================================
 
-bool DESTEP_ConfigurationNode::CheckContent(const Handle(NCollection_Buffer)& theBuffer) const
+bool DESTEP_ConfigurationNode::CheckContent(const occ::handle<NCollection_Buffer>& theBuffer) const
 {
   if (theBuffer.IsNull() || theBuffer->Size() < 100)
   {

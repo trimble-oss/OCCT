@@ -16,6 +16,8 @@
 #include <DBRep.hxx>
 #include <DDocStd.hxx>
 #include <DDocStd_DrawDocument.hxx>
+#include <DEGLTF_ConfigurationNode.hxx>
+#include <DE_PluginHolder.hxx>
 #include <Draw.hxx>
 #include <Draw_Interpretor.hxx>
 #include <Draw_PluginMacro.hxx>
@@ -29,6 +31,16 @@
 #include <XCAFDoc_ShapeTool.hxx>
 #include <XSControl_WorkSession.hxx>
 #include <XSDRAW.hxx>
+
+namespace
+{
+// Singleton to ensure DEGLTF plugin is registered only once
+void DEGLTFSingleton()
+{
+  static DE_PluginHolder<DEGLTF_ConfigurationNode> aHolder;
+  (void)aHolder;
+}
+} // namespace
 
 //=============================================================================
 // function : parseNameFormat
@@ -96,30 +108,28 @@ static bool parseCoordinateSystem(const char* theArg, RWMesh_CoordinateSystem& t
   }
   else
   {
-    return Standard_False;
+    return false;
   }
-  return Standard_True;
+  return true;
 }
 
 //=================================================================================================
 
-static Standard_Integer ReadGltf(Draw_Interpretor& theDI,
-                                 Standard_Integer  theNbArgs,
-                                 const char**      theArgVec)
+static int ReadGltf(Draw_Interpretor& theDI, int theNbArgs, const char** theArgVec)
 {
   TCollection_AsciiString aDestName, aFilePath;
-  Standard_Boolean        toUseExistingDoc      = Standard_False;
-  Standard_Boolean        toListExternalFiles   = Standard_False;
-  Standard_Boolean        isParallel            = Standard_False;
-  Standard_Boolean        isDoublePrec          = Standard_False;
-  Standard_Boolean        toSkipLateDataLoading = Standard_False;
-  Standard_Boolean        toKeepLateData        = Standard_True;
-  Standard_Boolean        toPrintDebugInfo      = Standard_False;
-  Standard_Boolean        toLoadAllScenes       = Standard_False;
-  Standard_Boolean        toPrintAssetInfo      = Standard_False;
-  Standard_Boolean        toApplyScale          = Standard_True;
-  Standard_Boolean        isNoDoc = (TCollection_AsciiString(theArgVec[0]) == "readgltf");
-  for (Standard_Integer anArgIter = 1; anArgIter < theNbArgs; ++anArgIter)
+  bool                    toUseExistingDoc      = false;
+  bool                    toListExternalFiles   = false;
+  bool                    isParallel            = false;
+  bool                    isDoublePrec          = false;
+  bool                    toSkipLateDataLoading = false;
+  bool                    toKeepLateData        = true;
+  bool                    toPrintDebugInfo      = false;
+  bool                    toLoadAllScenes       = false;
+  bool                    toPrintAssetInfo      = false;
+  bool                    toApplyScale          = true;
+  bool                    isNoDoc = (TCollection_AsciiString(theArgVec[0]) == "readgltf");
+  for (int anArgIter = 1; anArgIter < theNbArgs; ++anArgIter)
   {
     TCollection_AsciiString anArgCase(theArgVec[anArgIter]);
     anArgCase.LowerCase();
@@ -197,13 +207,13 @@ static Standard_Integer ReadGltf(Draw_Interpretor& theDI,
     return 1;
   }
 
-  Handle(Draw_ProgressIndicator) aProgress = new Draw_ProgressIndicator(theDI, 1);
-  Handle(TDocStd_Document)       aDoc;
+  occ::handle<Draw_ProgressIndicator> aProgress = new Draw_ProgressIndicator(theDI, 1);
+  occ::handle<TDocStd_Document>       aDoc;
   if (!aDestName.IsEmpty() && !isNoDoc)
   {
-    Handle(TDocStd_Application) anApp    = DDocStd::GetApplication();
-    Standard_CString            aNameVar = aDestName.ToCString();
-    DDocStd::GetDocument(aNameVar, aDoc, Standard_False);
+    occ::handle<TDocStd_Application> anApp    = DDocStd::GetApplication();
+    const char*                      aNameVar = aDestName.ToCString();
+    DDocStd::GetDocument(aNameVar, aDoc, false);
     if (aDoc.IsNull())
     {
       if (toUseExistingDoc)
@@ -220,7 +230,7 @@ static Standard_Integer ReadGltf(Draw_Interpretor& theDI,
     }
   }
 
-  const Standard_Real aScaleFactorM = XSDRAW::GetLengthUnit(aDoc) / 1000;
+  const double aScaleFactorM = XSDRAW::GetLengthUnit(aDoc) / 1000;
 
   RWGltf_CafReader aReader;
   aReader.SetSystemLengthUnit(aScaleFactorM);
@@ -246,7 +256,7 @@ static Standard_Integer ReadGltf(Draw_Interpretor& theDI,
     }
     else
     {
-      Handle(DDocStd_DrawDocument) aDrawDoc = new DDocStd_DrawDocument(aDoc);
+      occ::handle<DDocStd_DrawDocument> aDrawDoc = new DDocStd_DrawDocument(aDoc);
       TDataStd_Name::Set(aDoc->GetData()->Root(), aDestName);
       Draw::Set(aDestName.ToCString(), aDrawDoc);
     }
@@ -255,7 +265,8 @@ static Standard_Integer ReadGltf(Draw_Interpretor& theDI,
   bool isFirstLine = true;
   if (toPrintAssetInfo)
   {
-    for (TColStd_IndexedDataMapOfStringString::Iterator aKeyIter(aReader.Metadata());
+    for (NCollection_IndexedDataMap<TCollection_AsciiString, TCollection_AsciiString>::Iterator
+           aKeyIter(aReader.Metadata());
          aKeyIter.More();
          aKeyIter.Next())
     {
@@ -286,23 +297,21 @@ static Standard_Integer ReadGltf(Draw_Interpretor& theDI,
 
 //=================================================================================================
 
-static Standard_Integer WriteGltf(Draw_Interpretor& theDI,
-                                  Standard_Integer  theNbArgs,
-                                  const char**      theArgVec)
+static int WriteGltf(Draw_Interpretor& theDI, int theNbArgs, const char** theArgVec)
 {
-  TCollection_AsciiString              aGltfFilePath;
-  Handle(TDocStd_Document)             aDoc;
-  Handle(TDocStd_Application)          anApp = DDocStd::GetApplication();
-  TColStd_IndexedDataMapOfStringString aFileInfo;
-  RWGltf_WriterTrsfFormat              aTrsfFormat     = RWGltf_WriterTrsfFormat_Compact;
-  RWMesh_CoordinateSystem              aSystemCoordSys = RWMesh_CoordinateSystem_Zup;
-  bool                                 toForceUVExport = false, toEmbedTexturesInGlb = true;
-  bool                                 toMergeFaces = false, toSplitIndices16 = false;
-  bool                                 isParallel      = false;
-  RWMesh_NameFormat                    aNodeNameFormat = RWMesh_NameFormat_InstanceOrProduct;
-  RWMesh_NameFormat                    aMeshNameFormat = RWMesh_NameFormat_Product;
-  RWGltf_DracoParameters               aDracoParameters;
-  for (Standard_Integer anArgIter = 1; anArgIter < theNbArgs; ++anArgIter)
+  TCollection_AsciiString          aGltfFilePath;
+  occ::handle<TDocStd_Document>    aDoc;
+  occ::handle<TDocStd_Application> anApp = DDocStd::GetApplication();
+  NCollection_IndexedDataMap<TCollection_AsciiString, TCollection_AsciiString> aFileInfo;
+  RWGltf_WriterTrsfFormat aTrsfFormat     = RWGltf_WriterTrsfFormat_Compact;
+  RWMesh_CoordinateSystem aSystemCoordSys = RWMesh_CoordinateSystem_Zup;
+  bool                    toForceUVExport = false, toEmbedTexturesInGlb = true;
+  bool                    toMergeFaces = false, toSplitIndices16 = false;
+  bool                    isParallel      = false;
+  RWMesh_NameFormat       aNodeNameFormat = RWMesh_NameFormat_InstanceOrProduct;
+  RWMesh_NameFormat       aMeshNameFormat = RWMesh_NameFormat_Product;
+  RWGltf_DracoParameters  aDracoParameters;
+  for (int anArgIter = 1; anArgIter < theNbArgs; ++anArgIter)
   {
     TCollection_AsciiString anArgCase(theArgVec[anArgIter]);
     anArgCase.LowerCase();
@@ -393,7 +402,7 @@ static Standard_Integer WriteGltf(Draw_Interpretor& theDI,
     }
     else if (aDoc.IsNull())
     {
-      Standard_CString aNameVar = theArgVec[anArgIter];
+      const char* aNameVar = theArgVec[anArgIter];
       DDocStd::GetDocument(aNameVar, aDoc, false);
       if (aDoc.IsNull())
       {
@@ -405,7 +414,7 @@ static Standard_Integer WriteGltf(Draw_Interpretor& theDI,
         }
 
         anApp->NewDocument(TCollection_ExtendedString("BinXCAF"), aDoc);
-        Handle(XCAFDoc_ShapeTool) aShapeTool = XCAFDoc_DocumentTool::ShapeTool(aDoc->Main());
+        occ::handle<XCAFDoc_ShapeTool> aShapeTool = XCAFDoc_DocumentTool::ShapeTool(aDoc->Main());
         // auto-naming doesn't generate meaningful instance names
         // aShapeTool->SetAutoNaming (false);
         aNodeNameFormat = RWMesh_NameFormat_Product;
@@ -475,12 +484,12 @@ static Standard_Integer WriteGltf(Draw_Interpretor& theDI,
     return 1;
   }
 
-  Handle(Draw_ProgressIndicator) aProgress = new Draw_ProgressIndicator(theDI, 1);
+  occ::handle<Draw_ProgressIndicator> aProgress = new Draw_ProgressIndicator(theDI, 1);
 
   TCollection_AsciiString anExt = aGltfFilePath;
   anExt.LowerCase();
 
-  const Standard_Real aScaleFactorM = XSDRAW::GetLengthUnit(aDoc) / 1000;
+  const double aScaleFactorM = XSDRAW::GetLengthUnit(aDoc) / 1000;
 
   RWGltf_CafWriter aWriter(aGltfFilePath, anExt.EndsWith(".glb"));
   aWriter.SetTransformationFormat(aTrsfFormat);
@@ -502,12 +511,15 @@ static Standard_Integer WriteGltf(Draw_Interpretor& theDI,
 
 void XSDRAWGLTF::Factory(Draw_Interpretor& theDI)
 {
-  static Standard_Boolean aIsActivated = Standard_False;
+  static bool aIsActivated = false;
   if (aIsActivated)
   {
     return;
   }
-  aIsActivated = Standard_True;
+  aIsActivated = true;
+
+  //! Ensure DEGLTF plugin is registered
+  DEGLTFSingleton();
 
   const char* aGroup = "XSTEP-STL/VRML"; // Step transfer file commands
   theDI.Add("ReadGltf",

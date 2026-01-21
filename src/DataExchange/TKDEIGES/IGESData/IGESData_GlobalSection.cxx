@@ -28,32 +28,30 @@
 #include <XSAlgo_ShapeProcessor.hxx>
 #include <UnitsMethods.hxx>
 
-#include <stdio.h>
+#include <cstdio>
 
-//  Routines locales copiant une string [l`ideal serait : astr = astr->Copy()]
-//    et transformant un CString (Hollerith ou non) en HAsciiString non Holl.
-//    et l inverse
-static void CopyString(Handle(TCollection_HAsciiString)& astr)
+//  Local routines copying a string [the ideal would be : astr = astr->Copy()]
+//    and transforming a CString (Hollerith or not) to non-Hollerith HAsciiString.
+//    and the reverse
+static void CopyString(occ::handle<TCollection_HAsciiString>& astr)
 {
   if (astr.IsNull())
-    return; // ne rien faire si String pas definie !
-  Handle(TCollection_HAsciiString) S = new TCollection_HAsciiString("");
+    return; // do nothing if String not defined !
+  occ::handle<TCollection_HAsciiString> S = new TCollection_HAsciiString("");
   S->AssignCat(astr);
   astr = S;
 }
 
-static void MakeHollerith(const Handle(TCollection_HAsciiString)& astr,
-                          char*                                   text,
-                          Standard_Integer&                       lt)
+static void MakeHollerith(const occ::handle<TCollection_HAsciiString>& astr, char* text, int& lt)
 {
   lt      = 0;
   text[0] = '\0';
   if (astr.IsNull())
     return;
-  Standard_Integer ln = astr->Length();
+  int ln = astr->Length();
   if (ln == 0)
     return;
-  sprintf(text, "%dH%s", ln, astr->ToCString());
+  Sprintf(text, "%dH%s", ln, astr->ToCString());
   lt = ln + 2;
   if (ln >= 10)
     lt++;
@@ -66,7 +64,7 @@ static void MakeHollerith(const Handle(TCollection_HAsciiString)& astr,
 IGESData_GlobalSection::IGESData_GlobalSection()
     : theSeparator(','),
       theEndMark(';'),
-      theIntegerBits(32), // simple = entier = 32b, double = 64
+      theIntegerBits(32), // simple = integer = 32b, double = 64
       theMaxPower10Single(38),
       theMaxDigitsSingle(6),
       theMaxPower10Double(308),
@@ -78,22 +76,21 @@ IGESData_GlobalSection::IGESData_GlobalSection()
       theMaxLineWeight(0.0),
       theResolution(0.0),
       theMaxCoord(0.0),
-      hasMaxCoord(Standard_False),
+      hasMaxCoord(false),
       theIGESVersion(11), // IGES 5.3 by default
       theDraftingStandard(0)
 {
-  //
 }
 
 //=================================================================================================
 
-Handle(TCollection_HAsciiString) IGESData_GlobalSection::TranslatedFromHollerith(
-  const Handle(TCollection_HAsciiString)& astr) const
+occ::handle<TCollection_HAsciiString> IGESData_GlobalSection::TranslatedFromHollerith(
+  const occ::handle<TCollection_HAsciiString>& astr) const
 {
-  Handle(TCollection_HAsciiString) res;
+  occ::handle<TCollection_HAsciiString> res;
   if (astr.IsNull())
     return res;
-  Standard_Integer n = astr->Search("H");
+  int n = astr->Search("H");
   if (n > 1)
   {
     if (!astr->Token("H")->IsIntegerValue())
@@ -101,7 +98,7 @@ Handle(TCollection_HAsciiString) IGESData_GlobalSection::TranslatedFromHollerith
   }
   if (n > 1 && n < astr->Length())
     res = astr->SubString(n + 1, astr->Length());
-  else if (astr->ToCString() == NULL)
+  else if (astr->ToCString() == nullptr)
     res = new TCollection_HAsciiString;
   else
     res = new TCollection_HAsciiString(astr->ToCString());
@@ -110,8 +107,8 @@ Handle(TCollection_HAsciiString) IGESData_GlobalSection::TranslatedFromHollerith
 
 //=================================================================================================
 
-void IGESData_GlobalSection::Init(const Handle(Interface_ParamSet)& params,
-                                  Handle(Interface_Check)&          ach)
+void IGESData_GlobalSection::Init(const occ::handle<Interface_ParamSet>& params,
+                                  occ::handle<Interface_Check>&          ach)
 {
   // MGE 21/07/98
   // Building of messages
@@ -127,7 +124,7 @@ void IGESData_GlobalSection::Init(const Handle(Interface_ParamSet)& params,
   theFileName.Nullify();
   theSystemId.Nullify();
   theInterfaceVersion.Nullify();
-  theIntegerBits      = 32; // par defaut, simple = entier = 32b, double = 64
+  theIntegerBits      = 32; // by default, simple = integer = 32b, double = 64
   theMaxPower10Single = 38;
   theMaxDigitsSingle  = 6;
   theMaxPower10Double = 308;
@@ -141,7 +138,7 @@ void IGESData_GlobalSection::Init(const Handle(Interface_ParamSet)& params,
   theDate.Nullify();
   theResolution = 0.;
   theMaxCoord   = 0.;
-  hasMaxCoord   = Standard_False;
+  hasMaxCoord   = false;
   theAuthorName.Nullify();
   theCompanyName.Nullify();
   // clang-format off
@@ -149,18 +146,18 @@ void IGESData_GlobalSection::Init(const Handle(Interface_ParamSet)& params,
   // clang-format on
   theDraftingStandard = 0;
   theCascadeUnit      = UnitsMethods::GetCasCadeLengthUnit();
-  theLastChangeDate.Nullify(); // nouveaute 5.1 (peut etre absente)
-  theAppliProtocol.Nullify();  // nouveaute 5.3 (peut etre absente)
+  theLastChangeDate.Nullify(); // new in 5.1 (may be absent)
+  theAppliProtocol.Nullify();  // new in 5.3 (may be absent)
 
-  Standard_Integer nbp = params->NbParams();
+  int nbp = params->NbParams();
 
-  for (Standard_Integer i = 1; i <= nbp; i++)
+  for (int i = 1; i <= nbp; i++)
   {
-    Standard_Integer                 intval  = 0;
-    Standard_Real                    realval = 0.0;
-    Handle(TCollection_HAsciiString) strval; // doit repartir a null
+    int                                   intval  = 0;
+    double                                realval = 0.0;
+    occ::handle<TCollection_HAsciiString> strval; // doit repartir a null
     // char message[80]; //szv#4:S4163:12Mar99 unused
-    Standard_CString    val = params->Param(i).CValue();
+    const char*         val = params->Param(i).CValue();
     Interface_ParamType fpt = params->Param(i).ParamType();
     if (fpt == Interface_ParamVoid)
       continue;
@@ -177,8 +174,8 @@ void IGESData_GlobalSection::Init(const Handle(Interface_ParamSet)& params,
     // if the param is a Real
     else if (fpt == Interface_ParamReal || fpt == Interface_ParamEnum)
     {
-      char             text[50];
-      Standard_Integer k, j = 0;
+      char text[50];
+      int  k, j = 0;
       for (k = 0; k < 50; k++)
       {
         if (val[k] == 'D' || val[k] == 'd')
@@ -197,8 +194,8 @@ void IGESData_GlobalSection::Init(const Handle(Interface_ParamSet)& params,
       strval = new TCollection_HAsciiString(val);
       if (val[0] != '\0')
       {
-        Standard_Integer nhol = strval->Search("H");
-        Standard_Integer lhol = strval->Length();
+        int nhol = strval->Search("H");
+        int lhol = strval->Length();
         if (nhol > 1)
           if (!strval->Token("H")->IsIntegerValue())
             nhol = 0;
@@ -279,7 +276,7 @@ void IGESData_GlobalSection::Init(const Handle(Interface_ParamSet)& params,
         break;
       case 20:
         theMaxCoord = realval;
-        hasMaxCoord = Standard_True;
+        hasMaxCoord = true;
         break;
       case 21:
         theAuthorName = strval;
@@ -337,7 +334,7 @@ void IGESData_GlobalSection::Init(const Handle(Interface_ParamSet)& params,
   // restore it from UnitName. Repris par CKY 13-FEV-1998
   if (theUnitFlag == 0 || theUnitFlag == 3)
   {
-    Standard_Integer corrected = 0;
+    int corrected = 0;
     if (theUnitName.IsNull())
       // default (inches) value taken
       corrected = 1;
@@ -377,16 +374,16 @@ void IGESData_GlobalSection::CopyRefs()
 
 //=================================================================================================
 
-Handle(Interface_ParamSet) IGESData_GlobalSection::Params() const
+occ::handle<Interface_ParamSet> IGESData_GlobalSection::Params() const
 {
-  char             vide[1];
-  char             uncar[2];
-  char             nombre[1024];
-  char             text[200];
-  Standard_Integer lt;
-  vide[0] = uncar[1] = nombre[0] = '\0';
-  uncar[0]                       = ',';
-  Handle(Interface_ParamSet) res = new Interface_ParamSet(26); // gka 19.01.99
+  char vide[1];
+  char uncar[2];
+  char nombre[1024];
+  char text[200];
+  int  lt;
+  vide[0] = uncar[1] = nombre[0]      = '\0';
+  uncar[0]                            = ',';
+  occ::handle<Interface_ParamSet> res = new Interface_ParamSet(26); // gka 19.01.99
   if (theSeparator == ',')
     res->Append(vide, 0, Interface_ParamVoid, 0);
   else
@@ -415,54 +412,54 @@ Handle(Interface_ParamSet) IGESData_GlobalSection::Params() const
   MakeHollerith(theInterfaceVersion, text, lt);
   res->Append(text, lt, Interface_ParamText, 0);
 
-  sprintf(nombre, "%d", theIntegerBits);
-  res->Append(nombre, (Standard_Integer)strlen(nombre), Interface_ParamInteger, 0);
+  Sprintf(nombre, "%d", theIntegerBits);
+  res->Append(nombre, (int)strlen(nombre), Interface_ParamInteger, 0);
 
-  sprintf(nombre, "%d", theMaxPower10Single);
-  res->Append(nombre, (Standard_Integer)strlen(nombre), Interface_ParamInteger, 0);
+  Sprintf(nombre, "%d", theMaxPower10Single);
+  res->Append(nombre, (int)strlen(nombre), Interface_ParamInteger, 0);
 
-  sprintf(nombre, "%d", theMaxDigitsSingle);
-  res->Append(nombre, (Standard_Integer)strlen(nombre), Interface_ParamInteger, 0);
+  Sprintf(nombre, "%d", theMaxDigitsSingle);
+  res->Append(nombre, (int)strlen(nombre), Interface_ParamInteger, 0);
 
-  sprintf(nombre, "%d", theMaxPower10Double);
-  res->Append(nombre, (Standard_Integer)strlen(nombre), Interface_ParamInteger, 0);
+  Sprintf(nombre, "%d", theMaxPower10Double);
+  res->Append(nombre, (int)strlen(nombre), Interface_ParamInteger, 0);
 
-  sprintf(nombre, "%d", theMaxDigitsDouble);
-  res->Append(nombre, (Standard_Integer)strlen(nombre), Interface_ParamInteger, 0);
+  Sprintf(nombre, "%d", theMaxDigitsDouble);
+  res->Append(nombre, (int)strlen(nombre), Interface_ParamInteger, 0);
 
   MakeHollerith(theReceiveName, text, lt);
   res->Append(text, lt, Interface_ParamText, 0);
 
-  Interface_FloatWriter::Convert(theScale, nombre, Standard_True, 0., 0., "%f", "%f");
-  //  sprintf(nombre,"%f",theScale);
-  res->Append(nombre, (Standard_Integer)strlen(nombre), Interface_ParamReal, 0);
+  Interface_FloatWriter::Convert(theScale, nombre, true, 0., 0., "%f", "%f");
+  //  Sprintf(nombre,"%f",theScale);
+  res->Append(nombre, (int)strlen(nombre), Interface_ParamReal, 0);
 
-  sprintf(nombre, "%d", theUnitFlag);
-  res->Append(nombre, (Standard_Integer)strlen(nombre), Interface_ParamInteger, 0);
+  Sprintf(nombre, "%d", theUnitFlag);
+  res->Append(nombre, (int)strlen(nombre), Interface_ParamInteger, 0);
 
   MakeHollerith(theUnitName, text, lt);
   res->Append(text, lt, Interface_ParamText, 0);
 
-  sprintf(nombre, "%d", theLineWeightGrad);
-  res->Append(nombre, (Standard_Integer)strlen(nombre), Interface_ParamInteger, 0);
+  Sprintf(nombre, "%d", theLineWeightGrad);
+  res->Append(nombre, (int)strlen(nombre), Interface_ParamInteger, 0);
 
-  Interface_FloatWriter::Convert(theMaxLineWeight, nombre, Standard_True, 0., 0., "%f", "%f");
-  //  sprintf(nombre,"%f",theMaxLineWeight);
-  res->Append(nombre, (Standard_Integer)strlen(nombre), Interface_ParamReal, 0);
+  Interface_FloatWriter::Convert(theMaxLineWeight, nombre, true, 0., 0., "%f", "%f");
+  //  Sprintf(nombre,"%f",theMaxLineWeight);
+  res->Append(nombre, (int)strlen(nombre), Interface_ParamReal, 0);
 
   MakeHollerith(theDate, text, lt);
   res->Append(text, lt, Interface_ParamText, 0);
 
-  Interface_FloatWriter::Convert(theResolution, nombre, Standard_True, 0., 0., "%g", "%g");
-  //  sprintf(nombre,"%f",theResolution);
-  res->Append(nombre, (Standard_Integer)strlen(nombre), Interface_ParamReal, 0);
+  Interface_FloatWriter::Convert(theResolution, nombre, true, 0., 0., "%g", "%g");
+  //  Sprintf(nombre,"%f",theResolution);
+  res->Append(nombre, (int)strlen(nombre), Interface_ParamReal, 0);
 
   if (hasMaxCoord)
-    Interface_FloatWriter::Convert(theMaxCoord, nombre, Standard_True, 0., 0., "%f", "%f");
-  //  sprintf(nombre,"%f",theMaxCoord);
+    Interface_FloatWriter::Convert(theMaxCoord, nombre, true, 0., 0., "%f", "%f");
+  //  Sprintf(nombre,"%f",theMaxCoord);
   else
     nombre[0] = '\0';
-  res->Append(nombre, (Standard_Integer)strlen(nombre), Interface_ParamReal, 0);
+  res->Append(nombre, (int)strlen(nombre), Interface_ParamReal, 0);
 
   MakeHollerith(theAuthorName, text, lt);
   res->Append(text, lt, Interface_ParamText, 0);
@@ -470,11 +467,11 @@ Handle(Interface_ParamSet) IGESData_GlobalSection::Params() const
   MakeHollerith(theCompanyName, text, lt);
   res->Append(text, lt, Interface_ParamText, 0);
 
-  sprintf(nombre, "%d", theIGESVersion);
-  res->Append(nombre, (Standard_Integer)strlen(nombre), Interface_ParamInteger, 0);
+  Sprintf(nombre, "%d", theIGESVersion);
+  res->Append(nombre, (int)strlen(nombre), Interface_ParamInteger, 0);
 
-  sprintf(nombre, "%d", theDraftingStandard);
-  res->Append(nombre, (Standard_Integer)strlen(nombre), Interface_ParamInteger, 0);
+  Sprintf(nombre, "%d", theDraftingStandard);
+  res->Append(nombre, (int)strlen(nombre), Interface_ParamInteger, 0);
 
   if (!theLastChangeDate.IsNull())
   {
@@ -496,196 +493,196 @@ Handle(Interface_ParamSet) IGESData_GlobalSection::Params() const
 
 //=================================================================================================
 
-Standard_Character IGESData_GlobalSection::Separator() const
+char IGESData_GlobalSection::Separator() const
 {
   return theSeparator;
 }
 
 //=================================================================================================
 
-Standard_Character IGESData_GlobalSection::EndMark() const
+char IGESData_GlobalSection::EndMark() const
 {
   return theEndMark;
 }
 
 //=================================================================================================
 
-Handle(TCollection_HAsciiString) IGESData_GlobalSection::SendName() const
+occ::handle<TCollection_HAsciiString> IGESData_GlobalSection::SendName() const
 {
   return theSendName;
 }
 
 //=================================================================================================
 
-Handle(TCollection_HAsciiString) IGESData_GlobalSection::FileName() const
+occ::handle<TCollection_HAsciiString> IGESData_GlobalSection::FileName() const
 {
   return theFileName;
 }
 
 //=================================================================================================
 
-Handle(TCollection_HAsciiString) IGESData_GlobalSection::SystemId() const
+occ::handle<TCollection_HAsciiString> IGESData_GlobalSection::SystemId() const
 {
   return theSystemId;
 }
 
 //=================================================================================================
 
-Handle(TCollection_HAsciiString) IGESData_GlobalSection::InterfaceVersion() const
+occ::handle<TCollection_HAsciiString> IGESData_GlobalSection::InterfaceVersion() const
 {
   return theInterfaceVersion;
 }
 
 //=================================================================================================
 
-Standard_Integer IGESData_GlobalSection::IntegerBits() const
+int IGESData_GlobalSection::IntegerBits() const
 {
   return theIntegerBits;
 }
 
 //=================================================================================================
 
-Standard_Integer IGESData_GlobalSection::MaxPower10Single() const
+int IGESData_GlobalSection::MaxPower10Single() const
 {
   return theMaxPower10Single;
 }
 
 //=================================================================================================
 
-Standard_Integer IGESData_GlobalSection::MaxDigitsSingle() const
+int IGESData_GlobalSection::MaxDigitsSingle() const
 {
   return theMaxDigitsSingle;
 }
 
 //=================================================================================================
 
-Standard_Integer IGESData_GlobalSection::MaxPower10Double() const
+int IGESData_GlobalSection::MaxPower10Double() const
 {
   return theMaxPower10Double;
 }
 
 //=================================================================================================
 
-Standard_Integer IGESData_GlobalSection::MaxDigitsDouble() const
+int IGESData_GlobalSection::MaxDigitsDouble() const
 {
   return theMaxDigitsDouble;
 }
 
 //=================================================================================================
 
-Handle(TCollection_HAsciiString) IGESData_GlobalSection::ReceiveName() const
+occ::handle<TCollection_HAsciiString> IGESData_GlobalSection::ReceiveName() const
 {
   return theReceiveName;
 }
 
 //=================================================================================================
 
-Standard_Real IGESData_GlobalSection::Scale() const
+double IGESData_GlobalSection::Scale() const
 {
   return theScale;
 }
 
 //=================================================================================================
 
-Standard_Real IGESData_GlobalSection::CascadeUnit() const
+double IGESData_GlobalSection::CascadeUnit() const
 {
   return theCascadeUnit;
 }
 
 //=================================================================================================
 
-Standard_Integer IGESData_GlobalSection::UnitFlag() const
+int IGESData_GlobalSection::UnitFlag() const
 {
   return theUnitFlag;
 }
 
 //=================================================================================================
 
-Handle(TCollection_HAsciiString) IGESData_GlobalSection::UnitName() const
+occ::handle<TCollection_HAsciiString> IGESData_GlobalSection::UnitName() const
 {
   return theUnitName;
 }
 
 //=================================================================================================
 
-Standard_Integer IGESData_GlobalSection::LineWeightGrad() const
+int IGESData_GlobalSection::LineWeightGrad() const
 {
   return theLineWeightGrad;
 }
 
 //=================================================================================================
 
-Standard_Real IGESData_GlobalSection::MaxLineWeight() const
+double IGESData_GlobalSection::MaxLineWeight() const
 {
   return theMaxLineWeight;
 }
 
 //=================================================================================================
 
-Handle(TCollection_HAsciiString) IGESData_GlobalSection::Date() const
+occ::handle<TCollection_HAsciiString> IGESData_GlobalSection::Date() const
 {
   return theDate;
 }
 
 //=================================================================================================
 
-Standard_Real IGESData_GlobalSection::Resolution() const
+double IGESData_GlobalSection::Resolution() const
 {
   return theResolution;
 }
 
 //=================================================================================================
 
-Standard_Real IGESData_GlobalSection::MaxCoord() const
+double IGESData_GlobalSection::MaxCoord() const
 {
   return theMaxCoord;
 }
 
 //=================================================================================================
 
-Standard_Boolean IGESData_GlobalSection::HasMaxCoord() const
+bool IGESData_GlobalSection::HasMaxCoord() const
 {
   return hasMaxCoord;
 }
 
 //=================================================================================================
 
-Handle(TCollection_HAsciiString) IGESData_GlobalSection::AuthorName() const
+occ::handle<TCollection_HAsciiString> IGESData_GlobalSection::AuthorName() const
 {
   return theAuthorName;
 }
 
 //=================================================================================================
 
-Handle(TCollection_HAsciiString) IGESData_GlobalSection::CompanyName() const
+occ::handle<TCollection_HAsciiString> IGESData_GlobalSection::CompanyName() const
 {
   return theCompanyName;
 }
 
 //=================================================================================================
 
-Standard_Integer IGESData_GlobalSection::IGESVersion() const
+int IGESData_GlobalSection::IGESVersion() const
 {
   return theIGESVersion;
 }
 
 //=================================================================================================
 
-Standard_Integer IGESData_GlobalSection::DraftingStandard() const
+int IGESData_GlobalSection::DraftingStandard() const
 {
   return theDraftingStandard;
 }
 
 //=================================================================================================
 
-Handle(TCollection_HAsciiString) IGESData_GlobalSection::LastChangeDate() const
+occ::handle<TCollection_HAsciiString> IGESData_GlobalSection::LastChangeDate() const
 {
   return theLastChangeDate;
 }
 
 //=================================================================================================
 
-Standard_Boolean IGESData_GlobalSection::HasLastChangeDate() const
+bool IGESData_GlobalSection::HasLastChangeDate() const
 {
   return (!theLastChangeDate.IsNull());
 }
@@ -696,9 +693,9 @@ void IGESData_GlobalSection::SetLastChangeDate()
 {
   if (HasLastChangeDate())
     return;
-  Standard_Integer mois, jour, annee, heure, minute, seconde, millisec, microsec;
-  OSD_Process      system;
-  Quantity_Date    ladate = system.SystemDate();
+  int           mois, jour, annee, heure, minute, seconde, millisec, microsec;
+  OSD_Process   system;
+  Quantity_Date ladate = system.SystemDate();
   ladate.Values(mois, jour, annee, heure, minute, seconde, millisec, microsec);
   if (annee < 2000)
     // #65 rln 12.02.99 S4151 (explicitly force YYMMDD.HHMMSS before Y2000)
@@ -710,75 +707,74 @@ void IGESData_GlobalSection::SetLastChangeDate()
 
 //=================================================================================================
 
-Standard_Boolean IGESData_GlobalSection::HasApplicationProtocol() const
+bool IGESData_GlobalSection::HasApplicationProtocol() const
 {
   return !theAppliProtocol.IsNull();
 }
 
 //=================================================================================================
 
-Handle(TCollection_HAsciiString) IGESData_GlobalSection::ApplicationProtocol() const
+occ::handle<TCollection_HAsciiString> IGESData_GlobalSection::ApplicationProtocol() const
 {
   return theAppliProtocol;
 }
 
 //=================================================================================================
 
-Handle(TCollection_HAsciiString) IGESData_GlobalSection::NewDateString(
-  const Standard_Integer annee,
-  const Standard_Integer mois,
-  const Standard_Integer jour,
-  const Standard_Integer heure,
-  const Standard_Integer minute,
-  const Standard_Integer seconde,
-  const Standard_Integer mode)
+occ::handle<TCollection_HAsciiString> IGESData_GlobalSection::NewDateString(const int annee,
+                                                                            const int mois,
+                                                                            const int jour,
+                                                                            const int heure,
+                                                                            const int minute,
+                                                                            const int seconde,
+                                                                            const int mode)
 {
   //  0 : IGES annee a l ancienne 00-99    -1 IGES annee complete    1 lisible
-  char             madate[60];
-  Standard_Integer moi = mois, jou = jour, anne = annee;
-  Standard_Integer heur = heure, minut = minute, second = seconde;
+  char madate[60];
+  int  moi = mois, jou = jour, anne = annee;
+  int  heur = heure, minut = minute, second = seconde;
   if (annee == 0)
   {
-    Standard_Integer millisec, microsec;
-    OSD_Process      system;
-    Quantity_Date    ladate = system.SystemDate();
+    int           millisec, microsec;
+    OSD_Process   system;
+    Quantity_Date ladate = system.SystemDate();
     ladate.Values(moi, jou, anne, heur, minut, second, millisec, microsec);
   }
   if (mode == 0 || mode == -1)
   {
-    Standard_Integer an      = anne % 100;
-    Standard_Boolean dizaine = (an >= 10);
+    int  an      = anne % 100;
+    bool dizaine = (an >= 10);
     if (!dizaine)
       an += 10;
     if (mode < 0)
     {
       an      = anne;
-      dizaine = Standard_True;
+      dizaine = true;
     }
-    Standard_Integer date1 = (an) * 10000 + moi * 100 + jou;
-    Standard_Integer date2 = (heur + 100) * 10000 + minut * 100 + second;
-    sprintf(madate, "%d%d", date1, date2);
+    int date1 = (an) * 10000 + moi * 100 + jou;
+    int date2 = (heur + 100) * 10000 + minut * 100 + second;
+    Sprintf(madate, "%d%d", date1, date2);
     madate[(mode == 0 ? 6 : 8)] = '.';
     if (!dizaine)
       madate[0] = '0';
   }
   else if (mode == 1)
   {
-    sprintf(madate, "%4.4d-%2.2d-%2.2d:%2.2d-%2.2d-%2.2d", anne, moi, jou, heur, minut, second);
+    Sprintf(madate, "%4.4d-%2.2d-%2.2d:%2.2d-%2.2d-%2.2d", anne, moi, jou, heur, minut, second);
   }
   return new TCollection_HAsciiString(madate);
 }
 
 //=================================================================================================
 
-Handle(TCollection_HAsciiString) IGESData_GlobalSection::NewDateString(
-  const Handle(TCollection_HAsciiString)& date,
-  const Standard_Integer                  mode)
+occ::handle<TCollection_HAsciiString> IGESData_GlobalSection::NewDateString(
+  const occ::handle<TCollection_HAsciiString>& date,
+  const int                                    mode)
 {
-  Standard_Integer anne, moi, jou, heur, minut, second;
+  int anne, moi, jou, heur, minut, second;
   if (date.IsNull())
     return date;
-  Standard_Integer i0 = 0;
+  int i0 = 0;
   if (date->Length() == 15)
     i0 = 2;
   else if (date->Length() != 13)
@@ -807,122 +803,122 @@ Handle(TCollection_HAsciiString) IGESData_GlobalSection::NewDateString(
 
 //=================================================================================================
 
-Standard_Real IGESData_GlobalSection::UnitValue() const
+double IGESData_GlobalSection::UnitValue() const
 {
   return IGESData_BasicEditor::UnitFlagValue(theUnitFlag) / theCascadeUnit;
 }
 
 // ###############           UPDATES           ###############
 
-void IGESData_GlobalSection::SetSeparator(const Standard_Character val)
+void IGESData_GlobalSection::SetSeparator(const char val)
 {
   theSeparator = val;
 }
 
-void IGESData_GlobalSection::SetEndMark(const Standard_Character val)
+void IGESData_GlobalSection::SetEndMark(const char val)
 {
   theEndMark = val;
 }
 
-void IGESData_GlobalSection::SetSendName(const Handle(TCollection_HAsciiString)& val)
+void IGESData_GlobalSection::SetSendName(const occ::handle<TCollection_HAsciiString>& val)
 {
   theSendName = TranslatedFromHollerith(val);
 }
 
-void IGESData_GlobalSection::SetFileName(const Handle(TCollection_HAsciiString)& val)
+void IGESData_GlobalSection::SetFileName(const occ::handle<TCollection_HAsciiString>& val)
 {
   theFileName = TranslatedFromHollerith(val);
 }
 
-void IGESData_GlobalSection::SetSystemId(const Handle(TCollection_HAsciiString)& val)
+void IGESData_GlobalSection::SetSystemId(const occ::handle<TCollection_HAsciiString>& val)
 {
   theSystemId = TranslatedFromHollerith(val);
 }
 
-void IGESData_GlobalSection::SetInterfaceVersion(const Handle(TCollection_HAsciiString)& val)
+void IGESData_GlobalSection::SetInterfaceVersion(const occ::handle<TCollection_HAsciiString>& val)
 {
   theInterfaceVersion = TranslatedFromHollerith(val);
 }
 
-void IGESData_GlobalSection::SetIntegerBits(const Standard_Integer val)
+void IGESData_GlobalSection::SetIntegerBits(const int val)
 {
   theIntegerBits = val;
 }
 
-void IGESData_GlobalSection::SetMaxPower10Single(const Standard_Integer val)
+void IGESData_GlobalSection::SetMaxPower10Single(const int val)
 {
   theMaxPower10Single = val;
 }
 
-void IGESData_GlobalSection::SetMaxDigitsSingle(const Standard_Integer val)
+void IGESData_GlobalSection::SetMaxDigitsSingle(const int val)
 {
   theMaxDigitsSingle = val;
 }
 
-void IGESData_GlobalSection::SetMaxPower10Double(const Standard_Integer val)
+void IGESData_GlobalSection::SetMaxPower10Double(const int val)
 {
   theMaxPower10Double = val;
 }
 
-void IGESData_GlobalSection::SetMaxDigitsDouble(const Standard_Integer val)
+void IGESData_GlobalSection::SetMaxDigitsDouble(const int val)
 {
   theMaxDigitsDouble = val;
 }
 
-void IGESData_GlobalSection::SetReceiveName(const Handle(TCollection_HAsciiString)& val)
+void IGESData_GlobalSection::SetReceiveName(const occ::handle<TCollection_HAsciiString>& val)
 {
   theReceiveName = TranslatedFromHollerith(val);
 }
 
-void IGESData_GlobalSection::SetScale(const Standard_Real val)
+void IGESData_GlobalSection::SetScale(const double val)
 {
   theScale = val;
 }
 
-void IGESData_GlobalSection::SetCascadeUnit(const Standard_Real theUnit)
+void IGESData_GlobalSection::SetCascadeUnit(const double theUnit)
 {
   theCascadeUnit = theUnit;
 }
 
-void IGESData_GlobalSection::SetUnitFlag(const Standard_Integer val)
+void IGESData_GlobalSection::SetUnitFlag(const int val)
 {
   theUnitFlag = val;
 }
 
-void IGESData_GlobalSection::SetUnitName(const Handle(TCollection_HAsciiString)& val)
+void IGESData_GlobalSection::SetUnitName(const occ::handle<TCollection_HAsciiString>& val)
 {
   theUnitName = TranslatedFromHollerith(val);
 }
 
-void IGESData_GlobalSection::SetLineWeightGrad(const Standard_Integer val)
+void IGESData_GlobalSection::SetLineWeightGrad(const int val)
 {
   theLineWeightGrad = val;
 }
 
-void IGESData_GlobalSection::SetMaxLineWeight(const Standard_Real val)
+void IGESData_GlobalSection::SetMaxLineWeight(const double val)
 {
   theMaxLineWeight = val;
 }
 
-void IGESData_GlobalSection::SetDate(const Handle(TCollection_HAsciiString)& val)
+void IGESData_GlobalSection::SetDate(const occ::handle<TCollection_HAsciiString>& val)
 {
   theDate = TranslatedFromHollerith(val);
 }
 
-void IGESData_GlobalSection::SetResolution(const Standard_Real val)
+void IGESData_GlobalSection::SetResolution(const double val)
 {
   theResolution = val;
 }
 
-void IGESData_GlobalSection::SetMaxCoord(const Standard_Real val)
+void IGESData_GlobalSection::SetMaxCoord(const double val)
 {
   hasMaxCoord = (val > 0.);
   theMaxCoord = (hasMaxCoord ? val : 0.);
 }
 
-void IGESData_GlobalSection::MaxMaxCoord(const Standard_Real val)
+void IGESData_GlobalSection::MaxMaxCoord(const double val)
 {
-  Standard_Real aval = Abs(val);
+  double aval = std::abs(val);
   if (hasMaxCoord)
   {
     if (aval > theMaxCoord)
@@ -939,32 +935,33 @@ void IGESData_GlobalSection::MaxMaxCoords(const gp_XYZ& xyz)
   MaxMaxCoord(xyz.Z());
 }
 
-void IGESData_GlobalSection::SetAuthorName(const Handle(TCollection_HAsciiString)& val)
+void IGESData_GlobalSection::SetAuthorName(const occ::handle<TCollection_HAsciiString>& val)
 {
   theAuthorName = TranslatedFromHollerith(val);
 }
 
-void IGESData_GlobalSection::SetCompanyName(const Handle(TCollection_HAsciiString)& val)
+void IGESData_GlobalSection::SetCompanyName(const occ::handle<TCollection_HAsciiString>& val)
 {
   theCompanyName = TranslatedFromHollerith(val);
 }
 
-void IGESData_GlobalSection::SetIGESVersion(const Standard_Integer val)
+void IGESData_GlobalSection::SetIGESVersion(const int val)
 {
   theIGESVersion = val;
 }
 
-void IGESData_GlobalSection::SetDraftingStandard(const Standard_Integer val)
+void IGESData_GlobalSection::SetDraftingStandard(const int val)
 {
   theDraftingStandard = val;
 }
 
-void IGESData_GlobalSection::SetLastChangeDate(const Handle(TCollection_HAsciiString)& val)
+void IGESData_GlobalSection::SetLastChangeDate(const occ::handle<TCollection_HAsciiString>& val)
 {
   theLastChangeDate = TranslatedFromHollerith(val);
 }
 
-void IGESData_GlobalSection::SetApplicationProtocol(const Handle(TCollection_HAsciiString)& val)
+void IGESData_GlobalSection::SetApplicationProtocol(
+  const occ::handle<TCollection_HAsciiString>& val)
 {
   theAppliProtocol = TranslatedFromHollerith(val);
 }

@@ -12,26 +12,28 @@
 // commercial license or contractual agreement.
 
 #include <SelectMgr_BVHThreadPool.hxx>
+
 #include <Message.hxx>
 #include <OSD.hxx>
 #include <OSD_Parallel.hxx>
+#include <Standard_ErrorHandler.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(SelectMgr_BVHThreadPool, Standard_Transient)
 
 //=================================================================================================
 
-SelectMgr_BVHThreadPool::SelectMgr_BVHThreadPool(Standard_Integer theNbThreads)
-    : myToStopBVHThread(Standard_False),
-      myWakeEvent(Standard_False),
-      myIdleEvent(Standard_True),
-      myIsStarted(Standard_False)
+SelectMgr_BVHThreadPool::SelectMgr_BVHThreadPool(int theNbThreads)
+    : myToStopBVHThread(false),
+      myWakeEvent(false),
+      myIdleEvent(true),
+      myIsStarted(false)
 {
-  Standard_Integer aBVHThreadsNum = Max(1, theNbThreads);
-  myBVHThreads.Resize(1, aBVHThreadsNum, Standard_False);
+  int aBVHThreadsNum = std::max(1, theNbThreads);
+  myBVHThreads.Resize(1, aBVHThreadsNum, false);
 
-  Standard_Boolean toCatchFpe = OSD::ToCatchFloatingSignals();
+  bool toCatchFpe = OSD::ToCatchFloatingSignals();
 
-  for (Standard_Integer i = myBVHThreads.Lower(); i <= myBVHThreads.Upper(); ++i)
+  for (int i = myBVHThreads.Lower(); i <= myBVHThreads.Upper(); ++i)
   {
     BVHThread& aThread = myBVHThreads.ChangeValue(i);
     aThread.SetFunction(&BVHThread::runThread);
@@ -55,14 +57,14 @@ void SelectMgr_BVHThreadPool::StopThreads()
   {
     return;
   }
-  myToStopBVHThread = Standard_True;
+  myToStopBVHThread = true;
   myWakeEvent.Set();
-  for (Standard_Integer i = myBVHThreads.Lower(); i <= myBVHThreads.Upper(); ++i)
+  for (int i = myBVHThreads.Lower(); i <= myBVHThreads.Upper(); ++i)
   {
     myBVHThreads.ChangeValue(i).Wait();
   }
-  myToStopBVHThread = Standard_False;
-  myIsStarted       = Standard_False;
+  myToStopBVHThread = false;
+  myIsStarted       = false;
 }
 
 //=================================================================================================
@@ -76,7 +78,7 @@ void SelectMgr_BVHThreadPool::WaitThreads()
 
 //=================================================================================================
 
-void SelectMgr_BVHThreadPool::AddEntity(const Handle(Select3D_SensitiveEntity)& theEntity)
+void SelectMgr_BVHThreadPool::AddEntity(const occ::handle<Select3D_SensitiveEntity>& theEntity)
 {
   if (!theEntity->ToBuildBVH())
   {
@@ -84,7 +86,7 @@ void SelectMgr_BVHThreadPool::AddEntity(const Handle(Select3D_SensitiveEntity)& 
   }
 
   {
-    Standard_Mutex::Sentry aSentry(myBVHListMutex);
+    std::lock_guard<std::mutex> aLock(myBVHListMutex);
     myBVHToBuildList.Append(theEntity);
     myWakeEvent.Set();
     myIdleEvent.Reset();
@@ -92,10 +94,10 @@ void SelectMgr_BVHThreadPool::AddEntity(const Handle(Select3D_SensitiveEntity)& 
 
   if (!myIsStarted)
   {
-    myIsStarted = Standard_True;
-    for (Standard_Integer i = myBVHThreads.Lower(); i <= myBVHThreads.Upper(); ++i)
+    myIsStarted = true;
+    for (int i = myBVHThreads.Lower(); i <= myBVHThreads.Upper(); ++i)
     {
-      myBVHThreads.ChangeValue(i).Run((Standard_Address)(&myBVHThreads.ChangeValue(i)));
+      myBVHThreads.ChangeValue(i).Run((void*)(&myBVHThreads.ChangeValue(i)));
     }
   }
 }
@@ -115,19 +117,21 @@ void SelectMgr_BVHThreadPool::BVHThread::performThread()
       return;
     }
 
-    myPool->myBVHListMutex.Lock();
-    if (myPool->myBVHToBuildList.IsEmpty())
+    occ::handle<Select3D_SensitiveEntity> anEntity;
     {
-      myPool->myWakeEvent.Reset();
-      myPool->myIdleEvent.Set();
-      myPool->myBVHListMutex.Unlock();
-      continue;
+      std::lock_guard<std::mutex> aListLock(myPool->myBVHListMutex);
+      if (myPool->myBVHToBuildList.IsEmpty())
+      {
+        myPool->myWakeEvent.Reset();
+        myPool->myIdleEvent.Set();
+        continue;
+      }
+      anEntity = myPool->myBVHToBuildList.First();
+      myPool->myBVHToBuildList.RemoveFirst();
     }
-    Handle(Select3D_SensitiveEntity) anEntity = myPool->myBVHToBuildList.First();
-    myPool->myBVHToBuildList.RemoveFirst();
 
-    Standard_Mutex::Sentry anEntry(myMutex);
-    myPool->myBVHListMutex.Unlock();
+    // Lock thread mutex while building BVH
+    std::lock_guard<std::mutex> aThreadLock(myMutex);
 
     if (!anEntity.IsNull())
     {
@@ -138,8 +142,8 @@ void SelectMgr_BVHThreadPool::BVHThread::performThread()
       }
       catch (Standard_Failure const& aFailure)
       {
-        TCollection_AsciiString aMsg = TCollection_AsciiString(aFailure.DynamicType()->Name())
-                                       + ": " + aFailure.GetMessageString();
+        TCollection_AsciiString aMsg =
+          TCollection_AsciiString(aFailure.ExceptionType()) + ": " + aFailure.what();
         Message::DefaultMessenger()->SendFail(aMsg);
       }
       catch (std::exception& anStdException)
@@ -158,9 +162,9 @@ void SelectMgr_BVHThreadPool::BVHThread::performThread()
 
 //=================================================================================================
 
-Standard_Address SelectMgr_BVHThreadPool::BVHThread::runThread(Standard_Address theTask)
+void* SelectMgr_BVHThreadPool::BVHThread::runThread(void* theTask)
 {
   BVHThread* aThread = static_cast<BVHThread*>(theTask);
   aThread->performThread();
-  return NULL;
+  return nullptr;
 }

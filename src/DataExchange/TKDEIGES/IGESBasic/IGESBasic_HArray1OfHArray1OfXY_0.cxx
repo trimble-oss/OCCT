@@ -18,10 +18,35 @@
 
 #include <Standard_Type.hxx>
 
-#define Handle_TheKey Handle(TColgp_HArray1OfXY)
-#define TheKey TColgp_HArray1OfXY
-#define TheKey_hxx <TColgp_HArray1OfXY.hxx>
-#define Interface_JaggedArray IGESBasic_HArray1OfHArray1OfXY
-#define Interface_JaggedArray_hxx <IGESBasic_HArray1OfHArray1OfXY.hxx>
-#define Handle_Interface_JaggedArray Handle(IGESBasic_HArray1OfHArray1OfXY)
-#include <Interface_JaggedArray.gxx>
+IGESBasic_HArray1OfHArray1OfXY::IGESBasic_HArray1OfHArray1OfXY(const int low, const int up)
+    : thelist(low, up)
+{
+  occ::handle<Standard_Transient> nulo;
+  thelist.Init(nulo);
+}
+
+int IGESBasic_HArray1OfHArray1OfXY::Lower() const
+{
+  return thelist.Lower();
+}
+
+int IGESBasic_HArray1OfHArray1OfXY::Upper() const
+{
+  return thelist.Upper();
+}
+
+int IGESBasic_HArray1OfHArray1OfXY::Length() const
+{
+  return thelist.Length();
+}
+
+void IGESBasic_HArray1OfHArray1OfXY::SetValue(const int                                      num,
+                                              const occ::handle<NCollection_HArray1<gp_XY>>& val)
+{
+  thelist.SetValue(num, val);
+}
+
+occ::handle<NCollection_HArray1<gp_XY>> IGESBasic_HArray1OfHArray1OfXY::Value(const int num) const
+{
+  return occ::down_cast<NCollection_HArray1<gp_XY>>(thelist.Value(num));
+}

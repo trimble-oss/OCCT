@@ -45,28 +45,28 @@ public:
     const_iterator;
 
   //! Returns an iterator pointing to the first element in the list.
-  iterator begin() const { return Iterator(*this); }
+  iterator begin() const noexcept { return Iterator(*this); }
 
   //! Returns an iterator referring to the past-the-end element in the list.
-  iterator end() const { return Iterator(); }
+  iterator end() const noexcept { return Iterator(); }
 
   //! Returns a const iterator pointing to the first element in the list.
-  const_iterator cbegin() const { return Iterator(*this); }
+  const_iterator cbegin() const noexcept { return Iterator(*this); }
 
   //! Returns a const iterator referring to the past-the-end element in the list.
-  const_iterator cend() const { return Iterator(); }
+  const_iterator cend() const noexcept { return Iterator(); }
 
 public:
   // ---------- PUBLIC METHODS ------------
 
   //! Empty constructor.
   NCollection_List()
-      : NCollection_BaseList(Handle(NCollection_BaseAllocator)())
+      : NCollection_BaseList(occ::handle<NCollection_BaseAllocator>())
   {
   }
 
   //! Constructor
-  explicit NCollection_List(const Handle(NCollection_BaseAllocator)& theAllocator)
+  explicit NCollection_List(const occ::handle<NCollection_BaseAllocator>& theAllocator)
       : NCollection_BaseList(theAllocator)
   {
   }
@@ -86,7 +86,7 @@ public:
   }
 
   //! Size - Number of items
-  Standard_Integer Size(void) const { return Extent(); }
+  int Size() const noexcept { return Extent(); }
 
   //! Replace this list by the items of another list (theOther parameter).
   //! This method does not change the internal allocator.
@@ -120,7 +120,7 @@ public:
   }
 
   //! Clear this list
-  void Clear(const Handle(NCollection_BaseAllocator)& theAllocator = 0L)
+  void Clear(const occ::handle<NCollection_BaseAllocator>& theAllocator = nullptr)
   {
     PClear(ListNode::delNode);
     if (!theAllocator.IsNull())
@@ -128,28 +128,28 @@ public:
   }
 
   //! First item
-  const TheItemType& First(void) const
+  const TheItemType& First() const
   {
     Standard_NoSuchObject_Raise_if(IsEmpty(), "NCollection_List::First");
     return ((const ListNode*)PFirst())->Value();
   }
 
   //! First item (non-const)
-  TheItemType& First(void)
+  TheItemType& First()
   {
     Standard_NoSuchObject_Raise_if(IsEmpty(), "NCollection_List::First");
     return ((ListNode*)PFirst())->ChangeValue();
   }
 
   //! Last item
-  const TheItemType& Last(void) const
+  const TheItemType& Last() const
   {
     Standard_NoSuchObject_Raise_if(IsEmpty(), "NCollection_List::Last");
     return ((const ListNode*)PLast())->Value();
   }
 
   //! Last item (non-const)
-  TheItemType& Last(void)
+  TheItemType& Last()
   {
     Standard_NoSuchObject_Raise_if(IsEmpty(), "NCollection_List::Last");
     return ((ListNode*)PLast())->ChangeValue();
@@ -244,7 +244,7 @@ public:
   }
 
   //! RemoveFirst item
-  void RemoveFirst(void) { PRemoveFirst(ListNode::delNode); }
+  void RemoveFirst() { PRemoveFirst(ListNode::delNode); }
 
   //! Remove item pointed by iterator theIter;
   //! theIter is then set to the next item
@@ -253,17 +253,17 @@ public:
   //! Remove the first occurrence of the object.
   template <typename TheValueType> // instantiate this method on first call only for types defining
                                    // equality operator
-  Standard_Boolean Remove(const TheValueType& theObject)
+  bool Remove(const TheValueType& theObject)
   {
     for (Iterator anIter(*this); anIter.More(); anIter.Next())
     {
       if (anIter.Value() == theObject)
       {
         Remove(anIter);
-        return Standard_True;
+        return true;
       }
     }
-    return Standard_False;
+    return false;
   }
 
   //! InsertBefore
@@ -349,20 +349,20 @@ public:
   //! Return true if object is stored in the list.
   template <typename TheValueType> // instantiate this method on first call only for types defining
                                    // equality operator
-  Standard_Boolean Contains(const TheValueType& theObject) const
+  bool Contains(const TheValueType& theObject) const
   {
     for (Iterator anIter(*this); anIter.More(); anIter.Next())
     {
       if (anIter.Value() == theObject)
       {
-        return Standard_True;
+        return true;
       }
     }
-    return Standard_False;
+    return false;
   }
 
   //! Destructor - clears the List
-  virtual ~NCollection_List(void) { Clear(); }
+  ~NCollection_List() override { Clear(); }
 
 private:
   // ----------- PRIVATE METHODS -----------

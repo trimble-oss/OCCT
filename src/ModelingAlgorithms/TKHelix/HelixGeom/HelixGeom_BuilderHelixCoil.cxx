@@ -14,25 +14,24 @@
 #include <Geom_BSplineCurve.hxx>
 #include <HelixGeom_BuilderHelixCoil.hxx>
 #include <HelixGeom_HelixCurve.hxx>
-#include <HelixGeom_HelixCurve.hxx>
 #include <HelixGeom_Tools.hxx>
 
 //=================================================================================================
 
 HelixGeom_BuilderHelixCoil::HelixGeom_BuilderHelixCoil()
-    : HelixGeom_BuilderHelixGen()
+
 {
   myT1          = 0.;
   myT2          = 2. * M_PI;
   myPitch       = 1.;
   myRStart      = 1.;
   myTaperAngle  = 0.;
-  myIsClockWise = Standard_True;
+  myIsClockWise = true;
 }
 
 //=================================================================================================
 
-HelixGeom_BuilderHelixCoil::~HelixGeom_BuilderHelixCoil() {}
+HelixGeom_BuilderHelixCoil::~HelixGeom_BuilderHelixCoil() = default;
 
 //=================================================================================================
 
@@ -41,10 +40,10 @@ void HelixGeom_BuilderHelixCoil::Perform()
   myErrorStatus   = 0;
   myWarningStatus = 0;
   // Initialize variables for curve approximation
-  Standard_Integer             iErr;
-  HelixGeom_HelixCurve         aAdaptor;
-  Handle(HelixGeom_HelixCurve) aHAdaptor;
-  Handle(Geom_BSplineCurve)    aBC;
+  int                               iErr;
+  HelixGeom_HelixCurve              aAdaptor;
+  occ::handle<HelixGeom_HelixCurve> aHAdaptor;
+  occ::handle<Geom_BSplineCurve>    aBC;
   // Clear previous results and setup helix adaptor
   myCurves.Clear();
   // Load helix parameters into the adaptor

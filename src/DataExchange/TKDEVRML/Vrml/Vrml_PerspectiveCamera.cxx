@@ -28,8 +28,8 @@ Vrml_PerspectiveCamera::Vrml_PerspectiveCamera()
 
 Vrml_PerspectiveCamera::Vrml_PerspectiveCamera(const gp_Vec&          aPosition,
                                                const Vrml_SFRotation& aOrientation,
-                                               const Standard_Real    aFocalDistance,
-                                               const Standard_Real    aHeightAngle)
+                                               const double           aFocalDistance,
+                                               const double           aHeightAngle)
 {
   myPosition      = aPosition;
   myOrientation   = aOrientation;
@@ -57,22 +57,22 @@ Vrml_SFRotation Vrml_PerspectiveCamera::Orientation() const
   return myOrientation;
 }
 
-void Vrml_PerspectiveCamera::SetFocalDistance(const Standard_Real aFocalDistance)
+void Vrml_PerspectiveCamera::SetFocalDistance(const double aFocalDistance)
 {
   myFocalDistance = aFocalDistance;
 }
 
-Standard_Real Vrml_PerspectiveCamera::FocalDistance() const
+double Vrml_PerspectiveCamera::FocalDistance() const
 {
   return myFocalDistance;
 }
 
-void Vrml_PerspectiveCamera::SetAngle(const Standard_Real aHeightAngle)
+void Vrml_PerspectiveCamera::SetAngle(const double aHeightAngle)
 {
   myHeightAngle = aHeightAngle;
 }
 
-Standard_Real Vrml_PerspectiveCamera::Angle() const
+double Vrml_PerspectiveCamera::Angle() const
 {
   return myHeightAngle;
 }
@@ -80,27 +80,29 @@ Standard_Real Vrml_PerspectiveCamera::Angle() const
 Standard_OStream& Vrml_PerspectiveCamera::Print(Standard_OStream& anOStream) const
 {
   anOStream << "PerspectiveCamera {\n";
-  if (Abs(myPosition.X() - 0) > 0.0001 || Abs(myPosition.Y() - 0) > 0.0001
-      || Abs(myPosition.Z() - 1) > 0.0001)
+  if (std::abs(myPosition.X() - 0) > 0.0001 || std::abs(myPosition.Y() - 0) > 0.0001
+      || std::abs(myPosition.Z() - 1) > 0.0001)
   {
     anOStream << "    position\t\t";
     anOStream << myPosition.X() << " " << myPosition.Y() << " " << myPosition.Z() << "\n";
   }
 
-  if (Abs(myOrientation.RotationX() - 0) > 0.0001 || Abs(myOrientation.RotationY() - 0) > 0.0001
-      || Abs(myOrientation.RotationZ() - 1) > 0.0001 || Abs(myOrientation.Angle() - 0) > 0.0001)
+  if (std::abs(myOrientation.RotationX() - 0) > 0.0001
+      || std::abs(myOrientation.RotationY() - 0) > 0.0001
+      || std::abs(myOrientation.RotationZ() - 1) > 0.0001
+      || std::abs(myOrientation.Angle() - 0) > 0.0001)
   {
     anOStream << "    orientation\t\t";
     anOStream << myOrientation.RotationX() << " " << myOrientation.RotationY() << " ";
     anOStream << myOrientation.RotationZ() << " " << myOrientation.Angle() << "\n";
   }
 
-  if (Abs(myFocalDistance - 5) > 0.0001)
+  if (std::abs(myFocalDistance - 5) > 0.0001)
   {
     anOStream << "    focalDistance\t";
     anOStream << myFocalDistance << "\n";
   }
-  if (Abs(myHeightAngle - 0.785398) > 0.0000001)
+  if (std::abs(myHeightAngle - 0.785398) > 0.0000001)
   {
     anOStream << "    heightAngle\t\t";
     anOStream << myHeightAngle << "\n";

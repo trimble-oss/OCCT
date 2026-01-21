@@ -32,20 +32,19 @@ IMPLEMENT_STANDARD_RTTIEXT(Xw_Window, Aspect_Window)
 
 //=================================================================================================
 
-Xw_Window::Xw_Window(const Handle(Aspect_DisplayConnection)& theXDisplay,
-                     const Standard_CString                  theTitle,
-                     const Standard_Integer                  thePxLeft,
-                     const Standard_Integer                  thePxTop,
-                     const Standard_Integer                  thePxWidth,
-                     const Standard_Integer                  thePxHeight)
-    : Aspect_Window(),
-      myXWindow(0),
-      myFBConfig(NULL),
+Xw_Window::Xw_Window(const occ::handle<Aspect_DisplayConnection>& theXDisplay,
+                     const char*                                  theTitle,
+                     const int                                    thePxLeft,
+                     const int                                    thePxTop,
+                     const int                                    thePxWidth,
+                     const int                                    thePxHeight)
+    : myXWindow(0),
+      myFBConfig(nullptr),
       myXLeft(thePxLeft),
       myYTop(thePxTop),
       myXRight(thePxLeft + thePxWidth),
       myYBottom(thePxTop + thePxHeight),
-      myIsOwnWin(Standard_True)
+      myIsOwnWin(true)
 {
   myDisplay = theXDisplay;
   if (thePxWidth <= 0 || thePxHeight <= 0)
@@ -69,7 +68,7 @@ Xw_Window::Xw_Window(const Handle(Aspect_DisplayConnection)& theXDisplay,
   memset(&aWinAttr, 0, sizeof(aWinAttr));
   aWinAttr.event_mask = ExposureMask | StructureNotifyMask;
 
-  if (aVisInfo != NULL)
+  if (aVisInfo != nullptr)
   {
     aWinAttr.colormap = XCreateColormap(aDisp, aParent, aVisInfo->visual, AllocNone);
   }
@@ -83,9 +82,9 @@ Xw_Window::Xw_Window(const Handle(Aspect_DisplayConnection)& theXDisplay,
                                     thePxWidth,
                                     thePxHeight,
                                     0,
-                                    aVisInfo != NULL ? aVisInfo->depth : CopyFromParent,
+                                    aVisInfo != nullptr ? aVisInfo->depth : CopyFromParent,
                                     InputOutput,
-                                    aVisInfo != NULL ? aVisInfo->visual : CopyFromParent,
+                                    aVisInfo != nullptr ? aVisInfo->visual : CopyFromParent,
                                     CWBorderPixel | CWColormap | CWEventMask | CWOverrideRedirect,
                                     &aWinAttr);
   if (myXWindow == 0)
@@ -101,7 +100,14 @@ Xw_Window::Xw_Window(const Handle(Aspect_DisplayConnection)& theXDisplay,
   aSizeHints.width  = thePxWidth;
   aSizeHints.height = thePxHeight;
   aSizeHints.flags |= PSize;
-  XSetStandardProperties(aDisp, (Window)myXWindow, theTitle, theTitle, None, NULL, 0, &aSizeHints);
+  XSetStandardProperties(aDisp,
+                         (Window)myXWindow,
+                         theTitle,
+                         theTitle,
+                         None,
+                         nullptr,
+                         0,
+                         &aSizeHints);
 
   /*XTextProperty aTitleProperty;
   aTitleProperty.encoding = None;
@@ -123,17 +129,16 @@ Xw_Window::Xw_Window(const Handle(Aspect_DisplayConnection)& theXDisplay,
 
 //=================================================================================================
 
-Xw_Window::Xw_Window(const Handle(Aspect_DisplayConnection)& theXDisplay,
-                     const Aspect_Drawable                   theXWin,
-                     const Aspect_FBConfig                   theFBConfig)
-    : Aspect_Window(),
-      myXWindow(theXWin),
+Xw_Window::Xw_Window(const occ::handle<Aspect_DisplayConnection>& theXDisplay,
+                     const Aspect_Drawable                        theXWin,
+                     const Aspect_FBConfig                        theFBConfig)
+    : myXWindow(theXWin),
       myFBConfig(theFBConfig),
       myXLeft(0),
       myYTop(0),
       myXRight(512),
       myYBottom(512),
-      myIsOwnWin(Standard_False)
+      myIsOwnWin(false)
 {
   myDisplay = theXDisplay;
   if (theXWin == 0)
@@ -156,7 +161,7 @@ Xw_Window::Xw_Window(const Handle(Aspect_DisplayConnection)& theXDisplay,
   int          aNbItems = 0;
   XVisualInfo* aVisInfo =
     XGetVisualInfo(aDisp, VisualIDMask | VisualScreenMask, &aVisInfoTmp, &aNbItems);
-  if (aVisInfo == NULL)
+  if (aVisInfo == nullptr)
   {
     throw Aspect_WindowDefinitionError("Xw_Window, Visual is unavailable");
   }
@@ -182,7 +187,7 @@ Xw_Window::~Xw_Window()
 
 //=================================================================================================
 
-Standard_Boolean Xw_Window::IsMapped() const
+bool Xw_Window::IsMapped() const
 {
   if (myXWindow == 0)
   {
@@ -190,7 +195,7 @@ Standard_Boolean Xw_Window::IsMapped() const
   }
   else if (IsVirtual())
   {
-    return Standard_True;
+    return true;
   }
 
 #if defined(HAVE_XLIB)
@@ -199,7 +204,7 @@ Standard_Boolean Xw_Window::IsMapped() const
   XGetWindowAttributes(myDisplay->GetDisplay(), (Window)myXWindow, &aWinAttr);
   return aWinAttr.map_state == IsUnviewable || aWinAttr.map_state == IsViewable;
 #else
-  return Standard_False;
+  return false;
 #endif
 }
 
@@ -253,16 +258,16 @@ Aspect_TypeOfResize Xw_Window::DoResize()
     return Aspect_TOR_UNKNOWN;
   }
 
-  Standard_Integer    aMask = 0;
+  int                 aMask = 0;
   Aspect_TypeOfResize aMode = Aspect_TOR_UNKNOWN;
 
-  if (Abs(aWinAttr.x - myXLeft) > 2)
+  if (std::abs(aWinAttr.x - myXLeft) > 2)
     aMask |= 1;
-  if (Abs((aWinAttr.x + aWinAttr.width) - myXRight) > 2)
+  if (std::abs((aWinAttr.x + aWinAttr.width) - myXRight) > 2)
     aMask |= 2;
-  if (Abs(aWinAttr.y - myYTop) > 2)
+  if (std::abs(aWinAttr.y - myYTop) > 2)
     aMask |= 4;
-  if (Abs((aWinAttr.y + aWinAttr.height) - myYBottom) > 2)
+  if (std::abs((aWinAttr.y + aWinAttr.height) - myYBottom) > 2)
     aMask |= 8;
   switch (aMask)
   {
@@ -309,11 +314,11 @@ Aspect_TypeOfResize Xw_Window::DoResize()
 
 //=================================================================================================
 
-Standard_Real Xw_Window::Ratio() const
+double Xw_Window::Ratio() const
 {
   if (IsVirtual() || myXWindow == 0)
   {
-    return Standard_Real(myXRight - myXLeft) / Standard_Real(myYBottom - myYTop);
+    return double(myXRight - myXLeft) / double(myYBottom - myYTop);
   }
 
 #if defined(HAVE_XLIB)
@@ -321,7 +326,7 @@ Standard_Real Xw_Window::Ratio() const
   XWindowAttributes aWinAttr;
   memset(&aWinAttr, 0, sizeof(aWinAttr));
   XGetWindowAttributes(myDisplay->GetDisplay(), (Window)myXWindow, &aWinAttr);
-  return Standard_Real(aWinAttr.width) / Standard_Real(aWinAttr.height);
+  return double(aWinAttr.width) / double(aWinAttr.height);
 #else
   return 1.0;
 #endif
@@ -329,10 +334,7 @@ Standard_Real Xw_Window::Ratio() const
 
 //=================================================================================================
 
-void Xw_Window::Position(Standard_Integer& theX1,
-                         Standard_Integer& theY1,
-                         Standard_Integer& theX2,
-                         Standard_Integer& theY2) const
+void Xw_Window::Position(int& theX1, int& theY1, int& theX2, int& theY2) const
 {
   if (IsVirtual() || myXWindow == 0)
   {
@@ -367,7 +369,7 @@ void Xw_Window::Position(Standard_Integer& theX1,
 
 //=================================================================================================
 
-void Xw_Window::Size(Standard_Integer& theWidth, Standard_Integer& theHeight) const
+void Xw_Window::Size(int& theWidth, int& theHeight) const
 {
   if (IsVirtual() || myXWindow == 0)
   {
@@ -402,7 +404,7 @@ void Xw_Window::SetTitle(const TCollection_AsciiString& theTitle)
 
 //=================================================================================================
 
-void Xw_Window::InvalidateContent(const Handle(Aspect_DisplayConnection)& theDisp)
+void Xw_Window::InvalidateContent(const occ::handle<Aspect_DisplayConnection>& theDisp)
 {
   if (myXWindow == 0)
   {
@@ -410,8 +412,8 @@ void Xw_Window::InvalidateContent(const Handle(Aspect_DisplayConnection)& theDis
   }
 
 #if defined(HAVE_XLIB)
-  const Handle(Aspect_DisplayConnection)& aDisp  = !theDisp.IsNull() ? theDisp : myDisplay;
-  Display*                                aDispX = aDisp->GetDisplay();
+  const occ::handle<Aspect_DisplayConnection>& aDisp  = !theDisp.IsNull() ? theDisp : myDisplay;
+  Display*                                     aDispX = aDisp->GetDisplay();
 
   XEvent anEvent;
   memset(&anEvent, 0, sizeof(anEvent));
@@ -660,9 +662,9 @@ bool Xw_Window::ProcessMessage(Aspect_WindowInputListener& theListener,
     }
     case ButtonPress:
     case ButtonRelease: {
-      const Graphic3d_Vec2i aPos(theMsg.xbutton.x, theMsg.xbutton.y);
-      Aspect_VKeyFlags      aFlags  = Aspect_VKeyFlags_NONE;
-      Aspect_VKeyMouse      aButton = Aspect_VKeyMouse_NONE;
+      const NCollection_Vec2<int> aPos(theMsg.xbutton.x, theMsg.xbutton.y);
+      Aspect_VKeyFlags            aFlags  = Aspect_VKeyFlags_NONE;
+      Aspect_VKeyMouse            aButton = Aspect_VKeyMouse_NONE;
       if (theMsg.xbutton.button == Button1)
       {
         aButton = Aspect_VKeyMouse_LeftButton;
@@ -728,9 +730,9 @@ bool Xw_Window::ProcessMessage(Aspect_WindowInputListener& theListener,
         }
       }
 
-      Graphic3d_Vec2i  aPos(theMsg.xmotion.x, theMsg.xmotion.y);
-      Aspect_VKeyMouse aButtons = Aspect_VKeyMouse_NONE;
-      Aspect_VKeyFlags aFlags   = Aspect_VKeyFlags_NONE;
+      NCollection_Vec2<int> aPos(theMsg.xmotion.x, theMsg.xmotion.y);
+      Aspect_VKeyMouse      aButtons = Aspect_VKeyMouse_NONE;
+      Aspect_VKeyFlags      aFlags   = Aspect_VKeyFlags_NONE;
       if ((theMsg.xmotion.state & Button1Mask) != 0)
       {
         aButtons |= Aspect_VKeyMouse_LeftButton;

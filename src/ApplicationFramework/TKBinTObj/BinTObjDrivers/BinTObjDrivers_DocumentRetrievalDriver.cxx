@@ -25,17 +25,16 @@ IMPLEMENT_STANDARD_RTTIEXT(BinTObjDrivers_DocumentRetrievalDriver,
 //=================================================================================================
 
 BinTObjDrivers_DocumentRetrievalDriver::BinTObjDrivers_DocumentRetrievalDriver()
-    : BinLDrivers_DocumentRetrievalDriver()
-{
-}
+
+  = default;
 
 //=================================================================================================
 
-Handle(BinMDF_ADriverTable) BinTObjDrivers_DocumentRetrievalDriver::AttributeDrivers(
-  const Handle(Message_Messenger)& theMsgDrv)
+occ::handle<BinMDF_ADriverTable> BinTObjDrivers_DocumentRetrievalDriver::AttributeDrivers(
+  const occ::handle<Message_Messenger>& theMsgDrv)
 {
   // Standard drivers
-  Handle(BinMDF_ADriverTable) aTable = BinLDrivers::AttributeDrivers(theMsgDrv);
+  occ::handle<BinMDF_ADriverTable> aTable = BinLDrivers::AttributeDrivers(theMsgDrv);
 
   // Native drivers
   BinTObjDrivers::AddDrivers(aTable, theMsgDrv);

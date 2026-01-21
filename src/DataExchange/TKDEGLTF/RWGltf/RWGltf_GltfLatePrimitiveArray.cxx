@@ -33,10 +33,7 @@ RWGltf_GltfLatePrimitiveArray::RWGltf_GltfLatePrimitiveArray(const TCollection_A
 
 //=================================================================================================
 
-RWGltf_GltfLatePrimitiveArray::~RWGltf_GltfLatePrimitiveArray()
-{
-  //
-}
+RWGltf_GltfLatePrimitiveArray::~RWGltf_GltfLatePrimitiveArray() = default;
 
 //=================================================================================================
 
@@ -70,8 +67,9 @@ RWGltf_GltfPrimArrayData& RWGltf_GltfLatePrimitiveArray::AddPrimArrayData(
     // make sure indexes go after vertex positions but before any other vertex attributes
     if (myData.First().Type == RWGltf_GltfArrayType_Position)
     {
-      myData.InsertAfter(myData.Lower(), RWGltf_GltfPrimArrayData(theType));
-      return myData.ChangeValue(myData.Lower() + 1);
+      myData.InsertAfter(NCollection_Sequence<RWGltf_GltfPrimArrayData>::Lower(),
+                         RWGltf_GltfPrimArrayData(theType));
+      return myData.ChangeValue(NCollection_Sequence<RWGltf_GltfPrimArrayData>::Lower() + 1);
     }
     else
     {
@@ -88,19 +86,19 @@ RWGltf_GltfPrimArrayData& RWGltf_GltfLatePrimitiveArray::AddPrimArrayData(
 
 //=================================================================================================
 
-Handle(Poly_Triangulation) RWGltf_GltfLatePrimitiveArray::LoadStreamData() const
+occ::handle<Poly_Triangulation> RWGltf_GltfLatePrimitiveArray::LoadStreamData() const
 {
-  Handle(RWGltf_TriangulationReader) aGltfReader =
-    Handle(RWGltf_TriangulationReader)::DownCast(myReader);
+  occ::handle<RWGltf_TriangulationReader> aGltfReader =
+    occ::down_cast<RWGltf_TriangulationReader>(myReader);
   if (aGltfReader.IsNull())
   {
-    return Handle(Poly_Triangulation)();
+    return occ::handle<Poly_Triangulation>();
   }
 
-  Handle(RWMesh_TriangulationSource) aResult = new RWMesh_TriangulationSource();
+  occ::handle<RWMesh_TriangulationSource> aResult = new RWMesh_TriangulationSource();
   if (!aGltfReader->LoadStreamData(this, aResult))
   {
-    return Handle(Poly_Triangulation)();
+    return occ::handle<Poly_Triangulation>();
   }
   aResult->SetMeshPurpose(aResult->MeshPurpose() | Poly_MeshPurpose_Loaded);
   return aResult;

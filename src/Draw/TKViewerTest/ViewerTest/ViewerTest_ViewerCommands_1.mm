@@ -24,6 +24,8 @@
 #include <TCollection_AsciiString.hxx>
 #include <NCollection_DoubleMap.hxx>
 
+#include <cmath>
+
 #if !defined(MAC_OS_X_VERSION_10_12) || (MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_12)
   // replacements for macOS versions before 10.12
   #define NSEventModifierFlagControl  NSControlKeyMask
@@ -42,29 +44,25 @@
 @end
 
 extern void ActivateView (const TCollection_AsciiString& theViewName,
-                          Standard_Boolean theToUpdate = Standard_True);
+                          bool theToUpdate = true);
 
-extern NCollection_DoubleMap <TCollection_AsciiString, Handle(V3d_View)> ViewerTest_myViews;
+extern NCollection_DoubleMap <TCollection_AsciiString, occ::handle<V3d_View>> ViewerTest_myViews;
 
-// =======================================================================
-// function : GetCocoaScreenResolution
-// purpose  :
-// =======================================================================
-void GetCocoaScreenResolution (Standard_Integer& theWidth, Standard_Integer& theHeight)
+//=================================================================================================
+
+void GetCocoaScreenResolution (int& theWidth, int& theHeight)
 {
   NSRect aRect = [[NSScreen mainScreen] visibleFrame];
-  theWidth = (Standard_Integer )aRect.size.width;
-  theHeight = (Standard_Integer )aRect.size.height;
+  theWidth = (int )aRect.size.width;
+  theHeight = (int )aRect.size.height;
 }
 
-// =======================================================================
-// function : FindViewId
-// purpose  :
-// =======================================================================
+//=================================================================================================
+
 TCollection_AsciiString FindViewId (const NSWindow* theWindow)
 {
   TCollection_AsciiString aViewId = "";
-  NCollection_DoubleMap<TCollection_AsciiString, Handle(V3d_View)>::Iterator anIter(ViewerTest_myViews);
+  NCollection_DoubleMap<TCollection_AsciiString, occ::handle<V3d_View>>::Iterator anIter(ViewerTest_myViews);
   for (;anIter.More();anIter.Next())
   {
     NSView* aView = Handle(Cocoa_Window)::DownCast
@@ -100,21 +98,17 @@ TCollection_AsciiString FindViewId (const NSWindow* theWindow)
 
 @end
 
-// =======================================================================
-// function : ViewerMainLoop
-// purpose  :
-// =======================================================================
-int ViewerMainLoop (Standard_Integer, const char** )
+//=================================================================================================
+
+int ViewerMainLoop (int, const char** )
 {
   // unused
   return 0;
 }
 
-// =======================================================================
-// function : ViewerTest_SetCocoaEventManagerView
-// purpose  :
-// =======================================================================
-void ViewerTest_SetCocoaEventManagerView (const Handle(Cocoa_Window)& theWindow)
+//=================================================================================================
+
+void ViewerTest_SetCocoaEventManagerView (const occ::handle<Cocoa_Window>& theWindow)
 {
   if (theWindow.IsNull())
   {
@@ -142,13 +136,13 @@ void ViewerTest_SetCocoaEventManagerView (const Handle(Cocoa_Window)& theWindow)
 }
 
 //! Retrieve cursor position
-static Graphic3d_Vec2i getMouseCoords (NSView*  theView,
+static NCollection_Vec2<int> getMouseCoords (NSView*  theView,
                                        NSEvent* theEvent)
 {
   NSPoint aMouseLoc = [theView convertPoint: [theEvent locationInWindow] fromView: nil];
   NSRect  aBounds   = [theView bounds];
-  return Graphic3d_Vec2i (Standard_Integer(aMouseLoc.x),
-                          Standard_Integer(aBounds.size.height - aMouseLoc.y));
+  return NCollection_Vec2<int> (int(aMouseLoc.x),
+                          int(aBounds.size.height - aMouseLoc.y));
 }
 
 //! Convert key flags from mouse event.
@@ -180,20 +174,16 @@ static Aspect_VKeyFlags getMouseKeyFlags (NSEvent* theEvent)
 
 @implementation ViewerTest_CocoaEventManagerView
 
-// =======================================================================
-// function : setFrameSize
-// purpose  :
-// =======================================================================
+//=================================================================================================
+
 - (void )setFrameSize: (NSSize )theNewSize
 {
   [super setFrameSize: theNewSize];
   ViewerTest::CurrentEventManager()->ProcessConfigure();
 }
 
-// =======================================================================
-// function : drawRect
-// purpose  :
-// =======================================================================
+//=================================================================================================
+
 - (void )drawRect: (NSRect )theDirtyRect
 {
   (void )theDirtyRect;
@@ -203,113 +193,95 @@ static Aspect_VKeyFlags getMouseKeyFlags (NSEvent* theEvent)
   }
 }
 
-// =======================================================================
-// function : mouseMoved
-// purpose  :
-// =======================================================================
+//=================================================================================================
+
 - (void )mouseMoved: (NSEvent* )theEvent
 {
-  const Graphic3d_Vec2i  aPos   = getMouseCoords (self, theEvent);
+  const NCollection_Vec2<int>  aPos   = getMouseCoords (self, theEvent);
   const Aspect_VKeyFlags aFlags = getMouseKeyFlags (theEvent);
   const Aspect_VKeyMouse aButtons = ViewerTest::CurrentEventManager()->PressedMouseButtons();
   ViewerTest::CurrentEventManager()->UpdateMousePosition (aPos, aButtons, aFlags, false);
   ViewerTest::CurrentEventManager()->FlushViewEvents (ViewerTest::GetAISContext(), ViewerTest::CurrentView(), true);
 }
 
-// =======================================================================
-// function : acceptsFirstResponder
-// purpose  :
-// =======================================================================
+//=================================================================================================
+
 - (BOOL )acceptsFirstResponder
 {
   return YES;
 }
 
-// =======================================================================
-// function : mouseDown
-// purpose  :
-// =======================================================================
+//=================================================================================================
+
 - (void )mouseDown: (NSEvent* )theEvent
 {
-  const Graphic3d_Vec2i  aPos   = getMouseCoords (self, theEvent);
+  const NCollection_Vec2<int>  aPos   = getMouseCoords (self, theEvent);
   const Aspect_VKeyFlags aFlags = getMouseKeyFlags (theEvent);
   ViewerTest::CurrentEventManager()->PressMouseButton (aPos, Aspect_VKeyMouse_LeftButton, aFlags, false);
   ViewerTest::CurrentEventManager()->FlushViewEvents (ViewerTest::GetAISContext(), ViewerTest::CurrentView(), true);
 }
 
-// =======================================================================
-// function : mouseUp
-// purpose  :
-// =======================================================================
+//=================================================================================================
+
 - (void )mouseUp: (NSEvent* )theEvent
 {
-  const Graphic3d_Vec2i  aPos   = getMouseCoords (self, theEvent);
+  const NCollection_Vec2<int>  aPos   = getMouseCoords (self, theEvent);
   const Aspect_VKeyFlags aFlags = getMouseKeyFlags (theEvent);
   ViewerTest::CurrentEventManager()->ReleaseMouseButton (aPos, Aspect_VKeyMouse_LeftButton, aFlags, false);
   ViewerTest::CurrentEventManager()->FlushViewEvents (ViewerTest::GetAISContext(), ViewerTest::CurrentView(), true);
 }
 
-// =======================================================================
-// function : mouseDragged
-// purpose  :
-// =======================================================================
+//=================================================================================================
+
 - (void )mouseDragged: (NSEvent* )theEvent
 {
-  const Graphic3d_Vec2i  aPos   = getMouseCoords (self, theEvent);
+  const NCollection_Vec2<int>  aPos   = getMouseCoords (self, theEvent);
   const Aspect_VKeyFlags aFlags = getMouseKeyFlags (theEvent);
   const Aspect_VKeyMouse aButtons = ViewerTest::CurrentEventManager()->PressedMouseButtons();
   ViewerTest::CurrentEventManager()->UpdateMousePosition (aPos, aButtons, aFlags, false);
   ViewerTest::CurrentEventManager()->FlushViewEvents (ViewerTest::GetAISContext(), ViewerTest::CurrentView(), true);
 }
 
-// =======================================================================
-// function : rightMouseDown
-// purpose  :
-// =======================================================================
+//=================================================================================================
+
 - (void )rightMouseDown: (NSEvent* )theEvent
 {
-  const Graphic3d_Vec2i  aPos   = getMouseCoords (self, theEvent);
+  const NCollection_Vec2<int>  aPos   = getMouseCoords (self, theEvent);
   const Aspect_VKeyFlags aFlags = getMouseKeyFlags (theEvent);
   ViewerTest::CurrentEventManager()->PressMouseButton (aPos, Aspect_VKeyMouse_RightButton, aFlags, false);
   ViewerTest::CurrentEventManager()->FlushViewEvents (ViewerTest::GetAISContext(), ViewerTest::CurrentView(), true);
 }
 
-// =======================================================================
-// function : rightMouseUp
-// purpose  :
-// =======================================================================
+//=================================================================================================
+
 - (void )rightMouseUp: (NSEvent* )theEvent
 {
-  const Graphic3d_Vec2i  aPos   = getMouseCoords (self, theEvent);
+  const NCollection_Vec2<int>  aPos   = getMouseCoords (self, theEvent);
   const Aspect_VKeyFlags aFlags = getMouseKeyFlags (theEvent);
   ViewerTest::CurrentEventManager()->ReleaseMouseButton (aPos, Aspect_VKeyMouse_RightButton, aFlags, false);
   ViewerTest::CurrentEventManager()->FlushViewEvents (ViewerTest::GetAISContext(), ViewerTest::CurrentView(), true);
 }
 
-// =======================================================================
-// function : rightMouseDragged
-// purpose  :
-// =======================================================================
+//=================================================================================================
+
 - (void )rightMouseDragged: (NSEvent* )theEvent
 {
-  const Graphic3d_Vec2i  aPos   = getMouseCoords (self, theEvent);
+  const NCollection_Vec2<int>  aPos   = getMouseCoords (self, theEvent);
   const Aspect_VKeyFlags aFlags = getMouseKeyFlags (theEvent);
   const Aspect_VKeyMouse aButtons = ViewerTest::CurrentEventManager()->PressedMouseButtons();
   ViewerTest::CurrentEventManager()->UpdateMousePosition (aPos, aButtons, aFlags, false);
   ViewerTest::CurrentEventManager()->FlushViewEvents (ViewerTest::GetAISContext(), ViewerTest::CurrentView(), true);
 }
 
-// =======================================================================
-// function : scrollWheel
-// purpose  :
-// =======================================================================
+//=================================================================================================
+
 - (void )scrollWheel: (NSEvent* )theEvent
 {
-  const Graphic3d_Vec2i  aPos   = getMouseCoords (self, theEvent);
+  const NCollection_Vec2<int>  aPos   = getMouseCoords (self, theEvent);
   const Aspect_VKeyFlags aFlags = getMouseKeyFlags (theEvent);
 
-  const Standard_Real aDelta = [theEvent deltaY];
-  if (Abs (aDelta) < 0.001)
+  const double aDelta = [theEvent deltaY];
+  if (std::abs(aDelta) < 0.001)
   {
     // a lot of values near zero can be generated by touchpad
     return;
@@ -319,10 +291,8 @@ static Aspect_VKeyFlags getMouseKeyFlags (NSEvent* theEvent)
   ViewerTest::CurrentEventManager()->FlushViewEvents (ViewerTest::GetAISContext(), ViewerTest::CurrentView(), true);
 }
 
-// =======================================================================
-// function : keyDown
-// purpose  :
-// =======================================================================
+//=================================================================================================
+
 - (void )keyDown: (NSEvent* )theEvent
 {
   unsigned int aKeyCode = [theEvent keyCode];
@@ -337,14 +307,12 @@ static Aspect_VKeyFlags getMouseKeyFlags (NSEvent* theEvent)
   //NSString* aStringNs = [theEvent characters];
   //if (aStringNs != NULL && [aStringNs length] != 1)
   //{
-  //  const Standard_CString aString = [aStringNs UTF8String];
+  //  const char* aString = [aStringNs UTF8String];
   //}
 }
 
-// =======================================================================
-// function : keyUp
-// purpose  :
-// =======================================================================
+//=================================================================================================
+
 - (void )keyUp: (NSEvent* )theEvent
 {
   unsigned int aKeyCode = [theEvent keyCode];

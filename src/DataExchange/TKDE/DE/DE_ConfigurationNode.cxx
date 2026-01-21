@@ -17,6 +17,7 @@
 #include <DE_Provider.hxx>
 #include <DE_Wrapper.hxx>
 #include <Message.hxx>
+#include <Standard_ErrorHandler.hxx>
 #include <OSD_File.hxx>
 #include <OSD_Path.hxx>
 #include <OSD_Protection.hxx>
@@ -26,13 +27,14 @@ IMPLEMENT_STANDARD_RTTIEXT(DE_ConfigurationNode, Standard_Transient)
 //=================================================================================================
 
 DE_ConfigurationNode::DE_ConfigurationNode()
-    : myIsEnabled(Standard_True)
+    : myIsEnabled(true)
 {
 }
 
 //=================================================================================================
 
-DE_ConfigurationNode::DE_ConfigurationNode(const Handle(DE_ConfigurationNode)& theConfigurationNode)
+DE_ConfigurationNode::DE_ConfigurationNode(
+  const occ::handle<DE_ConfigurationNode>& theConfigurationNode)
 {
   GlobalParameters = theConfigurationNode->GlobalParameters;
   myIsEnabled      = theConfigurationNode->IsEnabled();
@@ -42,7 +44,7 @@ DE_ConfigurationNode::DE_ConfigurationNode(const Handle(DE_ConfigurationNode)& t
 
 bool DE_ConfigurationNode::Load(const TCollection_AsciiString& theResourcePath)
 {
-  Handle(DE_ConfigurationContext) aResource = new DE_ConfigurationContext();
+  occ::handle<DE_ConfigurationContext> aResource = new DE_ConfigurationContext();
   aResource->LoadFile(theResourcePath);
   return Load(aResource);
 }
@@ -79,8 +81,7 @@ bool DE_ConfigurationNode::Save(const TCollection_AsciiString& theResourcePath) 
 
 //=================================================================================================
 
-bool DE_ConfigurationNode::UpdateLoad(const Standard_Boolean theToImport,
-                                      const Standard_Boolean theToKeep)
+bool DE_ConfigurationNode::UpdateLoad(const bool theToImport, const bool theToKeep)
 {
   (void)theToImport;
   (void)theToKeep;
@@ -103,6 +104,13 @@ bool DE_ConfigurationNode::IsExportSupported() const
 
 //=================================================================================================
 
+bool DE_ConfigurationNode::IsStreamSupported() const
+{
+  return false;
+}
+
+//=================================================================================================
+
 bool DE_ConfigurationNode::CheckExtension(const TCollection_AsciiString& theExtension) const
 {
   TCollection_AsciiString anExtension(theExtension);
@@ -114,10 +122,11 @@ bool DE_ConfigurationNode::CheckExtension(const TCollection_AsciiString& theExte
   {
     anExtension.Remove(1);
   }
-  const TColStd_ListOfAsciiString& anExtensions = GetExtensions();
-  for (TColStd_ListOfAsciiString::Iterator anIter(anExtensions); anIter.More(); anIter.Next())
+  const NCollection_List<TCollection_AsciiString>& anExtensions = GetExtensions();
+  for (NCollection_List<TCollection_AsciiString>::Iterator anIter(anExtensions); anIter.More();
+       anIter.Next())
   {
-    if (TCollection_AsciiString::IsSameString(anIter.Value(), anExtension, Standard_False))
+    if (TCollection_AsciiString::IsSameString(anIter.Value(), anExtension, false))
     {
       return true;
     }
@@ -127,8 +136,22 @@ bool DE_ConfigurationNode::CheckExtension(const TCollection_AsciiString& theExte
 
 //=================================================================================================
 
-bool DE_ConfigurationNode::CheckContent(const Handle(NCollection_Buffer)& theBuffer) const
+bool DE_ConfigurationNode::CheckContent(const occ::handle<NCollection_Buffer>& theBuffer) const
 {
   (void)theBuffer;
   return false;
+}
+
+//=================================================================================================
+
+void DE_ConfigurationNode::Register(const occ::handle<DE_Wrapper>& theWrapper) const
+{
+  theWrapper->Bind(this);
+}
+
+//=================================================================================================
+
+void DE_ConfigurationNode::UnRegister(const occ::handle<DE_Wrapper>& theWrapper) const
+{
+  theWrapper->UnBind(this);
 }

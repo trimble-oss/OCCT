@@ -20,39 +20,37 @@ IMPLEMENT_STANDARD_RTTIEXT(OSD_LocalFileSystem, OSD_FileSystem)
 
 //=================================================================================================
 
-Standard_Boolean OSD_LocalFileSystem::IsSupportedPath(const TCollection_AsciiString& theUrl) const
+bool OSD_LocalFileSystem::IsSupportedPath(const TCollection_AsciiString& theUrl) const
 {
   return !OSD_Path::IsRemoteProtocolPath(theUrl.ToCString());
 }
 
 //=================================================================================================
 
-Standard_Boolean OSD_LocalFileSystem::IsOpenIStream(
-  const std::shared_ptr<std::istream>& theStream) const
+bool OSD_LocalFileSystem::IsOpenIStream(const std::shared_ptr<std::istream>& theStream) const
 {
   std::shared_ptr<OSD_IStreamBuffer> aFileStream =
     std::dynamic_pointer_cast<OSD_IStreamBuffer>(theStream);
-  if (aFileStream.get() == NULL)
+  if (aFileStream.get() == nullptr)
   {
     return false;
   }
   const std::filebuf* aFileBuf = dynamic_cast<const std::filebuf*>(aFileStream->rdbuf());
-  return (aFileBuf != NULL) ? aFileBuf->is_open() : false;
+  return (aFileBuf != nullptr) ? aFileBuf->is_open() : false;
 }
 
 //=================================================================================================
 
-Standard_Boolean OSD_LocalFileSystem::IsOpenOStream(
-  const std::shared_ptr<std::ostream>& theStream) const
+bool OSD_LocalFileSystem::IsOpenOStream(const std::shared_ptr<std::ostream>& theStream) const
 {
   std::shared_ptr<OSD_OStreamBuffer> aFileStream =
     std::dynamic_pointer_cast<OSD_OStreamBuffer>(theStream);
-  if (aFileStream.get() == NULL)
+  if (aFileStream.get() == nullptr)
   {
     return false;
   }
   const std::filebuf* aFileBuf = dynamic_cast<const std::filebuf*>(aFileStream->rdbuf());
-  return (aFileBuf != NULL) ? aFileBuf->is_open() : false;
+  return (aFileBuf != nullptr) ? aFileBuf->is_open() : false;
 }
 
 //=================================================================================================

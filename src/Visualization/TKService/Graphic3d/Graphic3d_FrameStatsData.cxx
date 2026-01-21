@@ -31,16 +31,8 @@ Graphic3d_FrameStatsData::Graphic3d_FrameStatsData()
 //=================================================================================================
 
 Graphic3d_FrameStatsData::Graphic3d_FrameStatsData(const Graphic3d_FrameStatsData& theOther)
-    : myCounters(theOther.myCounters),
-      myTimers(theOther.myTimers),
-      myTimersMin(theOther.myTimersMin),
-      myTimersMax(theOther.myTimersMax),
-      myFps(theOther.myFps),
-      myFpsCpu(theOther.myFpsCpu),
-      myFpsImmediate(theOther.myFpsImmediate),
-      myFpsCpuImmediate(theOther.myFpsCpuImmediate)
-{
-}
+
+  = default;
 
 //=================================================================================================
 
@@ -49,10 +41,10 @@ Graphic3d_FrameStatsData::Graphic3d_FrameStatsData(Graphic3d_FrameStatsData&& th
       myTimers(std::move(theOther.myTimers)),
       myTimersMin(std::move(theOther.myTimersMin)),
       myTimersMax(std::move(theOther.myTimersMax)),
-      myFps(std::move(theOther.myFps)),
-      myFpsCpu(std::move(theOther.myFpsCpu)),
-      myFpsImmediate(std::move(theOther.myFpsImmediate)),
-      myFpsCpuImmediate(std::move(theOther.myFpsCpuImmediate))
+      myFps(theOther.myFps),
+      myFpsCpu(theOther.myFpsCpu),
+      myFpsImmediate(theOther.myFpsImmediate),
+      myFpsCpuImmediate(theOther.myFpsCpuImmediate)
 {
 }
 
@@ -89,10 +81,10 @@ Graphic3d_FrameStatsData& Graphic3d_FrameStatsData::operator=(
   {
     return *this;
   }
-  myFps             = std::move(theOther.myFps);
-  myFpsCpu          = std::move(theOther.myFpsCpu);
-  myFpsImmediate    = std::move(theOther.myFpsImmediate);
-  myFpsCpuImmediate = std::move(theOther.myFpsCpuImmediate);
+  myFps             = theOther.myFps;
+  myFpsCpu          = theOther.myFpsCpu;
+  myFpsImmediate    = theOther.myFpsImmediate;
+  myFpsCpuImmediate = theOther.myFpsCpuImmediate;
   myCounters        = std::move(theOther.myCounters);
   myTimers          = std::move(theOther.myTimers);
   myTimersMin       = std::move(theOther.myTimersMin);
@@ -118,10 +110,10 @@ void Graphic3d_FrameStatsData::Reset()
 
 void Graphic3d_FrameStatsData::FillMax(const Graphic3d_FrameStatsData& theOther)
 {
-  myFps             = Max(myFps, theOther.myFps);
-  myFpsCpu          = Max(myFpsCpu, theOther.myFpsCpu);
-  myFpsImmediate    = Max(myFpsImmediate, theOther.myFpsImmediate);
-  myFpsCpuImmediate = Max(myFpsCpuImmediate, theOther.myFpsCpuImmediate);
+  myFps             = std::max(myFps, theOther.myFps);
+  myFpsCpu          = std::max(myFpsCpu, theOther.myFpsCpu);
+  myFpsImmediate    = std::max(myFpsImmediate, theOther.myFpsImmediate);
+  myFpsCpuImmediate = std::max(myFpsCpuImmediate, theOther.myFpsCpuImmediate);
   for (size_t aCounterIter = 0; aCounterIter < myCounters.size(); ++aCounterIter)
   {
     myCounters[aCounterIter] = myCounters[aCounterIter] > theOther.myCounters[aCounterIter]
@@ -130,8 +122,8 @@ void Graphic3d_FrameStatsData::FillMax(const Graphic3d_FrameStatsData& theOther)
   }
   for (size_t aTimerIter = 0; aTimerIter < myTimers.size(); ++aTimerIter)
   {
-    myTimersMax[aTimerIter] = Max(myTimersMax[aTimerIter], theOther.myTimersMax[aTimerIter]);
-    myTimersMin[aTimerIter] = Min(myTimersMin[aTimerIter], theOther.myTimersMin[aTimerIter]);
+    myTimersMax[aTimerIter] = std::max(myTimersMax[aTimerIter], theOther.myTimersMax[aTimerIter]);
+    myTimersMin[aTimerIter] = std::min(myTimersMin[aTimerIter], theOther.myTimersMin[aTimerIter]);
     myTimers[aTimerIter]    = myTimersMax[aTimerIter];
   }
 }
@@ -146,19 +138,19 @@ Graphic3d_FrameStatsDataTmp::Graphic3d_FrameStatsDataTmp()
 
 //=================================================================================================
 
-void Graphic3d_FrameStatsDataTmp::FlushTimers(Standard_Size theNbFrames, bool theIsFinal)
+void Graphic3d_FrameStatsDataTmp::FlushTimers(size_t theNbFrames, bool theIsFinal)
 {
   for (size_t aTimerIter = 0; aTimerIter < myTimers.size(); ++aTimerIter)
   {
-    const Standard_Real aFrameTime = myTimers[aTimerIter] - myTimersPrev[aTimerIter];
-    myTimersMax[aTimerIter]        = Max(myTimersMax[aTimerIter], aFrameTime);
-    myTimersMin[aTimerIter]        = Min(myTimersMin[aTimerIter], aFrameTime);
-    myTimersPrev[aTimerIter]       = myTimers[aTimerIter];
+    const double aFrameTime  = myTimers[aTimerIter] - myTimersPrev[aTimerIter];
+    myTimersMax[aTimerIter]  = std::max(myTimersMax[aTimerIter], aFrameTime);
+    myTimersMin[aTimerIter]  = std::min(myTimersMin[aTimerIter], aFrameTime);
+    myTimersPrev[aTimerIter] = myTimers[aTimerIter];
   }
 
   if (theIsFinal)
   {
-    const Standard_Real aNbFrames = (Standard_Real)theNbFrames;
+    const double aNbFrames = (double)theNbFrames;
     for (size_t aTimerIter = 0; aTimerIter < myTimers.size(); ++aTimerIter)
     {
       myTimers[aTimerIter] /= aNbFrames;

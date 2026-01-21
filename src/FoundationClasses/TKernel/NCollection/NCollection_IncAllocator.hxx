@@ -17,10 +17,10 @@
 #include <NCollection_BaseAllocator.hxx>
 #include <NCollection_OccAllocator.hxx>
 #include <NCollection_Allocator.hxx>
+#include <Standard_MemoryUtils.hxx>
 
 #include <utility>
-
-class Standard_Mutex;
+#include <mutex>
 
 /**
  *  Class NCollection_IncAllocator - incremental memory  allocator. This class
@@ -64,19 +64,19 @@ public:
   Standard_EXPORT void SetThreadSafe(const bool theIsThreadSafe = true);
 
   //! Allocate memory with given size. Returns NULL on failure
-  Standard_EXPORT void* Allocate(const size_t size) Standard_OVERRIDE;
+  Standard_EXPORT void* Allocate(const size_t size) override;
 
   //! Allocate memory with given size. Returns NULL on failure
-  Standard_EXPORT void* AllocateOptimal(const size_t size) Standard_OVERRIDE;
+  Standard_EXPORT void* AllocateOptimal(const size_t size) override;
 
   //! Free a previously allocated memory. Does nothing
-  void Free(void*) Standard_OVERRIDE
+  void Free(void*) override
   {
     // Do nothing
   }
 
   //! Destructor (calls Clean() internally)
-  Standard_EXPORT ~NCollection_IncAllocator();
+  Standard_EXPORT ~NCollection_IncAllocator() override;
 
   //! Re-initialize the allocator so that the next Allocate call should
   //! start allocating in the very beginning as though the allocator is just
@@ -132,12 +132,12 @@ public:
   static constexpr size_t THE_MINIMUM_BLOCK_SIZE = 1024 * 2;
 
 private:
-  unsigned int    myBlockSize;                //!< Block size to incremental allocations
-  unsigned int    myBlockCount     = 0;       //!< Count of created blocks
-  Standard_Mutex* myMutex          = nullptr; //!< Thread-safety mutex
-  IBlock*         myAllocationHeap = nullptr; //!< Sorted list for allocations
-  IBlock*         myUsedHeap       = nullptr; //!< Sorted list for store empty blocks
-  IBlock*         myOrderedBlocks  = nullptr; //!< Ordered list for store growing size blocks
+  unsigned int                myBlockSize;                //!< Block size to incremental allocations
+  unsigned int                myBlockCount     = 0;       //!< Count of created blocks
+  std::unique_ptr<std::mutex> myMutex          = nullptr; //!< Thread-safety mutex
+  IBlock*                     myAllocationHeap = nullptr; //!< Sorted list for allocations
+  IBlock*                     myUsedHeap       = nullptr; //!< Sorted list for store empty blocks
+  IBlock* myOrderedBlocks = nullptr; //!< Ordered list for store growing size blocks
 
 public:
   // Declaration of CASCADE RTTI
@@ -145,6 +145,4 @@ public:
 };
 
 // Definition of HANDLE object using Standard_DefineHandle.hxx
-DEFINE_STANDARD_HANDLE(NCollection_IncAllocator, NCollection_BaseAllocator)
-
 #endif

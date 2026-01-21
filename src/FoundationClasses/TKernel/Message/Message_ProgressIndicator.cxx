@@ -19,7 +19,7 @@ IMPLEMENT_STANDARD_RTTIEXT(Message_ProgressIndicator, Standard_Transient)
 
 Message_ProgressIndicator::Message_ProgressIndicator()
     : myPosition(0.),
-      myRootScope(NULL)
+      myRootScope(nullptr)
 {
   myRootScope = new Message_ProgressScope(this);
 }
@@ -29,7 +29,7 @@ Message_ProgressIndicator::Message_ProgressIndicator()
 Message_ProgressIndicator::~Message_ProgressIndicator()
 {
   // Avoid calling Increment() from myRootScope.Close()
-  myRootScope->myProgress = 0;
+  myRootScope->myProgress = nullptr;
   myRootScope->myIsActive = false;
   delete myRootScope;
 }
@@ -41,14 +41,14 @@ Message_ProgressRange Message_ProgressIndicator::Start()
   myPosition           = 0.;
   myRootScope->myValue = 0.;
   Reset();
-  Show(*myRootScope, Standard_False);
+  Show(*myRootScope, false);
   return myRootScope->Next();
 }
 
 //=================================================================================================
 
 Message_ProgressRange Message_ProgressIndicator::Start(
-  const Handle(Message_ProgressIndicator)& theProgress)
+  const occ::handle<Message_ProgressIndicator>& theProgress)
 {
   return theProgress.IsNull() ? Message_ProgressRange() : theProgress->Start();
 }

@@ -20,42 +20,41 @@
 #include <gp_Vec.hxx>
 #include <Precision.hxx>
 #include <Standard_Type.hxx>
-#include <TColgp_Array1OfPnt.hxx>
-#include <TColgp_Array1OfVec.hxx>
+#include <NCollection_Array1.hxx>
 #include <Vrml_Instancing.hxx>
 #include <Vrml_TransformSeparator.hxx>
 #include <VrmlConverter_Projector.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(VrmlConverter_Projector, Standard_Transient)
 
-VrmlConverter_Projector::VrmlConverter_Projector(const TopTools_Array1OfShape&    Shapes,
-                                                 const Standard_Real              Focus,
-                                                 const Standard_Real              DX,
-                                                 const Standard_Real              DY,
-                                                 const Standard_Real              DZ,
-                                                 const Standard_Real              XUp,
-                                                 const Standard_Real              YUp,
-                                                 const Standard_Real              ZUp,
-                                                 const VrmlConverter_TypeOfCamera Camera,
-                                                 const VrmlConverter_TypeOfLight  Light)
+VrmlConverter_Projector::VrmlConverter_Projector(const NCollection_Array1<TopoDS_Shape>& Shapes,
+                                                 const double                            Focus,
+                                                 const double                            DX,
+                                                 const double                            DY,
+                                                 const double                            DZ,
+                                                 const double                            XUp,
+                                                 const double                            YUp,
+                                                 const double                            ZUp,
+                                                 const VrmlConverter_TypeOfCamera        Camera,
+                                                 const VrmlConverter_TypeOfLight         Light)
 
 {
 
   myTypeOfCamera = Camera;
   myTypeOfLight  = Light;
 
-  Standard_Integer i;
-  Bnd_Box          box;
-  Standard_Real    Xmin, Xmax, Ymin, Ymax, Zmin, Zmax, diagonal;
-  Standard_Real    Xtarget, Ytarget, Ztarget, Angle, MaxAngle, Height, MaxHeight;
+  int     i;
+  Bnd_Box box;
+  double  Xmin, Xmax, Ymin, Ymax, Zmin, Zmax, diagonal;
+  double  Xtarget, Ytarget, Ztarget, Angle, MaxAngle, Height, MaxHeight;
 
   for (i = Shapes.Lower(); i <= Shapes.Upper(); i++)
   {
     BRepBndLib::AddClose(Shapes.Value(i), box);
   }
 
-  Standard_Real DistMax = 500000;
-  Standard_Real TolMin  = 0.000001;
+  double DistMax = 500000;
+  double TolMin  = 0.000001;
 
   box.Enlarge(TolMin);
   box.Get(Xmin, Ymin, Zmin, Xmax, Ymax, Zmax);
@@ -73,9 +72,9 @@ VrmlConverter_Projector::VrmlConverter_Projector(const TopTools_Array1OfShape&  
   if (box.IsOpenZmax())
     Zmax = DistMax;
 
-  Standard_Real xx = (Xmax - Xmin);
-  Standard_Real yy = (Ymax - Ymin);
-  Standard_Real zz = (Zmax - Zmin);
+  double xx = (Xmax - Xmin);
+  double yy = (Ymax - Ymin);
+  double zz = (Zmax - Zmin);
 
   Xtarget = (Xmin + Xmax) / 2;
   Ytarget = (Ymin + Ymax) / 2;
@@ -90,7 +89,7 @@ VrmlConverter_Projector::VrmlConverter_Projector(const TopTools_Array1OfShape&  
   gp_Dir Zpers(DX, DY, DZ);
   gp_Vec V(Zpers);
 
-  diagonal = Sqrt(xx * xx + yy * yy + zz * zz);
+  diagonal = std::sqrt(xx * xx + yy * yy + zz * zz);
 
   gp_Vec aVec = V.Multiplied(0.5 * diagonal + TolMin + Focus);
 
@@ -134,9 +133,9 @@ VrmlConverter_Projector::VrmlConverter_Projector(const TopTools_Array1OfShape&  
   //  defaulted to the absolute coordinate system.
   T.SetTransformation(Axe);
 
-  Standard_Boolean Pers = Standard_False;
+  bool Pers = false;
   if (Camera == VrmlConverter_PerspectiveCamera)
-    Pers = Standard_True;
+    Pers = true;
 
   // build a Projector with automatic minmax directions
   myProjector = HLRAlgo_Projector(T, Pers, Focus);
@@ -170,12 +169,11 @@ VrmlConverter_Projector::VrmlConverter_Projector(const TopTools_Array1OfShape&  
   {
 
     /*
-  gp_Dir Zmain (0,0,1);
-  gp_Dir Xmain (1,0,0);
-
+  gp_Dir Zmain (gp_Dir::D::Z);
+  gp_Dir Xmain (gp_Dir::D::X);
 
   gp_Dir Dturn;
-  Standard_Real AngleTurn;
+  double AngleTurn;
 
   if( Zmain.IsParallel(Zpers,Precision::Angular()) )
     {
@@ -194,8 +192,8 @@ VrmlConverter_Projector::VrmlConverter_Projector(const TopTools_Array1OfShape&  
     }
 */
 
-    gp_Pnt             CurP;
-    TColgp_Array1OfPnt ArrP(1, 8);
+    gp_Pnt                     CurP;
+    NCollection_Array1<gp_Pnt> ArrP(1, 8);
 
     CurP.SetCoord(Xmin, Ymin, Zmin);
     ArrP.SetValue(1, CurP);
@@ -237,8 +235,8 @@ VrmlConverter_Projector::VrmlConverter_Projector(const TopTools_Array1OfShape&  
 
       //  std::cout << " Angle: " << V1.Angle(V2) << std::endl;
       //  std::cout << " ****************** " << std::endl;
-      if (Abs(V1.Angle(V2)) > Abs(MaxAngle))
-        MaxAngle = Abs(V1.Angle(V2));
+      if (std::abs(V1.Angle(V2)) > std::abs(MaxAngle))
+        MaxAngle = std::abs(V1.Angle(V2));
 
       V2.SetX(0);
       V2.SetY(P2.Y());
@@ -246,21 +244,21 @@ VrmlConverter_Projector::VrmlConverter_Projector(const TopTools_Array1OfShape&  
 
       //  std::cout << " Angle: " << V1.Angle(V2) << std::endl;
       //  std::cout << " ****************** " << std::endl;
-      if (Abs(V1.Angle(V2)) > Abs(MaxAngle))
-        MaxAngle = Abs(V1.Angle(V2));
+      if (std::abs(V1.Angle(V2)) > std::abs(MaxAngle))
+        MaxAngle = std::abs(V1.Angle(V2));
 
-      if (Abs(P2.Y()) > Abs(MaxHeight))
+      if (std::abs(P2.Y()) > std::abs(MaxHeight))
       {
         //  std::cout << " Height Y: " << P2.Y() << std::endl;
         //  std::cout << " ****************** " << std::endl;
-        MaxHeight = Abs(P2.Y());
+        MaxHeight = std::abs(P2.Y());
       }
 
-      if (Abs(P2.X()) > Abs(MaxHeight))
+      if (std::abs(P2.X()) > std::abs(MaxHeight))
       {
         //  std::cout << " Height X: " << P2.X() << std::endl;
         //  std::cout << " ****************** " << std::endl;
-        MaxHeight = Abs(P2.X());
+        MaxHeight = std::abs(P2.X());
       }
     }
     Height = MaxHeight;

@@ -23,15 +23,16 @@ IMPLEMENT_STANDARD_RTTIEXT(StepDimTol_Datum, StepRepr_ShapeAspect)
 
 //=================================================================================================
 
-StepDimTol_Datum::StepDimTol_Datum() {}
+StepDimTol_Datum::StepDimTol_Datum() = default;
 
 //=================================================================================================
 
-void StepDimTol_Datum::Init(const Handle(TCollection_HAsciiString)& theShapeAspect_Name,
-                            const Handle(TCollection_HAsciiString)& theShapeAspect_Description,
-                            const Handle(StepRepr_ProductDefinitionShape)& theShapeAspect_OfShape,
-                            const StepData_Logical theShapeAspect_ProductDefinitional,
-                            const Handle(TCollection_HAsciiString)& theIdentification)
+void StepDimTol_Datum::Init(
+  const occ::handle<TCollection_HAsciiString>&        theShapeAspect_Name,
+  const occ::handle<TCollection_HAsciiString>&        theShapeAspect_Description,
+  const occ::handle<StepRepr_ProductDefinitionShape>& theShapeAspect_OfShape,
+  const StepData_Logical                              theShapeAspect_ProductDefinitional,
+  const occ::handle<TCollection_HAsciiString>&        theIdentification)
 {
   StepRepr_ShapeAspect::Init(theShapeAspect_Name,
                              theShapeAspect_Description,
@@ -42,14 +43,15 @@ void StepDimTol_Datum::Init(const Handle(TCollection_HAsciiString)& theShapeAspe
 
 //=================================================================================================
 
-Handle(TCollection_HAsciiString) StepDimTol_Datum::Identification() const
+occ::handle<TCollection_HAsciiString> StepDimTol_Datum::Identification() const
 {
   return myIdentification;
 }
 
 //=================================================================================================
 
-void StepDimTol_Datum::SetIdentification(const Handle(TCollection_HAsciiString)& theIdentification)
+void StepDimTol_Datum::SetIdentification(
+  const occ::handle<TCollection_HAsciiString>& theIdentification)
 {
   myIdentification = theIdentification;
 }

@@ -8,8 +8,7 @@ set(OCCT_HLRBRep_FILES
   HLRBRep_Algo.hxx
   HLRBRep_AreaLimit.cxx
   HLRBRep_AreaLimit.hxx
-  HLRBRep_Array1OfEData.hxx
-  HLRBRep_Array1OfFData.hxx
+
   HLRBRep_BCurveTool.cxx
   HLRBRep_BCurveTool.hxx
   HLRBRep_BCurveTool.lxx
@@ -61,27 +60,23 @@ set(OCCT_HLRBRep_FILES
   HLRBRep_IntConicCurveOfCInter.hxx
   HLRBRep_IntConicCurveOfCInter_0.cxx
   HLRBRep_InterCSurf.hxx
-  HLRBRep_InterCSurf_0.cxx
+  HLRBRep_InterCSurf.cxx
   HLRBRep_InternalAlgo.cxx
   HLRBRep_InternalAlgo.hxx
   HLRBRep_Intersector.cxx
   HLRBRep_Intersector.hxx
   HLRBRep_LineTool.hxx
   HLRBRep_LineTool.lxx
-  HLRBRep_ListIteratorOfListOfBPnt2D.hxx
-  HLRBRep_ListIteratorOfListOfBPoint.hxx
-  HLRBRep_ListOfBPnt2D.hxx
-  HLRBRep_ListOfBPoint.hxx
+
   HLRBRep_MyImpParToolOfTheIntersectorOfTheIntConicCurveOfCInter.hxx
   HLRBRep_MyImpParToolOfTheIntersectorOfTheIntConicCurveOfCInter_0.cxx
   HLRBRep_PCLocFOfTheLocateExtPCOfTheProjPCurOfCInter.hxx
-  HLRBRep_PCLocFOfTheLocateExtPCOfTheProjPCurOfCInter_0.cxx
   HLRBRep_PolyAlgo.cxx
   HLRBRep_PolyAlgo.hxx
   HLRBRep_PolyHLRToShape.cxx
   HLRBRep_PolyHLRToShape.hxx
   HLRBRep_PolyHLRToShape.lxx
-  HLRBRep_SeqOfShapeBounds.hxx
+
   HLRBRep_ShapeBounds.cxx
   HLRBRep_ShapeBounds.hxx
   HLRBRep_ShapeBounds.lxx
@@ -100,7 +95,6 @@ set(OCCT_HLRBRep_FILES
   HLRBRep_TheCSFunctionOfInterCSurf.hxx
   HLRBRep_TheCSFunctionOfInterCSurf_0.cxx
   HLRBRep_TheCurveLocatorOfTheProjPCurOfCInter.hxx
-  HLRBRep_TheCurveLocatorOfTheProjPCurOfCInter_0.cxx
   HLRBRep_TheDistBetweenPCurvesOfTheIntPCurvePCurveOfCInter.hxx
   HLRBRep_TheDistBetweenPCurvesOfTheIntPCurvePCurveOfCInter_0.cxx
   HLRBRep_TheExactInterCSurf.hxx
@@ -114,21 +108,21 @@ set(OCCT_HLRBRep_FILES
   HLRBRep_TheIntPCurvePCurveOfCInter.hxx
   HLRBRep_TheIntPCurvePCurveOfCInter_0.cxx
   HLRBRep_TheLocateExtPCOfTheProjPCurOfCInter.hxx
-  HLRBRep_TheLocateExtPCOfTheProjPCurOfCInter_0.cxx
   HLRBRep_ThePolygon2dOfTheIntPCurvePCurveOfCInter.hxx
   HLRBRep_ThePolygon2dOfTheIntPCurvePCurveOfCInter_0.cxx
   HLRBRep_ThePolygonOfInterCSurf.hxx
-  HLRBRep_ThePolygonOfInterCSurf_0.cxx
+  HLRBRep_ThePolygonOfInterCSurf.cxx
   HLRBRep_ThePolygonToolOfInterCSurf.hxx
   HLRBRep_ThePolygonToolOfInterCSurf_0.cxx
   HLRBRep_ThePolyhedronOfInterCSurf.hxx
-  HLRBRep_ThePolyhedronOfInterCSurf_0.cxx
+  HLRBRep_ThePolyhedronOfInterCSurf.cxx
   HLRBRep_ThePolyhedronToolOfInterCSurf.hxx
   HLRBRep_ThePolyhedronToolOfInterCSurf_0.cxx
   HLRBRep_TheProjPCurOfCInter.hxx
   HLRBRep_TheProjPCurOfCInter_0.cxx
+  HLRBRep_TypeDef.hxx
   HLRBRep_TheQuadCurvExactInterCSurf.hxx
-  HLRBRep_TheQuadCurvExactInterCSurf_0.cxx
+  HLRBRep_TheQuadCurvExactInterCSurf.cxx
   HLRBRep_TheQuadCurvFuncOfTheQuadCurvExactInterCSurf.hxx
   HLRBRep_TheQuadCurvFuncOfTheQuadCurvExactInterCSurf_0.cxx
   HLRBRep_VertexList.cxx

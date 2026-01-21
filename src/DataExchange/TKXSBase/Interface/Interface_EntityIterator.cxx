@@ -17,48 +17,50 @@
 #include <Standard_NoSuchObject.hxx>
 #include <Standard_Transient.hxx>
 
-//  Iterateur pour ecriture for, ou while avec Next en fin :
-//  for (creer iterateur; iter.More(); iter.Next()) { val = iter.Value(); ... }
-// .... Definitions initiales : en particulier celles requises pour
-//      les outils de graphe (construction avec le graphe, avec un vertex)
+//  Iterator for for writing, or while with Next at the end :
+//  for (create iterator; iter.More(); iter.Next()) { val = iter.Value(); ... }
+// .... Initial definitions : in particular those required for
+//      graph tools (construction with graph, with a vertex)
 Interface_EntityIterator::Interface_EntityIterator()
 {
   //  thecurr = new Interface_IntVal;
   //  thecurr->CValue() = 0;
-  //  thelist = new TColStd_HSequenceOfTransient();  // constructeur vide
+  //  thelist = new NCollection_HSequence<occ::handle<Standard_Transient>>();  // empty constructor
   //  thelist sera construit au premier Add (quelquefois, il nyena pas)
 }
 
-Interface_EntityIterator::Interface_EntityIterator(const Handle(TColStd_HSequenceOfTransient)& list)
+Interface_EntityIterator::Interface_EntityIterator(
+  const occ::handle<NCollection_HSequence<occ::handle<Standard_Transient>>>& list)
 {
   thecurr           = new Interface_IntVal;
   thecurr->CValue() = 0;
   thelist           = list;
 }
 
-void Interface_EntityIterator::AddList(const Handle(TColStd_HSequenceOfTransient)& list)
+void Interface_EntityIterator::AddList(
+  const occ::handle<NCollection_HSequence<occ::handle<Standard_Transient>>>& list)
 {
   if (thelist.IsNull())
-    thelist = new TColStd_HSequenceOfTransient();
+    thelist = new NCollection_HSequence<occ::handle<Standard_Transient>>();
   if (thecurr.IsNull())
     thecurr = new Interface_IntVal;
   thecurr->CValue() = 0;
   thelist->Append(list);
 }
 
-void Interface_EntityIterator::AddItem(const Handle(Standard_Transient)& anentity)
+void Interface_EntityIterator::AddItem(const occ::handle<Standard_Transient>& anentity)
 {
   if (anentity.IsNull())
     return;
   if (thecurr.IsNull())
     thecurr = new Interface_IntVal;
   if (thelist.IsNull())
-    thelist = new TColStd_HSequenceOfTransient();
+    thelist = new NCollection_HSequence<occ::handle<Standard_Transient>>();
   thecurr->CValue() = 0;
   thelist->Append(anentity);
 }
 
-void Interface_EntityIterator::GetOneItem(const Handle(Standard_Transient)& anentity)
+void Interface_EntityIterator::GetOneItem(const occ::handle<Standard_Transient>& anentity)
 {
   AddItem(anentity);
 }
@@ -68,21 +70,21 @@ void Interface_EntityIterator::Reset()
   if (thecurr.IsNull())
     thecurr = new Interface_IntVal;
   thecurr->CValue() = 0;
-  thelist           = new TColStd_HSequenceOfTransient();
+  thelist           = new NCollection_HSequence<occ::handle<Standard_Transient>>();
 }
 
-// .... Fonctionnalites de tri prealable a l'iteration ....
+// .... Pre-iteration sorting functionalities ....
 
-//  Facon "bete" : supprimer les termes qui ne conviennent pas : lent !
-//  Mieux vaut refaire une autre sequence a cote
+//  "Dumb" way : remove terms that don't fit : slow !
+//  Better to make another sequence alongside
 
-void Interface_EntityIterator::SelectType(const Handle(Standard_Type)& atype,
-                                          const Standard_Boolean       keep)
+void Interface_EntityIterator::SelectType(const occ::handle<Standard_Type>& atype, const bool keep)
 {
   if (thelist.IsNull())
     return;
-  Standard_Integer                     i, n = thelist->Length();
-  Handle(TColStd_HSequenceOfTransient) nlist = new TColStd_HSequenceOfTransient();
+  int                                                                 i, n = thelist->Length();
+  occ::handle<NCollection_HSequence<occ::handle<Standard_Transient>>> nlist =
+    new NCollection_HSequence<occ::handle<Standard_Transient>>();
   for (i = 1; i <= n; i++)
   {
     if (thelist->Value(i)->IsKind(atype) == keep)
@@ -93,7 +95,7 @@ void Interface_EntityIterator::SelectType(const Handle(Standard_Type)& atype,
 
 //  ....  Iteration proprement dite  ....
 
-Standard_Integer Interface_EntityIterator::NbEntities() const
+int Interface_EntityIterator::NbEntities() const
 {
   if (thelist.IsNull())
     return 0;
@@ -102,12 +104,12 @@ Standard_Integer Interface_EntityIterator::NbEntities() const
   return thelist->Length();
 }
 
-Standard_Integer Interface_EntityIterator::NbTyped(const Handle(Standard_Type)& atype) const
+int Interface_EntityIterator::NbTyped(const occ::handle<Standard_Type>& atype) const
 {
-  Standard_Integer res = 0;
+  int res = 0;
   if (thelist.IsNull())
     return res;
-  Standard_Integer i, n = thelist->Length();
+  int i, n = thelist->Length();
   for (i = 1; i <= n; i++)
   {
     if (thelist->Value(i)->IsKind(atype))
@@ -116,12 +118,13 @@ Standard_Integer Interface_EntityIterator::NbTyped(const Handle(Standard_Type)& 
   return res;
 }
 
-Interface_EntityIterator Interface_EntityIterator::Typed(const Handle(Standard_Type)& atype) const
+Interface_EntityIterator Interface_EntityIterator::Typed(
+  const occ::handle<Standard_Type>& atype) const
 {
   Interface_EntityIterator res;
   if (thelist.IsNull())
     return res;
-  Standard_Integer i, n = thelist->Length();
+  int i, n = thelist->Length();
   for (i = 1; i <= n; i++)
   {
     if (thelist->Value(i)->IsKind(atype))
@@ -134,16 +137,16 @@ void Interface_EntityIterator::Start() const
 {
   if (!thecurr.IsNull())
     thecurr->CValue() = 1;
-} // peut etre redefini ...
+} // can be redefined ...
 
-Standard_Boolean Interface_EntityIterator::More() const
+bool Interface_EntityIterator::More() const
 {
   if (thecurr.IsNull())
-    return Standard_False;
+    return false;
   if (thecurr->Value() == 0)
-    Start(); // preparation de l iteration
+    Start(); // iteration preparation
   if (thelist.IsNull())
-    return Standard_False;
+    return false;
   return (thecurr->Value() <= thelist->Length());
 }
 
@@ -152,9 +155,9 @@ void Interface_EntityIterator::Next() const
   thecurr->CValue()++;
 } // Next ne verifie rien : soin laisse a Value
 
-const Handle(Standard_Transient)& Interface_EntityIterator::Value() const
+const occ::handle<Standard_Transient>& Interface_EntityIterator::Value() const
 {
-  //  NbEntity pas const (on ne sait pas comment il est implemente apres tout)
+  //  NbEntity not const (we don't know how it is implemented after all)
   if (thelist.IsNull())
     throw Standard_NoSuchObject("Interface_EntityIterator");
   if (thecurr->Value() < 1 || thecurr->Value() > thelist->Length())
@@ -162,19 +165,20 @@ const Handle(Standard_Transient)& Interface_EntityIterator::Value() const
   return thelist->Value(thecurr->Value());
 }
 
-Handle(TColStd_HSequenceOfTransient) Interface_EntityIterator::Content() const
+occ::handle<NCollection_HSequence<occ::handle<Standard_Transient>>> Interface_EntityIterator::
+  Content() const
 {
   if (!thecurr.IsNull() && thecurr->Value() == 0)
     Start();
   if (thelist.IsNull())
-    return new TColStd_HSequenceOfTransient(); // vide
+    return new NCollection_HSequence<occ::handle<Standard_Transient>>(); // empty
   return thelist;
 }
 
 void Interface_EntityIterator::Destroy()
 {
   thecurr.Nullify();
-} // redevient vide !
+} // becomes empty again !
 
 Interface_EntityIterator::~Interface_EntityIterator()
 {

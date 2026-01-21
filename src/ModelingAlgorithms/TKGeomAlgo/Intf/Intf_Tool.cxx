@@ -64,12 +64,12 @@ void Intf_Tool::Lin2dBox(const gp_Lin2d& L2d, const Bnd_Box2d& domain, Bnd_Box2d
   else if (domain.IsVoid())
     return;
 
-  Standard_Real    xmin, xmax, ymin, ymax;
-  Standard_Real    Xmin = 0, Xmax = 0, Ymin = 0, Ymax = 0;
-  Standard_Real    parmin = -Precision::Infinite();
-  Standard_Real    parmax = Precision::Infinite();
-  Standard_Real    parcur, par1, par2;
-  Standard_Boolean xToSet, yToSet;
+  double xmin, xmax, ymin, ymax;
+  double Xmin = 0, Xmax = 0, Ymin = 0, Ymax = 0;
+  double parmin = -Precision::Infinite();
+  double parmax = Precision::Infinite();
+  double parcur, par1, par2;
+  bool   xToSet, yToSet;
 
   domain.Get(xmin, ymin, xmax, ymax);
 
@@ -83,7 +83,7 @@ void Intf_Tool::Lin2dBox(const gp_Lin2d& L2d, const Bnd_Box2d& domain, Bnd_Box2d
       parmax = Precision::Infinite();
     else
       parmax = (xmax - L2d.Location().XY().X()) / L2d.Direction().XY().X();
-    xToSet = Standard_True;
+    xToSet = true;
   }
   else if (L2d.Direction().XY().X() < 0.)
   {
@@ -95,7 +95,7 @@ void Intf_Tool::Lin2dBox(const gp_Lin2d& L2d, const Bnd_Box2d& domain, Bnd_Box2d
       parmax = Precision::Infinite();
     else
       parmax = (xmin - L2d.Location().XY().X()) / L2d.Direction().XY().X();
-    xToSet = Standard_True;
+    xToSet = true;
   }
   else
   { // Parallel to axis  X
@@ -103,7 +103,7 @@ void Intf_Tool::Lin2dBox(const gp_Lin2d& L2d, const Bnd_Box2d& domain, Bnd_Box2d
       return;
     Xmin   = L2d.Location().XY().X();
     Xmax   = L2d.Location().XY().X();
-    xToSet = Standard_False;
+    xToSet = false;
   }
 
   if (L2d.Direction().XY().Y() > 0.)
@@ -112,13 +112,13 @@ void Intf_Tool::Lin2dBox(const gp_Lin2d& L2d, const Bnd_Box2d& domain, Bnd_Box2d
       parcur = -Precision::Infinite();
     else
       parcur = (ymin - L2d.Location().XY().Y()) / L2d.Direction().XY().Y();
-    parmin = Max(parmin, parcur);
+    parmin = std::max(parmin, parcur);
     if (domain.IsOpenYmax())
       parcur = Precision::Infinite();
     else
       parcur = (ymax - L2d.Location().XY().Y()) / L2d.Direction().XY().Y();
-    parmax = Min(parmax, parcur);
-    yToSet = Standard_True;
+    parmax = std::min(parmax, parcur);
+    yToSet = true;
   }
   else if (L2d.Direction().XY().Y() < 0.)
   {
@@ -126,13 +126,13 @@ void Intf_Tool::Lin2dBox(const gp_Lin2d& L2d, const Bnd_Box2d& domain, Bnd_Box2d
       parcur = -Precision::Infinite();
     else
       parcur = (ymax - L2d.Location().XY().Y()) / L2d.Direction().XY().Y();
-    parmin = Max(parmin, parcur);
+    parmin = std::max(parmin, parcur);
     if (domain.IsOpenYmin())
       parcur = Precision::Infinite();
     else
       parcur = (ymin - L2d.Location().XY().Y()) / L2d.Direction().XY().Y();
-    parmax = Min(parmax, parcur);
-    yToSet = Standard_True;
+    parmax = std::min(parmax, parcur);
+    yToSet = true;
   }
   else
   { // Parallel to axis  Y
@@ -140,7 +140,7 @@ void Intf_Tool::Lin2dBox(const gp_Lin2d& L2d, const Bnd_Box2d& domain, Bnd_Box2d
       return;
     Ymin   = L2d.Location().XY().Y();
     Ymax   = L2d.Location().XY().Y();
-    yToSet = Standard_False;
+    yToSet = false;
   }
 
   nbSeg++;
@@ -151,16 +151,16 @@ void Intf_Tool::Lin2dBox(const gp_Lin2d& L2d, const Bnd_Box2d& domain, Bnd_Box2d
   {
     par1 = L2d.Location().XY().X() + parmin * L2d.Direction().XY().X();
     par2 = L2d.Location().XY().X() + parmax * L2d.Direction().XY().X();
-    Xmin = Min(par1, par2);
-    Xmax = Max(par1, par2);
+    Xmin = std::min(par1, par2);
+    Xmax = std::max(par1, par2);
   }
 
   if (yToSet)
   {
     par1 = L2d.Location().XY().Y() + parmin * L2d.Direction().XY().Y();
     par2 = L2d.Location().XY().Y() + parmax * L2d.Direction().XY().Y();
-    Ymin = Min(par1, par2);
-    Ymax = Max(par1, par2);
+    Ymin = std::min(par1, par2);
+    Ymax = std::max(par1, par2);
   }
 
   boxLin.Update(Xmin, Ymin, Xmax, Ymax);
@@ -183,26 +183,26 @@ void Intf_Tool::Hypr2dBox(const gp_Hypr2d& theHypr2d, const Bnd_Box2d& domain, B
   else if (domain.IsVoid())
     return;
 
-  Standard_Integer nbPi = Inters2d(theHypr2d, domain);
+  int nbPi = Inters2d(theHypr2d, domain);
 
   if (nbPi > 0)
   {
-    Standard_Real Xmin, Xmax, Ymin, Ymax;
+    double Xmin, Xmax, Ymin, Ymax;
 
     domain.Get(Xmax, Ymax, Xmin, Ymin);
 
-    Standard_Integer npi;
+    int npi;
     for (npi = 0; npi < nbPi; npi++)
     {
-      Xmin = Min(Xmin, xint[npi]);
-      Xmax = Max(Xmax, xint[npi]);
-      Ymin = Min(Ymin, yint[npi]);
-      Ymax = Max(Ymax, yint[npi]);
+      Xmin = std::min(Xmin, xint[npi]);
+      Xmax = std::max(Xmax, xint[npi]);
+      Ymin = std::min(Ymin, yint[npi]);
+      Ymax = std::max(Ymax, yint[npi]);
     }
     boxHypr2d.Update(Xmin, Ymin, Xmax, Ymax);
 
-    Standard_Integer npj, npk;
-    Standard_Real    parmin;
+    int    npj, npk;
+    double parmin;
     for (npi = 0; npi < nbPi; npi++)
     {
       npk = npi;
@@ -220,10 +220,10 @@ void Intf_Tool::Hypr2dBox(const gp_Hypr2d& theHypr2d, const Bnd_Box2d& domain, B
       }
     }
 
-    gp_Pnt2d         Pn;
-    gp_Vec2d         Tan;
-    Standard_Real    sinan = 0;
-    Standard_Boolean out   = Standard_True;
+    gp_Pnt2d Pn;
+    gp_Vec2d Tan;
+    double   sinan = 0;
+    bool     out   = true;
 
     for (npi = 0; npi < nbPi; npi++)
     {
@@ -243,11 +243,11 @@ void Intf_Tool::Hypr2dBox(const gp_Hypr2d& theHypr2d, const Bnd_Box2d& domain, B
           sinan = gp_XY(0., 1.) ^ Tan.XY();
           break;
       }
-      if (Abs(sinan) > Precision::Angular())
+      if (std::abs(sinan) > Precision::Angular())
       {
         if (sinan > 0.)
         {
-          out                 = Standard_False;
+          out                 = false;
           beginOnCurve[nbSeg] = parint[npi];
           nbSeg++;
         }
@@ -259,31 +259,31 @@ void Intf_Tool::Hypr2dBox(const gp_Hypr2d& theHypr2d, const Bnd_Box2d& domain, B
             nbSeg++;
           }
           endOnCurve[nbSeg - 1] = parint[npi];
-          out                   = Standard_True;
+          out                   = true;
 
-          Standard_Integer ipmin;
+          int ipmin;
           if (beginOnCurve[nbSeg - 1] < -10.)
             ipmin = -10;
           else
-            ipmin = (Standard_Integer)(beginOnCurve[nbSeg - 1]);
+            ipmin = (int)(beginOnCurve[nbSeg - 1]);
 
-          Standard_Integer ipmax;
+          int ipmax;
           if (endOnCurve[nbSeg - 1] > 10.)
             ipmax = 10;
           else
-            ipmax = (Standard_Integer)(endOnCurve[nbSeg - 1]);
+            ipmax = (int)(endOnCurve[nbSeg - 1]);
 
-          // Standard_Integer ipmin=Max((Standard_Integer)(beginOnCurve[nbSeg-1]),
+          // int ipmin=Max((int)(beginOnCurve[nbSeg-1]),
           //		     -10);
-          // Standard_Integer ipmax=Min((Standard_Integer)(endOnCurve[nbSeg-1]),
+          // int ipmax=Min((int)(endOnCurve[nbSeg-1]),
           //		     10);
           ipmin = ipmin * 10 + 1;
           ipmax = ipmax * 10 - 1;
-          Standard_Integer ip, pas = 1;
+          int ip, pas = 1;
           for (ip = ipmin; ip <= ipmax; ip += pas)
           {
-            boxHypr2d.Add(ElCLib::Value(Standard_Real(ip) / 10., theHypr2d));
-            if (Abs(ip) <= 10)
+            boxHypr2d.Add(ElCLib::Value(double(ip) / 10., theHypr2d));
+            if (std::abs(ip) <= 10)
               pas = 1;
             else
               pas = 10;
@@ -303,17 +303,17 @@ void Intf_Tool::Hypr2dBox(const gp_Hypr2d& theHypr2d, const Bnd_Box2d& domain, B
 
 //=================================================================================================
 
-Standard_Integer Intf_Tool::Inters2d(const gp_Hypr2d& theCurv, const Bnd_Box2d& Domain)
+int Intf_Tool::Inters2d(const gp_Hypr2d& theCurv, const Bnd_Box2d& Domain)
 {
-  Standard_Integer nbpi = 0;
-  Standard_Integer npi;
-  Standard_Real    xmin, xmax, ymin, ymax;
+  int    nbpi = 0;
+  int    npi;
+  double xmin, xmax, ymin, ymax;
 
   Domain.Get(xmin, ymin, xmax, ymax);
 
   if (!Domain.IsOpenYmax())
   {
-    gp_Lin2d                 L1(gp_Pnt2d(0., ymax), gp_Dir2d(-1., 0.));
+    gp_Lin2d                 L1(gp_Pnt2d(0., ymax), gp_Dir2d(gp_Dir2d::D::NX));
     IntAna2d_AnaIntersection Inters1(theCurv, IntAna2d_Conic(L1));
     if (Inters1.IsDone())
     {
@@ -336,7 +336,7 @@ Standard_Integer Intf_Tool::Inters2d(const gp_Hypr2d& theCurv, const Bnd_Box2d& 
 
   if (!Domain.IsOpenXmin())
   {
-    gp_Lin2d                 L2(gp_Pnt2d(xmin, 0.), gp_Dir2d(0., -1.));
+    gp_Lin2d                 L2(gp_Pnt2d(xmin, 0.), gp_Dir2d(gp_Dir2d::D::NY));
     IntAna2d_AnaIntersection Inters2(theCurv, IntAna2d_Conic(L2));
     if (Inters2.IsDone())
     {
@@ -359,7 +359,7 @@ Standard_Integer Intf_Tool::Inters2d(const gp_Hypr2d& theCurv, const Bnd_Box2d& 
 
   if (!Domain.IsOpenYmin())
   {
-    gp_Lin2d                 L3(gp_Pnt2d(0., ymin), gp_Dir2d(1., 0.));
+    gp_Lin2d                 L3(gp_Pnt2d(0., ymin), gp_Dir2d(gp_Dir2d::D::X));
     IntAna2d_AnaIntersection Inters3(theCurv, IntAna2d_Conic(L3));
     if (Inters3.IsDone())
     {
@@ -382,7 +382,7 @@ Standard_Integer Intf_Tool::Inters2d(const gp_Hypr2d& theCurv, const Bnd_Box2d& 
 
   if (!Domain.IsOpenXmax())
   {
-    gp_Lin2d                 L4(gp_Pnt2d(xmax, 0.), gp_Dir2d(0., 1.));
+    gp_Lin2d                 L4(gp_Pnt2d(xmax, 0.), gp_Dir2d(gp_Dir2d::D::Y));
     IntAna2d_AnaIntersection Inters4(theCurv, IntAna2d_Conic(L4));
     if (Inters4.IsDone())
     {
@@ -424,26 +424,26 @@ void Intf_Tool::Parab2dBox(const gp_Parab2d& theParab2d,
   else if (domain.IsVoid())
     return;
 
-  Standard_Integer nbPi = Inters2d(theParab2d, domain);
+  int nbPi = Inters2d(theParab2d, domain);
 
   if (nbPi > 0)
   {
-    Standard_Real Xmin, Xmax, Ymin, Ymax;
+    double Xmin, Xmax, Ymin, Ymax;
 
     domain.Get(Xmax, Ymax, Xmin, Ymin);
 
-    Standard_Integer npi;
+    int npi;
     for (npi = 0; npi < nbPi; npi++)
     {
-      Xmin = Min(Xmin, xint[npi]);
-      Xmax = Max(Xmax, xint[npi]);
-      Ymin = Min(Ymin, yint[npi]);
-      Ymax = Max(Ymax, yint[npi]);
+      Xmin = std::min(Xmin, xint[npi]);
+      Xmax = std::max(Xmax, xint[npi]);
+      Ymin = std::min(Ymin, yint[npi]);
+      Ymax = std::max(Ymax, yint[npi]);
     }
     boxParab2d.Update(Xmin, Ymin, Xmax, Ymax);
 
-    Standard_Integer npj, npk;
-    Standard_Real    parmin;
+    int    npj, npk;
+    double parmin;
     for (npi = 0; npi < nbPi; npi++)
     {
       npk = npi;
@@ -461,10 +461,10 @@ void Intf_Tool::Parab2dBox(const gp_Parab2d& theParab2d,
       }
     }
 
-    gp_Pnt2d         Pn;
-    gp_Vec2d         Tan;
-    Standard_Real    sinan = 0;
-    Standard_Boolean out   = Standard_True;
+    gp_Pnt2d Pn;
+    gp_Vec2d Tan;
+    double   sinan = 0;
+    bool     out   = true;
 
     for (npi = 0; npi < nbPi; npi++)
     {
@@ -484,11 +484,11 @@ void Intf_Tool::Parab2dBox(const gp_Parab2d& theParab2d,
           sinan = gp_XY(0., 1.) ^ Tan.XY();
           break;
       }
-      if (Abs(sinan) > Precision::Angular())
+      if (std::abs(sinan) > Precision::Angular())
       {
         if (sinan > 0.)
         {
-          out                 = Standard_False;
+          out                 = false;
           beginOnCurve[nbSeg] = parint[npi];
           nbSeg++;
         }
@@ -500,31 +500,31 @@ void Intf_Tool::Parab2dBox(const gp_Parab2d& theParab2d,
             nbSeg++;
           }
           endOnCurve[nbSeg - 1] = parint[npi];
-          out                   = Standard_True;
+          out                   = true;
 
-          Standard_Integer ipmin;
+          int ipmin;
           if (beginOnCurve[nbSeg - 1] < -10.)
             ipmin = -10;
           else
-            ipmin = (Standard_Integer)(beginOnCurve[nbSeg - 1]);
+            ipmin = (int)(beginOnCurve[nbSeg - 1]);
 
-          Standard_Integer ipmax;
+          int ipmax;
           if (endOnCurve[nbSeg - 1] > 10.)
             ipmax = 10;
           else
-            ipmax = (Standard_Integer)(endOnCurve[nbSeg - 1]);
+            ipmax = (int)(endOnCurve[nbSeg - 1]);
 
-          // Standard_Integer ipmin=Max((Standard_Integer)(beginOnCurve[nbSeg-1]),
+          // int ipmin=Max((int)(beginOnCurve[nbSeg-1]),
           //		     -10);
-          // Standard_Integer ipmax=Min((Standard_Integer)(endOnCurve[nbSeg-1]),
+          // int ipmax=Min((int)(endOnCurve[nbSeg-1]),
           //		     10);
           ipmin = ipmin * 10 + 1;
           ipmax = ipmax * 10 - 1;
-          Standard_Integer ip, pas = 1;
+          int ip, pas = 1;
           for (ip = ipmin; ip <= ipmax; ip += pas)
           {
-            boxParab2d.Add(ElCLib::Value(Standard_Real(ip) / 10., theParab2d));
-            if (Abs(ip) <= 10)
+            boxParab2d.Add(ElCLib::Value(double(ip) / 10., theParab2d));
+            if (std::abs(ip) <= 10)
               pas = 1;
             else
               pas = 10;
@@ -544,17 +544,17 @@ void Intf_Tool::Parab2dBox(const gp_Parab2d& theParab2d,
 
 //=================================================================================================
 
-Standard_Integer Intf_Tool::Inters2d(const gp_Parab2d& theCurv, const Bnd_Box2d& Domain)
+int Intf_Tool::Inters2d(const gp_Parab2d& theCurv, const Bnd_Box2d& Domain)
 {
-  Standard_Integer nbpi = 0;
-  Standard_Integer npi;
-  Standard_Real    xmin, xmax, ymin, ymax;
+  int    nbpi = 0;
+  int    npi;
+  double xmin, xmax, ymin, ymax;
 
   Domain.Get(xmin, ymin, xmax, ymax);
 
   if (!Domain.IsOpenYmax())
   {
-    gp_Lin2d                 L1(gp_Pnt2d(0., ymax), gp_Dir2d(-1., 0.));
+    gp_Lin2d                 L1(gp_Pnt2d(0., ymax), gp_Dir2d(gp_Dir2d::D::NX));
     IntAna2d_AnaIntersection Inters1(theCurv, IntAna2d_Conic(L1));
     if (Inters1.IsDone())
     {
@@ -577,7 +577,7 @@ Standard_Integer Intf_Tool::Inters2d(const gp_Parab2d& theCurv, const Bnd_Box2d&
 
   if (!Domain.IsOpenXmin())
   {
-    gp_Lin2d                 L2(gp_Pnt2d(xmin, 0.), gp_Dir2d(0., -1.));
+    gp_Lin2d                 L2(gp_Pnt2d(xmin, 0.), gp_Dir2d(gp_Dir2d::D::NY));
     IntAna2d_AnaIntersection Inters2(theCurv, IntAna2d_Conic(L2));
     if (Inters2.IsDone())
     {
@@ -600,7 +600,7 @@ Standard_Integer Intf_Tool::Inters2d(const gp_Parab2d& theCurv, const Bnd_Box2d&
 
   if (!Domain.IsOpenYmin())
   {
-    gp_Lin2d                 L3(gp_Pnt2d(0., ymin), gp_Dir2d(1., 0.));
+    gp_Lin2d                 L3(gp_Pnt2d(0., ymin), gp_Dir2d(gp_Dir2d::D::X));
     IntAna2d_AnaIntersection Inters3(theCurv, IntAna2d_Conic(L3));
     if (Inters3.IsDone())
     {
@@ -623,7 +623,7 @@ Standard_Integer Intf_Tool::Inters2d(const gp_Parab2d& theCurv, const Bnd_Box2d&
 
   if (!Domain.IsOpenXmax())
   {
-    gp_Lin2d                 L4(gp_Pnt2d(xmax, 0.), gp_Dir2d(0., 1.));
+    gp_Lin2d                 L4(gp_Pnt2d(xmax, 0.), gp_Dir2d(gp_Dir2d::D::Y));
     IntAna2d_AnaIntersection Inters4(theCurv, IntAna2d_Conic(L4));
     if (Inters4.IsDone())
     {
@@ -664,12 +664,12 @@ void Intf_Tool::LinBox(const gp_Lin& L, const Bnd_Box& domain, Bnd_Box& boxLin)
   else if (domain.IsVoid())
     return;
 
-  Standard_Real    xmin, xmax, ymin, ymax, zmin, zmax;
-  Standard_Real    Xmin = 0, Xmax = 0, Ymin = 0, Ymax = 0, Zmin = 0, Zmax = 0;
-  Standard_Real    parmin = -Precision::Infinite();
-  Standard_Real    parmax = Precision::Infinite();
-  Standard_Real    parcur, par1, par2;
-  Standard_Boolean xToSet, yToSet, zToSet;
+  double xmin, xmax, ymin, ymax, zmin, zmax;
+  double Xmin = 0, Xmax = 0, Ymin = 0, Ymax = 0, Zmin = 0, Zmax = 0;
+  double parmin = -Precision::Infinite();
+  double parmax = Precision::Infinite();
+  double parcur, par1, par2;
+  bool   xToSet, yToSet, zToSet;
 
   domain.Get(xmin, ymin, zmin, xmax, ymax, zmax);
 
@@ -683,7 +683,7 @@ void Intf_Tool::LinBox(const gp_Lin& L, const Bnd_Box& domain, Bnd_Box& boxLin)
       parmax = Precision::Infinite();
     else
       parmax = (xmax - L.Location().XYZ().X()) / L.Direction().XYZ().X();
-    xToSet = Standard_True;
+    xToSet = true;
   }
   else if (L.Direction().XYZ().X() < 0.)
   {
@@ -695,7 +695,7 @@ void Intf_Tool::LinBox(const gp_Lin& L, const Bnd_Box& domain, Bnd_Box& boxLin)
       parmax = Precision::Infinite();
     else
       parmax = (xmin - L.Location().XYZ().X()) / L.Direction().XYZ().X();
-    xToSet = Standard_True;
+    xToSet = true;
   }
   else
   { // Perpendiculaire a l axe  X
@@ -703,7 +703,7 @@ void Intf_Tool::LinBox(const gp_Lin& L, const Bnd_Box& domain, Bnd_Box& boxLin)
       return;
     Xmin   = L.Location().XYZ().X();
     Xmax   = L.Location().XYZ().X();
-    xToSet = Standard_False;
+    xToSet = false;
   }
 
   if (L.Direction().XYZ().Y() > 0.)
@@ -712,13 +712,13 @@ void Intf_Tool::LinBox(const gp_Lin& L, const Bnd_Box& domain, Bnd_Box& boxLin)
       parcur = -Precision::Infinite();
     else
       parcur = (ymin - L.Location().XYZ().Y()) / L.Direction().XYZ().Y();
-    parmin = Max(parmin, parcur);
+    parmin = std::max(parmin, parcur);
     if (domain.IsOpenYmax())
       parcur = Precision::Infinite();
     else
       parcur = (ymax - L.Location().XYZ().Y()) / L.Direction().XYZ().Y();
-    parmax = Min(parmax, parcur);
-    yToSet = Standard_True;
+    parmax = std::min(parmax, parcur);
+    yToSet = true;
   }
   else if (L.Direction().XYZ().Y() < 0.)
   {
@@ -726,13 +726,13 @@ void Intf_Tool::LinBox(const gp_Lin& L, const Bnd_Box& domain, Bnd_Box& boxLin)
       parcur = -Precision::Infinite();
     else
       parcur = (ymax - L.Location().XYZ().Y()) / L.Direction().XYZ().Y();
-    parmin = Max(parmin, parcur);
+    parmin = std::max(parmin, parcur);
     if (domain.IsOpenYmin())
       parcur = Precision::Infinite();
     else
       parcur = (ymin - L.Location().XYZ().Y()) / L.Direction().XYZ().Y();
-    parmax = Min(parmax, parcur);
-    yToSet = Standard_True;
+    parmax = std::min(parmax, parcur);
+    yToSet = true;
   }
   else
   { // Perpendiculaire a l axe  Y
@@ -740,7 +740,7 @@ void Intf_Tool::LinBox(const gp_Lin& L, const Bnd_Box& domain, Bnd_Box& boxLin)
       return;
     Ymin   = L.Location().XYZ().Y();
     Ymax   = L.Location().XYZ().Y();
-    yToSet = Standard_False;
+    yToSet = false;
   }
 
   if (L.Direction().XYZ().Z() > 0.)
@@ -749,13 +749,13 @@ void Intf_Tool::LinBox(const gp_Lin& L, const Bnd_Box& domain, Bnd_Box& boxLin)
       parcur = -Precision::Infinite();
     else
       parcur = (zmin - L.Location().XYZ().Z()) / L.Direction().XYZ().Z();
-    parmin = Max(parmin, parcur);
+    parmin = std::max(parmin, parcur);
     if (domain.IsOpenZmax())
       parcur = Precision::Infinite();
     else
       parcur = (zmax - L.Location().XYZ().Z()) / L.Direction().XYZ().Z();
-    parmax = Min(parmax, parcur);
-    zToSet = Standard_True;
+    parmax = std::min(parmax, parcur);
+    zToSet = true;
   }
   else if (L.Direction().XYZ().Z() < 0.)
   {
@@ -763,13 +763,13 @@ void Intf_Tool::LinBox(const gp_Lin& L, const Bnd_Box& domain, Bnd_Box& boxLin)
       parcur = -Precision::Infinite();
     else
       parcur = (zmax - L.Location().XYZ().Z()) / L.Direction().XYZ().Z();
-    parmin = Max(parmin, parcur);
+    parmin = std::max(parmin, parcur);
     if (domain.IsOpenZmin())
       parcur = Precision::Infinite();
     else
       parcur = (zmin - L.Location().XYZ().Z()) / L.Direction().XYZ().Z();
-    parmax = Min(parmax, parcur);
-    zToSet = Standard_True;
+    parmax = std::min(parmax, parcur);
+    zToSet = true;
   }
   else
   { // Perpendicular to axis Z
@@ -777,7 +777,7 @@ void Intf_Tool::LinBox(const gp_Lin& L, const Bnd_Box& domain, Bnd_Box& boxLin)
       return;
     Zmin   = L.Location().XYZ().Z();
     Zmax   = L.Location().XYZ().Z();
-    zToSet = Standard_False;
+    zToSet = false;
   }
 
   nbSeg++;
@@ -788,24 +788,24 @@ void Intf_Tool::LinBox(const gp_Lin& L, const Bnd_Box& domain, Bnd_Box& boxLin)
   {
     par1 = L.Location().XYZ().X() + parmin * L.Direction().XYZ().X();
     par2 = L.Location().XYZ().X() + parmax * L.Direction().XYZ().X();
-    Xmin = Min(par1, par2);
-    Xmax = Max(par1, par2);
+    Xmin = std::min(par1, par2);
+    Xmax = std::max(par1, par2);
   }
 
   if (yToSet)
   {
     par1 = L.Location().XYZ().Y() + parmin * L.Direction().XYZ().Y();
     par2 = L.Location().XYZ().Y() + parmax * L.Direction().XYZ().Y();
-    Ymin = Min(par1, par2);
-    Ymax = Max(par1, par2);
+    Ymin = std::min(par1, par2);
+    Ymax = std::max(par1, par2);
   }
 
   if (zToSet)
   {
     par1 = L.Location().XYZ().Z() + parmin * L.Direction().XYZ().Z();
     par2 = L.Location().XYZ().Z() + parmax * L.Direction().XYZ().Z();
-    Zmin = Min(par1, par2);
-    Zmax = Max(par1, par2);
+    Zmin = std::min(par1, par2);
+    Zmax = std::max(par1, par2);
   }
 
   boxLin.Update(Xmin, Ymin, Zmin, Xmax, Ymax, Zmax);
@@ -833,31 +833,31 @@ void Intf_Tool::HyprBox(const gp_Hypr& theHypr, const Bnd_Box& domain, Bnd_Box& 
     return;
   }
   //
-  Standard_Integer nbPi;
+  int nbPi;
   //
   nbPi = Inters3d(theHypr, domain);
   if (nbPi > 0)
   {
-    Standard_Integer npi;
-    Standard_Real    Xmin, Ymin, Zmin, Xmax, Ymax, Zmax;
+    int    npi;
+    double Xmin, Ymin, Zmin, Xmax, Ymax, Zmax;
     //
     domain.Get(Xmin, Ymin, Zmin, Xmax, Ymax, Zmax);
     //
     for (npi = 0; npi < nbPi; npi++)
     {
-      Xmin = Min(Xmin, xint[npi]);
-      Xmax = Max(Xmax, xint[npi]);
-      Ymin = Min(Ymin, yint[npi]);
-      Ymax = Max(Ymax, yint[npi]);
-      Zmin = Min(Zmin, zint[npi]);
-      Zmax = Max(Zmax, yint[npi]);
+      Xmin = std::min(Xmin, xint[npi]);
+      Xmax = std::max(Xmax, xint[npi]);
+      Ymin = std::min(Ymin, yint[npi]);
+      Ymax = std::max(Ymax, yint[npi]);
+      Zmin = std::min(Zmin, zint[npi]);
+      Zmax = std::max(Zmax, yint[npi]);
     }
     boxHypr.Update(Xmin, Ymin, Zmin, Xmax, Ymax, Zmax);
     //
-    gp_Pnt           Pn;
-    gp_Vec           Tan;
-    Standard_Real    sinan = 0;
-    Standard_Boolean out   = Standard_True;
+    gp_Pnt Pn;
+    gp_Vec Tan;
+    double sinan = 0;
+    bool   out   = true;
 
     for (npi = 0; npi < nbPi; npi++)
     {
@@ -883,11 +883,11 @@ void Intf_Tool::HyprBox(const gp_Hypr& theHypr, const Bnd_Box& domain, Bnd_Box& 
           sinan = gp_XYZ(0., 0., -1.) * Tan.XYZ();
           break;
       }
-      if (Abs(sinan) > Precision::Angular())
+      if (std::abs(sinan) > Precision::Angular())
       {
         if (sinan > 0.)
         {
-          out                 = Standard_False;
+          out                 = false;
           beginOnCurve[nbSeg] = parint[npi];
           //// modified by jgv, 10.11.2009 /////
           endOnCurve[nbSeg] = 10.;
@@ -905,10 +905,10 @@ void Intf_Tool::HyprBox(const gp_Hypr& theHypr, const Bnd_Box& domain, Bnd_Box& 
             nbSeg++;
           }
           endOnCurve[nbSeg - 1] = parint[npi];
-          out                   = Standard_True;
+          out                   = true;
           //
           // modified by NIZNHY-PKV Fri Jul 11 13:54:54 2008f
-          Standard_Real ipmin, ipmax, ip, pas;
+          double ipmin, ipmax, ip, pas;
           //
           ipmin = -10.;
           if (beginOnCurve[nbSeg - 1] > ipmin)
@@ -934,16 +934,16 @@ void Intf_Tool::HyprBox(const gp_Hypr& theHypr, const Bnd_Box& domain, Bnd_Box& 
             }
           }
           /*
-          Standard_Integer ipmin=Max((Standard_Integer)(beginOnCurve[nbSeg-1]), -10);
-          Standard_Integer ipmax=Min((Standard_Integer)(endOnCurve[nbSeg-1]),    10);
+          int ipmin=Max((int)(beginOnCurve[nbSeg-1]), -10);
+          int ipmax=Min((int)(endOnCurve[nbSeg-1]),    10);
 
           ipmin=ipmin*10+1;
           ipmax=ipmax*10-1;
-          Standard_Integer ip, pas=1;
+          int ip, pas=1;
           for (ip=ipmin; ip<=ipmax; ip+=pas) {
-            boxHypr.Add(ElCLib::Value(Standard_Real(ip)/10., theHypr));
+            boxHypr.Add(ElCLib::Value(double(ip)/10., theHypr));
 
-            if (Abs(ip)<=10) {
+            if (std::abs(ip)<=10) {
               pas=1;
             }
             else {
@@ -969,11 +969,11 @@ void Intf_Tool::HyprBox(const gp_Hypr& theHypr, const Bnd_Box& domain, Bnd_Box& 
 
 //=================================================================================================
 
-Standard_Integer Intf_Tool::Inters3d(const gp_Hypr& theCurv, const Bnd_Box& Domain)
+int Intf_Tool::Inters3d(const gp_Hypr& theCurv, const Bnd_Box& Domain)
 {
-  Standard_Integer nbpi = 0;
-  Standard_Integer npi;
-  Standard_Real    xmin, ymin, zmin, xmax, ymax, zmax;
+  int    nbpi = 0;
+  int    npi;
+  double xmin, ymin, zmin, xmax, ymax, zmax;
 
   Domain.Get(xmin, ymin, zmin, xmax, ymax, zmax);
 
@@ -1115,13 +1115,13 @@ Standard_Integer Intf_Tool::Inters3d(const gp_Hypr& theCurv, const Bnd_Box& Doma
     }
   }
 
-  Standard_Integer aNbDiffPoints = nbpi;
+  int aNbDiffPoints = nbpi;
 
   // Sort parint and check if parint contains several
   // matched values. If that is true they will be deleted.
-  for (Standard_Integer i = nbpi - 1; i > 0; i--)
+  for (int i = nbpi - 1; i > 0; i--)
   {
-    for (Standard_Integer j = 0; j < i; j++)
+    for (int j = 0; j < i; j++)
     {
       if (parint[i] <= parint[j])
       {
@@ -1135,7 +1135,7 @@ Standard_Integer Intf_Tool::Inters3d(const gp_Hypr& theCurv, const Bnd_Box& Doma
       if ((i < nbpi - 1) && IsEqual(parint[i], parint[i + 1]))
       {
         aNbDiffPoints--;
-        for (Standard_Integer k = i; k < aNbDiffPoints; k++)
+        for (int k = i; k < aNbDiffPoints; k++)
         {
           parint[k] = parint[k + 1];
           zint[k]   = zint[k + 1];
@@ -1152,11 +1152,11 @@ Standard_Integer Intf_Tool::Inters3d(const gp_Hypr& theCurv, const Bnd_Box& Doma
 
 //=================================================================================================
 
-Standard_Integer Intf_Tool::Inters3d(const gp_Parab& theCurv, const Bnd_Box& Domain)
+int Intf_Tool::Inters3d(const gp_Parab& theCurv, const Bnd_Box& Domain)
 {
-  Standard_Integer nbpi = 0;
-  Standard_Integer npi;
-  Standard_Real    xmin, ymin, zmin, xmax, ymax, zmax;
+  int    nbpi = 0;
+  int    npi;
+  double xmin, ymin, zmin, xmax, ymax, zmax;
 
   Domain.Get(xmin, ymin, zmin, xmax, ymax, zmax);
 
@@ -1298,13 +1298,13 @@ Standard_Integer Intf_Tool::Inters3d(const gp_Parab& theCurv, const Bnd_Box& Dom
     }
   }
 
-  Standard_Integer aNbDiffPoints = nbpi;
+  int aNbDiffPoints = nbpi;
 
   // Sort parint and check if parint contains several
   // matched values. If that is true they will be deleted.
-  for (Standard_Integer i = nbpi - 1; i > 0; i--)
+  for (int i = nbpi - 1; i > 0; i--)
   {
-    for (Standard_Integer j = 0; j < i; j++)
+    for (int j = 0; j < i; j++)
     {
       if (parint[i] <= parint[j])
       {
@@ -1318,7 +1318,7 @@ Standard_Integer Intf_Tool::Inters3d(const gp_Parab& theCurv, const Bnd_Box& Dom
       if ((i < nbpi - 1) && IsEqual(parint[i], parint[i + 1]))
       {
         aNbDiffPoints--;
-        for (Standard_Integer k = i; k < aNbDiffPoints; k++)
+        for (int k = i; k < aNbDiffPoints; k++)
         {
           parint[k] = parint[k + 1];
           zint[k]   = zint[k + 1];
@@ -1350,31 +1350,31 @@ void Intf_Tool::ParabBox(const gp_Parab& theParab, const Bnd_Box& domain, Bnd_Bo
   else if (domain.IsVoid())
     return;
 
-  Standard_Integer nbPi = Inters3d(theParab, domain);
+  int nbPi = Inters3d(theParab, domain);
 
   if (nbPi > 0)
   {
-    Standard_Integer npi;
-    Standard_Real    Xmin, Ymin, Zmin, Xmax, Ymax, Zmax;
+    int    npi;
+    double Xmin, Ymin, Zmin, Xmax, Ymax, Zmax;
 
     domain.Get(Xmin, Ymin, Zmin, Xmax, Ymax, Zmax);
 
     for (npi = 0; npi < nbPi; npi++)
     {
-      Xmin = Min(Xmin, xint[npi]);
-      Xmax = Max(Xmax, xint[npi]);
-      Ymin = Min(Ymin, yint[npi]);
-      Ymax = Max(Ymax, yint[npi]);
-      Zmin = Min(Zmin, zint[npi]);
-      Zmax = Max(Zmax, yint[npi]);
+      Xmin = std::min(Xmin, xint[npi]);
+      Xmax = std::max(Xmax, xint[npi]);
+      Ymin = std::min(Ymin, yint[npi]);
+      Ymax = std::max(Ymax, yint[npi]);
+      Zmin = std::min(Zmin, zint[npi]);
+      Zmax = std::max(Zmax, yint[npi]);
     }
 
     boxParab.Update(Xmin, Ymin, Zmin, Xmax, Ymax, Zmax);
 
-    gp_Pnt           Pn;
-    gp_Vec           Tan;
-    Standard_Real    sinan = 0;
-    Standard_Boolean out   = Standard_True;
+    gp_Pnt Pn;
+    gp_Vec Tan;
+    double sinan = 0;
+    bool   out   = true;
 
     for (npi = 0; npi < nbPi; npi++)
     {
@@ -1400,11 +1400,11 @@ void Intf_Tool::ParabBox(const gp_Parab& theParab, const Bnd_Box& domain, Bnd_Bo
           sinan = gp_XYZ(0., 0., -1.) * Tan.XYZ();
           break;
       }
-      if (Abs(sinan) > Precision::Angular())
+      if (std::abs(sinan) > Precision::Angular())
       {
         if (sinan > 0.)
         {
-          out                 = Standard_False;
+          out                 = false;
           beginOnCurve[nbSeg] = parint[npi];
           nbSeg++;
         }
@@ -1416,27 +1416,27 @@ void Intf_Tool::ParabBox(const gp_Parab& theParab, const Bnd_Box& domain, Bnd_Bo
             nbSeg++;
           }
           endOnCurve[nbSeg - 1] = parint[npi];
-          out                   = Standard_True;
+          out                   = true;
 
-          Standard_Integer ipmin;
+          int ipmin;
           if (beginOnCurve[nbSeg - 1] < -10.)
             ipmin = -10;
           else
-            ipmin = (Standard_Integer)(beginOnCurve[nbSeg - 1]);
+            ipmin = (int)(beginOnCurve[nbSeg - 1]);
 
-          Standard_Integer ipmax;
+          int ipmax;
           if (endOnCurve[nbSeg - 1] > 10.)
             ipmax = 10;
           else
-            ipmax = (Standard_Integer)(endOnCurve[nbSeg - 1]);
+            ipmax = (int)(endOnCurve[nbSeg - 1]);
 
           ipmin = ipmin * 10 + 1;
           ipmax = ipmax * 10 - 1;
-          Standard_Integer ip, pas = 1;
+          int ip, pas = 1;
           for (ip = ipmin; ip <= ipmax; ip += pas)
           {
-            boxParab.Add(ElCLib::Value(Standard_Real(ip) / 10., theParab));
-            if (Abs(ip) <= 10)
+            boxParab.Add(ElCLib::Value(double(ip) / 10., theParab));
+            if (std::abs(ip) <= 10)
               pas = 1;
             else
               pas = 10;
@@ -1456,14 +1456,14 @@ void Intf_Tool::ParabBox(const gp_Parab& theParab, const Bnd_Box& domain, Bnd_Bo
 
 //=================================================================================================
 
-Standard_Integer Intf_Tool::NbSegments() const
+int Intf_Tool::NbSegments() const
 {
   return nbSeg;
 }
 
 //=================================================================================================
 
-Standard_Real Intf_Tool::BeginParam(const Standard_Integer SegmentNum) const
+double Intf_Tool::BeginParam(const int SegmentNum) const
 {
   Standard_OutOfRange_Raise_if(SegmentNum < 1 || SegmentNum > nbSeg, "Intf_Tool::BeginParam");
   return beginOnCurve[SegmentNum - 1];
@@ -1471,7 +1471,7 @@ Standard_Real Intf_Tool::BeginParam(const Standard_Integer SegmentNum) const
 
 //=================================================================================================
 
-Standard_Real Intf_Tool::EndParam(const Standard_Integer SegmentNum) const
+double Intf_Tool::EndParam(const int SegmentNum) const
 {
   Standard_OutOfRange_Raise_if(SegmentNum < 1 || SegmentNum > nbSeg, "Intf_Tool::EndParam");
   return endOnCurve[SegmentNum - 1];

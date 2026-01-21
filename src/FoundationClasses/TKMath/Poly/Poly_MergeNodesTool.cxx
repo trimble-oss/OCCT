@@ -49,7 +49,7 @@ public:
   const Poly_MergeNodesTool::Vec3AndNormal& Key() const { return myKey; }
 
   //! Static deleter to be passed to BaseMap
-  static void delNode(NCollection_ListNode* theNode, Handle(NCollection_BaseAllocator)& theAl)
+  static void delNode(NCollection_ListNode* theNode, occ::handle<NCollection_BaseAllocator>& theAl)
   {
     ((DataMapNode*)theNode)->~DataMapNode();
     theAl->Free(theNode);
@@ -69,7 +69,6 @@ Poly_MergeNodesTool::MergedNodesMap::MergedNodesMap(const int theNbBuckets)
       myAngleCos(0.0f),
       myToMergeOpposite(false)
 {
-  //
 }
 
 //=================================================================================================
@@ -109,9 +108,9 @@ inline size_t Poly_MergeNodesTool::MergedNodesMap::hashCode(const NCollection_Ve
   if (myInvTol <= 0.0f)
   {
     // compute DJB2 hash of a string
-    const size_t              aLength   = sizeof(NCollection_Vec3<float>);
-    unsigned int              aHashCode = 0;
-    const Standard_Character* c         = (Standard_CString)&thePos;
+    const size_t aLength   = sizeof(NCollection_Vec3<float>);
+    unsigned int aHashCode = 0;
+    const char*  c         = (const char*)&thePos;
     for (size_t i = 0; i < aLength; ++i, ++c)
     {
       aHashCode = ((aHashCode << 5) + aHashCode) ^ (*c);
@@ -139,30 +138,15 @@ inline bool Poly_MergeNodesTool::MergedNodesMap::vec3AreEqual(
   // const CellVec3i anIndex2 = vec3ToCell (theKey2);
   // return anIndex1.IsEqual (anIndex2);
 
-  float aVal = theKey1.x() - theKey2.x();
-  if (aVal < 0)
-  {
-    aVal = -aVal;
-  }
-  if (aVal > myTolerance)
+  if (std::abs(theKey1.x() - theKey2.x()) > myTolerance)
   {
     return false;
   }
-  aVal = theKey1.y() - theKey2.y();
-  if (aVal < 0)
-  {
-    aVal = -aVal;
-  }
-  if (aVal > myTolerance)
+  if (std::abs(theKey1.y() - theKey2.y()) > myTolerance)
   {
     return false;
   }
-  aVal = theKey1.z() - theKey2.z();
-  if (aVal < 0)
-  {
-    aVal = -aVal;
-  }
-  if (aVal > myTolerance)
+  if (std::abs(theKey1.z() - theKey2.z()) > myTolerance)
   {
     return false;
   }
@@ -209,7 +193,7 @@ inline bool Poly_MergeNodesTool::MergedNodesMap::Bind(int&                      
 
   DataMapNode** aData = (DataMapNode**)myData1;
   const size_t  aHash = hashCode(thePos, theNorm, NbBuckets());
-  for (DataMapNode* aNodeIter = aData[aHash]; aNodeIter != NULL;
+  for (DataMapNode* aNodeIter = aData[aHash]; aNodeIter != nullptr;
        aNodeIter              = (DataMapNode*)aNodeIter->Next())
   {
     if (isEqual(aNodeIter->Key(), thePos, theNorm, theIsOpposite))
@@ -233,7 +217,7 @@ inline bool Poly_MergeNodesTool::MergedNodesMap::Bind(int&                      
     {
       const CellVec3i anIndex = anIndexCnt + THE_NEIGHBRS[aNeigIter];
       const size_t    aHashEx = vec3iHashCode(anIndex, NbBuckets());
-      for (DataMapNode* aNodeIter = aData[aHashEx]; aNodeIter != NULL;
+      for (DataMapNode* aNodeIter = aData[aHashEx]; aNodeIter != nullptr;
            aNodeIter              = (DataMapNode*)aNodeIter->Next())
       {
         if (isEqual(aNodeIter->Key(), thePos, theNorm, theIsOpposite))
@@ -254,8 +238,8 @@ inline bool Poly_MergeNodesTool::MergedNodesMap::Bind(int&                      
 
 inline void Poly_MergeNodesTool::MergedNodesMap::ReSize(const int theSize)
 {
-  NCollection_ListNode** aNewData   = NULL;
-  NCollection_ListNode** aDummy     = NULL;
+  NCollection_ListNode** aNewData   = nullptr;
+  NCollection_ListNode** aDummy     = nullptr;
   int                    aNbNewBuck = 0;
   if (BeginResize(theSize, aNbNewBuck, aNewData, aDummy))
   {
@@ -263,7 +247,7 @@ inline void Poly_MergeNodesTool::MergedNodesMap::ReSize(const int theSize)
     {
       for (int anOldBuckIter = 0; anOldBuckIter <= NbBuckets(); ++anOldBuckIter)
       {
-        for (DataMapNode* anOldNodeIter = anOldData[anOldBuckIter]; anOldNodeIter != NULL;)
+        for (DataMapNode* anOldNodeIter = anOldData[anOldBuckIter]; anOldNodeIter != nullptr;)
         {
           const size_t aNewHash  = hashCode(anOldNodeIter->Key(), aNbNewBuck);
           DataMapNode* aNextNode = (DataMapNode*)anOldNodeIter->Next();
@@ -409,9 +393,9 @@ void Poly_MergeNodesTool::PushLastElement(int theNbNodes)
 
 //=================================================================================================
 
-void Poly_MergeNodesTool::AddTriangulation(const Handle(Poly_Triangulation)& theTris,
-                                           const gp_Trsf&                    theTrsf,
-                                           const Standard_Boolean            theToReverse)
+void Poly_MergeNodesTool::AddTriangulation(const occ::handle<Poly_Triangulation>& theTris,
+                                           const gp_Trsf&                         theTrsf,
+                                           const bool                             theToReverse)
 {
   if (theTris.IsNull())
   {
@@ -444,11 +428,11 @@ void Poly_MergeNodesTool::AddTriangulation(const Handle(Poly_Triangulation)& the
 
 //=================================================================================================
 
-Handle(Poly_Triangulation) Poly_MergeNodesTool::Result()
+occ::handle<Poly_Triangulation> Poly_MergeNodesTool::Result()
 {
   if (myPolyData.IsNull())
   {
-    return Handle(Poly_Triangulation)();
+    return occ::handle<Poly_Triangulation>();
   }
 
   // compress data
@@ -459,17 +443,17 @@ Handle(Poly_Triangulation) Poly_MergeNodesTool::Result()
 
 //=================================================================================================
 
-Handle(Poly_Triangulation) Poly_MergeNodesTool::MergeNodes(
-  const Handle(Poly_Triangulation)& theTris,
-  const gp_Trsf&                    theTrsf,
-  const Standard_Boolean            theToReverse,
-  const double                      theSmoothAngle,
-  const double                      theMergeTolerance,
-  const bool                        theToForce)
+occ::handle<Poly_Triangulation> Poly_MergeNodesTool::MergeNodes(
+  const occ::handle<Poly_Triangulation>& theTris,
+  const gp_Trsf&                         theTrsf,
+  const bool                             theToReverse,
+  const double                           theSmoothAngle,
+  const double                           theMergeTolerance,
+  const bool                             theToForce)
 {
   if (theTris.IsNull() || theTris->NbNodes() < 3 || theTris->NbTriangles() < 1)
   {
-    return Handle(Poly_Triangulation)();
+    return occ::handle<Poly_Triangulation>();
   }
 
   Poly_MergeNodesTool aMergeTool(theSmoothAngle, theMergeTolerance, theTris->NbTriangles());
@@ -477,7 +461,7 @@ Handle(Poly_Triangulation) Poly_MergeNodesTool::MergeNodes(
   if (!theToForce && aMergeTool.NbNodes() == theTris->NbNodes()
       && aMergeTool.NbElements() == theTris->NbTriangles())
   {
-    return Handle(Poly_Triangulation)();
+    return occ::handle<Poly_Triangulation>();
   }
   return aMergeTool.Result();
 }

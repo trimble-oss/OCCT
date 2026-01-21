@@ -39,7 +39,7 @@ GProp_GProps::GProp_GProps(const gp_Pnt& SystemLocation)
   inertia = gp_Mat(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 }
 
-void GProp_GProps::Add(const GProp_GProps& Item, const Standard_Real Density)
+void GProp_GProps::Add(const GProp_GProps& Item, const double Density)
 {
   if (Density <= gp::Resolution())
     throw Standard_DomainError();
@@ -49,7 +49,7 @@ void GProp_GProps::Add(const GProp_GProps& Item, const Standard_Real Density)
     g.SetXYZ(g.XYZ().Multiplied(dim));
     GXYZ.Add(g.XYZ());
     dim = dim + Item.dim * Density;
-    if (Abs(dim) >= 1.e-20)
+    if (std::abs(dim) >= 1.e-20)
     {
       GXYZ.Divide(dim);
       g.SetXYZ(GXYZ);
@@ -69,7 +69,7 @@ void GProp_GProps::Add(const GProp_GProps& Item, const Standard_Real Density)
     g.SetXYZ(g.XYZ().Multiplied(dim));
     GXYZ.Add(g.XYZ());
     dim = dim + Item.dim * Density;
-    if (Abs(dim) >= 1.e-20)
+    if (std::abs(dim) >= 1.e-20)
     {
       GXYZ.Divide(dim);
       g.SetXYZ(GXYZ);
@@ -95,7 +95,7 @@ void GProp_GProps::Add(const GProp_GProps& Item, const Standard_Real Density)
   }
 }
 
-Standard_Real GProp_GProps::Mass() const
+double GProp_GProps::Mass() const
 {
   return dim;
 }
@@ -112,7 +112,7 @@ gp_Mat GProp_GProps::MatrixOfInertia() const
   return inertia - HMat;
 }
 
-void GProp_GProps::StaticMoments(Standard_Real& Ix, Standard_Real& Iy, Standard_Real& Iz) const
+void GProp_GProps::StaticMoments(double& Ix, double& Iy, double& Iz) const
 {
 
   gp_XYZ G = loc.XYZ() + g.XYZ();
@@ -121,7 +121,7 @@ void GProp_GProps::StaticMoments(Standard_Real& Ix, Standard_Real& Iy, Standard_
   Iz       = G.Z() * dim;
 }
 
-Standard_Real GProp_GProps::MomentOfInertia(const gp_Ax1& A) const
+double GProp_GProps::MomentOfInertia(const gp_Ax1& A) const
 {
   // Moment of inertia / axis A
   // 1] computes the math_Matrix of inertia / A.location()
@@ -143,18 +143,18 @@ Standard_Real GProp_GProps::MomentOfInertia(const gp_Ax1& A) const
   }
 }
 
-Standard_Real GProp_GProps::RadiusOfGyration(const gp_Ax1& A) const
+double GProp_GProps::RadiusOfGyration(const gp_Ax1& A) const
 {
 
-  return Sqrt(MomentOfInertia(A) / dim);
+  return std::sqrt(MomentOfInertia(A) / dim);
 }
 
 GProp_PrincipalProps GProp_GProps::PrincipalProperties() const
 {
 
-  math_Matrix      DiagMat(1, 3, 1, 3);
-  Standard_Integer i, j;
-  gp_Mat           AxisInertia = MatrixOfInertia();
+  math_Matrix DiagMat(1, 3, 1, 3);
+  int         i, j;
+  gp_Mat      AxisInertia = MatrixOfInertia();
   for (j = 1; j <= 3; j++)
   {
     for (i = 1; i <= 3; i++)
@@ -162,25 +162,25 @@ GProp_PrincipalProps GProp_GProps::PrincipalProperties() const
       DiagMat(i, j) = AxisInertia.Value(i, j);
     }
   }
-  math_Jacobi   J(DiagMat);
-  Standard_Real Ixx = J.Value(1);
-  Standard_Real Iyy = J.Value(2);
-  Standard_Real Izz = J.Value(3);
-  DiagMat           = J.Vectors();
+  math_Jacobi J(DiagMat);
+  double      Ixx = J.Value(1);
+  double      Iyy = J.Value(2);
+  double      Izz = J.Value(3);
+  DiagMat         = J.Vectors();
   gp_Vec Vxx(DiagMat(1, 1), DiagMat(2, 1), DiagMat(3, 1));
   gp_Vec Vyy(DiagMat(1, 2), DiagMat(2, 2), DiagMat(3, 2));
   gp_Vec Vzz(DiagMat(1, 3), DiagMat(2, 3), DiagMat(3, 3));
   //
   // protection contre dim == 0.0e0 au cas ou on aurait rentre qu'un point
   //
-  Standard_Real Rxx = 0.0e0;
-  Standard_Real Ryy = 0.0e0;
-  Standard_Real Rzz = 0.0e0;
+  double Rxx = 0.0e0;
+  double Ryy = 0.0e0;
+  double Rzz = 0.0e0;
   if (0.0e0 != dim)
   {
-    Rxx = Sqrt(Abs(Ixx / dim));
-    Ryy = Sqrt(Abs(Iyy / dim));
-    Rzz = Sqrt(Abs(Izz / dim));
+    Rxx = std::sqrt(std::abs(Ixx / dim));
+    Ryy = std::sqrt(std::abs(Iyy / dim));
+    Rzz = std::sqrt(std::abs(Izz / dim));
   }
   return GProp_PrincipalProps(Ixx,
                               Iyy,

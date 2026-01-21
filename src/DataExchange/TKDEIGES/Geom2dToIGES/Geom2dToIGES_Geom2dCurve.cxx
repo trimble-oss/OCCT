@@ -32,9 +32,8 @@
 //  Geom2dToIGES_Geom2dCurve
 //=============================================================================
 Geom2dToIGES_Geom2dCurve::Geom2dToIGES_Geom2dCurve()
-    : Geom2dToIGES_Geom2dEntity()
-{
-}
+
+  = default;
 
 //=============================================================================
 // Geom2dToIGES_Geom2dCurve
@@ -46,16 +45,16 @@ Geom2dToIGES_Geom2dCurve::Geom2dToIGES_Geom2dCurve(const Geom2dToIGES_Geom2dEnti
 }
 
 //=============================================================================
-// Transfer des Entites Curve de Geom2d vers IGES
+// Transfer of Curve Entities from Geom2d to IGES
 // Transfer2dCurve
 //=============================================================================
 
-Handle(IGESData_IGESEntity) Geom2dToIGES_Geom2dCurve::Transfer2dCurve(
-  const Handle(Geom2d_Curve)& start,
-  const Standard_Real         Udeb,
-  const Standard_Real         Ufin)
+occ::handle<IGESData_IGESEntity> Geom2dToIGES_Geom2dCurve::Transfer2dCurve(
+  const occ::handle<Geom2d_Curve>& start,
+  const double                     Udeb,
+  const double                     Ufin)
 {
-  Handle(IGESData_IGESEntity) res;
+  occ::handle<IGESData_IGESEntity> res;
   if (start.IsNull())
   {
     return res;

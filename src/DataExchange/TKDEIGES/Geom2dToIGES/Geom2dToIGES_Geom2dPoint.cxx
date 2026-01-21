@@ -24,9 +24,8 @@
 // Geom2dToIGES_Geom2dPoint
 //=============================================================================
 Geom2dToIGES_Geom2dPoint::Geom2dToIGES_Geom2dPoint()
-    : Geom2dToIGES_Geom2dEntity()
-{
-}
+
+  = default;
 
 //=============================================================================
 // Geom2dToIGES_Geom2dPoint
@@ -38,44 +37,45 @@ Geom2dToIGES_Geom2dPoint::Geom2dToIGES_Geom2dPoint(const Geom2dToIGES_Geom2dEnti
 }
 
 //=============================================================================
-// Transfer de Point2d de Geom2d vers IGES
+// Transfer of Point2d from Geom2d to IGES
 // Tranfer2dPoint
 //=============================================================================
 
-Handle(IGESGeom_Point) Geom2dToIGES_Geom2dPoint::Transfer2dPoint(const Handle(Geom2d_Point)& P)
+occ::handle<IGESGeom_Point> Geom2dToIGES_Geom2dPoint::Transfer2dPoint(
+  const occ::handle<Geom2d_Point>& P)
 {
 
-  Handle(IGESGeom_Point) Piges = new IGESGeom_Point;
+  occ::handle<IGESGeom_Point> Piges = new IGESGeom_Point;
   if (P.IsNull())
   {
     return Piges;
   }
 
-  Standard_Real X, Y;
+  double X, Y;
   P->Coord(X, Y);
-  Handle(IGESBasic_SubfigureDef) voidsubdef;
+  occ::handle<IGESBasic_SubfigureDef> voidsubdef;
   Piges->Init(gp_XYZ(X, Y, 0.), voidsubdef);
   return Piges;
 }
 
 //=============================================================================
-// Transfer de CartesianPoint de Geom2d vers IGES
+// Transfer of CartesianPoint from Geom2d to IGES
 // Tranfer2dPoint
 //=============================================================================
 
-Handle(IGESGeom_Point) Geom2dToIGES_Geom2dPoint::Transfer2dPoint(
-  const Handle(Geom2d_CartesianPoint)& P)
+occ::handle<IGESGeom_Point> Geom2dToIGES_Geom2dPoint::Transfer2dPoint(
+  const occ::handle<Geom2d_CartesianPoint>& P)
 {
 
-  Handle(IGESGeom_Point) Piges = new IGESGeom_Point;
+  occ::handle<IGESGeom_Point> Piges = new IGESGeom_Point;
   if (P.IsNull())
   {
     return Piges;
   }
 
-  Standard_Real X, Y;
+  double X, Y;
   P->Coord(X, Y);
-  Handle(IGESBasic_SubfigureDef) voidsubdef;
+  occ::handle<IGESBasic_SubfigureDef> voidsubdef;
   Piges->Init(gp_XYZ(X, Y, 0.), voidsubdef);
   return Piges;
 }

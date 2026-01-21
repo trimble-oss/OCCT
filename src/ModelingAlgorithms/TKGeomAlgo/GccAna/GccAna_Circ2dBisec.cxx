@@ -49,19 +49,12 @@ GccAna_Circ2dBisec::GccAna_Circ2dBisec(const gp_Circ2d& Circ1, const gp_Circ2d& 
   //            - WellDone (Boolean showing success or failure of the algo) +
   //=========================================================================
 
-  WellDone                    = Standard_False;
-  constexpr Standard_Real Tol = Precision::Confusion();
+  WellDone             = false;
+  constexpr double Tol = Precision::Confusion();
 
-  Standard_Real R1 = Circ1.Radius();
-  Standard_Real R2 = Circ2.Radius();
-  if (Abs(R1 - R2) <= Tol)
-  {
-    sameradius = Standard_True;
-  }
-  else
-  {
-    sameradius = Standard_False;
-  }
+  double R1  = Circ1.Radius();
+  double R2  = Circ2.Radius();
+  sameradius = std::abs(R1 - R2) <= Tol;
   if (R1 < R2)
   {
     circle1 = gp_Circ2d(Circ2);
@@ -74,25 +67,25 @@ GccAna_Circ2dBisec::GccAna_Circ2dBisec(const gp_Circ2d& Circ1, const gp_Circ2d& 
     circle1 = gp_Circ2d(Circ1);
     circle2 = gp_Circ2d(Circ2);
   }
-  Standard_Real dist = circle2.Location().Distance(circle1.Location());
+  double dist = circle2.Location().Distance(circle1.Location());
   if (R1 - dist - R2 > Tol)
   {
     intersection = 0;
     NbrSol       = 2;
-    WellDone     = Standard_True;
+    WellDone     = true;
   }
-  else if (Abs(R1 - dist - R2) <= Tol)
+  else if (std::abs(R1 - dist - R2) <= Tol)
   {
     intersection = 1;
     if (sameradius)
     {
       NbrSol   = 0;
-      WellDone = Standard_True;
+      WellDone = true;
     }
     else
     {
       NbrSol   = 2;
-      WellDone = Standard_True;
+      WellDone = true;
     }
   }
   else if ((dist + R2 - R1 > Tol) && (R1 - dist + R2 > Tol))
@@ -101,26 +94,26 @@ GccAna_Circ2dBisec::GccAna_Circ2dBisec(const gp_Circ2d& Circ1, const gp_Circ2d& 
     if (sameradius)
     {
       NbrSol   = 2;
-      WellDone = Standard_True;
+      WellDone = true;
     }
     else
     {
       NbrSol   = 3;
-      WellDone = Standard_True;
+      WellDone = true;
     }
   }
-  else if (Abs(R1 - dist + R2) <= Tol)
+  else if (std::abs(R1 - dist + R2) <= Tol)
   {
     intersection = 3;
     if (sameradius)
     {
       NbrSol   = 2;
-      WellDone = Standard_True;
+      WellDone = true;
     }
     else
     {
       NbrSol   = 3;
-      WellDone = Standard_True;
+      WellDone = true;
     }
   }
   else
@@ -129,12 +122,12 @@ GccAna_Circ2dBisec::GccAna_Circ2dBisec(const gp_Circ2d& Circ1, const gp_Circ2d& 
     if (sameradius)
     {
       NbrSol   = 3;
-      WellDone = Standard_True;
+      WellDone = true;
     }
     else
     {
       NbrSol   = 4;
-      WellDone = Standard_True;
+      WellDone = true;
     }
   }
 }
@@ -146,11 +139,11 @@ GccAna_Circ2dBisec::GccAna_Circ2dBisec(const gp_Circ2d& Circ1, const gp_Circ2d& 
 //  Also return the radiuses of two circles R1 and R2.                    +
 //=========================================================================
 
-Handle(GccInt_Bisec) GccAna_Circ2dBisec::ThisSolution(const Standard_Integer Index) const
+occ::handle<GccInt_Bisec> GccAna_Circ2dBisec::ThisSolution(const int Index) const
 {
 
-  Standard_Real        Tol = 1.e-14;
-  Handle(GccInt_Bisec) bissol;
+  double                    Tol = 1.e-14;
+  occ::handle<GccInt_Bisec> bissol;
 
   if (!WellDone)
   {
@@ -162,11 +155,11 @@ Handle(GccInt_Bisec) GccAna_Circ2dBisec::ThisSolution(const Standard_Integer Ind
   }
   else
   {
-    Standard_Real xcencir1 = circle1.Location().X();
-    Standard_Real ycencir1 = circle1.Location().Y();
-    Standard_Real xcencir2 = circle2.Location().X();
-    Standard_Real ycencir2 = circle2.Location().Y();
-    Standard_Real dist     = circle1.Location().Distance(circle2.Location());
+    double xcencir1 = circle1.Location().X();
+    double ycencir1 = circle1.Location().Y();
+    double xcencir2 = circle2.Location().X();
+    double ycencir2 = circle2.Location().Y();
+    double dist     = circle1.Location().Distance(circle2.Location());
 
     gp_Pnt2d pcen((xcencir1 + xcencir2) / 2.0, (ycencir1 + ycencir2) / 2.0);
     gp_Dir2d dircen, medcen;
@@ -175,16 +168,16 @@ Handle(GccInt_Bisec) GccAna_Circ2dBisec::ThisSolution(const Standard_Integer Ind
       dircen.SetCoord(xcencir2 - xcencir1, ycencir2 - ycencir1);
       medcen.SetCoord(ycencir2 - ycencir1, xcencir1 - xcencir2);
     }
-    gp_Dir2d dirx(1.0, 0.0);
+    gp_Dir2d dirx(gp_Dir2d::D::X);
     gp_Ax2d  acenx(pcen, dirx);
     gp_Ax2d  acencen(pcen, dircen);
 
-    Standard_Real R1 = circle1.Radius();
-    Standard_Real R2 = circle2.Radius();
+    double R1 = circle1.Radius();
+    double R2 = circle2.Radius();
 
     if ((NbrSol == 1) && (intersection == 0))
     {
-      Standard_Real R;
+      double R;
       if (Index == 1)
         R = (R1 + R2) / 2.0;
       else
@@ -199,7 +192,7 @@ Handle(GccInt_Bisec) GccAna_Circ2dBisec::ThisSolution(const Standard_Integer Ind
       {
         gp_Elips2d E(acencen,
                      (R1 + R2) / 2.0,
-                     Sqrt((R1 * R1 + R2 * R2 - dist * dist) / 4. + R1 * R2 / 2.));
+                     std::sqrt((R1 * R1 + R2 * R2 - dist * dist) / 4. + R1 * R2 / 2.));
         bissol = new GccInt_BElips(E);
         //       =============================
       }
@@ -214,7 +207,7 @@ Handle(GccInt_Bisec) GccAna_Circ2dBisec::ThisSolution(const Standard_Integer Ind
     {
       if (Index == 1)
       {
-        if (Abs(xcencir2 - xcencir1) < Tol && Abs(ycencir2 - ycencir1) < Tol)
+        if (std::abs(xcencir2 - xcencir1) < Tol && std::abs(ycencir2 - ycencir1) < Tol)
         {
           gp_Circ2d C(acenx, (R1 + R2) / 2.0);
           bissol = new GccInt_BCirc(C);
@@ -224,14 +217,14 @@ Handle(GccInt_Bisec) GccAna_Circ2dBisec::ThisSolution(const Standard_Integer Ind
         {
           gp_Elips2d E(acencen,
                        (R1 + R2) / 2.0,
-                       Sqrt((R1 * R1 + R2 * R2 - dist * dist) / 4. + R1 * R2 / 2.));
+                       std::sqrt((R1 * R1 + R2 * R2 - dist * dist) / 4. + R1 * R2 / 2.));
           bissol = new GccInt_BElips(E);
           //         ==============================
         }
       }
       else if (Index == 2)
       {
-        if (Abs(xcencir2 - xcencir1) < Tol && Abs(ycencir2 - ycencir1) < Tol)
+        if (std::abs(xcencir2 - xcencir1) < Tol && std::abs(ycencir2 - ycencir1) < Tol)
         {
           gp_Circ2d C(acencen, (R1 - R2) / 2.);
           bissol = new GccInt_BCirc(C);
@@ -241,7 +234,7 @@ Handle(GccInt_Bisec) GccAna_Circ2dBisec::ThisSolution(const Standard_Integer Ind
         {
           gp_Elips2d E(acencen,
                        (R1 - R2) / 2.0,
-                       Sqrt((R1 * R1 + R2 * R2 - dist * dist) / 4. - R1 * R2 / 2.));
+                       std::sqrt((R1 * R1 + R2 * R2 - dist * dist) / 4. - R1 * R2 / 2.));
           bissol = new GccInt_BElips(E);
           //         ==============================
         }
@@ -259,7 +252,7 @@ Handle(GccInt_Bisec) GccAna_Circ2dBisec::ThisSolution(const Standard_Integer Ind
         }
         else if (Index == 2)
         {
-          gp_Elips2d E(acencen, R1, Sqrt(R1 * R1 - dist * dist / 4.0));
+          gp_Elips2d E(acencen, R1, std::sqrt(R1 * R1 - dist * dist / 4.0));
           bissol = new GccInt_BElips(E);
           //         ==============================
         }
@@ -269,13 +262,17 @@ Handle(GccInt_Bisec) GccAna_Circ2dBisec::ThisSolution(const Standard_Integer Ind
         if (Index == 1)
         {
           gp_Hypr2d H1;
-          H1 = gp_Hypr2d(acencen, (R1 - R2) / 2.0, Sqrt(dist * dist - (R1 - R2) * (R1 - R2)) / 2.0);
+          H1     = gp_Hypr2d(acencen,
+                         (R1 - R2) / 2.0,
+                         std::sqrt(dist * dist - (R1 - R2) * (R1 - R2)) / 2.0);
           bissol = new GccInt_BHyper(H1);
           //         ===============================
         }
         else if (Index == 2)
         {
-          gp_Hypr2d H1(acencen, (R1 - R2) / 2.0, Sqrt(dist * dist - (R1 - R2) * (R1 - R2)) / 2.0);
+          gp_Hypr2d H1(acencen,
+                       (R1 - R2) / 2.0,
+                       std::sqrt(dist * dist - (R1 - R2) * (R1 - R2)) / 2.0);
           bissol = new GccInt_BHyper(H1.OtherBranch());
           //         ===============================
         }
@@ -283,7 +280,7 @@ Handle(GccInt_Bisec) GccAna_Circ2dBisec::ThisSolution(const Standard_Integer Ind
         {
           gp_Elips2d E(acencen,
                        (R1 + R2) / 2.0,
-                       Sqrt((R1 * R1 + R2 * R2 - dist * dist) / 4. + R1 * R2 / 2.));
+                       std::sqrt((R1 * R1 + R2 * R2 - dist * dist) / 4. + R1 * R2 / 2.));
           bissol = new GccInt_BElips(E);
           //         ==============================
         }
@@ -316,13 +313,17 @@ Handle(GccInt_Bisec) GccAna_Circ2dBisec::ThisSolution(const Standard_Integer Ind
         }
         else if (Index == 2)
         {
-          gp_Hypr2d H1(acencen, (R1 - R2) / 2.0, Sqrt(dist * dist - (R1 - R2) * (R1 - R2)) / 2.0);
+          gp_Hypr2d H1(acencen,
+                       (R1 - R2) / 2.0,
+                       std::sqrt(dist * dist - (R1 - R2) * (R1 - R2)) / 2.0);
           bissol = new GccInt_BHyper(H1);
           //         ===============================
         }
         else if (Index == 3)
         {
-          gp_Hypr2d H1(acencen, (R1 - R2) / 2.0, Sqrt(dist * dist - (R1 - R2) * (R1 - R2)) / 2.0);
+          gp_Hypr2d H1(acencen,
+                       (R1 - R2) / 2.0,
+                       std::sqrt(dist * dist - (R1 - R2) * (R1 - R2)) / 2.0);
           bissol = new GccInt_BHyper(H1.OtherBranch());
           //         ===============================
         }
@@ -340,13 +341,13 @@ Handle(GccInt_Bisec) GccAna_Circ2dBisec::ThisSolution(const Standard_Integer Ind
         }
         else if (Index == 2)
         {
-          gp_Hypr2d H1(acencen, R1, Sqrt(dist * dist - 4 * R1 * R1) / 2.0);
+          gp_Hypr2d H1(acencen, R1, std::sqrt(dist * dist - 4 * R1 * R1) / 2.0);
           bissol = new GccInt_BHyper(H1);
           //         ===============================
         }
         else if (Index == 3)
         {
-          gp_Hypr2d H1(acencen, R1, Sqrt(dist * dist - 4 * R1 * R1) / 2.0);
+          gp_Hypr2d H1(acencen, R1, std::sqrt(dist * dist - 4 * R1 * R1) / 2.0);
           bissol = new GccInt_BHyper(H1.OtherBranch());
           //         ===============================
         }
@@ -355,25 +356,33 @@ Handle(GccInt_Bisec) GccAna_Circ2dBisec::ThisSolution(const Standard_Integer Ind
       {
         if (Index == 1)
         {
-          gp_Hypr2d H1(acencen, (R1 - R2) / 2.0, Sqrt(dist * dist - (R1 - R2) * (R1 - R2)) / 2.0);
+          gp_Hypr2d H1(acencen,
+                       (R1 - R2) / 2.0,
+                       std::sqrt(dist * dist - (R1 - R2) * (R1 - R2)) / 2.0);
           bissol = new GccInt_BHyper(H1);
           //         ===============================
         }
         else if (Index == 2)
         {
-          gp_Hypr2d H1(acencen, (R1 - R2) / 2.0, Sqrt(dist * dist - (R1 - R2) * (R1 - R2)) / 2.0);
+          gp_Hypr2d H1(acencen,
+                       (R1 - R2) / 2.0,
+                       std::sqrt(dist * dist - (R1 - R2) * (R1 - R2)) / 2.0);
           bissol = new GccInt_BHyper(H1.OtherBranch());
           //         ===============================
         }
         else if (Index == 3)
         {
-          gp_Hypr2d H1(acencen, (R1 + R2) / 2.0, Sqrt(dist * dist - (R1 + R2) * (R1 + R2)) / 2.0);
+          gp_Hypr2d H1(acencen,
+                       (R1 + R2) / 2.0,
+                       std::sqrt(dist * dist - (R1 + R2) * (R1 + R2)) / 2.0);
           bissol = new GccInt_BHyper(H1);
           //         ===============================
         }
         else if (Index == 4)
         {
-          gp_Hypr2d H1(acencen, (R1 + R2) / 2.0, Sqrt(dist * dist - (R1 + R2) * (R1 + R2)) / 2.0);
+          gp_Hypr2d H1(acencen,
+                       (R1 + R2) / 2.0,
+                       std::sqrt(dist * dist - (R1 + R2) * (R1 + R2)) / 2.0);
           bissol = new GccInt_BHyper(H1.OtherBranch());
           //         ===============================
         }
@@ -385,12 +394,12 @@ Handle(GccInt_Bisec) GccAna_Circ2dBisec::ThisSolution(const Standard_Integer Ind
 
 //=========================================================================
 
-Standard_Boolean GccAna_Circ2dBisec::IsDone() const
+bool GccAna_Circ2dBisec::IsDone() const
 {
   return WellDone;
 }
 
-Standard_Integer GccAna_Circ2dBisec::NbSolutions() const
+int GccAna_Circ2dBisec::NbSolutions() const
 {
   if (!WellDone)
     throw StdFail_NotDone();

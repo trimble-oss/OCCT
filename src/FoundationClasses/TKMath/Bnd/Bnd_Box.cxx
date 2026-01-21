@@ -15,49 +15,109 @@
 // commercial license or contractual agreement.
 
 #include <Bnd_Box.hxx>
+
 #include <gp_Dir.hxx>
 #include <gp_Pln.hxx>
 #include <gp_Pnt.hxx>
 #include <gp_Trsf.hxx>
 #include <Standard_ConstructionError.hxx>
 #include <Standard_Dump.hxx>
+#include <Standard_Macro.hxx>
+#include <iostream>
+#include <iomanip>
+#include <fstream>
 
-// set the flag to one
-#define ClearVoidFlag() (Flags &= ~VoidMask)
-
-#include <Standard_Stream.hxx>
-// #include <Precision.hxx>
-#define Bnd_Precision_Infinite 1e+100
-
-//=================================================================================================
-
-Bnd_Box::Bnd_Box()
-    // Equal to SetVoid();
-    : Xmin(RealLast()),
-      Xmax(-RealLast()),
-      Ymin(RealLast()),
-      Ymax(-RealLast()),
-      Zmin(RealLast()),
-      Zmax(-RealLast()),
-      Gap(0.0),
-      Flags(VoidMask)
+namespace
 {
+// Precision constant for infinite bounds
+constexpr double THE_BND_PRECISION_INFINITE = 1e+100;
+
+// Precomputed unit direction vectors for bounding box transformations
+constexpr gp_Dir THE_DIR_XMIN{gp_Dir::D::NX};
+constexpr gp_Dir THE_DIR_XMAX{gp_Dir::D::X};
+constexpr gp_Dir THE_DIR_YMIN{gp_Dir::D::NY};
+constexpr gp_Dir THE_DIR_YMAX{gp_Dir::D::Y};
+constexpr gp_Dir THE_DIR_ZMIN{gp_Dir::D::NZ};
+constexpr gp_Dir THE_DIR_ZMAX{gp_Dir::D::Z};
+
+// Computes minimum squared distance between two 1D intervals
+inline double DistMini2Box(const double theR1Min,
+                           const double theR1Max,
+                           const double theR2Min,
+                           const double theR2Max) noexcept
+{
+  const double aR1 = Square(theR1Min - theR2Max);
+  const double aR2 = Square(theR1Max - theR2Min);
+  return std::min(aR1, aR2);
 }
 
-//=================================================================================================
-
-Bnd_Box::Bnd_Box(const gp_Pnt& theMin, const gp_Pnt& theMax)
-    // Equal to Update(theMin.X(), theMin.Y(), theMin.Z(), theMax.X(), theMax.Y(), theMax.Z());
-    : Xmin(theMin.X()),
-      Xmax(theMax.X()),
-      Ymin(theMin.Y()),
-      Ymax(theMax.Y()),
-      Zmin(theMin.Z()),
-      Zmax(theMax.Z()),
-      Gap(0.0),
-      Flags(0)
+// Computes squared distance in one dimension, returns 0 if intervals overlap
+inline double DistanceInDimension(const double theMin1,
+                                  const double theMax1,
+                                  const double theMin2,
+                                  const double theMax2) noexcept
 {
+  // Check if intervals overlap
+  if ((theMin1 <= theMin2 && theMin2 <= theMax1) || (theMin2 <= theMin1 && theMin1 <= theMax2))
+    return 0.0;
+  return DistMini2Box(theMin1, theMax1, theMin2, theMax2);
 }
+
+// Tests if a 2D segment is outside a 2D box
+bool IsSegmentOut(const double theX1,
+                  const double theY1,
+                  const double theX2,
+                  const double theY2,
+                  const double theXs1,
+                  const double theYs1,
+                  const double theXs2,
+                  const double theYs2) noexcept
+{
+  constexpr double anEps  = RealSmall();
+  const double     aXsMin = std::min(theXs1, theXs2);
+  const double     aXsMax = std::max(theXs1, theXs2);
+  const double     aYsMin = std::min(theYs1, theYs2);
+  const double     aYsMax = std::max(theYs1, theYs2);
+
+  if (aYsMax - aYsMin < anEps && (theY1 - theYs1 < anEps && theYs1 - theY2 < anEps)
+      && ((aXsMin - theX1 < anEps && theX1 - aXsMax < anEps)
+          || (aXsMin - theX2 < anEps && theX2 - aXsMax < anEps)
+          || (theX1 - theXs1 < anEps && theXs1 - theX2 < anEps)))
+    return false;
+  if (aXsMax - aXsMin < anEps && (theX1 - theXs1 < anEps && theXs1 - theX2 < anEps)
+      && ((aYsMin - theY1 < anEps && theY1 - aYsMax < anEps)
+          || (aYsMin - theY2 < anEps && theY2 - aYsMax < anEps)
+          || (theY1 - theYs1 < anEps && theYs1 - theY2 < anEps)))
+    return false;
+
+  if ((theXs1 < theX1 && theXs2 < theX1) || (theXs1 > theX2 && theXs2 > theX2)
+      || (theYs1 < theY1 && theYs2 < theY1) || (theYs1 > theY2 && theYs2 > theY2))
+    return true;
+
+  if (std::abs(theXs2 - theXs1) > anEps)
+  {
+    const double aYa =
+      (std::min(theX1, theX2) - theXs1) * (theYs2 - theYs1) / (theXs2 - theXs1) + theYs1;
+    const double aYb =
+      (std::max(theX1, theX2) - theXs1) * (theYs2 - theYs1) / (theXs2 - theXs1) + theYs1;
+    if ((aYa < theY1 && aYb < theY1) || (aYa > theY2 && aYb > theY2))
+      return true;
+  }
+  else if (std::abs(theYs2 - theYs1) > anEps)
+  {
+    const double aXa =
+      (std::min(theY1, theY2) - theYs1) * (theXs2 - theXs1) / (theYs2 - theYs1) + theXs1;
+    const double aXb =
+      (std::max(theY1, theY2) - theYs1) * (theXs2 - theXs1) / (theYs2 - theYs1) + theXs1;
+    if ((aXa < theX1 && aXb < theX1) || (aXa > theX2 && aXb > theX2))
+      return true;
+  }
+  else
+    return true;
+
+  return false;
+}
+} // anonymous namespace
 
 //=================================================================================================
 
@@ -77,12 +137,12 @@ void Bnd_Box::Set(const gp_Pnt& P, const gp_Dir& D)
 
 //=================================================================================================
 
-void Bnd_Box::Update(const Standard_Real x,
-                     const Standard_Real y,
-                     const Standard_Real z,
-                     const Standard_Real X,
-                     const Standard_Real Y,
-                     const Standard_Real Z)
+void Bnd_Box::Update(const double x,
+                     const double y,
+                     const double z,
+                     const double X,
+                     const double Y,
+                     const double Z)
 {
   if (IsVoid())
   {
@@ -92,28 +152,22 @@ void Bnd_Box::Update(const Standard_Real x,
     Xmax = X;
     Ymax = Y;
     Zmax = Z;
-    ClearVoidFlag();
+    Flags &= ~VoidMask;
   }
   else
   {
-    if (x < Xmin)
-      Xmin = x;
-    if (X > Xmax)
-      Xmax = X;
-    if (y < Ymin)
-      Ymin = y;
-    if (Y > Ymax)
-      Ymax = Y;
-    if (z < Zmin)
-      Zmin = z;
-    if (Z > Zmax)
-      Zmax = Z;
+    Xmin = std::min(Xmin, x);
+    Xmax = std::max(Xmax, X);
+    Ymin = std::min(Ymin, y);
+    Ymax = std::max(Ymax, Y);
+    Zmin = std::min(Zmin, z);
+    Zmax = std::max(Zmax, Z);
   }
 }
 
 //=================================================================================================
 
-void Bnd_Box::Update(const Standard_Real X, const Standard_Real Y, const Standard_Real Z)
+void Bnd_Box::Update(const double X, const double Y, const double Z)
 {
   if (IsVoid())
   {
@@ -123,196 +177,182 @@ void Bnd_Box::Update(const Standard_Real X, const Standard_Real Y, const Standar
     Xmax = X;
     Ymax = Y;
     Zmax = Z;
-    ClearVoidFlag();
+    Flags &= ~VoidMask;
   }
   else
   {
-    if (X < Xmin)
-      Xmin = X;
-    else if (X > Xmax)
-      Xmax = X;
-    if (Y < Ymin)
-      Ymin = Y;
-    else if (Y > Ymax)
-      Ymax = Y;
-    if (Z < Zmin)
-      Zmin = Z;
-    else if (Z > Zmax)
-      Zmax = Z;
+    Xmin = std::min(Xmin, X);
+    Xmax = std::max(Xmax, X);
+    Ymin = std::min(Ymin, Y);
+    Ymax = std::max(Ymax, Y);
+    Zmin = std::min(Zmin, Z);
+    Zmax = std::max(Zmax, Z);
   }
 }
 
 //=================================================================================================
 
-Standard_Real Bnd_Box::GetGap() const
-{
-  return Gap;
-}
-
-//=================================================================================================
-
-void Bnd_Box::SetGap(const Standard_Real Tol)
-{
-  Gap = Tol;
-}
-
-//=================================================================================================
-
-void Bnd_Box::Enlarge(const Standard_Real Tol)
-{
-  Gap = Max(Gap, Abs(Tol));
-}
-
-//=================================================================================================
-
-void Bnd_Box::Get(Standard_Real& theXmin,
-                  Standard_Real& theYmin,
-                  Standard_Real& theZmin,
-                  Standard_Real& theXmax,
-                  Standard_Real& theYmax,
-                  Standard_Real& theZmax) const
+void Bnd_Box::Get(double& theXmin,
+                  double& theYmin,
+                  double& theZmin,
+                  double& theXmax,
+                  double& theYmax,
+                  double& theZmax) const
 {
   if (IsVoid())
   {
     throw Standard_ConstructionError("Bnd_Box is void");
   }
 
-  if (IsOpenXmin())
-    theXmin = -Bnd_Precision_Infinite;
-  else
-    theXmin = Xmin - Gap;
-  if (IsOpenXmax())
-    theXmax = Bnd_Precision_Infinite;
-  else
-    theXmax = Xmax + Gap;
-  if (IsOpenYmin())
-    theYmin = -Bnd_Precision_Infinite;
-  else
-    theYmin = Ymin - Gap;
-  if (IsOpenYmax())
-    theYmax = Bnd_Precision_Infinite;
-  else
-    theYmax = Ymax + Gap;
-  if (IsOpenZmin())
-    theZmin = -Bnd_Precision_Infinite;
-  else
-    theZmin = Zmin - Gap;
-  if (IsOpenZmax())
-    theZmax = Bnd_Precision_Infinite;
-  else
-    theZmax = Zmax + Gap;
+  theXmin = GetXMin();
+  theXmax = GetXMax();
+  theYmin = GetYMin();
+  theYmax = GetYMax();
+  theZmin = GetZMin();
+  theZmax = GetZMax();
+}
+
+//=================================================================================================
+
+Bnd_Box::Limits Bnd_Box::Get() const
+{
+  return {GetXMin(), GetXMax(), GetYMin(), GetYMax(), GetZMin(), GetZMax()};
+}
+
+//=================================================================================================
+
+double Bnd_Box::GetXMin() const
+{
+  return IsOpenXmin() ? -THE_BND_PRECISION_INFINITE : Xmin - Gap;
+}
+
+//=================================================================================================
+
+double Bnd_Box::GetXMax() const
+{
+  return IsOpenXmax() ? THE_BND_PRECISION_INFINITE : Xmax + Gap;
+}
+
+//=================================================================================================
+
+double Bnd_Box::GetYMin() const
+{
+  return IsOpenYmin() ? -THE_BND_PRECISION_INFINITE : Ymin - Gap;
+}
+
+//=================================================================================================
+
+double Bnd_Box::GetYMax() const
+{
+  return IsOpenYmax() ? THE_BND_PRECISION_INFINITE : Ymax + Gap;
+}
+
+//=================================================================================================
+
+double Bnd_Box::GetZMin() const
+{
+  return IsOpenZmin() ? -THE_BND_PRECISION_INFINITE : Zmin - Gap;
+}
+
+//=================================================================================================
+
+double Bnd_Box::GetZMax() const
+{
+  return IsOpenZmax() ? THE_BND_PRECISION_INFINITE : Zmax + Gap;
 }
 
 //=================================================================================================
 
 gp_Pnt Bnd_Box::CornerMin() const
 {
-  gp_Pnt aCornerMin;
   if (IsVoid())
   {
     throw Standard_ConstructionError("Bnd_Box is void");
   }
-  if (IsOpenXmin())
-    aCornerMin.SetX(-Bnd_Precision_Infinite);
-  else
-    aCornerMin.SetX(Xmin - Gap);
-  if (IsOpenYmin())
-    aCornerMin.SetY(-Bnd_Precision_Infinite);
-  else
-    aCornerMin.SetY(Ymin - Gap);
-  if (IsOpenZmin())
-    aCornerMin.SetZ(-Bnd_Precision_Infinite);
-  else
-    aCornerMin.SetZ(Zmin - Gap);
-  return aCornerMin;
+  return gp_Pnt(IsOpenXmin() ? -THE_BND_PRECISION_INFINITE : Xmin - Gap,
+                IsOpenYmin() ? -THE_BND_PRECISION_INFINITE : Ymin - Gap,
+                IsOpenZmin() ? -THE_BND_PRECISION_INFINITE : Zmin - Gap);
 }
 
 //=================================================================================================
 
 gp_Pnt Bnd_Box::CornerMax() const
 {
-  gp_Pnt aCornerMax;
   if (IsVoid())
   {
     throw Standard_ConstructionError("Bnd_Box is void");
   }
-  if (IsOpenXmax())
-    aCornerMax.SetX(Bnd_Precision_Infinite);
-  else
-    aCornerMax.SetX(Xmax + Gap);
-  if (IsOpenYmin())
-    aCornerMax.SetY(Bnd_Precision_Infinite);
-  else
-    aCornerMax.SetY(Ymax + Gap);
-  if (IsOpenZmin())
-    aCornerMax.SetZ(Bnd_Precision_Infinite);
-  else
-    aCornerMax.SetZ(Zmax + Gap);
-  return aCornerMax;
+  return gp_Pnt(IsOpenXmax() ? THE_BND_PRECISION_INFINITE : Xmax + Gap,
+                IsOpenYmax() ? THE_BND_PRECISION_INFINITE : Ymax + Gap,
+                IsOpenZmax() ? THE_BND_PRECISION_INFINITE : Zmax + Gap);
 }
 
 //=================================================================================================
 
-Standard_Boolean Bnd_Box::IsXThin(const Standard_Real tol) const
+bool Bnd_Box::IsXThin(const double tol) const
 {
   if (IsWhole())
-    return Standard_False;
+    return false;
   if (IsVoid())
-    return Standard_True;
+    return true;
   if (IsOpenXmin())
-    return Standard_False;
+    return false;
   if (IsOpenXmax())
-    return Standard_False;
+    return false;
   if (Xmax - Xmin < tol)
-    return Standard_True;
-  return Standard_False;
+    return true;
+  return false;
 }
 
 //=================================================================================================
 
-Standard_Boolean Bnd_Box::IsYThin(const Standard_Real tol) const
+bool Bnd_Box::IsYThin(const double tol) const
 {
   if (IsWhole())
-    return Standard_False;
+    return false;
   if (IsVoid())
-    return Standard_True;
+    return true;
   if (IsOpenYmin())
-    return Standard_False;
+    return false;
   if (IsOpenYmax())
-    return Standard_False;
+    return false;
   if (Ymax - Ymin < tol)
-    return Standard_True;
-  return Standard_False;
+    return true;
+  return false;
 }
 
 //=================================================================================================
 
-Standard_Boolean Bnd_Box::IsZThin(const Standard_Real tol) const
+bool Bnd_Box::IsZThin(const double tol) const
 {
   if (IsWhole())
-    return Standard_False;
+    return false;
   if (IsVoid())
-    return Standard_True;
+    return true;
   if (IsOpenZmin())
-    return Standard_False;
+    return false;
   if (IsOpenZmax())
-    return Standard_False;
+    return false;
   if (Zmax - Zmin < tol)
-    return Standard_True;
-  return Standard_False;
+    return true;
+  return false;
 }
 
 //=================================================================================================
 
-Standard_Boolean Bnd_Box::IsThin(const Standard_Real tol) const
+bool Bnd_Box::IsThin(const double tol) const
 {
-  if (!IsXThin(tol))
-    return Standard_False;
-  if (!IsYThin(tol))
-    return Standard_False;
-  if (!IsZThin(tol))
-    return Standard_False;
-  return Standard_True;
+  if (IsWhole())
+    return false;
+  if (IsVoid())
+    return true;
+  if (IsOpenXmin() || IsOpenXmax() || Xmax - Xmin >= tol)
+    return false;
+  if (IsOpenYmin() || IsOpenYmax() || Ymax - Ymin >= tol)
+    return false;
+  if (IsOpenZmin() || IsOpenZmax() || Zmax - Zmin >= tol)
+    return false;
+  return true;
 }
 
 //=================================================================================================
@@ -358,7 +398,7 @@ Bnd_Box Bnd_Box::Transformed(const gp_Trsf& T) const
       gp_Pnt(Xmin, Ymax, Zmax),
       gp_Pnt(Xmax, Ymax, Zmax),
     };
-    for (Standard_Integer aCornerIter = 0; aCornerIter < 8; ++aCornerIter)
+    for (int aCornerIter = 0; aCornerIter < 8; ++aCornerIter)
     {
       aCorners[aCornerIter].Transform(T);
       aNewBox.Add(aCorners[aCornerIter]);
@@ -370,34 +410,34 @@ Bnd_Box Bnd_Box::Transformed(const gp_Trsf& T) const
     return aNewBox;
   }
 
-  gp_Dir           aDirs[6];
-  Standard_Integer aNbDirs = 0;
+  gp_Dir aDirs[6];
+  int    aNbDirs = 0;
   if (IsOpenXmin())
   {
-    aDirs[aNbDirs++].SetCoord(-1., 0., 0.);
+    aDirs[aNbDirs++] = THE_DIR_XMIN;
   }
   if (IsOpenXmax())
   {
-    aDirs[aNbDirs++].SetCoord(1., 0., 0.);
+    aDirs[aNbDirs++] = THE_DIR_XMAX;
   }
   if (IsOpenYmin())
   {
-    aDirs[aNbDirs++].SetCoord(0., -1., 0.);
+    aDirs[aNbDirs++] = THE_DIR_YMIN;
   }
   if (IsOpenYmax())
   {
-    aDirs[aNbDirs++].SetCoord(0., 1., 0.);
+    aDirs[aNbDirs++] = THE_DIR_YMAX;
   }
   if (IsOpenZmin())
   {
-    aDirs[aNbDirs++].SetCoord(0., 0., -1.);
+    aDirs[aNbDirs++] = THE_DIR_ZMIN;
   }
   if (IsOpenZmax())
   {
-    aDirs[aNbDirs++].SetCoord(0., 0., 1.);
+    aDirs[aNbDirs++] = THE_DIR_ZMAX;
   }
 
-  for (Standard_Integer aDirIter = 0; aDirIter < aNbDirs; ++aDirIter)
+  for (int aDirIter = 0; aDirIter < aNbDirs; ++aDirIter)
   {
     aDirs[aDirIter].Transform(T);
     aNewBox.Add(aDirs[aDirIter]);
@@ -432,7 +472,7 @@ void Bnd_Box::Add(const Bnd_Box& Other)
     Zmin = Other.Zmin;
   if (Zmax < Other.Zmax)
     Zmax = Other.Zmax;
-  Gap = Max(Gap, Other.Gap);
+  Gap = std::max(Gap, Other.Gap);
 
   if (IsWhole())
   {
@@ -462,7 +502,7 @@ void Bnd_Box::Add(const Bnd_Box& Other)
 
 void Bnd_Box::Add(const gp_Pnt& P)
 {
-  Standard_Real X, Y, Z;
+  double X, Y, Z;
   P.Coord(X, Y, Z);
   Update(X, Y, Z);
 }
@@ -479,7 +519,7 @@ void Bnd_Box::Add(const gp_Pnt& P, const gp_Dir& D)
 
 void Bnd_Box::Add(const gp_Dir& D)
 {
-  Standard_Real DX, DY, DZ;
+  double DX, DY, DZ;
   D.Coord(DX, DY, DZ);
 
   if (DX < -RealEpsilon())
@@ -500,313 +540,264 @@ void Bnd_Box::Add(const gp_Dir& D)
 
 //=================================================================================================
 
-Standard_Boolean Bnd_Box::IsOut(const gp_Pnt& P) const
+bool Bnd_Box::IsOut(const gp_Pnt& P) const
 {
   if (IsWhole())
-    return Standard_False;
+    return false;
   else if (IsVoid())
-    return Standard_True;
+    return true;
   else
   {
-    Standard_Real X, Y, Z;
+    double X, Y, Z;
     P.Coord(X, Y, Z);
     if (!IsOpenXmin() && (X < (Xmin - Gap)))
-      return Standard_True;
+      return true;
     else if (!IsOpenXmax() && (X > (Xmax + Gap)))
-      return Standard_True;
+      return true;
     else if (!IsOpenYmin() && (Y < (Ymin - Gap)))
-      return Standard_True;
+      return true;
     else if (!IsOpenYmax() && (Y > (Ymax + Gap)))
-      return Standard_True;
+      return true;
     else if (!IsOpenZmin() && (Z < (Zmin - Gap)))
-      return Standard_True;
+      return true;
     else if (!IsOpenZmax() && (Z > (Zmax + Gap)))
-      return Standard_True;
+      return true;
     else
-      return Standard_False;
+      return false;
   }
 }
 
 //=================================================================================================
 
-Standard_Boolean Bnd_Box::IsOut(const gp_Pln& P) const
+bool Bnd_Box::IsOut(const gp_Pln& P) const
 {
   if (IsWhole())
-    return Standard_False;
+    return false;
   else if (IsVoid())
-    return Standard_True;
+    return true;
   else
   {
-    Standard_Real A, B, C, D;
+    double A, B, C, D;
     P.Coefficients(A, B, C, D);
-    Standard_Real d = A * (Xmin - Gap) + B * (Ymin - Gap) + C * (Zmin - Gap) + D;
-    //    Standard_Boolean plus = d > 0;
-    Standard_Integer plus = d > 0;
+    double d    = A * (Xmin - Gap) + B * (Ymin - Gap) + C * (Zmin - Gap) + D;
+    bool   plus = d > 0;
     if (plus != ((A * (Xmin - Gap) + B * (Ymin - Gap) + C * (Zmax + Gap) + D) > 0))
-      return Standard_False;
+      return false;
     if (plus != ((A * (Xmin - Gap) + B * (Ymax + Gap) + C * (Zmin - Gap) + D) > 0))
-      return Standard_False;
+      return false;
     if (plus != ((A * (Xmin - Gap) + B * (Ymax + Gap) + C * (Zmax + Gap) + D) > 0))
-      return Standard_False;
+      return false;
     if (plus != ((A * (Xmax + Gap) + B * (Ymin - Gap) + C * (Zmin - Gap) + D) > 0))
-      return Standard_False;
+      return false;
     if (plus != ((A * (Xmax + Gap) + B * (Ymin - Gap) + C * (Zmax + Gap) + D) > 0))
-      return Standard_False;
+      return false;
     if (plus != ((A * (Xmax + Gap) + B * (Ymax + Gap) + C * (Zmin - Gap) + D) > 0))
-      return Standard_False;
-    if (plus != ((A * (Xmax + Gap) + B * (Ymax + Gap) + C * (Zmax + Gap) + D) > 0))
-      return Standard_False;
-    else
-      return Standard_True;
+      return false;
+    return plus == ((A * (Xmax + Gap) + B * (Ymax + Gap) + C * (Zmax + Gap) + D) > 0);
   }
 }
 
 //=================================================================================================
 
-Standard_Boolean Bnd_Box::IsOut(const gp_Lin& L) const
+bool Bnd_Box::IsOut(const gp_Lin& L) const
 {
   if (IsWhole())
-    return Standard_False;
+    return false;
   else if (IsVoid())
-    return Standard_True;
+    return true;
   else
   {
-    Standard_Real    xmin = 0, xmax = 0, ymin = 0, ymax = 0, zmin, zmax;
-    Standard_Real    parmin, parmax, par1, par2;
-    Standard_Boolean xToSet, yToSet;
-    Standard_Real    myXmin, myYmin, myZmin, myXmax, myYmax, myZmax;
+    double xmin = 0, xmax = 0, ymin = 0, ymax = 0, zmin = 0, zmax = 0;
+    double parmin, parmax, par1, par2;
+    bool   xToSet, yToSet;
+    double myXmin, myYmin, myZmin, myXmax, myYmax, myZmax;
     Get(myXmin, myYmin, myZmin, myXmax, myYmax, myZmax);
 
-    if (Abs(L.Direction().XYZ().X()) > 0.)
+    const double aDirX = std::abs(L.Direction().XYZ().X());
+    const double aDirY = std::abs(L.Direction().XYZ().Y());
+    const double aDirZ = std::abs(L.Direction().XYZ().Z());
+
+    if (aDirX > 0.)
     {
       par1   = (myXmin - L.Location().XYZ().X()) / L.Direction().XYZ().X();
       par2   = (myXmax - L.Location().XYZ().X()) / L.Direction().XYZ().X();
-      parmin = Min(par1, par2);
-      parmax = Max(par1, par2);
-      xToSet = Standard_True;
+      parmin = std::min(par1, par2);
+      parmax = std::max(par1, par2);
+      xToSet = true;
     }
     else
     {
       if (L.Location().XYZ().X() < myXmin || myXmax < L.Location().XYZ().X())
       {
-        return Standard_True;
+        return true;
       }
       xmin   = L.Location().XYZ().X();
       xmax   = L.Location().XYZ().X();
-      parmin = -Bnd_Precision_Infinite;
-      parmax = Bnd_Precision_Infinite;
-      xToSet = Standard_False;
+      parmin = -THE_BND_PRECISION_INFINITE;
+      parmax = THE_BND_PRECISION_INFINITE;
+      xToSet = false;
     }
 
-    if (Abs(L.Direction().XYZ().Y()) > 0.)
+    if (aDirY > 0.)
     {
       par1 = (myYmin - L.Location().XYZ().Y()) / L.Direction().XYZ().Y();
       par2 = (myYmax - L.Location().XYZ().Y()) / L.Direction().XYZ().Y();
       //=================DET change 06/03/01====================
-      if (parmax < Min(par1, par2) || parmin > Max(par1, par2))
-        return Standard_True;
+      if (parmax < std::min(par1, par2) || parmin > std::max(par1, par2))
+        return true;
       //========================================================
-      parmin = Max(parmin, Min(par1, par2));
-      parmax = Min(parmax, Max(par1, par2));
-      yToSet = Standard_True;
+      parmin = std::max(parmin, std::min(par1, par2));
+      parmax = std::min(parmax, std::max(par1, par2));
+      yToSet = true;
     }
     else
     {
       if (L.Location().XYZ().Y() < myYmin || myYmax < L.Location().XYZ().Y())
       {
-        return Standard_True;
+        return true;
       }
       ymin   = L.Location().XYZ().Y();
       ymax   = L.Location().XYZ().Y();
-      yToSet = Standard_False;
+      yToSet = false;
     }
 
-    if (Abs(L.Direction().XYZ().Z()) > 0.)
+    if (aDirZ > 0.)
     {
       par1 = (myZmin - L.Location().XYZ().Z()) / L.Direction().XYZ().Z();
       par2 = (myZmax - L.Location().XYZ().Z()) / L.Direction().XYZ().Z();
       //=================DET change 06/03/01====================
-      if (parmax < Min(par1, par2) || parmin > Max(par1, par2))
-        return Standard_True;
+      if (parmax < std::min(par1, par2) || parmin > std::max(par1, par2))
+        return true;
       //========================================================
-      parmin = Max(parmin, Min(par1, par2));
-      parmax = Min(parmax, Max(par1, par2));
+      parmin = std::max(parmin, std::min(par1, par2));
+      parmax = std::min(parmax, std::max(par1, par2));
       par1   = L.Location().XYZ().Z() + parmin * L.Direction().XYZ().Z();
       par2   = L.Location().XYZ().Z() + parmax * L.Direction().XYZ().Z();
-      zmin   = Min(par1, par2);
-      zmax   = Max(par1, par2);
+      zmin   = std::min(par1, par2);
+      zmax   = std::max(par1, par2);
     }
     else
     {
       if (L.Location().XYZ().Z() < myZmin || myZmax < L.Location().XYZ().Z())
-        return Standard_True;
+        return true;
       zmin = L.Location().XYZ().Z();
       zmax = L.Location().XYZ().Z();
     }
     if (zmax < myZmin || myZmax < zmin)
-      return Standard_True;
+      return true;
 
     if (xToSet)
     {
       par1 = L.Location().XYZ().X() + parmin * L.Direction().XYZ().X();
       par2 = L.Location().XYZ().X() + parmax * L.Direction().XYZ().X();
-      xmin = Min(par1, par2);
-      xmax = Max(par1, par2);
+      xmin = std::min(par1, par2);
+      xmax = std::max(par1, par2);
     }
     if (xmax < myXmin || myXmax < xmin)
-      return Standard_True;
+      return true;
 
     if (yToSet)
     {
       par1 = L.Location().XYZ().Y() + parmin * L.Direction().XYZ().Y();
       par2 = L.Location().XYZ().Y() + parmax * L.Direction().XYZ().Y();
-      ymin = Min(par1, par2);
-      ymax = Max(par1, par2);
+      ymin = std::min(par1, par2);
+      ymax = std::max(par1, par2);
     }
     if (ymax < myYmin || myYmax < ymin)
-      return Standard_True;
+      return true;
   }
-  return Standard_False;
+  return false;
 }
 
 //=================================================================================================
 
-Standard_Boolean Bnd_Box::IsOut(const Bnd_Box& Other) const
+bool Bnd_Box::IsOut(const Bnd_Box& Other) const
 {
-  // modified by NIZNHY-PKV Fri Jul 08 11:03:43 2011f
+  // Fast path for non-open boxes with early exit
   if (!Flags && !Other.Flags)
   {
-    Standard_Boolean bRet;
-    Standard_Real    delta;
-    //
-    delta = Other.Gap + Gap;
-    bRet  = ((Xmin - Other.Xmax > delta) || (Other.Xmin - Xmax > delta)
-            || (Ymin - Other.Ymax > delta) || (Other.Ymin - Ymax > delta)
-            || (Zmin - Other.Zmax > delta) || (Other.Zmin - Zmax > delta));
-    return bRet;
+    const double aDelta = Other.Gap + Gap;
+    // Early exit on first separating axis found
+    if (Xmin - Other.Xmax > aDelta)
+      return true;
+    if (Other.Xmin - Xmax > aDelta)
+      return true;
+    if (Ymin - Other.Ymax > aDelta)
+      return true;
+    if (Other.Ymin - Ymax > aDelta)
+      return true;
+    if (Zmin - Other.Zmax > aDelta)
+      return true;
+    if (Other.Zmin - Zmax > aDelta)
+      return true;
+    return false;
   }
-  // modified by NIZNHY-PKV Fri Jul 08 11:03:46 2011t
-  if (IsVoid())
-    return Standard_True;
-  if (Other.IsVoid())
-    return Standard_True;
-  if (IsWhole())
-    return Standard_False;
-  if (Other.IsWhole())
-    return Standard_False;
 
-  Standard_Real delta = Other.Gap + Gap;
+  // Handle special cases
+  if (IsVoid() || Other.IsVoid())
+    return true;
+  if (IsWhole() || Other.IsWhole())
+    return false;
 
-  if (!IsOpenXmin() && !Other.IsOpenXmax())
-    if (Xmin - Other.Xmax > delta)
-      return Standard_True;
-  if (!IsOpenXmax() && !Other.IsOpenXmin())
-    if (Other.Xmin - Xmax > delta)
-      return Standard_True;
+  const double aDelta = Other.Gap + Gap;
 
-  if (!IsOpenYmin() && !Other.IsOpenYmax())
-    if (Ymin - Other.Ymax > delta)
-      return Standard_True;
-  if (!IsOpenYmax() && !Other.IsOpenYmin())
-    if (Other.Ymin - Ymax > delta)
-      return Standard_True;
+  // Check each axis with early exit
+  if (!IsOpenXmin() && !Other.IsOpenXmax() && Xmin - Other.Xmax > aDelta)
+    return true;
+  if (!IsOpenXmax() && !Other.IsOpenXmin() && Other.Xmin - Xmax > aDelta)
+    return true;
 
-  if (!IsOpenZmin() && !Other.IsOpenZmax())
-    if (Zmin - Other.Zmax > delta)
-      return Standard_True;
-  if (!IsOpenZmax() && !Other.IsOpenZmin())
-    if (Other.Zmin - Zmax > delta)
-      return Standard_True;
+  if (!IsOpenYmin() && !Other.IsOpenYmax() && Ymin - Other.Ymax > aDelta)
+    return true;
+  if (!IsOpenYmax() && !Other.IsOpenYmin() && Other.Ymin - Ymax > aDelta)
+    return true;
 
-  return Standard_False;
+  if (!IsOpenZmin() && !Other.IsOpenZmax() && Zmin - Other.Zmax > aDelta)
+    return true;
+  if (!IsOpenZmax() && !Other.IsOpenZmin() && Other.Zmin - Zmax > aDelta)
+    return true;
+
+  return false;
 }
 
 //=================================================================================================
 
-Standard_Boolean Bnd_Box::IsOut(const Bnd_Box& Other, const gp_Trsf& T) const
+bool Bnd_Box::IsOut(const Bnd_Box& Other, const gp_Trsf& T) const
 {
   return IsOut(Other.Transformed(T));
 }
 
 //=================================================================================================
 
-Standard_Boolean Bnd_Box::IsOut(const gp_Trsf& T1, const Bnd_Box& Other, const gp_Trsf& T2) const
+bool Bnd_Box::IsOut(const gp_Trsf& T1, const Bnd_Box& Other, const gp_Trsf& T2) const
 {
   return Transformed(T1).IsOut(Other.Transformed(T2));
 }
 
 //=================================================================================================
 
-static Standard_Boolean IsSegmentOut(Standard_Real x1,
-                                     Standard_Real y1,
-                                     Standard_Real x2,
-                                     Standard_Real y2,
-                                     Standard_Real xs1,
-                                     Standard_Real ys1,
-                                     Standard_Real xs2,
-                                     Standard_Real ys2)
-{
-  constexpr Standard_Real eps   = RealSmall();
-  Standard_Real           xsmin = Min(xs1, xs2);
-  Standard_Real           xsmax = Max(xs1, xs2);
-  Standard_Real           ysmin = Min(ys1, ys2);
-  Standard_Real           ysmax = Max(ys1, ys2);
-
-  if (ysmax - ysmin < eps && (y1 - ys1 < eps && ys1 - y2 < eps)
-      && ((xsmin - x1 < eps && x1 - xsmax < eps) || (xsmin - x2 < eps && x2 - xsmax < eps)
-          || (x1 - xs1 < eps && xs1 - x2 < eps)))
-    return Standard_False;
-  if (xsmax - xsmin < eps && (x1 - xs1 < eps && xs1 - x2 < eps)
-      && ((ysmin - y1 < eps && y1 - ysmax < eps) || (ysmin - y2 < eps && y2 - ysmax < eps)
-          || (y1 - ys1 < eps && ys1 - y2 < eps)))
-    return Standard_False;
-
-  if ((xs1 < x1 && xs2 < x1) || (xs1 > x2 && xs2 > x2) || (ys1 < y1 && ys2 < y1)
-      || (ys1 > y2 && ys2 > y2))
-    return Standard_True;
-
-  if (Abs(xs2 - xs1) > eps)
-  {
-    Standard_Real ya = (Min(x1, x2) - xs1) * (ys2 - ys1) / (xs2 - xs1) + ys1;
-    Standard_Real yb = (Max(x1, x2) - xs1) * (ys2 - ys1) / (xs2 - xs1) + ys1;
-    if ((ya < y1 && yb < y1) || (ya > y2 && yb > y2))
-      return Standard_True;
-  }
-  else if (Abs(ys2 - ys1) > eps)
-  {
-    Standard_Real xa = (Min(y1, y2) - ys1) * (xs2 - xs1) / (ys2 - ys1) + xs1;
-    Standard_Real xb = (Max(y1, y2) - ys1) * (xs2 - xs1) / (ys2 - ys1) + xs1;
-    if ((xa < x1 && xb < x1) || (xa > x2 && xb > x2))
-      return Standard_True;
-  }
-  else
-    return Standard_True;
-
-  return Standard_False;
-}
-
-Standard_Boolean Bnd_Box::IsOut(const gp_Pnt& P1, const gp_Pnt& P2, const gp_Dir& D) const
+bool Bnd_Box::IsOut(const gp_Pnt& P1, const gp_Pnt& P2, const gp_Dir& D) const
 {
 
   if (IsWhole())
-    return Standard_False;
+    return false;
   else if (IsVoid())
-    return Standard_True;
+    return true;
 
-  constexpr Standard_Real eps = RealSmall();
-  Standard_Real           myXmin, myYmin, myZmin, myXmax, myYmax, myZmax;
+  constexpr double eps = RealSmall();
+  double           myXmin, myYmin, myZmin, myXmax, myYmax, myZmax;
   Get(myXmin, myYmin, myZmin, myXmax, myYmax, myZmax);
 
-  if (Abs(D.X()) < eps && Abs(D.Y()) < eps)
+  if (std::abs(D.X()) < eps && std::abs(D.Y()) < eps)
     return IsSegmentOut(myXmin, myYmin, myXmax, myYmax, P1.X(), P1.Y(), P2.X(), P2.Y());
 
-  if (Abs(D.X()) < eps && Abs(D.Z()) < eps)
+  if (std::abs(D.X()) < eps && std::abs(D.Z()) < eps)
     return IsSegmentOut(myXmin, myZmin, myXmax, myZmax, P1.X(), P1.Z(), P2.X(), P2.Z());
 
-  if (Abs(D.Y()) < eps && Abs(D.Z()) < eps)
+  if (std::abs(D.Y()) < eps && std::abs(D.Z()) < eps)
     return IsSegmentOut(myYmin, myZmin, myYmax, myZmax, P1.Y(), P1.Z(), P2.Y(), P2.Z());
 
-  if (Abs(D.X()) < eps)
+  if (std::abs(D.X()) < eps)
   {
     if (!IsSegmentOut(myXmin,
                       myZmin,
@@ -816,7 +807,7 @@ Standard_Boolean Bnd_Box::IsOut(const gp_Pnt& P1, const gp_Pnt& P2, const gp_Dir
                       (myYmin - P1.Y()) * D.Z() / D.Y() + P1.Z(),
                       P2.X(),
                       (myYmin - P2.Y()) * D.Z() / D.Y() + P2.Z()))
-      return Standard_False;
+      return false;
 
     if (!IsSegmentOut(myXmin,
                       myZmin,
@@ -826,7 +817,7 @@ Standard_Boolean Bnd_Box::IsOut(const gp_Pnt& P1, const gp_Pnt& P2, const gp_Dir
                       (myYmax - P1.Y()) * D.Z() / D.Y() + P1.Z(),
                       P2.X(),
                       (myYmax - P2.Y()) * D.Z() / D.Y() + P2.Z()))
-      return Standard_False;
+      return false;
 
     if (!IsSegmentOut(myXmin,
                       myYmin,
@@ -836,7 +827,7 @@ Standard_Boolean Bnd_Box::IsOut(const gp_Pnt& P1, const gp_Pnt& P2, const gp_Dir
                       (myZmin - P1.Z()) * D.Y() / D.Z() + P1.Y(),
                       P2.X(),
                       (myZmin - P2.Z()) * D.Y() / D.Z() + P2.Y()))
-      return Standard_False;
+      return false;
 
     if (!IsSegmentOut(myXmin,
                       myYmin,
@@ -846,12 +837,12 @@ Standard_Boolean Bnd_Box::IsOut(const gp_Pnt& P1, const gp_Pnt& P2, const gp_Dir
                       (myZmax - P1.Z()) * D.Y() / D.Z() + P1.Y(),
                       P2.X(),
                       (myZmax - P2.Z()) * D.Y() / D.Z() + P2.Y()))
-      return Standard_False;
+      return false;
 
-    return Standard_True;
+    return true;
   } // if(D.X() == 0)
 
-  if (Abs(D.Y()) < eps)
+  if (std::abs(D.Y()) < eps)
   {
     if (!IsSegmentOut(myYmin,
                       myZmin,
@@ -861,7 +852,7 @@ Standard_Boolean Bnd_Box::IsOut(const gp_Pnt& P1, const gp_Pnt& P2, const gp_Dir
                       (myXmin - P1.X()) * D.Z() / D.X() + P1.Z(),
                       P2.Y(),
                       (myXmin - P2.X()) * D.Z() / D.X() + P2.Z()))
-      return Standard_False;
+      return false;
 
     if (!IsSegmentOut(myYmin,
                       myZmin,
@@ -871,7 +862,7 @@ Standard_Boolean Bnd_Box::IsOut(const gp_Pnt& P1, const gp_Pnt& P2, const gp_Dir
                       (myXmax - P1.X()) * D.Z() / D.X() + P1.Z(),
                       P2.Y(),
                       (myXmax - P2.X()) * D.Z() / D.X() + P2.Z()))
-      return Standard_False;
+      return false;
 
     if (!IsSegmentOut(myYmin,
                       myXmin,
@@ -881,7 +872,7 @@ Standard_Boolean Bnd_Box::IsOut(const gp_Pnt& P1, const gp_Pnt& P2, const gp_Dir
                       (myZmin - P1.Z()) * D.X() / D.Z() + P1.X(),
                       P2.Y(),
                       (myZmin - P2.Z()) * D.X() / D.Z() + P2.X()))
-      return Standard_False;
+      return false;
 
     if (!IsSegmentOut(myYmin,
                       myXmin,
@@ -891,12 +882,12 @@ Standard_Boolean Bnd_Box::IsOut(const gp_Pnt& P1, const gp_Pnt& P2, const gp_Dir
                       (myZmax - P1.Z()) * D.X() / D.Z() + P1.X(),
                       P2.Y(),
                       (myZmax - P2.Z()) * D.X() / D.Z() + P2.X()))
-      return Standard_False;
+      return false;
 
-    return Standard_True;
+    return true;
   } // if(D.Y() == 0)
 
-  if (Abs(D.Z()) < eps)
+  if (std::abs(D.Z()) < eps)
   {
     if (!IsSegmentOut(myZmin,
                       myXmin,
@@ -906,7 +897,7 @@ Standard_Boolean Bnd_Box::IsOut(const gp_Pnt& P1, const gp_Pnt& P2, const gp_Dir
                       (myYmax - P1.Y()) * D.X() / D.Y() + P1.X(),
                       P2.Z(),
                       (myYmax - P2.Y()) * D.X() / D.Y() + P2.X()))
-      return Standard_False;
+      return false;
 
     if (!IsSegmentOut(myZmin,
                       myXmin,
@@ -916,7 +907,7 @@ Standard_Boolean Bnd_Box::IsOut(const gp_Pnt& P1, const gp_Pnt& P2, const gp_Dir
                       (myYmin - P1.Y()) * D.X() / D.Y() + P1.X(),
                       P2.Z(),
                       (myYmin - P2.Y()) * D.X() / D.Y() + P2.X()))
-      return Standard_False;
+      return false;
 
     if (!IsSegmentOut(myZmin,
                       myYmin,
@@ -926,7 +917,7 @@ Standard_Boolean Bnd_Box::IsOut(const gp_Pnt& P1, const gp_Pnt& P2, const gp_Dir
                       (myXmax - P1.X()) * D.Y() / D.X() + P1.Y(),
                       P2.Z(),
                       (myXmax - P2.X()) * D.Y() / D.X() + P2.Y()))
-      return Standard_False;
+      return false;
 
     if (!IsSegmentOut(myZmin,
                       myYmin,
@@ -936,9 +927,9 @@ Standard_Boolean Bnd_Box::IsOut(const gp_Pnt& P1, const gp_Pnt& P2, const gp_Dir
                       (myXmin - P1.X()) * D.Y() / D.X() + P1.Y(),
                       P2.Z(),
                       (myXmin - P2.X()) * D.Y() / D.X() + P2.Y()))
-      return Standard_False;
+      return false;
 
-    return Standard_True;
+    return true;
   } // if(D.Z() == 0)
 
   if (!IsSegmentOut(myXmin,
@@ -949,7 +940,7 @@ Standard_Boolean Bnd_Box::IsOut(const gp_Pnt& P1, const gp_Pnt& P2, const gp_Dir
                     (myYmin - P1.Y()) / D.Y() * D.Z() + P1.Z(),
                     (myYmin - P2.Y()) / D.Y() * D.X() + P2.X(),
                     (myYmin - P2.Y()) / D.Y() * D.Z() + P2.Z()))
-    return Standard_False;
+    return false;
 
   if (!IsSegmentOut(myXmin,
                     myZmin,
@@ -959,7 +950,7 @@ Standard_Boolean Bnd_Box::IsOut(const gp_Pnt& P1, const gp_Pnt& P2, const gp_Dir
                     (myYmax - P1.Y()) / D.Y() * D.Z() + P1.Z(),
                     (myYmax - P2.Y()) / D.Y() * D.X() + P2.X(),
                     (myYmax - P2.Y()) / D.Y() * D.Z() + P2.Z()))
-    return Standard_False;
+    return false;
 
   if (!IsSegmentOut(myXmin,
                     myYmin,
@@ -969,7 +960,7 @@ Standard_Boolean Bnd_Box::IsOut(const gp_Pnt& P1, const gp_Pnt& P2, const gp_Dir
                     (myZmin - P1.Z()) / D.Z() * D.Y() + P1.Y(),
                     (myZmin - P2.Z()) / D.Z() * D.X() + P2.X(),
                     (myZmin - P2.Z()) / D.Z() * D.Y() + P2.Y()))
-    return Standard_False;
+    return false;
 
   if (!IsSegmentOut(myXmin,
                     myYmin,
@@ -979,7 +970,7 @@ Standard_Boolean Bnd_Box::IsOut(const gp_Pnt& P1, const gp_Pnt& P2, const gp_Dir
                     (myZmax - P1.Z()) / D.Z() * D.Y() + P1.Y(),
                     (myZmax - P2.Z()) / D.Z() * D.X() + P2.X(),
                     (myZmax - P2.Z()) / D.Z() * D.Y() + P2.Y()))
-    return Standard_False;
+    return false;
 
   if (!IsSegmentOut(myZmin,
                     myYmin,
@@ -989,7 +980,7 @@ Standard_Boolean Bnd_Box::IsOut(const gp_Pnt& P1, const gp_Pnt& P2, const gp_Dir
                     (myXmin - P1.X()) / D.X() * D.Y() + P1.Y(),
                     (myXmin - P2.X()) / D.X() * D.Z() + P2.Z(),
                     (myXmin - P2.X()) / D.X() * D.Y() + P2.Y()))
-    return Standard_False;
+    return false;
 
   if (!IsSegmentOut(myZmin,
                     myYmin,
@@ -999,9 +990,9 @@ Standard_Boolean Bnd_Box::IsOut(const gp_Pnt& P1, const gp_Pnt& P2, const gp_Dir
                     (myXmax - P1.X()) / D.X() * D.Y() + P1.Y(),
                     (myXmax - P2.X()) / D.X() * D.Z() + P2.Z(),
                     (myXmax - P2.X()) / D.X() * D.Y() + P2.Y()))
-    return Standard_False;
+    return false;
 
-  return Standard_True;
+  return true;
 }
 
 //=======================================================================
@@ -1009,53 +1000,19 @@ Standard_Boolean Bnd_Box::IsOut(const gp_Pnt& P1, const gp_Pnt& P2, const gp_Dir
 // purpose  : computes the minimum distance between two boxes
 //=======================================================================
 
-static Standard_Real DistMini2Box(const Standard_Real r1min,
-                                  const Standard_Real r1max,
-                                  const Standard_Real r2min,
-                                  const Standard_Real r2max)
+double Bnd_Box::Distance(const Bnd_Box& Other) const
 {
-  Standard_Real r1, r2;
+  double aXMinB1, aYMinB1, aZMinB1, aXMaxB1, aYMaxB1, aZMaxB1;
+  double aXMinB2, aYMinB2, aZMinB2, aXMaxB2, aYMaxB2, aZMaxB2;
 
-  r1 = Square(r1min - r2max);
-  r2 = Square(r1max - r2min);
-  return (Min(r1, r2));
-}
+  Get(aXMinB1, aYMinB1, aZMinB1, aXMaxB1, aYMaxB1, aZMaxB1);
+  Other.Get(aXMinB2, aYMinB2, aZMinB2, aXMaxB2, aYMaxB2, aZMaxB2);
 
-Standard_Real Bnd_Box::Distance(const Bnd_Box& Other) const
-{
-  Standard_Real xminB1, yminB1, zminB1, xmaxB1, ymaxB1, zmaxB1;
-  Standard_Real xminB2, yminB2, zminB2, xmaxB2, ymaxB2, zmaxB2;
-  Standard_Real dist_x, dist_y, dist_z, dist_t;
+  const double aDistX = DistanceInDimension(aXMinB1, aXMaxB1, aXMinB2, aXMaxB2);
+  const double aDistY = DistanceInDimension(aYMinB1, aYMaxB1, aYMinB2, aYMaxB2);
+  const double aDistZ = DistanceInDimension(aZMinB1, aZMaxB1, aZMinB2, aZMaxB2);
 
-  Get(xminB1, yminB1, zminB1, xmaxB1, ymaxB1, zmaxB1);
-  Other.Get(xminB2, yminB2, zminB2, xmaxB2, ymaxB2, zmaxB2);
-
-  if (((xminB1 <= xminB2) && (xminB2 <= xmaxB1)) || ((xminB2 <= xminB1) && (xminB1 <= xmaxB2)))
-  {
-    dist_x = 0;
-  }
-  else
-  {
-    dist_x = DistMini2Box(xminB1, xmaxB1, xminB2, xmaxB2);
-  }
-  if (((yminB1 <= yminB2) && (yminB2 <= ymaxB1)) || ((yminB2 <= yminB1) && (yminB1 <= ymaxB2)))
-  {
-    dist_y = 0;
-  }
-  else
-  {
-    dist_y = DistMini2Box(yminB1, ymaxB1, yminB2, ymaxB2);
-  }
-  if (((zminB1 <= zminB2) && (zminB2 <= zmaxB1)) || ((zminB2 <= zminB1) && (zminB1 <= zmaxB2)))
-  {
-    dist_z = 0;
-  }
-  else
-  {
-    dist_z = DistMini2Box(zminB1, zmaxB1, zminB2, zmaxB2);
-  }
-  dist_t = dist_x + dist_y + dist_z;
-  return (Sqrt(dist_t));
+  return std::sqrt(aDistX + aDistY + aDistZ);
 }
 
 //=================================================================================================
@@ -1106,19 +1063,19 @@ void Bnd_Box::Dump() const
 
 //=================================================================================================
 
-void Bnd_Box::DumpJson(Standard_OStream& theOStream, Standard_Integer) const {
-  OCCT_DUMP_FIELD_VALUES_NUMERICAL(theOStream, "CornerMin", 3, Xmin, Ymin, Zmin)
-    OCCT_DUMP_FIELD_VALUES_NUMERICAL(theOStream, "CornerMax", 3, Xmax, Ymax, Zmax)
-
-      OCCT_DUMP_FIELD_VALUE_NUMERICAL(theOStream, Gap)
-        OCCT_DUMP_FIELD_VALUE_NUMERICAL(theOStream, Flags)}
+void Bnd_Box::DumpJson(Standard_OStream& theOStream, int) const
+{
+  OCCT_DUMP_FIELD_VALUES_NUMERICAL(theOStream, "CornerMin", 3, Xmin, Ymin, Zmin);
+  OCCT_DUMP_FIELD_VALUES_NUMERICAL(theOStream, "CornerMax", 3, Xmax, Ymax, Zmax);
+  OCCT_DUMP_FIELD_VALUE_NUMERICAL(theOStream, Gap);
+  OCCT_DUMP_FIELD_VALUE_NUMERICAL(theOStream, Flags)
+}
 
 //=================================================================================================
 
-Standard_Boolean Bnd_Box::InitFromJson(const Standard_SStream& theSStream,
-                                       Standard_Integer&       theStreamPos)
+bool Bnd_Box::InitFromJson(const Standard_SStream& theSStream, int& theStreamPos)
 {
-  Standard_Integer aPos = theStreamPos;
+  int aPos = theStreamPos;
 
   TCollection_AsciiString aStreamStr = Standard_Dump::Text(theSStream);
   OCCT_INIT_VECTOR_CLASS(aStreamStr, "CornerMin", aPos, 3, &Xmin, &Ymin, &Zmin)
@@ -1128,5 +1085,5 @@ Standard_Boolean Bnd_Box::InitFromJson(const Standard_SStream& theSStream,
   OCCT_INIT_FIELD_VALUE_INTEGER(aStreamStr, aPos, Flags);
 
   theStreamPos = aPos;
-  return Standard_True;
+  return true;
 }

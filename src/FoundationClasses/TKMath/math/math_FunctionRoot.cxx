@@ -33,11 +33,11 @@ private:
 public:
   math_MyFunctionSetWithDerivatives(math_FunctionWithDerivative& F);
 
-  Standard_Integer NbVariables() const;
-  Standard_Integer NbEquations() const;
-  Standard_Boolean Value(const math_Vector& X, math_Vector& F);
-  Standard_Boolean Derivatives(const math_Vector& X, math_Matrix& D);
-  Standard_Boolean Values(const math_Vector& X, math_Vector& F, math_Matrix& D);
+  int  NbVariables() const override;
+  int  NbEquations() const override;
+  bool Value(const math_Vector& X, math_Vector& F) override;
+  bool Derivatives(const math_Vector& X, math_Matrix& D) override;
+  bool Values(const math_Vector& X, math_Vector& F, math_Matrix& D) override;
 };
 
 math_MyFunctionSetWithDerivatives::math_MyFunctionSetWithDerivatives(math_FunctionWithDerivative& F)
@@ -45,38 +45,35 @@ math_MyFunctionSetWithDerivatives::math_MyFunctionSetWithDerivatives(math_Functi
   Ff = &F;
 }
 
-Standard_Integer math_MyFunctionSetWithDerivatives::NbVariables() const
+int math_MyFunctionSetWithDerivatives::NbVariables() const
 {
   return 1;
 }
 
-Standard_Integer math_MyFunctionSetWithDerivatives::NbEquations() const
+int math_MyFunctionSetWithDerivatives::NbEquations() const
 {
   return 1;
 }
 
-Standard_Boolean math_MyFunctionSetWithDerivatives::Value(const math_Vector& X, math_Vector& Fs)
+bool math_MyFunctionSetWithDerivatives::Value(const math_Vector& X, math_Vector& Fs)
 {
   return Ff->Value(X(1), Fs(1));
 }
 
-Standard_Boolean math_MyFunctionSetWithDerivatives::Derivatives(const math_Vector& X,
-                                                                math_Matrix&       D)
+bool math_MyFunctionSetWithDerivatives::Derivatives(const math_Vector& X, math_Matrix& D)
 {
   return Ff->Derivative(X(1), D(1, 1));
 }
 
-Standard_Boolean math_MyFunctionSetWithDerivatives::Values(const math_Vector& X,
-                                                           math_Vector&       F,
-                                                           math_Matrix&       D)
+bool math_MyFunctionSetWithDerivatives::Values(const math_Vector& X, math_Vector& F, math_Matrix& D)
 {
   return Ff->Values(X(1), F(1), D(1, 1));
 }
 
 math_FunctionRoot::math_FunctionRoot(math_FunctionWithDerivative& F,
-                                     const Standard_Real          Guess,
-                                     const Standard_Real          Tolerance,
-                                     const Standard_Integer       NbIterations)
+                                     const double                 Guess,
+                                     const double                 Tolerance,
+                                     const int                    NbIterations)
 {
   math_Vector                       V(1, 1), Tol(1, 1);
   math_MyFunctionSetWithDerivatives Ff(F);
@@ -84,23 +81,23 @@ math_FunctionRoot::math_FunctionRoot(math_FunctionWithDerivative& F,
   Tol(1) = Tolerance;
   math_FunctionSetRoot Sol(Ff, Tol, NbIterations);
   Sol.Perform(Ff, V);
-  Done = Sol.IsDone();
+  Done   = Sol.IsDone();
+  NbIter = Sol.NbIterations();
   if (Done)
   {
     F.GetStateNumber();
     TheRoot       = Sol.Root()(1);
     TheDerivative = Sol.Derivative()(1, 1);
     F.Value(TheRoot, TheError);
-    NbIter = Sol.NbIterations();
   }
 }
 
 math_FunctionRoot::math_FunctionRoot(math_FunctionWithDerivative& F,
-                                     const Standard_Real          Guess,
-                                     const Standard_Real          Tolerance,
-                                     const Standard_Real          A,
-                                     const Standard_Real          B,
-                                     const Standard_Integer       NbIterations)
+                                     const double                 Guess,
+                                     const double                 Tolerance,
+                                     const double                 A,
+                                     const double                 B,
+                                     const int                    NbIterations)
 {
   math_Vector                       V(1, 1), Aa(1, 1), Bb(1, 1), Tol(1, 1);
   math_MyFunctionSetWithDerivatives Ff(F);
@@ -110,14 +107,14 @@ math_FunctionRoot::math_FunctionRoot(math_FunctionWithDerivative& F,
   Bb(1)  = B;
   math_FunctionSetRoot Sol(Ff, Tol, NbIterations);
   Sol.Perform(Ff, V, Aa, Bb);
-  Done = Sol.IsDone();
+  Done   = Sol.IsDone();
+  NbIter = Sol.NbIterations();
   if (Done)
   {
     F.GetStateNumber();
     TheRoot       = Sol.Root()(1);
     TheDerivative = Sol.Derivative()(1, 1);
     F.Value(TheRoot, TheError);
-    NbIter = Sol.NbIterations();
   }
 }
 

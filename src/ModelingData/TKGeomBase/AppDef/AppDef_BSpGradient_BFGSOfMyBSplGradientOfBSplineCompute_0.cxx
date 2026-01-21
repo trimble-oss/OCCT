@@ -23,18 +23,32 @@
 #include <AppDef_BSpParFunctionOfMyBSplGradientOfBSplineCompute.hxx>
 #include <math_MultipleVarFunctionWithGradient.hxx>
 
-#define MultiLine AppDef_MultiLine
-#define MultiLine_hxx <AppDef_MultiLine.hxx>
-#define ToolLine AppDef_MyLineTool
-#define ToolLine_hxx <AppDef_MyLineTool.hxx>
-#define AppParCurves_BSpParLeastSquare AppDef_BSpParLeastSquareOfMyBSplGradientOfBSplineCompute
-#define AppParCurves_BSpParLeastSquare_hxx                                                         \
-  <AppDef_BSpParLeastSquareOfMyBSplGradientOfBSplineCompute.hxx>
-#define AppParCurves_BSpParFunction AppDef_BSpParFunctionOfMyBSplGradientOfBSplineCompute
-#define AppParCurves_BSpParFunction_hxx <AppDef_BSpParFunctionOfMyBSplGradientOfBSplineCompute.hxx>
-#define AppParCurves_BSpGradient_BFGS AppDef_BSpGradient_BFGSOfMyBSplGradientOfBSplineCompute
-#define AppParCurves_BSpGradient_BFGS_hxx                                                          \
-  <AppDef_BSpGradient_BFGSOfMyBSplGradientOfBSplineCompute.hxx>
-#define AppParCurves_BSpGradient AppDef_MyBSplGradientOfBSplineCompute
-#define AppParCurves_BSpGradient_hxx <AppDef_MyBSplGradientOfBSplineCompute.hxx>
-#include "../AppParCurves/AppParCurves_BSpGradient_BFGS.gxx"
+AppDef_BSpGradient_BFGSOfMyBSplGradientOfBSplineCompute::
+  AppDef_BSpGradient_BFGSOfMyBSplGradientOfBSplineCompute(math_MultipleVarFunctionWithGradient& F,
+                                                          const math_Vector& StartingPoint,
+                                                          const double       Tolerance3d,
+                                                          const double       Tolerance2d,
+                                                          const double       Eps,
+                                                          const int          NbIterations)
+    : math_BFGS(F.NbVariables(), Eps, NbIterations, Eps),
+      myTol3d(Tolerance3d),
+      myTol2d(Tolerance2d)
+{
+  Perform(F, StartingPoint);
+}
+
+bool AppDef_BSpGradient_BFGSOfMyBSplGradientOfBSplineCompute::IsSolutionReached(
+  math_MultipleVarFunctionWithGradient& F) const
+{
+  bool                                                   Result, Result2;
+  AppDef_BSpParFunctionOfMyBSplGradientOfBSplineCompute* F1 =
+    (AppDef_BSpParFunctionOfMyBSplGradientOfBSplineCompute*)&F;
+
+  Result        = (2.0 * fabs(TheMinimum - PreviousMinimum)
+            <= 1.e-10 * (fabs(TheMinimum) + fabs(PreviousMinimum)) + 1.e-12);
+  double MErr3d = F1->MaxError3d();
+  double MErr2d = F1->MaxError2d();
+  Result2       = ((MErr3d <= myTol3d) && (MErr2d <= myTol2d));
+
+  return (Result || Result2);
+}

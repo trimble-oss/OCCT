@@ -252,8 +252,8 @@ int dtoa_stats[7]; /* strtod_{64,96,bigcomp},dtoa_{exact,64,96,bigcomp} */
   #define Debug(x)  /*nothing*/
 #endif
 
-#include "stdlib.h"
-#include "string.h"
+#include <cstdlib>
+#include <cstring>
 
 #ifdef USE_LOCALE
   #include "locale.h"
@@ -316,7 +316,7 @@ static double private_mem[PRIVATE_mem], *pmem_next = private_mem;
   #define NO_STRTOD_BIGCOMP
 #endif
 
-#include "errno.h"
+#include <cerrno>
 
 #ifdef NO_ERRNO /*{*/
   #undef Set_errno
@@ -357,11 +357,11 @@ static double private_mem[PRIVATE_mem], *pmem_next = private_mem;
   #endif
 
 #else /* ifndef Bad_float_h */
-  #include "float.h"
+  #include <cfloat>
 #endif /* Bad_float_h */
 
 #ifndef __MATH_H__
-  #include "math.h"
+  #include <cmath>
 #endif
 
 #ifdef __cplusplus
@@ -1604,7 +1604,7 @@ static Bigint* pow5mult(Bigint* b, int k MTd)
       FREE_DTOA_LOCK(1);
 #else
     p5 = p5s = i2b(625 MTa);
-    p5->next = 0;
+    p5->next = nullptr;
 #endif
   }
   for (;;)
@@ -1633,7 +1633,7 @@ static Bigint* pow5mult(Bigint* b, int k MTd)
         FREE_DTOA_LOCK(1);
 #else
       p51 = p5->next = mult(p5, p5);
-      p51->next      = 0;
+      p51->next      = nullptr;
 #endif
     }
     p5 = p51;
@@ -2182,27 +2182,6 @@ static const double tinytens[] = {1e-16, 1e-32};
 #endif
 
 #ifdef Need_Hexdig /*{*/
-  #if 0
-static unsigned char hexdig[256];
-
- static void
-htinit(unsigned char *h, unsigned char *s, int inc)
-{
-	int i, j;
-	for(i = 0; (j = s[i]) !=0; i++)
-		h[j] = i + inc;
-	}
-
- static void
-hexdig_init(void)	/* Use of hexdig_init omitted 20121220 to avoid a */
-			/* race condition when multiple threads are used. */
-{
-    #define USC (unsigned char*)
-	htinit(hexdig, USC "0123456789", 0x10);
-	htinit(hexdig, USC "abcdef", 0x10 + 10);
-	htinit(hexdig, USC "ABCDEF", 0x10 + 10);
-	}
-  #else
 static unsigned char hexdig[256] = {
   0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
   0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  16, 17, 18, 19,
@@ -2214,7 +2193,6 @@ static unsigned char hexdig[256] = {
   0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
   0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
   0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0};
-  #endif
 #endif /* } Need_Hexdig */
 
 #ifdef INFNAN_CHECK
@@ -2477,7 +2455,7 @@ void gethex(const char** sp, U* rvp, int rounding, int sign MTd)
     havedig++;
   s0 += havedig;
   s     = s0;
-  decpt = 0;
+  decpt = nullptr;
   zret  = 0;
   e     = 0;
   if (hexdig[*s])
@@ -2539,7 +2517,7 @@ pcheck:
         case '-':
           esign = 1;
           /* no break */
-          Standard_FALLTHROUGH
+          [[fallthrough]];
         case '+':
           s++;
       }
@@ -2761,11 +2739,6 @@ pcheck:
       x = b->x;
       if (denorm)
       {
-  #if 0
-				if (nbits == Nbits - 1
-				 && x[nbits >> kshift] & 1 << (nbits & kmask))
-					denorm = 0; /* not currently used */
-  #endif
       }
       else if (b->wds > k || ((n = nbits & kmask) != 0 && hi0bits(x[k - 1]) < 32 - n))
       {
@@ -3204,7 +3177,8 @@ double Strtod(const char* s00, char** se)
   U           aadj2, adj, rv, rv0;
   ULong       y, z;
   BCinfo      bc;
-  Bigint *    bb = 0, *bb1 = 0, *bd = 0, *bd0 = 0, *bs = 0, *delta = 0;
+  Bigint *    bb = nullptr, *bb1 = nullptr, *bd = nullptr, *bd0 = nullptr, *bs = nullptr,
+         *delta = nullptr;
 #ifdef USE_BF96
   ULLong      bhi, blo, brv, t00, t01, t02, t10, t11, terv, tg, tlo, yz;
   const BF96* p10;
@@ -3252,12 +3226,12 @@ double Strtod(const char* s00, char** se)
       case '-':
         sign = 1;
         /* no break */
-        Standard_FALLTHROUGH
+        [[fallthrough]];
       case '+':
         if (*++s)
           goto break2;
         /* no break */
-        Standard_FALLTHROUGH
+        [[fallthrough]];
       case 0:
         goto ret0;
       case '\t':
@@ -3402,7 +3376,7 @@ dig_done:
     {
       case '-':
         esign = 1;
-        Standard_FALLTHROUGH
+        [[fallthrough]];
       case '+':
         c = *++s;
     }
@@ -3494,7 +3468,7 @@ dig_done:
     dval(&rv) = tens[k - 9] * dval(&rv) + z;
   }
 #endif
-  bd0 = 0;
+  bd0 = nullptr;
   if (nd <= DBL_DIG
 #ifndef RND_PRODQUOT
   #ifndef Honor_FLT_ROUNDS
@@ -4741,7 +4715,7 @@ Bfree(delta MTb);
 #ifndef NO_STRTOD_BIGCOMP
 if (req_bigcomp)
 {
-  bd0 = 0;
+  bd0 = nullptr;
   bc.e0 += nz1;
   bigcomp(&rv, s0, &bc MTb);
   y = word0(&rv) & Exp_mask;
@@ -6216,7 +6190,7 @@ Fast_failed1:
       b = multadd(b, 10, 0 MTb);
     }
 
-    /* Round off last digit */
+  /* Round off last digit */
 
   #ifdef Honor_FLT_ROUNDS
   if (mode > 1)

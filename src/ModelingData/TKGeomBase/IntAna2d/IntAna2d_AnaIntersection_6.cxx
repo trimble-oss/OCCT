@@ -25,26 +25,26 @@
 
 void IntAna2d_AnaIntersection::Perform(const gp_Elips2d& Elips, const IntAna2d_Conic& Conic)
 {
-  Standard_Boolean EIsDirect = Elips.IsDirect();
-  Standard_Real    A, B, C, D, E, F;
-  Standard_Real    pcte, ps, pc, p2sc, pcc, pss;
-  Standard_Real    minor_radius = Elips.MinorRadius();
-  Standard_Real    major_radius = Elips.MajorRadius();
-  Standard_Integer i;
-  Standard_Real    tx, ty, S;
+  bool   EIsDirect = Elips.IsDirect();
+  double A, B, C, D, E, F;
+  double pcte, ps, pc, p2sc, pcc, pss;
+  double minor_radius = Elips.MinorRadius();
+  double major_radius = Elips.MajorRadius();
+  int    i;
+  double tx, ty, S;
 
-  done = Standard_False;
+  done = false;
   nbp  = 0;
-  para = Standard_False;
-  iden = Standard_False;
-  empt = Standard_False;
+  para = false;
+  iden = false;
+  empt = false;
 
   gp_Ax2d Axe_rep(Elips.XAxis());
 
   Conic.Coefficients(A, B, C, D, E, F);
   Conic.NewCoefficients(A, B, C, D, E, F, Axe_rep);
 
-  // Parametre : a avec x=MajorRadius Cos(a)  et y=MinorRadius Sin(a)
+  // Parametre : a avec x=MajorRadius std::cos(a)  et y=MinorRadius std::sin(a)
 
   pss  = B * minor_radius * minor_radius;       // SIN ^2
   pcc  = A * major_radius * major_radius - pss; // COS ^2
@@ -57,23 +57,23 @@ void IntAna2d_AnaIntersection::Perform(const gp_Elips2d& Elips, const IntAna2d_C
 
   if (!Sol.IsDone())
   {
-    done = Standard_False;
+    done = false;
     return;
   }
   else
   {
     if (Sol.InfiniteRoots())
     {
-      iden = Standard_True;
-      done = Standard_True;
+      iden = true;
+      done = true;
       return;
     }
     nbp = Sol.NbSolutions();
     for (i = 1; i <= nbp; i++)
     {
       S  = Sol.Value(i);
-      tx = major_radius * Cos(S);
-      ty = minor_radius * Sin(S);
+      tx = major_radius * std::cos(S);
+      ty = minor_radius * std::sin(S);
       Coord_Ancien_Repere(tx, ty, Axe_rep);
       if (!EIsDirect)
         S = M_PI + M_PI - S;
@@ -81,5 +81,5 @@ void IntAna2d_AnaIntersection::Perform(const gp_Elips2d& Elips, const IntAna2d_C
     }
     Traitement_Points_Confondus(nbp, lpnt);
   }
-  done = Standard_True;
+  done = true;
 }

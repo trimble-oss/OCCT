@@ -43,12 +43,12 @@ Standard_DISABLE_DEPRECATION_WARNINGS
   //=================================================================================================
 
   Image_VideoRecorder::Image_VideoRecorder()
-    : myAVContext(NULL),
-      myVideoStream(NULL),
-      myVideoCodec(NULL),
-      myCodecCtx(NULL),
-      myFrame(NULL),
-      myScaleCtx(NULL),
+    : myAVContext(nullptr),
+      myVideoStream(nullptr),
+      myVideoCodec(nullptr),
+      myCodecCtx(nullptr),
+      myFrame(nullptr),
+      myScaleCtx(nullptr),
       myFrameCount(0)
 {
   myFrameRate.num = 1;
@@ -91,7 +91,7 @@ AVCodecContext* Image_VideoRecorder::getCodecContext() const
   return myVideoStream != NULL ? myVideoStream->codec : NULL;
   #endif
 #else
-  return NULL;
+  return nullptr;
 #endif
 }
 
@@ -100,13 +100,13 @@ AVCodecContext* Image_VideoRecorder::getCodecContext() const
 void Image_VideoRecorder::Close()
 {
 #ifdef HAVE_FFMPEG
-  if (myScaleCtx != NULL)
+  if (myScaleCtx != nullptr)
   {
     sws_freeContext(myScaleCtx);
-    myScaleCtx = NULL;
+    myScaleCtx = nullptr;
   }
 
-  if (myAVContext == NULL)
+  if (myAVContext == nullptr)
   {
     myFrameCount = 0;
     return;
@@ -122,24 +122,24 @@ void Image_VideoRecorder::Close()
   }
 
   // close each codec
-  if (myVideoStream != NULL)
+  if (myVideoStream != nullptr)
   {
   #if FFMPEG_HAVE_AVCODEC_PARAMETERS
-    if (myCodecCtx != NULL)
+    if (myCodecCtx != nullptr)
     {
       avcodec_free_context(&myCodecCtx);
-      myCodecCtx = NULL;
+      myCodecCtx = nullptr;
     }
   #else
     avcodec_close(myVideoStream->codec);
   #endif
-    myVideoStream = NULL;
+    myVideoStream = nullptr;
   }
-  if (myFrame != NULL)
+  if (myFrame != nullptr)
   {
     av_free(myFrame->data[0]);
     av_frame_free(&myFrame);
-    myFrame = NULL;
+    myFrame = nullptr;
   }
 
   if (!(myAVContext->oformat->flags & AVFMT_NOFILE))
@@ -150,46 +150,46 @@ void Image_VideoRecorder::Close()
 
   // free the stream
   avformat_free_context(myAVContext);
-  myAVContext = NULL;
+  myAVContext = nullptr;
 #endif
 }
 
 //=================================================================================================
 
-Standard_Boolean Image_VideoRecorder::Open(const char*              theFileName,
-                                           const Image_VideoParams& theParams)
+bool Image_VideoRecorder::Open(const char* theFileName, const Image_VideoParams& theParams)
 {
 #ifdef HAVE_FFMPEG
   Close();
   if (theParams.Width <= 0 || theParams.Height <= 0)
   {
-    return Standard_False;
+    return false;
   }
 
   // allocate the output media context
   avformat_alloc_output_context2(&myAVContext,
-                                 NULL,
-                                 theParams.Format.IsEmpty() ? NULL : theParams.Format.ToCString(),
+                                 nullptr,
+                                 theParams.Format.IsEmpty() ? nullptr
+                                                            : theParams.Format.ToCString(),
                                  theFileName);
-  if (myAVContext == NULL)
+  if (myAVContext == nullptr)
   {
     ::Message::SendFail(
       "ViewerTest_VideoRecorder, could not deduce output format from file extension");
-    return Standard_False;
+    return false;
   }
 
   // add the audio stream using the default format codecs and initialize the codecs
   if (!addVideoStream(theParams, myAVContext->oformat->video_codec))
   {
     Close();
-    return Standard_False;
+    return false;
   }
 
   // open video codec and allocate the necessary encode buffers
   if (!openVideoCodec(theParams))
   {
     Close();
-    return Standard_False;
+    return false;
   }
 
   #ifdef OCCT_DEBUG
@@ -205,30 +205,30 @@ Standard_Boolean Image_VideoRecorder::Open(const char*              theFileName,
       ::Message::SendFail(TCollection_AsciiString("Error: could not open '") + theFileName + "', "
                           + formatAvError(aResAv));
       Close();
-      return Standard_False;
+      return false;
     }
   }
 
   // write the stream header, if any
-  const int aResAv = avformat_write_header(myAVContext, NULL);
+  const int aResAv = avformat_write_header(myAVContext, nullptr);
   if (aResAv < 0)
   {
     ::Message::SendFail(TCollection_AsciiString("Error: can not open output file '") + theFileName
                         + "', " + formatAvError(aResAv));
     Close();
-    return Standard_False;
+    return false;
   }
 #else
   (void)theFileName;
   (void)theParams;
 #endif
-  return Standard_True;
+  return true;
 }
 
 //=================================================================================================
 
-Standard_Boolean Image_VideoRecorder::addVideoStream(const Image_VideoParams& theParams,
-                                                     const Standard_Integer   theDefCodecId)
+bool Image_VideoRecorder::addVideoStream(const Image_VideoParams& theParams,
+                                         const int                theDefCodecId)
 {
   myFrameRate.num = theParams.FpsNum;
   myFrameRate.den = theParams.FpsDen;
@@ -246,28 +246,28 @@ Standard_Boolean Image_VideoRecorder::addVideoStream(const Image_VideoParams& th
     myVideoCodec = ffmpeg_find_encoder((AVCodecID)theDefCodecId);
     aCodecName   = avcodec_get_name((AVCodecID)theDefCodecId);
   }
-  if (myVideoCodec == NULL)
+  if (myVideoCodec == nullptr)
   {
     ::Message::SendFail(TCollection_AsciiString("Error: can not find encoder for ") + aCodecName);
-    return Standard_False;
+    return false;
   }
 
   const AVCodecID aCodecId = myVideoCodec->id;
   myVideoStream            = avformat_new_stream(myAVContext, myVideoCodec);
-  if (myVideoStream == NULL)
+  if (myVideoStream == nullptr)
   {
     ::Message::SendFail("Error: can not allocate stream");
-    return Standard_False;
+    return false;
   }
   myVideoStream->id = myAVContext->nb_streams - 1;
 
   #if FFMPEG_HAVE_AVCODEC_PARAMETERS
   // For FFmpeg 5.0+, allocate and use separate codec context
   myCodecCtx = avcodec_alloc_context3(myVideoCodec);
-  if (myCodecCtx == NULL)
+  if (myCodecCtx == nullptr)
   {
     ::Message::SendFail("Error: can not allocate codec context");
-    return Standard_False;
+    return false;
   }
   AVCodecContext* aCodecCtx = myCodecCtx;
   #else
@@ -297,29 +297,29 @@ Standard_Boolean Image_VideoRecorder::addVideoStream(const Image_VideoParams& th
   if (avcodec_parameters_from_context(myVideoStream->codecpar, aCodecCtx) < 0)
   {
     ::Message::SendFail("Error: can not copy codec parameters to stream");
-    return Standard_False;
+    return false;
   }
   #endif
-  return Standard_True;
+  return true;
 #else
   (void)theParams;
   (void)theDefCodecId;
-  return Standard_False;
+  return false;
 #endif
 }
 
 //=================================================================================================
 
-Standard_Boolean Image_VideoRecorder::openVideoCodec(const Image_VideoParams& theParams)
+bool Image_VideoRecorder::openVideoCodec(const Image_VideoParams& theParams)
 {
 #ifdef HAVE_FFMPEG
-  AVDictionary*   anOptions = NULL;
+  AVDictionary*   anOptions = nullptr;
   AVCodecContext* aCodecCtx = getCodecContext();
 
-  if (aCodecCtx == NULL)
+  if (aCodecCtx == nullptr)
   {
     ::Message::SendFail("Error: codec context is not available");
-    return Standard_False;
+    return false;
   }
 
   // setup default values
@@ -381,11 +381,12 @@ Standard_Boolean Image_VideoRecorder::openVideoCodec(const Image_VideoParams& th
       ::Message::SendFail(
         TCollection_AsciiString("Error: unknown pixel format has been specified '")
         + theParams.PixelFormat + "'");
-      return Standard_False;
+      return false;
     }
 
     aCodecCtx->pix_fmt = aPixFormat;
-    for (Resource_DataMapOfAsciiStringAsciiString::Iterator aParamIter(theParams.VideoCodecParams);
+    for (NCollection_DataMap<TCollection_AsciiString, TCollection_AsciiString>::Iterator aParamIter(
+           theParams.VideoCodecParams);
          aParamIter.More();
          aParamIter.Next())
     {
@@ -395,7 +396,7 @@ Standard_Boolean Image_VideoRecorder::openVideoCodec(const Image_VideoParams& th
 
   // open codec
   int aResAv = avcodec_open2(aCodecCtx, myVideoCodec, &anOptions);
-  if (anOptions != NULL)
+  if (anOptions != nullptr)
   {
     av_dict_free(&anOptions);
   }
@@ -403,15 +404,15 @@ Standard_Boolean Image_VideoRecorder::openVideoCodec(const Image_VideoParams& th
   {
     ::Message::SendFail(TCollection_AsciiString("Error: can not open video codec, ")
                         + formatAvError(aResAv));
-    return Standard_False;
+    return false;
   }
 
   // allocate and init a re-usable frame
   myFrame = av_frame_alloc();
-  if (myFrame == NULL)
+  if (myFrame == nullptr)
   {
     ::Message::SendFail("Error: can not allocate video frame");
-    return Standard_False;
+    return false;
   }
 
   // allocate the encoded raw picture
@@ -428,19 +429,19 @@ Standard_Boolean Image_VideoRecorder::openVideoCodec(const Image_VideoParams& th
     ::Message::SendFail(TCollection_AsciiString("Error: can not allocate picture ")
                         + aCodecCtx->width + "x" + aCodecCtx->height + ", "
                         + formatAvError(aResAv));
-    return Standard_False;
+    return false;
   }
   // copy data and linesize picture pointers to frame
   myFrame->format = aCodecCtx->pix_fmt;
   myFrame->width  = aCodecCtx->width;
   myFrame->height = aCodecCtx->height;
 
-  const Standard_Size aStride = aCodecCtx->width + 16 - (aCodecCtx->width % 16);
+  const size_t aStride = aCodecCtx->width + 16 - (aCodecCtx->width % 16);
   if (!myImgSrcRgba.InitZero(Image_Format_RGBA, aCodecCtx->width, aCodecCtx->height, aStride))
   {
     ::Message::SendFail(TCollection_AsciiString("Error: can not allocate RGBA32 picture ")
                         + aCodecCtx->width + "x" + aCodecCtx->height);
-    return Standard_False;
+    return false;
   }
 
   myScaleCtx = sws_getContext(aCodecCtx->width,
@@ -450,24 +451,24 @@ Standard_Boolean Image_VideoRecorder::openVideoCodec(const Image_VideoParams& th
                               aCodecCtx->height,
                               aCodecCtx->pix_fmt,
                               SWS_BICUBIC,
-                              NULL,
-                              NULL,
-                              NULL);
-  if (myScaleCtx == NULL)
+                              nullptr,
+                              nullptr,
+                              nullptr);
+  if (myScaleCtx == nullptr)
   {
     ::Message::SendFail("Error: can not initialize the conversion context");
-    return Standard_False;
+    return false;
   }
-  return Standard_True;
+  return true;
 #else
   (void)theParams;
-  return Standard_False;
+  return false;
 #endif
 }
 
 //=================================================================================================
 
-Standard_Boolean Image_VideoRecorder::writeVideoFrame(const Standard_Boolean theToFlush)
+bool Image_VideoRecorder::writeVideoFrame(const bool theToFlush)
 {
 #ifdef HAVE_FFMPEG
   if (myImgSrcRgba.Format() != Image_Format_RGBA)
@@ -479,7 +480,7 @@ Standard_Boolean Image_VideoRecorder::writeVideoFrame(const Standard_Boolean the
   AVCodecContext* aCodecCtx = getCodecContext();
   if (!theToFlush)
   {
-    uint8_t* aSrcData[4]     = {(uint8_t*)myImgSrcRgba.ChangeData(), NULL, NULL, NULL};
+    uint8_t* aSrcData[4]     = {(uint8_t*)myImgSrcRgba.ChangeData(), nullptr, nullptr, nullptr};
     int      aSrcLinesize[4] = {(int)myImgSrcRgba.SizeRowBytes(), 0, 0, 0};
     sws_scale(myScaleCtx,
               aSrcData,
@@ -499,14 +500,14 @@ Standard_Boolean Image_VideoRecorder::writeVideoFrame(const Standard_Boolean the
   }
   else
   {
-    aResAv = avcodec_send_frame(aCodecCtx, NULL); // flush
+    aResAv = avcodec_send_frame(aCodecCtx, nullptr); // flush
   }
 
   if (aResAv < 0)
   {
     ::Message::SendFail(TCollection_AsciiString("Error: can not send frame to encoder, ")
                         + formatAvError(aResAv));
-    return Standard_False;
+    return false;
   }
 
   while (aResAv >= 0)
@@ -523,7 +524,7 @@ Standard_Boolean Image_VideoRecorder::writeVideoFrame(const Standard_Boolean the
       av_packet_free(&aPacket);
       ::Message::SendFail(TCollection_AsciiString("Error: can not encode video frame, ")
                           + formatAvError(aResAv));
-      return Standard_False;
+      return false;
     }
 
     // rescale output packet timestamp values from codec to stream timebase
@@ -547,7 +548,7 @@ Standard_Boolean Image_VideoRecorder::writeVideoFrame(const Standard_Boolean the
     {
       ::Message::SendFail(TCollection_AsciiString("Error: can not write video frame, ")
                           + formatAvError(aResAv));
-      return Standard_False;
+      return false;
     }
   }
   #else
@@ -567,7 +568,7 @@ Standard_Boolean Image_VideoRecorder::writeVideoFrame(const Standard_Boolean the
     {
       ::Message::SendFail(TCollection_AsciiString("Error: can not encode video frame, ")
                           + formatAvError(aResAv));
-      return Standard_False;
+      return false;
     }
 
     // if size is zero, it means the image was buffered
@@ -600,14 +601,14 @@ Standard_Boolean Image_VideoRecorder::writeVideoFrame(const Standard_Boolean the
   {
     ::Message::SendFail(TCollection_AsciiString("Error: can not write video frame, ")
                         + formatAvError(aResAv));
-    return Standard_False;
+    return false;
   }
   #endif
 
   ++myFrameCount;
-  return Standard_True;
+  return true;
 #else
   (void)theToFlush;
-  return Standard_False;
+  return false;
 #endif
 }

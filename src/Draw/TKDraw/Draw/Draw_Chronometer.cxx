@@ -22,23 +22,17 @@ IMPLEMENT_STANDARD_RTTIEXT(Draw_Chronometer, Draw_Drawable3D)
 
 //=================================================================================================
 
-Draw_Chronometer::Draw_Chronometer()
-{
-  //
-}
+Draw_Chronometer::Draw_Chronometer() = default;
 
 //=================================================================================================
 
-void Draw_Chronometer::DrawOn(Draw_Display&) const
-{
-  //
-}
+void Draw_Chronometer::DrawOn(Draw_Display&) const {}
 
 //=================================================================================================
 
-Handle(Draw_Drawable3D) Draw_Chronometer::Copy() const
+occ::handle<Draw_Drawable3D> Draw_Chronometer::Copy() const
 {
-  Handle(Draw_Chronometer) C = new Draw_Chronometer();
+  occ::handle<Draw_Chronometer> C = new Draw_Chronometer();
   return C;
 }
 

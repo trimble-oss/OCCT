@@ -13,7 +13,6 @@
 
 #include <NCollection_IncAllocator.hxx>
 
-#include <Standard_Mutex.hxx>
 #include <Standard_OutOfMemory.hxx>
 
 #include <cmath>
@@ -72,13 +71,12 @@ void NCollection_IncAllocator::SetThreadSafe(const bool theIsThreadSafe)
   {
     if (!myMutex)
     {
-      myMutex = new Standard_Mutex;
+      myMutex = opencascade::make_unique<std::mutex>();
     }
   }
   else
   {
-    delete myMutex;
-    myMutex = nullptr;
+    myMutex.reset();
   }
 }
 
@@ -87,14 +85,14 @@ void NCollection_IncAllocator::SetThreadSafe(const bool theIsThreadSafe)
 NCollection_IncAllocator::~NCollection_IncAllocator()
 {
   clean();
-  delete myMutex;
 }
 
 //=================================================================================================
 
 void* NCollection_IncAllocator::AllocateOptimal(const size_t theSize)
 {
-  Standard_Mutex::Sentry aLock(myMutex);
+  std::unique_lock<std::mutex> aLock =
+    myMutex ? std::unique_lock<std::mutex>(*myMutex) : std::unique_lock<std::mutex>();
   // Allocating using general block
   IBlock* aBlock = nullptr;
   // Use allocated blocks
@@ -164,8 +162,9 @@ void* NCollection_IncAllocator::Allocate(const size_t theSize)
 
 void NCollection_IncAllocator::clean()
 {
-  Standard_Mutex::Sentry aLock(myMutex);
-  IBlock*                aHeapIter = myOrderedBlocks;
+  std::unique_lock<std::mutex> aLock =
+    myMutex ? std::unique_lock<std::mutex>(*myMutex) : std::unique_lock<std::mutex>();
+  IBlock* aHeapIter = myOrderedBlocks;
   while (aHeapIter)
   {
     IBlock* aCur = aHeapIter;
@@ -214,15 +213,16 @@ void NCollection_IncAllocator::resetBlock(IBlock* theBlock) const
 
 //=================================================================================================
 
-void NCollection_IncAllocator::Reset(const Standard_Boolean theReleaseMemory)
+void NCollection_IncAllocator::Reset(const bool theReleaseMemory)
 {
   if (theReleaseMemory)
   {
     clean();
     return;
   }
-  Standard_Mutex::Sentry aLock(myMutex);
-  IBlock*                aHeapIter = myOrderedBlocks;
+  std::unique_lock<std::mutex> aLock =
+    myMutex ? std::unique_lock<std::mutex>(*myMutex) : std::unique_lock<std::mutex>();
+  IBlock* aHeapIter = myOrderedBlocks;
   while (aHeapIter)
   {
     IBlock* aCur    = aHeapIter;

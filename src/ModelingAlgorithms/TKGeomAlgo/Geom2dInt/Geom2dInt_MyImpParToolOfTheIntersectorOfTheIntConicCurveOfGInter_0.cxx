@@ -20,13 +20,43 @@
 #include <Adaptor2d_Curve2d.hxx>
 #include <Geom2dInt_Geom2dCurveTool.hxx>
 
-#define ImpTool IntCurve_IConicTool
-#define ImpTool_hxx <IntCurve_IConicTool.hxx>
-#define ParCurve Adaptor2d_Curve2d
-#define ParCurve_hxx <Adaptor2d_Curve2d.hxx>
-#define ParTool Geom2dInt_Geom2dCurveTool
-#define ParTool_hxx <Geom2dInt_Geom2dCurveTool.hxx>
-#define IntImpParGen_ImpParTool Geom2dInt_MyImpParToolOfTheIntersectorOfTheIntConicCurveOfGInter
-#define IntImpParGen_ImpParTool_hxx                                                                \
-  <Geom2dInt_MyImpParToolOfTheIntersectorOfTheIntConicCurveOfGInter.hxx>
-#include <IntImpParGen_ImpParTool.gxx>
+#include <gp_Vec2d.hxx>
+
+Geom2dInt_MyImpParToolOfTheIntersectorOfTheIntConicCurveOfGInter::
+  Geom2dInt_MyImpParToolOfTheIntersectorOfTheIntConicCurveOfGInter(const IntCurve_IConicTool& ITool,
+                                                                   const Adaptor2d_Curve2d&   PC)
+    : TheImpTool(ITool)
+{
+  TheParCurve = (void*)(&PC);
+}
+
+bool Geom2dInt_MyImpParToolOfTheIntersectorOfTheIntConicCurveOfGInter::Value(const double Param,
+                                                                             double& ApproxDistance)
+{
+  ApproxDistance = TheImpTool.Distance(
+    Geom2dInt_Geom2dCurveTool::Value((*((Adaptor2d_Curve2d*)(TheParCurve))), Param));
+  return (true);
+}
+
+bool Geom2dInt_MyImpParToolOfTheIntersectorOfTheIntConicCurveOfGInter::Derivative(
+  const double Param,
+  double&      D_ApproxDistance_DV)
+{
+  gp_Pnt2d Pt;
+  gp_Vec2d TanParCurve;
+  gp_Vec2d Grad = TheImpTool.GradDistance(
+    Geom2dInt_Geom2dCurveTool::Value((*((Adaptor2d_Curve2d*)(TheParCurve))), Param));
+  Geom2dInt_Geom2dCurveTool::D1((*((Adaptor2d_Curve2d*)(TheParCurve))), Param, Pt, TanParCurve);
+  D_ApproxDistance_DV = Grad.Dot(TanParCurve);
+  return (true);
+}
+
+bool Geom2dInt_MyImpParToolOfTheIntersectorOfTheIntConicCurveOfGInter::Values(
+  const double Param,
+  double&      ApproxDistance,
+  double&      Deriv)
+{
+  this->Value(Param, ApproxDistance);
+  this->Derivative(Param, Deriv);
+  return (true);
+}

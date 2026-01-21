@@ -12,146 +12,166 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-//#include <LibCtl_Library.ixx>
+// #include <LibCtl_Library.ixx>
 #include <Standard_NoSuchObject.hxx>
 
+//  Global List of Modules, from which we will be served
 
-//  Liste Globale des Modules, dans laquelle on va se servir
+static occ::handle<LibCtl_GlobalNode> theglobal;
 
-static Handle(LibCtl_GlobalNode) theglobal;
+//  Data for optimization (last Protocol requested)
 
-//  Donnees pour optimisation (dernier Protocole demande)
+static occ::handle<TheProtocol> theprotocol;
+static occ::handle<LibCtl_Node> thelast;
 
-static Handle(TheProtocol) theprotocol;
-static Handle(LibCtl_Node) thelast;
-
-
-//  Alimentation de la liste globale
-//  ATTENTION : SetGlobal fait de la substitution, c-a-d que c est le dernier
-//   qui a raison pour un Protocol donne
-    void LibCtl_Library::SetGlobal
-  (const Handle(TheModule)& amodule, const Handle(TheProtocol)& aprotocol)
+//  Feeding the global list
+//  WARNING: SetGlobal performs substitution, i.e. it's the last one
+//   that is right for a given Protocol
+void LibCtl_Library::SetGlobal(const occ::handle<TheModule>&   amodule,
+                               const occ::handle<TheProtocol>& aprotocol)
 {
-  if (theglobal.IsNull()) theglobal = new LibCtl_GlobalNode;
-  theglobal->Add(amodule,aprotocol);
+  if (theglobal.IsNull())
+    theglobal = new LibCtl_GlobalNode;
+  theglobal->Add(amodule, aprotocol);
 }
 
-// Constructeur d apres Protocole
-    LibCtl_Library::LibCtl_Library (const Handle(TheProtocol)& aprotocol)
+// Constructor from Protocol
+LibCtl_Library::LibCtl_Library(const occ::handle<TheProtocol>& aprotocol)
 {
-  Standard_Boolean last = Standard_False;
-  if (aprotocol.IsNull()) return;    // PAS de protocole = Lib VIDE
-  if (!theprotocol.IsNull()) last =
-    (theprotocol == aprotocol);
+  bool last = false;
+  if (aprotocol.IsNull())
+    return; // NO protocol = EMPTY Lib
+  if (!theprotocol.IsNull())
+    last = (theprotocol == aprotocol);
 
-  if (last) thelist = thelast;
-//  Si Pas d optimisation disponible : construire la liste
-  else {
+  if (last)
+    thelist = thelast;
+  //  If no optimization available: build the list
+  else
+  {
     AddProtocol(aprotocol);
-//  Ceci definit l optimisation (pour la fois suivante)
+    //  This defines the optimization (for the next time)
     thelast     = thelist;
     theprotocol = aprotocol;
   }
 }
 
 //  Constructeur vide
-    LibCtl_Library::LibCtl_Library ()    {  }
+LibCtl_Library::LibCtl_Library() {}
 
-
-//  Ajout d un Protocol : attention, desoptimise (sinon risque de confusion !)
-    void LibCtl_Library::AddProtocol
-  (const Handle(Standard_Transient)& aprotocol)
+//  Adding a Protocol: beware, deoptimizes (otherwise risk of confusion!)
+void LibCtl_Library::AddProtocol(const occ::handle<Standard_Transient>& aprotocol)
 {
-//  DownCast car Protocol->Resources, meme redefini et utilise dans d autres
-//  librairies, doit toujours renvoyer le type le plus haut
-  Handle(TheProtocol) aproto = Handle(TheProtocol)::DownCast(aprotocol);
-  if (aproto.IsNull()) return;
+  //  DownCast because Protocol->Resources, even redefined and used in other
+  //  libraries, must always return the highest type
+  occ::handle<TheProtocol> aproto = occ::down_cast<TheProtocol>(aprotocol);
+  if (aproto.IsNull())
+    return;
 
-//  D abord, ajouter celui-ci a la liste : chercher le Node
-  Handle(LibCtl_GlobalNode) curr;
-  for (curr = theglobal; !curr.IsNull(); ) {        // curr->Next : plus loin
-    const Handle(TheProtocol)& protocol = curr->Protocol();
-    if (!protocol.IsNull()) {
-//  Match Protocol ?
-      if (protocol->DynamicType() == aprotocol->DynamicType()) {
-	if (thelist.IsNull()) thelist = new LibCtl_Node;
-	thelist->AddNode(curr);
-	break;  // UN SEUL MODULE PAR PROTOCOLE
+  //  First, add this one to the list: search for the Node
+  occ::handle<LibCtl_GlobalNode> curr;
+  for (curr = theglobal; !curr.IsNull();)
+  { // curr->Next : plus loin
+    const occ::handle<TheProtocol>& protocol = curr->Protocol();
+    if (!protocol.IsNull())
+    {
+      //  Match Protocol ?
+      if (protocol->DynamicType() == aprotocol->DynamicType())
+      {
+        if (thelist.IsNull())
+          thelist = new LibCtl_Node;
+        thelist->AddNode(curr);
+        break; // UN SEUL MODULE PAR PROTOCOLE
       }
     }
-    curr = curr->Next();  // cette formule est refusee dans "for"
+    curr = curr->Next(); // this formula is refused in "for"
   }
-//  Ensuite, Traiter les ressources
-  Standard_Integer nb = aproto->NbResources();
-  for (Standard_Integer i = 1; i <= nb; i ++) {
-    AddProtocol (aproto->Resource(i));
+  //  Then, process the resources
+  int nb = aproto->NbResources();
+  for (int i = 1; i <= nb; i++)
+  {
+    AddProtocol(aproto->Resource(i));
   }
-//  Ne pas oublier de desoptimiser
+  //  Don't forget to deoptimize
   theprotocol.Nullify();
   thelast.Nullify();
 }
 
-    void LibCtl_Library::Clear ()
-      {  thelist = new LibCtl_Node;  }
-
-    void LibCtl_Library::SetComplete ()
+void LibCtl_Library::Clear()
 {
   thelist = new LibCtl_Node;
-//    On prend chacun des Protocoles de la Liste Globale et on l ajoute
-  Handle(LibCtl_GlobalNode) curr;
-  for (curr = theglobal; !curr.IsNull(); ) {        // curr->Next : plus loin
-    const Handle(TheProtocol)& protocol = curr->Protocol();
-//    Comme on prend tout tout tout, on ne se preoccupe pas des Ressources !
-    if (!protocol.IsNull()) thelist->AddNode(curr);
-    curr = curr->Next();  // cette formule est refusee dans "for"
+}
+
+void LibCtl_Library::SetComplete()
+{
+  thelist = new LibCtl_Node;
+  //    We take each of the Protocols from the Global List and add it
+  occ::handle<LibCtl_GlobalNode> curr;
+  for (curr = theglobal; !curr.IsNull();)
+  { // curr->Next : plus loin
+    const occ::handle<TheProtocol>& protocol = curr->Protocol();
+    //    Since we take everything, we don't worry about Resources!
+    if (!protocol.IsNull())
+      thelist->AddNode(curr);
+    curr = curr->Next(); // this formula is refused in "for"
   }
 }
 
+//  Selection: Very powerful, we return the Module corresponding to a Type
+//  (as well as the CaseNumber returned by the corresponding protocol)
 
-//  Selection : Tres fort, on retourne le Module correspondant a un Type
-//  (ainsi que le CaseNumber retourne par le protocole correspondant)
-
-    Standard_Boolean LibCtl_Library::Select
-  (const TheObject& obj,
-   Handle(TheModule)& module, Standard_Integer& CN) const
+bool LibCtl_Library::Select(const TheObject& obj, occ::handle<TheModule>& module, int& CN) const
 {
-  module.Nullify();  CN = 0;    // Reponse "pas trouve"
-  if (thelist.IsNull()) return Standard_False;
-  Handle(LibCtl_Node) curr = thelist;
-  for (curr = thelist; !curr.IsNull(); ) {        // curr->Next : plus loin
-    const Handle(TheProtocol)& protocol = curr->Protocol();
-    if (!protocol.IsNull()) {
+  module.Nullify();
+  CN = 0; // Response "not found"
+  if (thelist.IsNull())
+    return false;
+  occ::handle<LibCtl_Node> curr = thelist;
+  for (curr = thelist; !curr.IsNull();)
+  { // curr->Next : plus loin
+    const occ::handle<TheProtocol>& protocol = curr->Protocol();
+    if (!protocol.IsNull())
+    {
       CN = protocol->CaseNumber(obj);
-      if (CN > 0) {
-	module = curr->Module();
-	return Standard_True;
+      if (CN > 0)
+      {
+        module = curr->Module();
+        return true;
       }
     }
-    curr = curr->Next();        // cette formule est refusee dans "for"
+    curr = curr->Next(); // this formula is refused in "for"
   }
-  return Standard_False;        // ici, pas trouce
+  return false; // here, not found
 }
-
 
 //  ....                        Iteration                        ....
 
-    void LibCtl_Library::Start ()
-      {  thecurr = thelist;  }
-
-    Standard_Boolean LibCtl_Library::More () const
-      {  return (!thecurr.IsNull());  }
-
-    void LibCtl_Library::Next ()
-      {  if (!thecurr.IsNull()) thecurr = thecurr->Next();  }
-
-    const Handle(TheModule)& LibCtl_Library::Module () const
+void LibCtl_Library::Start()
 {
-  if (thecurr.IsNull()) throw Standard_NoSuchObject("Library from LibCtl");
+  thecurr = thelist;
+}
+
+bool LibCtl_Library::More() const
+{
+  return (!thecurr.IsNull());
+}
+
+void LibCtl_Library::Next()
+{
+  if (!thecurr.IsNull())
+    thecurr = thecurr->Next();
+}
+
+const occ::handle<TheModule>& LibCtl_Library::Module() const
+{
+  if (thecurr.IsNull())
+    throw Standard_NoSuchObject("Library from LibCtl");
   return thecurr->Module();
 }
 
-    const Handle(TheProtocol)& LibCtl_Library::Protocol () const
+const occ::handle<TheProtocol>& LibCtl_Library::Protocol() const
 {
-  if (thecurr.IsNull()) throw Standard_NoSuchObject("Library from LibCtl");
+  if (thecurr.IsNull())
+    throw Standard_NoSuchObject("Library from LibCtl");
   return thecurr->Protocol();
 }

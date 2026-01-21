@@ -24,15 +24,15 @@
 //=======================================================================
 
 TDF_LabelNode::TDF_LabelNode(TDF_Data* aDataPtr)
-    : myFather(NULL), // The sign it is the root.
+    : myFather(nullptr), // The sign it is the root.
 #ifdef KEEP_LOCAL_ROOT
-      myBrother(NULL),
+      myBrother(nullptr),
 #else
       myBrother((TDF_LabelNode*)aDataPtr),
 #endif
-      myFirstChild(NULL),
-      myLastFoundChild(NULL), // jfa 10.01.2003
-      myTag(0),               // Always 0 for root.
+      myFirstChild(nullptr),
+      myLastFoundChild(nullptr), // jfa 10.01.2003
+      myTag(0),                  // Always 0 for root.
       myFlags(0),
 #ifdef KEEP_LOCAL_ROOT
       myData(aDataPtr)
@@ -45,18 +45,18 @@ TDF_LabelNode::TDF_LabelNode(TDF_Data* aDataPtr)
 
 //=================================================================================================
 
-TDF_LabelNode::TDF_LabelNode(const Standard_Integer aTag, TDF_LabelNode* aFather)
+TDF_LabelNode::TDF_LabelNode(const int aTag, TDF_LabelNode* aFather)
     : myFather(aFather),
-      myBrother(NULL),
-      myFirstChild(NULL),
-      myLastFoundChild(NULL), // jfa 10.01.2003
+      myBrother(nullptr),
+      myFirstChild(nullptr),
+      myLastFoundChild(nullptr), // jfa 10.01.2003
       myTag(aTag),
       myFlags(0),
 #ifdef KEEP_LOCAL_ROOT
-      myData(NULL)
+      myData(nullptr)
 #endif
 {
-  if (aFather != NULL)
+  if (aFather != nullptr)
   {
     Depth(aFather->Depth() + 1);
 #ifdef KEEP_LOCAL_ROOT
@@ -76,14 +76,14 @@ void TDF_LabelNode::Destroy(const TDF_HAllocator& theAllocator)
 {
   // MSV 21.03.2003: do not delete brother, rather delete all children in a loop
   //                 to avoid stack overflow
-  while (myFirstChild != NULL)
+  while (myFirstChild != nullptr)
   {
     TDF_LabelNode* aSecondChild = myFirstChild->Brother();
     myFirstChild->Destroy(theAllocator);
     myFirstChild = aSecondChild;
   }
   this->~TDF_LabelNode();
-  myFather = myBrother = myFirstChild = myLastFoundChild = NULL;
+  myFather = myBrother = myFirstChild = myLastFoundChild = nullptr;
   myTag = myFlags = 0;
 
   // deallocate memory (does nothing for IncAllocator)
@@ -95,8 +95,8 @@ void TDF_LabelNode::Destroy(const TDF_HAllocator& theAllocator)
 // purpose  : Adds an attribute at the first or the specified position.
 //=======================================================================
 
-void TDF_LabelNode::AddAttribute(const Handle(TDF_Attribute)& afterAtt,
-                                 const Handle(TDF_Attribute)& newAtt)
+void TDF_LabelNode::AddAttribute(const occ::handle<TDF_Attribute>& afterAtt,
+                                 const occ::handle<TDF_Attribute>& newAtt)
 {
   newAtt->myFlags     = 1; // Valid.
   newAtt->myLabelNode = this;
@@ -117,11 +117,11 @@ void TDF_LabelNode::AddAttribute(const Handle(TDF_Attribute)& afterAtt,
 // purpose  : Removes an attribute from the first or the specified position.
 //=======================================================================
 
-void TDF_LabelNode::RemoveAttribute(const Handle(TDF_Attribute)& afterAtt,
-                                    const Handle(TDF_Attribute)& oldAtt)
+void TDF_LabelNode::RemoveAttribute(const occ::handle<TDF_Attribute>& afterAtt,
+                                    const occ::handle<TDF_Attribute>& oldAtt)
 {
   oldAtt->myFlags     = 0; // Invalid.
-  oldAtt->myLabelNode = NULL;
+  oldAtt->myLabelNode = nullptr;
   if (afterAtt.IsNull())
   { // Removes from beginning.
     myFirstAttribute = oldAtt->myNext;
@@ -142,7 +142,7 @@ void TDF_LabelNode::RemoveAttribute(const Handle(TDF_Attribute)& afterAtt,
 TDF_LabelNode* TDF_LabelNode::RootNode()
 {
 #ifdef KEEP_LOCAL_ROOT
-  return myData ? myData->myRoot : 0L;
+  return myData ? myData->myRoot : nullptr;
 #else
   TDF_LabelNode* lp = this;
   while (lp->myFather != NULL)
@@ -159,7 +159,7 @@ TDF_LabelNode* TDF_LabelNode::RootNode()
 const TDF_LabelNode* TDF_LabelNode::RootNode() const
 {
 #ifdef KEEP_LOCAL_ROOT
-  return myData ? myData->myRoot : 0L;
+  return myData ? myData->myRoot : nullptr;
 #else
   const TDF_LabelNode* lp = this;
   while (lp->myFather != NULL)
@@ -184,7 +184,7 @@ TDF_Data* TDF_LabelNode::Data() const
 
 void TDF_LabelNode::AllMayBeModified()
 {
-  MayBeModified(Standard_True);
+  MayBeModified(true);
   if (myFather && !myFather->MayBeModified())
     myFather->AllMayBeModified();
 }

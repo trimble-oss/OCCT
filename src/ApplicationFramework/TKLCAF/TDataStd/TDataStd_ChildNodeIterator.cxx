@@ -36,8 +36,9 @@ TDataStd_ChildNodeIterator::TDataStd_ChildNodeIterator()
 
 //=================================================================================================
 
-TDataStd_ChildNodeIterator::TDataStd_ChildNodeIterator(const Handle(TDataStd_TreeNode)& aTreeNode,
-                                                       const Standard_Boolean           allLevels)
+TDataStd_ChildNodeIterator::TDataStd_ChildNodeIterator(
+  const occ::handle<TDataStd_TreeNode>& aTreeNode,
+  const bool                            allLevels)
     : myNode(aTreeNode->myFirst),
       myFirstLevel(allLevels ? aTreeNode->Depth() : -1)
 {
@@ -45,8 +46,8 @@ TDataStd_ChildNodeIterator::TDataStd_ChildNodeIterator(const Handle(TDataStd_Tre
 
 //=================================================================================================
 
-void TDataStd_ChildNodeIterator::Initialize(const Handle(TDataStd_TreeNode)& aTreeNode,
-                                            const Standard_Boolean           allLevels)
+void TDataStd_ChildNodeIterator::Initialize(const occ::handle<TDataStd_TreeNode>& aTreeNode,
+                                            const bool                            allLevels)
 {
   myNode       = aTreeNode->myFirst;
   myFirstLevel = allLevels ? aTreeNode->Depth() : -1;
@@ -62,7 +63,7 @@ void TDataStd_ChildNodeIterator::Next()
   }
   else
   {
-    if (myNode->myFirst != NULL)
+    if (myNode->myFirst != nullptr)
       myNode = myNode->myFirst;
     else
       ChildNodeIterator_UpToBrother;
@@ -73,7 +74,7 @@ void TDataStd_ChildNodeIterator::Next()
 
 void TDataStd_ChildNodeIterator::NextBrother()
 {
-  if (myNode->myNext != NULL)
+  if (myNode->myNext != nullptr)
     myNode = myNode->myNext;
   else
     ChildNodeIterator_UpToBrother;

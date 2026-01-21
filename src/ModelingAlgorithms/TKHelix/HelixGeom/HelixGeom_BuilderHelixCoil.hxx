@@ -29,13 +29,10 @@ public:
 
   //! Empty constructor
   Standard_EXPORT HelixGeom_BuilderHelixCoil();
-  Standard_EXPORT virtual ~HelixGeom_BuilderHelixCoil();
+  Standard_EXPORT ~HelixGeom_BuilderHelixCoil() override;
 
   //! Performs calculations
-  Standard_EXPORT virtual void Perform() Standard_OVERRIDE;
-
-protected:
-private:
+  Standard_EXPORT void Perform() override;
 };
 
 #endif // _HelixGeom_BuilderHelixCoil_HeaderFile

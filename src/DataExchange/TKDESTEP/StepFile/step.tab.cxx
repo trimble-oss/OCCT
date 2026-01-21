@@ -1,3 +1,16 @@
+// Copyright (c) 2025 OPEN CASCADE SAS
+//
+// This file is part of Open CASCADE Technology software library.
+//
+// This library is free software; you can redistribute it and/or modify it under
+// the terms of the GNU Lesser General Public License version 2.1 as published
+// by the Free Software Foundation, with special exception defined in the file
+// OCCT_LGPL_EXCEPTION.txt. Consult the file LICENSE_LGPL_21.txt included in OCCT
+// distribution for complete text of the license and disclaimer of any warranty.
+//
+// Alternatively, this file may be used under the terms of Open CASCADE
+// commercial license or contractual agreement.
+
 // A Bison parser, made by GNU Bison 3.7.4.
 
 // Skeleton implementation for Bison LALR(1) parsers in C++
@@ -30,6 +43,8 @@
 // This special exception was added by the Free Software Foundation in
 // version 2.2 of Bison.
 
+// NOLINTBEGIN - Bison-generated file, do not modify with clang-tidy
+
 // DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
 // especially those whose name start with YY_ or yy_.  They are
 // private implementation details that can be changed or removed.
@@ -54,7 +69,7 @@
 #ifdef _MSC_VER
   #pragma warning(disable : 4065 4244 4131 4127 4702)
 #endif
-void StepFile_Interrupt(Standard_CString theErrorMessage, const Standard_Boolean theIsFail);
+void StepFile_Interrupt(const char* theErrorMessage, const bool theIsFail);
 
 #ifndef YY_
   #if defined YYENABLE_NLS && YYENABLE_NLS
@@ -144,9 +159,9 @@ parser::parser(step::scanner* scanner_yyarg)
 {
 }
 
-parser::~parser() {}
+parser::~parser() = default;
 
-parser::syntax_error::~syntax_error() YY_NOEXCEPT YY_NOTHROW {}
+parser::syntax_error::~syntax_error() YY_NOEXCEPT YY_NOTHROW = default;
 
 /*---------------.
 | symbol kinds.  |
@@ -209,9 +224,8 @@ parser::by_kind::by_kind(by_kind&& that)
 #endif
 
 parser::by_kind::by_kind(const by_kind& that)
-    : kind_(that.kind_)
-{
-}
+
+  = default;
 
 parser::by_kind::by_kind(token_kind_type t)
     : kind_(yytranslate_(t))
@@ -242,7 +256,7 @@ parser::symbol_kind_type parser::by_kind::type_get() const YY_NOEXCEPT
 // by_state.
 parser::by_state::by_state() YY_NOEXCEPT : state(empty_state) {}
 
-parser::by_state::by_state(const by_state& that) YY_NOEXCEPT : state(that.state) {}
+parser::by_state::by_state(const by_state& that) YY_NOEXCEPT = default;
 
 void parser::by_state::clear() YY_NOEXCEPT
 {
@@ -265,7 +279,7 @@ parser::symbol_kind_type parser::by_state::kind() const YY_NOEXCEPT
     return YY_CAST(symbol_kind_type, yystos_[+state]);
 }
 
-parser::stack_symbol_type::stack_symbol_type() {}
+parser::stack_symbol_type::stack_symbol_type() = default;
 
 parser::stack_symbol_type::stack_symbol_type(YY_RVREF(stack_symbol_type) that)
     : super_type(YY_MOVE(that.state), YY_MOVE(that.value))
@@ -1030,7 +1044,6 @@ const signed char parser::yyr2_[] = {0, 2, 1, 2, 1, 2, 8, 7, 6, 1, 1, 1, 1, 2, 3
                                      1, 1, 1, 1, 2, 1, 1, 1, 1, 2, 3, 1, 3, 1, 2, 4,
                                      7, 6, 1, 2, 3, 2, 3, 1, 1, 1, 3, 1, 1, 4, 1, 1};
 
-#if YYDEBUG || 1
 // YYTNAME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
 // First, the terminals, then, starting at \a YYNTOKENS, nonterminals.
 const char* const parser::yytname_[] = {"\"end of file\"",
@@ -1088,7 +1101,6 @@ const char* const parser::yytname_[] = {"\"end of file\"",
                                         "entlab",
                                         "enttype",
                                         YY_NULLPTR};
-#endif
 
 #if YYDEBUG
 const unsigned char parser::yyrline_[] = {
@@ -1146,8 +1158,8 @@ parser::symbol_kind_type parser::yytranslate_(int t)
 
 void step::parser::error(const std::string& m)
 {
-  char             newmess[120];
-  Standard_Boolean isSyntax = strncmp(m.c_str(), "syntax error", 12) == 0;
+  char newmess[120];
+  bool isSyntax = strncmp(m.c_str(), "syntax error", 12) == 0;
   if (isSyntax && m.length() > 13)
     Sprintf(newmess,
             "Undefined Parsing: Line %d: %s: %s",
@@ -1159,7 +1171,9 @@ void step::parser::error(const std::string& m)
   else
     Sprintf(newmess, "Undefined Parsing: Line %d: %s", scanner->lineno() + 1, m.c_str());
 
-  StepFile_Interrupt(newmess, Standard_False);
+  StepFile_Interrupt(newmess, false);
 
   StepData->AddError(newmess);
 }
+
+// NOLINTEND

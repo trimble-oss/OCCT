@@ -196,10 +196,8 @@ void EstimateSAH(const BVH_Tree<T, N, BVH_BinaryTree>* theTree,
 }
 } // namespace BVH
 
-// =======================================================================
-// function : EstimateSAH
-// purpose  :
-// =======================================================================
+//=================================================================================================
+
 template <class T, int N>
 T BVH_Tree<T, N, BVH_BinaryTree>::EstimateSAH() const
 {
@@ -208,10 +206,8 @@ T BVH_Tree<T, N, BVH_BinaryTree>::EstimateSAH() const
   return aSAH;
 }
 
-// =======================================================================
-// function : CollapseToQuadTree
-// purpose  :
-// =======================================================================
+//=================================================================================================
+
 template <class T, int N>
 BVH_Tree<T, N, BVH_QuadTree>* BVH_Tree<T, N, BVH_BinaryTree>::CollapseToQuadTree() const
 {
@@ -277,7 +273,7 @@ BVH_Tree<T, N, BVH_QuadTree>* BVH_Tree<T, N, BVH_BinaryTree>::CollapseToQuadTree
                             aGrandChildNodes.Size() - 1,
                             std::get<1>(aNode) /* level */);
 
-      aQBVH->myDepth = Max(aQBVH->myDepth, std::get<1>(aNode) + 1);
+      aQBVH->myDepth = (std::max)(aQBVH->myDepth, std::get<1>(aNode) + 1);
 
       aNbNodes += aGrandChildNodes.Size();
     }

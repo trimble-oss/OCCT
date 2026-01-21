@@ -16,6 +16,9 @@
 #include <TCollection_AsciiString.hxx>
 
 #include <gtest/gtest.h>
+#include <algorithm>
+#include <vector>
+#include <set>
 
 // Test fixture for NCollection_DataMap tests
 class NCollection_DataMapTest : public testing::Test
@@ -30,7 +33,7 @@ protected:
 TEST_F(NCollection_DataMapTest, IntegerKeys)
 {
   // Default constructor should create an empty map
-  NCollection_DataMap<Standard_Integer, TCollection_AsciiString> aMap;
+  NCollection_DataMap<int, TCollection_AsciiString> aMap;
 
   EXPECT_TRUE(aMap.IsEmpty());
   EXPECT_EQ(0, aMap.Size());
@@ -39,7 +42,7 @@ TEST_F(NCollection_DataMapTest, IntegerKeys)
 
 TEST_F(NCollection_DataMapTest, BindingAndAccess)
 {
-  NCollection_DataMap<Standard_Integer, TCollection_AsciiString> aMap;
+  NCollection_DataMap<int, TCollection_AsciiString> aMap;
 
   // Test Bind method
   aMap.Bind(1, "One");
@@ -63,7 +66,7 @@ TEST_F(NCollection_DataMapTest, BindingAndAccess)
 
 TEST_F(NCollection_DataMapTest, ChangeFind)
 {
-  NCollection_DataMap<Standard_Integer, TCollection_AsciiString> aMap;
+  NCollection_DataMap<int, TCollection_AsciiString> aMap;
 
   aMap.Bind(1, "One");
 
@@ -75,7 +78,7 @@ TEST_F(NCollection_DataMapTest, ChangeFind)
 
 TEST_F(NCollection_DataMapTest, Rebind)
 {
-  NCollection_DataMap<Standard_Integer, TCollection_AsciiString> aMap;
+  NCollection_DataMap<int, TCollection_AsciiString> aMap;
 
   // First binding
   aMap.Bind(1, "One");
@@ -91,7 +94,7 @@ TEST_F(NCollection_DataMapTest, Rebind)
 
 TEST_F(NCollection_DataMapTest, UnBind)
 {
-  NCollection_DataMap<Standard_Integer, TCollection_AsciiString> aMap;
+  NCollection_DataMap<int, TCollection_AsciiString> aMap;
 
   aMap.Bind(1, "One");
   aMap.Bind(2, "Two");
@@ -111,7 +114,7 @@ TEST_F(NCollection_DataMapTest, UnBind)
 
 TEST_F(NCollection_DataMapTest, Clear)
 {
-  NCollection_DataMap<Standard_Integer, TCollection_AsciiString> aMap;
+  NCollection_DataMap<int, TCollection_AsciiString> aMap;
 
   aMap.Bind(1, "One");
   aMap.Bind(2, "Two");
@@ -126,12 +129,12 @@ TEST_F(NCollection_DataMapTest, Clear)
 
 TEST_F(NCollection_DataMapTest, Assignment)
 {
-  NCollection_DataMap<Standard_Integer, TCollection_AsciiString> aMap1;
+  NCollection_DataMap<int, TCollection_AsciiString> aMap1;
   aMap1.Bind(1, "One");
   aMap1.Bind(2, "Two");
 
   // Test assignment operator
-  NCollection_DataMap<Standard_Integer, TCollection_AsciiString> aMap2;
+  NCollection_DataMap<int, TCollection_AsciiString> aMap2;
   aMap2 = aMap1;
 
   // Check both maps have the same content
@@ -147,7 +150,7 @@ TEST_F(NCollection_DataMapTest, Assignment)
 
 TEST_F(NCollection_DataMapTest, Find_NonExisting)
 {
-  NCollection_DataMap<Standard_Integer, TCollection_AsciiString> aMap;
+  NCollection_DataMap<int, TCollection_AsciiString> aMap;
   aMap.Bind(1, "One");
 
   // Finding non-existent key should throw exception
@@ -159,17 +162,17 @@ TEST_F(NCollection_DataMapTest, Find_NonExisting)
 
 TEST_F(NCollection_DataMapTest, IteratorAccess)
 {
-  NCollection_DataMap<Standard_Integer, TCollection_AsciiString> aMap;
+  NCollection_DataMap<int, TCollection_AsciiString> aMap;
   aMap.Bind(1, "One");
   aMap.Bind(2, "Two");
   aMap.Bind(3, "Three");
 
   // Test iteration using OCCT iterator
-  NCollection_DataMap<Standard_Integer, TCollection_AsciiString>::Iterator it(aMap);
+  NCollection_DataMap<int, TCollection_AsciiString>::Iterator it(aMap);
 
   // Create sets to check all keys and values are visited
-  std::set<Standard_Integer> foundKeys;
-  std::set<std::string>      foundValues;
+  std::set<int>         foundKeys;
+  std::set<std::string> foundValues;
 
   for (; it.More(); it.Next())
   {
@@ -192,11 +195,11 @@ TEST_F(NCollection_DataMapTest, IteratorAccess)
 
 TEST_F(NCollection_DataMapTest, ChangeValue)
 {
-  NCollection_DataMap<Standard_Integer, TCollection_AsciiString> aMap;
+  NCollection_DataMap<int, TCollection_AsciiString> aMap;
   aMap.Bind(1, "One");
 
   // Test Value change through iterator
-  NCollection_DataMap<Standard_Integer, TCollection_AsciiString>::Iterator it(aMap);
+  NCollection_DataMap<int, TCollection_AsciiString>::Iterator it(aMap);
   EXPECT_STREQ("One", it.Value().ToCString());
 
   it.ChangeValue() = "Modified via Iterator";
@@ -211,7 +214,7 @@ TEST_F(NCollection_DataMapTest, ExhaustiveIterator)
   const int NUM_ELEMENTS = 1000;
 
   // Create a map with many elements to test iterator efficiency
-  NCollection_DataMap<Standard_Integer, Standard_Integer> aMap;
+  NCollection_DataMap<int, int> aMap;
 
   // Bind many elements
   for (int i = 0; i < NUM_ELEMENTS; ++i)
@@ -222,8 +225,8 @@ TEST_F(NCollection_DataMapTest, ExhaustiveIterator)
   EXPECT_EQ(NUM_ELEMENTS, aMap.Size());
 
   // Count elements using iterator
-  int                                                               count = 0;
-  NCollection_DataMap<Standard_Integer, Standard_Integer>::Iterator it(aMap);
+  int                                     count = 0;
+  NCollection_DataMap<int, int>::Iterator it(aMap);
   for (; it.More(); it.Next())
   {
     EXPECT_EQ(it.Key() * 2, it.Value());
@@ -231,4 +234,44 @@ TEST_F(NCollection_DataMapTest, ExhaustiveIterator)
   }
 
   EXPECT_EQ(NUM_ELEMENTS, count);
+}
+
+TEST_F(NCollection_DataMapTest, STLAlgorithmCompatibility_MinMax)
+{
+  NCollection_DataMap<int, int> aMap;
+
+  // Add some sequential values to make results predictable
+  for (int anIdx = 10; anIdx <= 50; anIdx += 5)
+  {
+    aMap.Bind(anIdx, anIdx * 2);
+  }
+
+  EXPECT_FALSE(aMap.IsEmpty());
+
+  // Test that STL algorithms work with OCCT iterators
+  auto aMinElement = std::min_element(aMap.cbegin(), aMap.cend());
+  auto aMaxElement = std::max_element(aMap.cbegin(), aMap.cend());
+
+  EXPECT_TRUE(aMinElement != aMap.cend());
+  EXPECT_TRUE(aMaxElement != aMap.cend());
+  EXPECT_LE(*aMinElement, *aMaxElement);
+}
+
+TEST_F(NCollection_DataMapTest, STLAlgorithmCompatibility_Find)
+{
+  NCollection_DataMap<int, int> aMap;
+
+  // Add known values
+  aMap.Bind(100, 200);
+  aMap.Bind(200, 400);
+  aMap.Bind(300, 600);
+
+  // Test std::find compatibility
+  auto aFound = std::find(aMap.cbegin(), aMap.cend(), 200);
+  EXPECT_TRUE(aFound != aMap.cend());
+  EXPECT_EQ(*aFound, 200);
+
+  // Test finding non-existent value
+  auto aNotFound = std::find(aMap.cbegin(), aMap.cend(), 999);
+  EXPECT_TRUE(aNotFound == aMap.cend());
 }

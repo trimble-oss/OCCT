@@ -18,23 +18,20 @@
 IMPLEMENT_STANDARD_RTTIEXT(Graphic3d_ShaderVariable, Standard_Transient)
 
 // Specific instantiations of struct templates to avoid compilation warnings
-template struct Graphic3d_UniformValue<Standard_Integer>;
-template struct Graphic3d_UniformValue<Standard_ShortReal>;
-template struct Graphic3d_UniformValue<Graphic3d_Vec2>;
-template struct Graphic3d_UniformValue<Graphic3d_Vec3>;
-template struct Graphic3d_UniformValue<Graphic3d_Vec4>;
-template struct Graphic3d_UniformValue<Graphic3d_Vec2i>;
-template struct Graphic3d_UniformValue<Graphic3d_Vec3i>;
-template struct Graphic3d_UniformValue<Graphic3d_Vec4i>;
+template struct Graphic3d_UniformValue<int>;
+template struct Graphic3d_UniformValue<float>;
+template struct Graphic3d_UniformValue<NCollection_Vec2<float>>;
+template struct Graphic3d_UniformValue<NCollection_Vec3<float>>;
+template struct Graphic3d_UniformValue<NCollection_Vec4<float>>;
+template struct Graphic3d_UniformValue<NCollection_Vec2<int>>;
+template struct Graphic3d_UniformValue<NCollection_Vec3<int>>;
+template struct Graphic3d_UniformValue<NCollection_Vec4<int>>;
 
 // =======================================================================
 // function : ~Graphic3d_ValueInterface
 // purpose  : Releases memory resources of variable value
 // =======================================================================
-Graphic3d_ValueInterface::~Graphic3d_ValueInterface()
-{
-  //
-}
+Graphic3d_ValueInterface::~Graphic3d_ValueInterface() = default;
 
 // =======================================================================
 // function : Graphic3d_ShaderVariable
@@ -42,9 +39,8 @@ Graphic3d_ValueInterface::~Graphic3d_ValueInterface()
 // =======================================================================
 Graphic3d_ShaderVariable::Graphic3d_ShaderVariable(const TCollection_AsciiString& theName)
     : myName(theName),
-      myValue(NULL)
+      myValue(nullptr)
 {
-  //
 }
 
 // =======================================================================
@@ -60,9 +56,9 @@ Graphic3d_ShaderVariable::~Graphic3d_ShaderVariable()
 // function : IsDone
 // purpose  : Checks if the shader variable is valid or not
 // =======================================================================
-Standard_Boolean Graphic3d_ShaderVariable::IsDone() const
+bool Graphic3d_ShaderVariable::IsDone() const
 {
-  return !myName.IsEmpty() && (myValue != NULL);
+  return !myName.IsEmpty() && (myValue != nullptr);
 }
 
 // =======================================================================

@@ -17,8 +17,8 @@ IMPLEMENT_STANDARD_RTTIEXT(OSD_FileSystemSelector, OSD_FileSystem)
 
 //=================================================================================================
 
-void OSD_FileSystemSelector::AddProtocol(const Handle(OSD_FileSystem)& theFileSystem,
-                                         bool                          theIsPreferred)
+void OSD_FileSystemSelector::AddProtocol(const occ::handle<OSD_FileSystem>& theFileSystem,
+                                         bool                               theIsPreferred)
 {
   myProtocols.Remove(theFileSystem); // avoid duplicates
   if (theIsPreferred)
@@ -33,17 +33,17 @@ void OSD_FileSystemSelector::AddProtocol(const Handle(OSD_FileSystem)& theFileSy
 
 //=================================================================================================
 
-void OSD_FileSystemSelector::RemoveProtocol(const Handle(OSD_FileSystem)& theFileSystem)
+void OSD_FileSystemSelector::RemoveProtocol(const occ::handle<OSD_FileSystem>& theFileSystem)
 {
   myProtocols.Remove(theFileSystem);
 }
 
 //=================================================================================================
 
-Standard_Boolean OSD_FileSystemSelector::IsSupportedPath(
-  const TCollection_AsciiString& theUrl) const
+bool OSD_FileSystemSelector::IsSupportedPath(const TCollection_AsciiString& theUrl) const
 {
-  for (NCollection_List<Handle(OSD_FileSystem)>::Iterator aProtIter(myProtocols); aProtIter.More();
+  for (NCollection_List<occ::handle<OSD_FileSystem>>::Iterator aProtIter(myProtocols);
+       aProtIter.More();
        aProtIter.Next())
   {
     if (aProtIter.Value()->IsSupportedPath(theUrl))
@@ -56,19 +56,19 @@ Standard_Boolean OSD_FileSystemSelector::IsSupportedPath(
 
 //=================================================================================================
 
-Standard_Boolean OSD_FileSystemSelector::IsOpenIStream(
-  const std::shared_ptr<std::istream>& theStream) const
+bool OSD_FileSystemSelector::IsOpenIStream(const std::shared_ptr<std::istream>& theStream) const
 {
   std::shared_ptr<OSD_IStreamBuffer> aFileStream =
     std::dynamic_pointer_cast<OSD_IStreamBuffer>(theStream);
-  if (aFileStream.get() == NULL)
+  if (aFileStream.get() == nullptr)
   {
     return false;
   }
-  for (NCollection_List<Handle(OSD_FileSystem)>::Iterator aProtIter(myProtocols); aProtIter.More();
+  for (NCollection_List<occ::handle<OSD_FileSystem>>::Iterator aProtIter(myProtocols);
+       aProtIter.More();
        aProtIter.Next())
   {
-    const Handle(OSD_FileSystem)& aFileSystem = aProtIter.Value();
+    const occ::handle<OSD_FileSystem>& aFileSystem = aProtIter.Value();
     if (aFileSystem->IsSupportedPath(TCollection_AsciiString(aFileStream->Url().c_str())))
     {
       if (aFileSystem->IsOpenIStream(theStream))
@@ -82,19 +82,19 @@ Standard_Boolean OSD_FileSystemSelector::IsOpenIStream(
 
 //=================================================================================================
 
-Standard_Boolean OSD_FileSystemSelector::IsOpenOStream(
-  const std::shared_ptr<std::ostream>& theStream) const
+bool OSD_FileSystemSelector::IsOpenOStream(const std::shared_ptr<std::ostream>& theStream) const
 {
   std::shared_ptr<OSD_OStreamBuffer> aFileStream =
     std::dynamic_pointer_cast<OSD_OStreamBuffer>(theStream);
-  if (aFileStream.get() == NULL)
+  if (aFileStream.get() == nullptr)
   {
     return false;
   }
-  for (NCollection_List<Handle(OSD_FileSystem)>::Iterator aProtIter(myProtocols); aProtIter.More();
+  for (NCollection_List<occ::handle<OSD_FileSystem>>::Iterator aProtIter(myProtocols);
+       aProtIter.More();
        aProtIter.Next())
   {
-    const Handle(OSD_FileSystem)& aFileSystem = aProtIter.Value();
+    const occ::handle<OSD_FileSystem>& aFileSystem = aProtIter.Value();
     if (aFileSystem->IsSupportedPath(TCollection_AsciiString(aFileStream->Url().c_str())))
     {
       if (aFileSystem->IsOpenOStream(theStream))
@@ -114,15 +114,16 @@ std::shared_ptr<std::istream> OSD_FileSystemSelector::OpenIStream(
   const int64_t                        theOffset,
   const std::shared_ptr<std::istream>& theOldStream)
 {
-  for (NCollection_List<Handle(OSD_FileSystem)>::Iterator aProtIter(myProtocols); aProtIter.More();
+  for (NCollection_List<occ::handle<OSD_FileSystem>>::Iterator aProtIter(myProtocols);
+       aProtIter.More();
        aProtIter.Next())
   {
-    const Handle(OSD_FileSystem)& aFileSystem = aProtIter.Value();
+    const occ::handle<OSD_FileSystem>& aFileSystem = aProtIter.Value();
     if (aFileSystem->IsSupportedPath(theUrl))
     {
       std::shared_ptr<std::istream> aStream =
         aFileSystem->OpenIStream(theUrl, theMode, theOffset, theOldStream);
-      if (aStream.get() != NULL)
+      if (aStream.get() != nullptr)
       {
         return aStream;
       }
@@ -137,14 +138,15 @@ std::shared_ptr<std::ostream> OSD_FileSystemSelector::OpenOStream(
   const TCollection_AsciiString& theUrl,
   const std::ios_base::openmode  theMode)
 {
-  for (NCollection_List<Handle(OSD_FileSystem)>::Iterator aProtIter(myProtocols); aProtIter.More();
+  for (NCollection_List<occ::handle<OSD_FileSystem>>::Iterator aProtIter(myProtocols);
+       aProtIter.More();
        aProtIter.Next())
   {
-    const Handle(OSD_FileSystem)& aFileSystem = aProtIter.Value();
+    const occ::handle<OSD_FileSystem>& aFileSystem = aProtIter.Value();
     if (aFileSystem->IsSupportedPath(theUrl))
     {
       std::shared_ptr<std::ostream> aStream = aFileSystem->OpenOStream(theUrl, theMode);
-      if (aStream.get() != NULL)
+      if (aStream.get() != nullptr)
       {
         return aStream;
       }
@@ -161,15 +163,16 @@ std::shared_ptr<std::streambuf> OSD_FileSystemSelector::OpenStreamBuffer(
   const int64_t                  theOffset,
   int64_t*                       theOutBufSize)
 {
-  for (NCollection_List<Handle(OSD_FileSystem)>::Iterator aProtIter(myProtocols); aProtIter.More();
+  for (NCollection_List<occ::handle<OSD_FileSystem>>::Iterator aProtIter(myProtocols);
+       aProtIter.More();
        aProtIter.Next())
   {
-    const Handle(OSD_FileSystem)& aFileSystem = aProtIter.Value();
+    const occ::handle<OSD_FileSystem>& aFileSystem = aProtIter.Value();
     if (aFileSystem->IsSupportedPath(theUrl))
     {
       std::shared_ptr<std::streambuf> aBuf =
         aFileSystem->OpenStreamBuffer(theUrl, theMode, theOffset, theOutBufSize);
-      if (aBuf.get() != NULL)
+      if (aBuf.get() != nullptr)
       {
         return aBuf;
       }

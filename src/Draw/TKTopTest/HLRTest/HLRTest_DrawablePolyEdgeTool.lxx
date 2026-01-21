@@ -14,102 +14,72 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-//=======================================================================
-// function : Show
-// purpose  :
-//=======================================================================
+//=================================================================================================
 
 inline void HLRTest_DrawablePolyEdgeTool::Show()
 {
-  myHideMode = Standard_False;
+  myHideMode = false;
 }
 
-//=======================================================================
-// function : Hide
-// purpose  :
-//=======================================================================
+//=================================================================================================
 
 inline void HLRTest_DrawablePolyEdgeTool::Hide()
 {
-  myHideMode = Standard_True;
+  myHideMode = true;
 }
 
-//=======================================================================
-// function : DisplayRg1Line
-// purpose  :
-//=======================================================================
+//=================================================================================================
 
-inline void HLRTest_DrawablePolyEdgeTool::DisplayRg1Line(const Standard_Boolean B)
+inline void HLRTest_DrawablePolyEdgeTool::DisplayRg1Line(const bool B)
 {
   myDispRg1 = B;
 }
 
-//=======================================================================
-// function : DisplayRg1Line
-// purpose  :
-//=======================================================================
+//=================================================================================================
 
-inline Standard_Boolean HLRTest_DrawablePolyEdgeTool::DisplayRg1Line() const
+inline bool HLRTest_DrawablePolyEdgeTool::DisplayRg1Line() const
 {
   return myDispRg1;
 }
 
-//=======================================================================
-// function : DisplayRgNLine
-// purpose  :
-//=======================================================================
+//=================================================================================================
 
-inline void HLRTest_DrawablePolyEdgeTool::DisplayRgNLine(const Standard_Boolean B)
+inline void HLRTest_DrawablePolyEdgeTool::DisplayRgNLine(const bool B)
 {
   myDispRgN = B;
 }
 
-//=======================================================================
-// function : DisplayRgNLine
-// purpose  :
-//=======================================================================
+//=================================================================================================
 
-inline Standard_Boolean HLRTest_DrawablePolyEdgeTool::DisplayRgNLine() const
+inline bool HLRTest_DrawablePolyEdgeTool::DisplayRgNLine() const
 {
   return myDispRgN;
 }
 
-//=======================================================================
-// function : DisplayHidden
-// purpose  :
-//=======================================================================
+//=================================================================================================
 
-inline void HLRTest_DrawablePolyEdgeTool::DisplayHidden(const Standard_Boolean B)
+inline void HLRTest_DrawablePolyEdgeTool::DisplayHidden(const bool B)
 {
   myDispHid = B;
 }
 
-//=======================================================================
-// function : DisplayHidden
-// purpose  :
-//=======================================================================
+//=================================================================================================
 
-inline Standard_Boolean HLRTest_DrawablePolyEdgeTool::DisplayHidden() const
+inline bool HLRTest_DrawablePolyEdgeTool::DisplayHidden() const
 {
   return myDispHid;
 }
 
-//=======================================================================
-// function : Debug
-// purpose  :
-//=======================================================================
+//=================================================================================================
 
-inline void HLRTest_DrawablePolyEdgeTool::Debug(const Standard_Boolean B)
+inline void HLRTest_DrawablePolyEdgeTool::Debug(const bool B)
 {
   myDebug = B;
 }
 
-//=======================================================================
-// function : Debug
-// purpose  :
-//=======================================================================
+//=================================================================================================
 
-inline Standard_Boolean HLRTest_DrawablePolyEdgeTool::Debug() const
+inline bool HLRTest_DrawablePolyEdgeTool::Debug() const
 {
   return myDebug;
 }

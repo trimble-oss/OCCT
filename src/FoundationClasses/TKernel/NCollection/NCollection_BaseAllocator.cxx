@@ -15,10 +15,8 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(NCollection_BaseAllocator, Standard_Transient)
 
-//=======================================================================
-// function : Allocate
-// purpose  : Standard allocation
-//=======================================================================
+//=================================================================================================
+
 void* NCollection_BaseAllocator::Allocate(const size_t theSize)
 {
   return Standard::Allocate(theSize);
@@ -31,10 +29,8 @@ void* NCollection_BaseAllocator::AllocateOptimal(const size_t theSize)
   return Standard::AllocateOptimal(theSize);
 }
 
-//=======================================================================
-// function : Free
-// purpose  : Standard deallocation
-//=======================================================================
+//=================================================================================================
+
 void NCollection_BaseAllocator::Free(void* theAddress)
 {
   Standard::Free(theAddress);
@@ -44,8 +40,8 @@ void NCollection_BaseAllocator::Free(void* theAddress)
 // function : CommonBaseAllocator
 // purpose  : Creates the only one BaseAllocator
 //=======================================================================
-const Handle(NCollection_BaseAllocator)& NCollection_BaseAllocator::CommonBaseAllocator(void)
+const occ::handle<NCollection_BaseAllocator>& NCollection_BaseAllocator::CommonBaseAllocator()
 {
-  static Handle(NCollection_BaseAllocator) THE_SINGLETON_ALLOC = new NCollection_BaseAllocator;
+  static occ::handle<NCollection_BaseAllocator> THE_SINGLETON_ALLOC = new NCollection_BaseAllocator;
   return THE_SINGLETON_ALLOC;
 }

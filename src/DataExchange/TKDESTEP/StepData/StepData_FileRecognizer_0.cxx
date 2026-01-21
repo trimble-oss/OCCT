@@ -19,16 +19,15 @@
 #include <Standard_Type.hxx>
 
 #include <Standard_Transient.hxx>
-#include <StepData_FileRecognizer.hxx>
 #include <Standard_NoSuchObject.hxx>
 #include <TCollection_AsciiString.hxx>
 
 #define TheKey TCollection_AsciiString
 #define TheKey_hxx <TCollection_AsciiString.hxx>
-#define Handle_TheResul Handle(Standard_Transient)
+#define Handle_TheResul occ::handle<Standard_Transient>
 #define TheResul Standard_Transient
 #define TheResul_hxx <Standard_Transient.hxx>
 #define Interface_Recognizer StepData_FileRecognizer
 #define Interface_Recognizer_hxx <StepData_FileRecognizer.hxx>
-#define Handle_Interface_Recognizer Handle(StepData_FileRecognizer)
+#define Handle_Interface_Recognizer occ::handle<StepData_FileRecognizer>
 #include <Interface_Recognizer.gxx>

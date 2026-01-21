@@ -37,7 +37,7 @@
 //=======================================================================
 //  OCC895
 //=======================================================================
-static Standard_Integer OCC895(Draw_Interpretor& di, Standard_Integer argc, const char** argv)
+static int OCC895(Draw_Interpretor& di, int argc, const char** argv)
 {
   if (argc < 2 || argc > 5)
   {
@@ -45,10 +45,10 @@ static Standard_Integer OCC895(Draw_Interpretor& di, Standard_Integer argc, cons
     return 1;
   }
 
-  const Standard_Real    rad     = 1.0;
-  const Standard_Real    angle   = (argc > 2) ? Draw::Atof(argv[2]) : 0.0;
-  const Standard_Integer reverse = (argc > 3) ? Draw::Atoi(argv[3]) : 0;
-  const Standard_Integer order   = (argc > 4) ? Draw::Atoi(argv[4]) : 0;
+  const double rad     = 1.0;
+  const double angle   = (argc > 2) ? Draw::Atof(argv[2]) : 0.0;
+  const int    reverse = (argc > 3) ? Draw::Atoi(argv[3]) : 0;
+  const int    order   = (argc > 4) ? Draw::Atoi(argv[4]) : 0;
 
   // Make a wire from the first arc for ThruSections.
   //
@@ -58,17 +58,17 @@ static Standard_Integer OCC895(Draw_Interpretor& di, Standard_Integer argc, cons
   gp_Pnt center1(0, 10, 0);
   gp_Ax2 axis1 =
     reverse ? gp_Ax2(center1, gp::DY(), gp::DZ()) : gp_Ax2(center1, -gp::DY(), gp::DX());
-  if (Abs(angle) > gp::Resolution())
+  if (std::abs(angle) > gp::Resolution())
     axis1.Rotate(gp_Ax1(center1, gp::DZ()), angle * M_PI / 180.0);
 
   gce_MakeCirc makeCirc1(axis1, rad);
   if (!makeCirc1.IsDone())
     return 1;
   gp_Circ            circ1 = makeCirc1.Value();
-  GC_MakeArcOfCircle makeArc1(circ1, 0, M_PI / 2, Standard_True);
+  GC_MakeArcOfCircle makeArc1(circ1, 0, M_PI / 2, true);
   if (!makeArc1.IsDone())
     return 1;
-  Handle(Geom_TrimmedCurve) arc1 = makeArc1.Value();
+  occ::handle<Geom_TrimmedCurve> arc1 = makeArc1.Value();
 
   // Create wire 1
   BRepBuilderAPI_MakeEdge makeEdge1(arc1, arc1->StartPoint(), arc1->EndPoint());
@@ -89,10 +89,10 @@ static Standard_Integer OCC895(Draw_Interpretor& di, Standard_Integer argc, cons
   if (!makeCirc2.IsDone())
     return 1;
   gp_Circ            circ2 = makeCirc2.Value();
-  GC_MakeArcOfCircle makeArc2(circ2, 0, M_PI / 2, Standard_True);
+  GC_MakeArcOfCircle makeArc2(circ2, 0, M_PI / 2, true);
   if (!makeArc2.IsDone())
     return 1;
-  Handle(Geom_TrimmedCurve) arc2 = makeArc2.Value();
+  occ::handle<Geom_TrimmedCurve> arc2 = makeArc2.Value();
 
   // Create wire 2
   BRepBuilderAPI_MakeEdge makeEdge2(arc2, arc2->StartPoint(), arc2->EndPoint());
@@ -105,7 +105,7 @@ static Standard_Integer OCC895(Draw_Interpretor& di, Standard_Integer argc, cons
     return 1;
   TopoDS_Wire wire2 = makeWire2.Wire();
 
-  BRepOffsetAPI_ThruSections thruSect(Standard_False, Standard_True);
+  BRepOffsetAPI_ThruSections thruSect(false, true);
   if (order)
   {
     thruSect.AddWire(wire1);

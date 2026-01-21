@@ -19,12 +19,11 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(IFSelect_SelectUnknownEntities, IFSelect_SelectExtract)
 
-IFSelect_SelectUnknownEntities::IFSelect_SelectUnknownEntities() {}
+IFSelect_SelectUnknownEntities::IFSelect_SelectUnknownEntities() = default;
 
-Standard_Boolean IFSelect_SelectUnknownEntities::Sort(
-  const Standard_Integer,
-  const Handle(Standard_Transient)&       ent,
-  const Handle(Interface_InterfaceModel)& model) const
+bool IFSelect_SelectUnknownEntities::Sort(const int,
+                                          const occ::handle<Standard_Transient>&       ent,
+                                          const occ::handle<Interface_InterfaceModel>& model) const
 {
   return model->IsUnknownEntity(model->Number(ent));
 }

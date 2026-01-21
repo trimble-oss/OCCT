@@ -15,19 +15,21 @@
 
 #include <StepDimTol_ToleranceZoneDefinition.hxx>
 
-#include <StepRepr_HArray1OfShapeAspect.hxx>
+#include <StepRepr_ShapeAspect.hxx>
+#include <NCollection_Array1.hxx>
+#include <NCollection_HArray1.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(StepDimTol_ToleranceZoneDefinition, Standard_Transient)
 
 //=================================================================================================
 
-StepDimTol_ToleranceZoneDefinition::StepDimTol_ToleranceZoneDefinition() {}
+StepDimTol_ToleranceZoneDefinition::StepDimTol_ToleranceZoneDefinition() = default;
 
 //=================================================================================================
 
 void StepDimTol_ToleranceZoneDefinition::Init(
-  const Handle(StepDimTol_ToleranceZone)&      theZone,
-  const Handle(StepRepr_HArray1OfShapeAspect)& theBoundaries)
+  const occ::handle<StepDimTol_ToleranceZone>&                               theZone,
+  const occ::handle<NCollection_HArray1<occ::handle<StepRepr_ShapeAspect>>>& theBoundaries)
 {
   myBoundaries = theBoundaries;
   myZone       = theZone;

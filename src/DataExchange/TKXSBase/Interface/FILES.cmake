@@ -2,8 +2,7 @@
 set(OCCT_Interface_FILES_LOCATION "${CMAKE_CURRENT_LIST_DIR}")
 
 set(OCCT_Interface_FILES
-  Interface_Array1OfFileParameter.hxx
-  Interface_Array1OfHAsciiString.hxx
+
   Interface_BitMap.cxx
   Interface_BitMap.hxx
   Interface_Category.cxx
@@ -22,8 +21,7 @@ set(OCCT_Interface_FILES
   Interface_CopyMap.hxx
   Interface_CopyTool.cxx
   Interface_CopyTool.hxx
-  Interface_DataMapIteratorOfDataMapOfTransientInteger.hxx
-  Interface_DataMapOfTransientInteger.hxx
+
   Interface_DataState.hxx
   Interface_EntityCluster.cxx
   Interface_EntityCluster.hxx
@@ -53,11 +51,10 @@ set(OCCT_Interface_FILES
   Interface_GraphContent.hxx
   Interface_GTool.cxx
   Interface_GTool.hxx
-  Interface_HArray1OfHAsciiString.hxx
+
   Interface_HGraph.cxx
   Interface_HGraph.hxx
-  Interface_HSequenceOfCheck.hxx
-  Interface_IndexedMapOfAsciiString.hxx
+
   Interface_InterfaceError.hxx
   Interface_InterfaceMismatch.hxx
   Interface_InterfaceModel.cxx
@@ -66,10 +63,9 @@ set(OCCT_Interface_FILES
   Interface_IntList.hxx
   Interface_IntVal.cxx
   Interface_IntVal.hxx
-  Interface_JaggedArray.gxx
   Interface_LineBuffer.cxx
   Interface_LineBuffer.hxx
-  Interface_Macros.hxx
+
   Interface_MSG.cxx
   Interface_MSG.hxx
   Interface_NodeOfGeneralLib.hxx
@@ -91,7 +87,7 @@ set(OCCT_Interface_FILES
   Interface_Recognizer.gxx
   Interface_ReportEntity.cxx
   Interface_ReportEntity.hxx
-  Interface_SequenceOfCheck.hxx
+
   Interface_ShareFlags.cxx
   Interface_ShareFlags.hxx
   Interface_ShareTool.cxx
@@ -114,6 +110,6 @@ set(OCCT_Interface_FILES
   Interface_UndefinedContent.hxx
   Interface_ValueInterpret.hxx
   Interface_ValueSatisfies.hxx
-  Interface_VectorOfFileParameter.hxx
+
   Interface_Version.hxx
 )

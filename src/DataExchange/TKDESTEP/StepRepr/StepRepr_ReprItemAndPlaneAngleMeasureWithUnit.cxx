@@ -23,7 +23,7 @@ IMPLEMENT_STANDARD_RTTIEXT(StepRepr_ReprItemAndPlaneAngleMeasureWithUnit,
 //=================================================================================================
 
 StepRepr_ReprItemAndPlaneAngleMeasureWithUnit::StepRepr_ReprItemAndPlaneAngleMeasureWithUnit()
-    : StepRepr_ReprItemAndMeasureWithUnit()
+
 {
   myPlaneAngleMeasureWithUnit = new StepBasic_PlaneAngleMeasureWithUnit();
 }
@@ -31,14 +31,14 @@ StepRepr_ReprItemAndPlaneAngleMeasureWithUnit::StepRepr_ReprItemAndPlaneAngleMea
 //=================================================================================================
 
 void StepRepr_ReprItemAndPlaneAngleMeasureWithUnit::SetPlaneAngleMeasureWithUnit(
-  const Handle(StepBasic_PlaneAngleMeasureWithUnit)& aLMWU)
+  const occ::handle<StepBasic_PlaneAngleMeasureWithUnit>& aLMWU)
 {
   myPlaneAngleMeasureWithUnit = aLMWU;
 }
 
 //=================================================================================================
 
-Handle(StepBasic_PlaneAngleMeasureWithUnit) StepRepr_ReprItemAndPlaneAngleMeasureWithUnit::
+occ::handle<StepBasic_PlaneAngleMeasureWithUnit> StepRepr_ReprItemAndPlaneAngleMeasureWithUnit::
   GetPlaneAngleMeasureWithUnit() const
 {
   return myPlaneAngleMeasureWithUnit;

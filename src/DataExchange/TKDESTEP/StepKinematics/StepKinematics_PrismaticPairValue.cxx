@@ -20,14 +20,14 @@ IMPLEMENT_STANDARD_RTTIEXT(StepKinematics_PrismaticPairValue, StepKinematics_Pai
 
 //=================================================================================================
 
-StepKinematics_PrismaticPairValue::StepKinematics_PrismaticPairValue() {}
+StepKinematics_PrismaticPairValue::StepKinematics_PrismaticPairValue() = default;
 
 //=================================================================================================
 
 void StepKinematics_PrismaticPairValue::Init(
-  const Handle(TCollection_HAsciiString)&     theRepresentationItem_Name,
-  const Handle(StepKinematics_KinematicPair)& thePairValue_AppliesToPair,
-  const Standard_Real                         theActualTranslation)
+  const occ::handle<TCollection_HAsciiString>&     theRepresentationItem_Name,
+  const occ::handle<StepKinematics_KinematicPair>& thePairValue_AppliesToPair,
+  const double                                     theActualTranslation)
 {
   StepKinematics_PairValue::Init(theRepresentationItem_Name, thePairValue_AppliesToPair);
 
@@ -36,15 +36,14 @@ void StepKinematics_PrismaticPairValue::Init(
 
 //=================================================================================================
 
-Standard_Real StepKinematics_PrismaticPairValue::ActualTranslation() const
+double StepKinematics_PrismaticPairValue::ActualTranslation() const
 {
   return myActualTranslation;
 }
 
 //=================================================================================================
 
-void StepKinematics_PrismaticPairValue::SetActualTranslation(
-  const Standard_Real theActualTranslation)
+void StepKinematics_PrismaticPairValue::SetActualTranslation(const double theActualTranslation)
 {
   myActualTranslation = theActualTranslation;
 }

@@ -22,15 +22,15 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESBasic_ExternalRefName, IGESData_IGESEntity)
 
-IGESBasic_ExternalRefName::IGESBasic_ExternalRefName() {}
+IGESBasic_ExternalRefName::IGESBasic_ExternalRefName() = default;
 
-void IGESBasic_ExternalRefName::Init(const Handle(TCollection_HAsciiString)& anExtName)
+void IGESBasic_ExternalRefName::Init(const occ::handle<TCollection_HAsciiString>& anExtName)
 {
   theExtRefEntitySymbName = anExtName;
   InitTypeAndForm(416, 3);
 }
 
-Handle(TCollection_HAsciiString) IGESBasic_ExternalRefName::ReferenceName() const
+occ::handle<TCollection_HAsciiString> IGESBasic_ExternalRefName::ReferenceName() const
 {
   return theExtRefEntitySymbName;
 }

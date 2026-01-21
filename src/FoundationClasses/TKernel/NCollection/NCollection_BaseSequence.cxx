@@ -53,7 +53,7 @@ void NCollection_BaseSequence::PAppend(NCollection_SeqNode* theItem)
   {
     myLastItem->SetNext(theItem);
     theItem->SetPrevious(myLastItem);
-    theItem->SetNext(NULL);
+    theItem->SetNext(nullptr);
     myLastItem = theItem;
     ++mySize;
   }
@@ -105,7 +105,7 @@ void NCollection_BaseSequence::PPrepend(NCollection_SeqNode* theItem)
   {
     myFirstItem->SetPrevious(theItem);
     theItem->SetNext(myFirstItem);
-    theItem->SetPrevious(NULL);
+    theItem->SetPrevious(nullptr);
     theItem->SetNext(myFirstItem);
     myFirstItem = theItem;
     ++mySize;
@@ -147,7 +147,7 @@ void NCollection_BaseSequence::PPrepend(NCollection_BaseSequence& Other)
 // purpose  : reverse the order of a given sequence
 //=======================================================================
 
-void NCollection_BaseSequence::PReverse()
+void NCollection_BaseSequence::PReverse() noexcept
 {
   NCollection_SeqNode* p = myFirstItem;
   while (p)
@@ -170,13 +170,13 @@ void NCollection_BaseSequence::PInsertAfter(NCollection_BaseSequence::Iterator& 
                                             NCollection_SeqNode*                theItem)
 {
   NCollection_SeqNode* aPos = thePosition.myCurrent;
-  if (aPos == NULL)
+  if (aPos == nullptr)
     PPrepend(theItem);
   else
   {
     theItem->SetNext(aPos->Next());
     theItem->SetPrevious(aPos);
-    if (aPos->Next() == NULL)
+    if (aPos->Next() == nullptr)
       myLastItem = theItem;
     else
       aPos->Next()->SetPrevious(theItem);
@@ -189,8 +189,7 @@ void NCollection_BaseSequence::PInsertAfter(NCollection_BaseSequence::Iterator& 
 
 //=================================================================================================
 
-void NCollection_BaseSequence::PInsertAfter(const Standard_Integer theIndex,
-                                            NCollection_SeqNode*   theItem)
+void NCollection_BaseSequence::PInsertAfter(const int theIndex, NCollection_SeqNode* theItem)
 {
   if (theIndex == 0)
     PPrepend(theItem);
@@ -215,8 +214,7 @@ void NCollection_BaseSequence::PInsertAfter(const Standard_Integer theIndex,
 // purpose  : insert a sequence after a given index in the sequence
 //=======================================================================
 
-void NCollection_BaseSequence::PInsertAfter(const Standard_Integer    theIndex,
-                                            NCollection_BaseSequence& Other)
+void NCollection_BaseSequence::PInsertAfter(const int theIndex, NCollection_BaseSequence& Other)
 {
   if (theIndex < 0 || theIndex > mySize)
     throw Standard_OutOfRange();
@@ -247,7 +245,7 @@ void NCollection_BaseSequence::PInsertAfter(const Standard_Integer    theIndex,
 // purpose  : exchange two elements in the sequence
 //=======================================================================
 
-void NCollection_BaseSequence::PExchange(const Standard_Integer I, const Standard_Integer J)
+void NCollection_BaseSequence::PExchange(const int I, const int J)
 {
   Standard_OutOfRange_Raise_if(I <= 0 || J <= 0 || I > mySize || J > mySize, "");
 
@@ -302,8 +300,7 @@ void NCollection_BaseSequence::PExchange(const Standard_Integer I, const Standar
 
 //=================================================================================================
 
-void NCollection_BaseSequence::PSplit(const Standard_Integer    theIndex,
-                                      NCollection_BaseSequence& Sub)
+void NCollection_BaseSequence::PSplit(const int theIndex, NCollection_BaseSequence& Sub)
 {
   Standard_OutOfRange_Raise_if(theIndex <= 0 || theIndex > mySize, "");
   Standard_DomainError_Raise_if(this == &Sub, "No Split on myself!!");
@@ -316,7 +313,7 @@ void NCollection_BaseSequence::PSplit(const Standard_Integer    theIndex,
   myLastItem = p->Previous();
   if (myLastItem)
   {
-    myLastItem->SetNext(NULL);
+    myLastItem->SetNext(nullptr);
     mySize = theIndex - 1;
     if (myCurrentIndex >= theIndex)
     {
@@ -326,12 +323,12 @@ void NCollection_BaseSequence::PSplit(const Standard_Integer    theIndex,
   }
   else
   {
-    myFirstItem = myCurrentItem = NULL;
+    myFirstItem = myCurrentItem = nullptr;
     mySize = myCurrentIndex = 0;
   }
 
   Sub.myFirstItem = Sub.myCurrentItem = p;
-  p->SetPrevious(NULL);
+  p->SetPrevious(nullptr);
   Sub.myCurrentIndex = 1;
 }
 
@@ -341,7 +338,7 @@ void NCollection_BaseSequence::RemoveSeq(NCollection_BaseSequence::Iterator& the
                                          NCollection_DelSeqNode              fDel)
 {
   NCollection_SeqNode* aPos = thePosition.myCurrent;
-  if (aPos == NULL)
+  if (aPos == nullptr)
     return;
   thePosition.myCurrent = aPos->Next();
 
@@ -364,8 +361,7 @@ void NCollection_BaseSequence::RemoveSeq(NCollection_BaseSequence::Iterator& the
 
 //=================================================================================================
 
-void NCollection_BaseSequence::RemoveSeq(const Standard_Integer theIndex,
-                                         NCollection_DelSeqNode fDel)
+void NCollection_BaseSequence::RemoveSeq(const int theIndex, NCollection_DelSeqNode fDel)
 {
   Standard_OutOfRange_Raise_if(theIndex <= 0 || theIndex > mySize,
                                "NCollection_BaseSequence::RemoveSeq() - index is out of range");
@@ -396,14 +392,9 @@ void NCollection_BaseSequence::RemoveSeq(const Standard_Integer theIndex,
   fDel(p, myAllocator);
 }
 
-//=======================================================================
-// function : Remove
-// purpose  : remove a set of items
-//=======================================================================
+//=================================================================================================
 
-void NCollection_BaseSequence::RemoveSeq(const Standard_Integer From,
-                                         const Standard_Integer To,
-                                         NCollection_DelSeqNode fDel)
+void NCollection_BaseSequence::RemoveSeq(const int From, const int To, NCollection_DelSeqNode fDel)
 {
   Standard_OutOfRange_Raise_if(From <= 0 || To > mySize || From > To,
                                "NCollection_BaseSequence::RemoveSeq() - invalid input range");
@@ -437,7 +428,7 @@ void NCollection_BaseSequence::RemoveSeq(const Standard_Integer From,
     }
   }
 
-  for (Standard_Integer i = From; i <= To; i++)
+  for (int i = From; i <= To; i++)
   {
     NCollection_SeqNode* tmp = pfrom;
     pfrom                    = pfrom->Next();
@@ -447,9 +438,9 @@ void NCollection_BaseSequence::RemoveSeq(const Standard_Integer From,
 
 //=================================================================================================
 
-NCollection_SeqNode* NCollection_BaseSequence::Find(const Standard_Integer theIndex) const
+NCollection_SeqNode* NCollection_BaseSequence::Find(const int theIndex) const noexcept
 {
-  Standard_Integer     i;
+  int                  i;
   NCollection_SeqNode* p;
   if (theIndex <= myCurrentIndex)
   {

@@ -20,15 +20,15 @@ IMPLEMENT_STANDARD_RTTIEXT(StepKinematics_PointOnSurfacePairValue, StepKinematic
 
 //=================================================================================================
 
-StepKinematics_PointOnSurfacePairValue::StepKinematics_PointOnSurfacePairValue() {}
+StepKinematics_PointOnSurfacePairValue::StepKinematics_PointOnSurfacePairValue() = default;
 
 //=================================================================================================
 
 void StepKinematics_PointOnSurfacePairValue::Init(
-  const Handle(TCollection_HAsciiString)&     theRepresentationItem_Name,
-  const Handle(StepKinematics_KinematicPair)& thePairValue_AppliesToPair,
-  const Handle(StepGeom_PointOnSurface)&      theActualPointOnSurface,
-  const StepKinematics_SpatialRotation&       theInputOrientation)
+  const occ::handle<TCollection_HAsciiString>&     theRepresentationItem_Name,
+  const occ::handle<StepKinematics_KinematicPair>& thePairValue_AppliesToPair,
+  const occ::handle<StepGeom_PointOnSurface>&      theActualPointOnSurface,
+  const StepKinematics_SpatialRotation&            theInputOrientation)
 {
   StepKinematics_PairValue::Init(theRepresentationItem_Name, thePairValue_AppliesToPair);
 
@@ -39,7 +39,8 @@ void StepKinematics_PointOnSurfacePairValue::Init(
 
 //=================================================================================================
 
-Handle(StepGeom_PointOnSurface) StepKinematics_PointOnSurfacePairValue::ActualPointOnSurface() const
+occ::handle<StepGeom_PointOnSurface> StepKinematics_PointOnSurfacePairValue::ActualPointOnSurface()
+  const
 {
   return myActualPointOnSurface;
 }
@@ -47,7 +48,7 @@ Handle(StepGeom_PointOnSurface) StepKinematics_PointOnSurfacePairValue::ActualPo
 //=================================================================================================
 
 void StepKinematics_PointOnSurfacePairValue::SetActualPointOnSurface(
-  const Handle(StepGeom_PointOnSurface)& theActualPointOnSurface)
+  const occ::handle<StepGeom_PointOnSurface>& theActualPointOnSurface)
 {
   myActualPointOnSurface = theActualPointOnSurface;
 }

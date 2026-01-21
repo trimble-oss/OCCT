@@ -19,13 +19,42 @@
 #include <IntCurve_IConicTool.hxx>
 #include <HLRBRep_CurveTool.hxx>
 
-#define ImpTool IntCurve_IConicTool
-#define ImpTool_hxx <IntCurve_IConicTool.hxx>
-#define ParCurve Standard_Address
-#define ParCurve_hxx <Standard_Address.hxx>
-#define ParTool HLRBRep_CurveTool
-#define ParTool_hxx <HLRBRep_CurveTool.hxx>
-#define IntImpParGen_ImpParTool HLRBRep_MyImpParToolOfTheIntersectorOfTheIntConicCurveOfCInter
-#define IntImpParGen_ImpParTool_hxx                                                                \
-  <HLRBRep_MyImpParToolOfTheIntersectorOfTheIntConicCurveOfCInter.hxx>
-#include <IntImpParGen_ImpParTool.gxx>
+#include <gp_Vec2d.hxx>
+
+HLRBRep_MyImpParToolOfTheIntersectorOfTheIntConicCurveOfCInter::
+  HLRBRep_MyImpParToolOfTheIntersectorOfTheIntConicCurveOfCInter(const IntCurve_IConicTool& ITool,
+                                                                 const HLRBRep_CurvePtr&    PC)
+    : TheImpTool(ITool)
+{
+  TheParCurve = (HLRBRep_CurvePtr)(&PC);
+}
+
+bool HLRBRep_MyImpParToolOfTheIntersectorOfTheIntConicCurveOfCInter::Value(const double Param,
+                                                                           double& ApproxDistance)
+{
+  ApproxDistance =
+    TheImpTool.Distance(HLRBRep_CurveTool::Value((*((HLRBRep_CurvePtr*)(TheParCurve))), Param));
+  return (true);
+}
+
+bool HLRBRep_MyImpParToolOfTheIntersectorOfTheIntConicCurveOfCInter::Derivative(
+  const double Param,
+  double&      D_ApproxDistance_DV)
+{
+  gp_Pnt2d Pt;
+  gp_Vec2d TanParCurve;
+  gp_Vec2d Grad =
+    TheImpTool.GradDistance(HLRBRep_CurveTool::Value((*((HLRBRep_CurvePtr*)(TheParCurve))), Param));
+  HLRBRep_CurveTool::D1((*((HLRBRep_CurvePtr*)(TheParCurve))), Param, Pt, TanParCurve);
+  D_ApproxDistance_DV = Grad.Dot(TanParCurve);
+  return (true);
+}
+
+bool HLRBRep_MyImpParToolOfTheIntersectorOfTheIntConicCurveOfCInter::Values(const double Param,
+                                                                            double& ApproxDistance,
+                                                                            double& Deriv)
+{
+  this->Value(Param, ApproxDistance);
+  this->Derivative(Param, Deriv);
+  return (true);
+}

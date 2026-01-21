@@ -22,7 +22,7 @@
 #include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_GeneralLib.hxx>
-#include <Interface_Macros.hxx>
+#include <MoniTool_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Interface_UndefinedContent.hxx>
 #include <Standard_Transient.hxx>
@@ -35,44 +35,44 @@ IGESData_DefaultGeneral::IGESData_DefaultGeneral()
   Interface_GeneralLib::SetGlobal(this, IGESData::Protocol());
 }
 
-void IGESData_DefaultGeneral::OwnSharedCase(const Standard_Integer             CN,
-                                            const Handle(IGESData_IGESEntity)& ent,
-                                            Interface_EntityIterator&          iter) const
+void IGESData_DefaultGeneral::OwnSharedCase(const int                               CN,
+                                            const occ::handle<IGESData_IGESEntity>& ent,
+                                            Interface_EntityIterator&               iter) const
 {
   if (CN == 0)
     return;
   DeclareAndCast(IGESData_UndefinedEntity, anent, ent);
   if (anent.IsNull())
     return;
-  Handle(Interface_UndefinedContent) cont = anent->UndefinedContent();
-  Standard_Integer                   nb   = cont->NbParams();
-  for (Standard_Integer i = 1; i <= nb; i++)
+  occ::handle<Interface_UndefinedContent> cont = anent->UndefinedContent();
+  int                                     nb   = cont->NbParams();
+  for (int i = 1; i <= nb; i++)
   {
     if (cont->IsParamEntity(i))
       iter.GetOneItem(cont->ParamEntity(i));
   }
 }
 
-IGESData_DirChecker IGESData_DefaultGeneral::DirChecker(const Standard_Integer,
-                                                        const Handle(IGESData_IGESEntity)&) const
+IGESData_DirChecker IGESData_DefaultGeneral::DirChecker(
+  const int,
+  const occ::handle<IGESData_IGESEntity>&) const
 {
   IGESData_DirChecker dc;
   return dc;
-} // aucun critere specifique
+} // no specific criteria
 
-void IGESData_DefaultGeneral::OwnCheckCase(const Standard_Integer,
-                                           const Handle(IGESData_IGESEntity)&,
+void IGESData_DefaultGeneral::OwnCheckCase(const int,
+                                           const occ::handle<IGESData_IGESEntity>&,
                                            const Interface_ShareTool&,
-                                           Handle(Interface_Check)&) const
+                                           occ::handle<Interface_Check>&) const
 {
-} // aucun critere specifique
+} // no specific criteria
 
-Standard_Boolean IGESData_DefaultGeneral::NewVoid(const Standard_Integer      CN,
-                                                  Handle(Standard_Transient)& entto) const
+bool IGESData_DefaultGeneral::NewVoid(const int CN, occ::handle<Standard_Transient>& entto) const
 {
   entto.Nullify();
   if (CN == 0)
-    return Standard_False;
+    return false;
   if (CN == 1)
     entto = new IGESData_UndefinedEntity;
   if (CN == 2)
@@ -80,21 +80,21 @@ Standard_Boolean IGESData_DefaultGeneral::NewVoid(const Standard_Integer      CN
   return (!entto.IsNull());
 }
 
-void IGESData_DefaultGeneral::OwnCopyCase(const Standard_Integer             CN,
-                                          const Handle(IGESData_IGESEntity)& entfrom,
-                                          const Handle(IGESData_IGESEntity)& entto,
-                                          Interface_CopyTool&                TC) const
+void IGESData_DefaultGeneral::OwnCopyCase(const int                               CN,
+                                          const occ::handle<IGESData_IGESEntity>& entfrom,
+                                          const occ::handle<IGESData_IGESEntity>& entto,
+                                          Interface_CopyTool&                     TC) const
 {
   if (CN == 0)
     return;
   DeclareAndCast(IGESData_UndefinedEntity, enfr, entfrom);
   DeclareAndCast(IGESData_UndefinedEntity, ento, entto);
-  //  ShallowCopy aura passe DirStatus
-  //  transmettre les contenus des UndefinedContents
-  Handle(Interface_UndefinedContent) cont = new Interface_UndefinedContent;
+  //  ShallowCopy will have passed DirStatus
+  //  transmit the contents of UndefinedContents
+  occ::handle<Interface_UndefinedContent> cont = new Interface_UndefinedContent;
   cont->GetFromAnother(enfr->UndefinedContent(), TC);
   ento->SetNewContent(cont);
-  //  FreeFormat, encore des choses
+  //  FreeFormat, more things
   if (enfr->IsKind(STANDARD_TYPE(IGESData_FreeFormatEntity)))
   {
     DeclareAndCast(IGESData_FreeFormatEntity, enf, entfrom);

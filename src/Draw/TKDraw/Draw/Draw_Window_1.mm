@@ -91,17 +91,17 @@
 }
 @end
 
-static Standard_Integer getScreenBottom()
+static int getScreenBottom()
 {
   NSRect aRect = [[[NSScreen screens] objectAtIndex:0] frame];
-  Standard_Integer aScreenBottom = Standard_Integer(aRect.size.height + aRect.origin.y);
+  int aScreenBottom = int(aRect.size.height + aRect.origin.y);
   return aScreenBottom;
 }
 
-extern Standard_Boolean Draw_VirtualWindows;
-static Standard_Boolean Draw_IsInZoomingMode = Standard_False;
+extern bool Draw_VirtualWindows;
+static bool Draw_IsInZoomingMode = false;
 
-Standard_Real Draw_RGBColorsArray[MAXCOLOR][3] = {{1.0,  1.0,  1.0},
+double Draw_RGBColorsArray[MAXCOLOR][3] = {{1.0,  1.0,  1.0},
                                                   {1.0,  0.0,  0.0},
                                                   {0.0,  1.0,  0.0},
                                                   {0.0,  0.0,  1.0},
@@ -117,20 +117,18 @@ Standard_Real Draw_RGBColorsArray[MAXCOLOR][3] = {{1.0,  1.0,  1.0},
                                                   {0.94, 0.9,  0.55},
                                                   {1.0,  0.5,  0.31}};
 
-//=======================================================================
-//function : Draw_Window
-//purpose  :
-//=======================================================================
+//=================================================================================================
+
 Draw_Window::Draw_Window (const char* theTitle,
                           const NCollection_Vec2<int>& theXY,
                           const NCollection_Vec2<int>& theSize,
                           Aspect_Drawable theParent,
                           Aspect_Drawable theWindow)
-: myWindow (NULL),
-  myView (NULL),
-  myImageBuffer (NULL),
+: myWindow (nullptr),
+  myView (nullptr),
+  myImageBuffer (nullptr),
   myCurrentColor (0),
-  myUseBuffer (Standard_False)
+  myUseBuffer (false)
 {
   (void )theParent;
   if (theWindow != 0)
@@ -147,38 +145,36 @@ Draw_Window::Draw_Window (const char* theTitle,
 //=======================================================================
 Draw_Window::~Draw_Window()
 {
-  if (myWindow != NULL)
+  if (myWindow != nullptr)
   { 
     [myWindow release];
-    myWindow = NULL;
+    myWindow = nullptr;
   }
 
-  if (myView != NULL)
+  if (myView != nullptr)
   {
     [myView release];
-    myView = NULL;
+    myView = nullptr;
   }
 
-  if (myImageBuffer != NULL)
+  if (myImageBuffer != nullptr)
   {
     [myImageBuffer release];
-    myImageBuffer = NULL;
+    myImageBuffer = nullptr;
   }
 }
 
-//=======================================================================
-//function : init
-//purpose  :
-//=======================================================================
+//=================================================================================================
+
 void Draw_Window::init (const NCollection_Vec2<int>& theXY,
                         const NCollection_Vec2<int>& theSize)
 {
   Cocoa_LocalPool aLocalPool;
 
   // converting left-bottom coordinate to left-top coordinate
-  Standard_Integer anYTop = getScreenBottom() - theXY.y() - theSize.y();
+  int anYTop = getScreenBottom() - theXY.y() - theSize.y();
 
-  if (myWindow == NULL)
+  if (myWindow == nullptr)
   {
     NSRect     aRectNs   = NSMakeRect (theXY.x(), anYTop, theSize.x(), theSize.y());
     NSUInteger aWinStyle = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable;
@@ -189,7 +185,7 @@ void Draw_Window::init (const NCollection_Vec2<int>& theXY,
                                                defer: NO];
   }
 
-  if (myView == NULL)
+  if (myView == nullptr)
   {
     NSRect aBounds = [[myWindow contentView] bounds];
     
@@ -197,7 +193,7 @@ void Draw_Window::init (const NCollection_Vec2<int>& theXY,
     [myWindow setContentView: myView];
   }
 
-  if (myImageBuffer == NULL)
+  if (myImageBuffer == nullptr)
   {
     NSRect aRectNs = [myView bounds];
     myImageBuffer  = [[NSImage alloc] initWithSize: aRectNs.size];
@@ -213,76 +209,60 @@ void Draw_Window::init (const NCollection_Vec2<int>& theXY,
   [myWindow setReleasedWhenClosed: NO];
 }
 
-//=======================================================================
-//function : InitBuffer
-//purpose  :
-//=======================================================================
-void Draw_Window::InitBuffer()
-{
-  //
-}
+//=================================================================================================
 
-//=======================================================================
-//function : SetPosition
-//purpose  :
-//=======================================================================
-void Draw_Window::SetPosition (Standard_Integer theNewXpos,
-                               Standard_Integer theNewYpos)
+void Draw_Window::InitBuffer()
+{}
+
+//=================================================================================================
+
+void Draw_Window::SetPosition (int theNewXpos,
+                               int theNewYpos)
 {
   NSPoint aNewPosition = NSMakePoint (theNewXpos, theNewYpos);
   [myWindow setFrameTopLeftPoint: aNewPosition];
 }
 
-//=======================================================================
-//function : SetDimension
-//purpose  :
-//=======================================================================
-void Draw_Window::SetDimension (Standard_Integer theNewWidth,
-                                Standard_Integer theNewHeight)
+//=================================================================================================
+
+void Draw_Window::SetDimension (int theNewWidth,
+                                int theNewHeight)
 {
   NSRect aWindowRect = [myWindow frame];
-  Standard_Integer aNewY = aWindowRect.origin.y + aWindowRect.size.height - theNewHeight;
+  int aNewY = aWindowRect.origin.y + aWindowRect.size.height - theNewHeight;
   NSRect aNewContentRect = NSMakeRect (aWindowRect.origin.x, aNewY,
                                        theNewWidth, theNewHeight);
   [myWindow setFrame: aNewContentRect display: YES];
 }
 
-//=======================================================================
-//function : GetPosition
-//purpose  :
-//=======================================================================
-void Draw_Window::GetPosition (Standard_Integer &thePosX,
-                               Standard_Integer &thePosY)
+//=================================================================================================
+
+void Draw_Window::GetPosition (int &thePosX,
+                               int &thePosY)
 {
   NSRect aWindowRect = [myWindow frame];
   thePosX = aWindowRect.origin.x;
   thePosY = getScreenBottom() - aWindowRect.origin.y - aWindowRect.size.height;
 }
 
-//=======================================================================
-//function : HeightWin
-//purpose  :
-//=======================================================================
-Standard_Integer Draw_Window::HeightWin() const
+//=================================================================================================
+
+int Draw_Window::HeightWin() const
 {
   NSRect aViewBounds = [myView bounds];
   return aViewBounds.size.height;
 }
 
-//=======================================================================
-//function : WidthWin
-//purpose  :
-//=======================================================================
-Standard_Integer Draw_Window::WidthWin() const
+//=================================================================================================
+
+int Draw_Window::WidthWin() const
 {
   NSRect aViewBounds = [myView bounds];
   return aViewBounds.size.width;
 }
 
-//=======================================================================
-//function : SetTitle
-//purpose  :
-//=======================================================================
+//=================================================================================================
+
 void Draw_Window::SetTitle (const TCollection_AsciiString& theTitle)
 {
   NSString* aTitleNs = [[NSString alloc] initWithUTF8String: theTitle.ToCString()];
@@ -290,33 +270,27 @@ void Draw_Window::SetTitle (const TCollection_AsciiString& theTitle)
   [aTitleNs release];
 }
 
-//=======================================================================
-//function : GetTitle
-//purpose  :
-//=======================================================================
+//=================================================================================================
+
 TCollection_AsciiString Draw_Window::GetTitle() const
 {
-  Standard_CString aTitle = [[myWindow title] UTF8String];
+  const char* aTitle = [[myWindow title] UTF8String];
   return TCollection_AsciiString (aTitle);
 }
 
-//=======================================================================
-//function :DefineColor
-//purpose  :
-//=======================================================================
-Standard_Boolean Draw_Window::DefineColor (const Standard_Integer , Standard_CString )
+//=================================================================================================
+
+bool Draw_Window::DefineColor (const int , const char* )
 {
-  return Standard_True; // unused
+  return true; // unused
 }
 
-//=======================================================================
-//function : IsMapped
-//purpose  :
-//=======================================================================
+//=================================================================================================
+
 bool Draw_Window::IsMapped() const
 {
   if (Draw_VirtualWindows
-   || myWindow == NULL)
+   || myWindow == nullptr)
   {
     return false;
   }
@@ -324,10 +298,8 @@ bool Draw_Window::IsMapped() const
   return [myWindow isVisible];
 }
 
-//=======================================================================
-//function : DisplayWindow
-//purpose  :
-//=======================================================================
+//=================================================================================================
+
 void Draw_Window::DisplayWindow()
 {
   if (Draw_VirtualWindows)
@@ -335,53 +307,47 @@ void Draw_Window::DisplayWindow()
     return;
   }
 
-  if (myWindow != NULL)
+  if (myWindow != nullptr)
   {
-    [myWindow orderFront: NULL];
+    [myWindow orderFront: nullptr];
   }
 }
 
-//=======================================================================
-//function : Hide
-//purpose  :
-//=======================================================================
+//=================================================================================================
+
 void Draw_Window::Hide()
 {
-  if (myWindow != NULL)
+  if (myWindow != nullptr)
   {
-    [myWindow orderOut: NULL];
+    [myWindow orderOut: nullptr];
   }
 }
 
-//=======================================================================
-//function : Destroy
-//purpose  :
-//=======================================================================
+//=================================================================================================
+
 void Draw_Window::Destroy()
 {  
-  if (myWindow != NULL)
+  if (myWindow != nullptr)
   { 
     [myWindow release];
-    myWindow = NULL;
+    myWindow = nullptr;
   }
 
-  if (myView != NULL)
+  if (myView != nullptr)
   {
     [myView release];
-    myView = NULL;
+    myView = nullptr;
   }
 
-  if (myImageBuffer != NULL)
+  if (myImageBuffer != nullptr)
   {
     [myImageBuffer release];
-    myImageBuffer = NULL;
+    myImageBuffer = nullptr;
   }
 }
 
-//=======================================================================
-//function : Clear
-//purpose  :
-//=======================================================================
+//=================================================================================================
+
 void Draw_Window::Clear()
 {
   [myImageBuffer lockFocus];
@@ -396,20 +362,14 @@ void Draw_Window::Clear()
   }
 }
 
-//=======================================================================
-//function : Flush
-//purpose  :
-//=======================================================================
-void Draw_Window::Flush()
-{
-  //
-}
+//=================================================================================================
 
-//=======================================================================
-//function : DrawString
-//purpose  :
-//=======================================================================
-void Draw_Window::DrawString (Standard_Integer theXLeft, Standard_Integer theYTop,
+void Draw_Window::Flush()
+{}
+
+//=================================================================================================
+
+void Draw_Window::DrawString (int theXLeft, int theYTop,
                               const char* theText)
 {
   Cocoa_LocalPool aLocalPool;
@@ -431,19 +391,17 @@ void Draw_Window::DrawString (Standard_Integer theXLeft, Standard_Integer theYTo
   }
 }
 
-//=======================================================================
-//function : DrawSegments
-//purpose  :
-//=======================================================================
+//=================================================================================================
+
 void Draw_Window::DrawSegments (const Draw_XSegment* theSegments,
-                                Standard_Integer theNumberOfElements)
+                                int theNumberOfElements)
 {
   Cocoa_LocalPool aLocalPool;
 
   NSBezierPath* aPath = [[[NSBezierPath alloc] init] autorelease];
 
   NSImage* anImage;
-  Standard_Integer anIter = 0;
+  int anIter = 0;
   
   if (Draw_IsInZoomingMode)
   {
@@ -481,13 +439,11 @@ void Draw_Window::DrawSegments (const Draw_XSegment* theSegments,
     [myView redraw];
   }
   
-  Draw_IsInZoomingMode = Standard_False;
+  Draw_IsInZoomingMode = false;
 }
 
-//=======================================================================
-//function : Redraw
-//purpose  :
-//=======================================================================
+//=================================================================================================
+
 void Draw_Window::Redraw()
 {
   if (myUseBuffer)
@@ -496,30 +452,24 @@ void Draw_Window::Redraw()
   }
 }
 
-//=======================================================================
-//function : SetColor
-//purpose  :
-//=======================================================================
-void Draw_Window::SetColor (Standard_Integer theColor)
+//=================================================================================================
+
+void Draw_Window::SetColor (int theColor)
 {
   myCurrentColor = theColor;
 }
 
-//=======================================================================
-//function : SetMode
-//purpose  :
-//=======================================================================
-void Draw_Window::SetMode (Standard_Integer theMode)
+//=================================================================================================
+
+void Draw_Window::SetMode (int theMode)
 {
   // unsupported
   (void )theMode;
 }
 
-//=======================================================================
-//function : Save
-//purpose  :
-//=======================================================================
-Standard_Boolean Draw_Window::Save (Standard_CString theFileName) const
+//=================================================================================================
+
+bool Draw_Window::Save (const char* theFileName) const
 {
   Cocoa_LocalPool aLocalPool;
 
@@ -532,9 +482,9 @@ Standard_Boolean Draw_Window::Save (Standard_CString theFileName) const
                                   [NSNumber numberWithInt: NSBitmapImageFileTypeJPEG], @"jpg",
                                   [NSNumber numberWithInt: NSBitmapImageFileTypeGIF],  @"gif",
                                   nil];
-  if ([aFileTypeDict valueForKey: aFileExtension] == NULL)
+  if ([aFileTypeDict valueForKey: aFileExtension] == nullptr)
   {
-    return Standard_False; // unsupported image extension
+    return false; // unsupported image extension
   }
 
   NSBitmapImageFileType aFileType = (NSBitmapImageFileType )[[aFileTypeDict valueForKey: aFileExtension] intValue];
@@ -546,22 +496,22 @@ Standard_Boolean Draw_Window::Save (Standard_CString theFileName) const
   NSData* aData = [anImageRep representationUsingType: aFileType 
                                            properties: anImgProps];
 
-  Standard_Boolean isSuccess = [aData writeToFile: aFileName
+  bool isSuccess = [aData writeToFile: aFileName
                                        atomically: NO];
 
   return isSuccess;
 }
 
-Standard_Boolean Draw_Window::IsEqualWindows (const long theWindowNumber)
+bool Draw_Window::IsEqualWindows (const long theWindowNumber)
 {
   return ([myWindow windowNumber] == theWindowNumber);
 }
 
-void Draw_Window::GetNextEvent (Standard_Boolean  theWait,
+void Draw_Window::GetNextEvent (bool  theWait,
                                 long&             theWindowNumber,
-                                Standard_Integer& theX,
-                                Standard_Integer& theY,
-                                Standard_Integer& theButton)
+                                int& theX,
+                                int& theY,
+                                int& theButton)
 {
   Cocoa_LocalPool aLocalPool;
 
@@ -570,7 +520,7 @@ void Draw_Window::GetNextEvent (Standard_Boolean  theWait,
   if (!theWait)
   {
     anEventMatchMask = anEventMatchMask | NSEventMaskMouseMoved | NSEventMaskLeftMouseDragged;
-    Draw_IsInZoomingMode = Standard_True;
+    Draw_IsInZoomingMode = true;
   }
 
   NSEvent* anEvent = [NSApp nextEventMatchingMask: anEventMatchMask
@@ -584,8 +534,8 @@ void Draw_Window::GetNextEvent (Standard_Boolean  theWait,
 
   NSPoint aMouseLoc = [aView convertPoint: [anEvent locationInWindow] fromView: nil];
 
-  theX = Standard_Integer (aMouseLoc.x);
-  theY = Standard_Integer (aMouseLoc.y);
+  theX = int (aMouseLoc.x);
+  theY = int (aMouseLoc.y);
 
   NSEventType anEventType = [anEvent type];
 

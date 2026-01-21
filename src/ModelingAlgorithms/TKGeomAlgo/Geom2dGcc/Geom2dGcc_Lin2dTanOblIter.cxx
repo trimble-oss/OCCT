@@ -36,69 +36,75 @@
 
 Geom2dGcc_Lin2dTanOblIter::Geom2dGcc_Lin2dTanOblIter(const Geom2dGcc_QCurve& Qualified1,
                                                      const gp_Lin2d&         TheLin,
-                                                     const Standard_Real     Param1,
-                                                     const Standard_Real     TolAng,
-                                                     const Standard_Real     Angle)
+                                                     const double            Param1,
+                                                     const double            TolAng,
+                                                     const double            Angle)
     : par2sol(0.0),
       pararg2(0.0)
 {
 
   par1sol  = 0.;
   pararg1  = 0.;
-  WellDone = Standard_False;
+  WellDone = false;
   if (!(Qualified1.IsEnclosed() || Qualified1.IsEnclosing() || Qualified1.IsOutside()
         || Qualified1.IsUnqualified()))
   {
     throw GccEnt_BadQualifier();
     return;
   }
-  Paral2                  = Standard_False;
+  Paral2                  = false;
   Geom2dAdaptor_Curve Cu1 = Qualified1.Qualified();
-  Standard_Real       U1  = Geom2dGcc_CurveTool::FirstParameter(Cu1);
-  Standard_Real       U2  = Geom2dGcc_CurveTool::LastParameter(Cu1);
+  double              U1  = Geom2dGcc_CurveTool::FirstParameter(Cu1);
+  double              U2  = Geom2dGcc_CurveTool::LastParameter(Cu1);
   gp_Dir2d            Dir(TheLin.Direction());
-  Standard_Real       A = Dir.X();
-  Standard_Real       B = Dir.Y();
+  double              A = Dir.X();
+  double              B = Dir.Y();
   gp_Dir2d            TheDirection(Dir);
-  if (Abs(Angle) > Abs(TolAng))
+  if (std::abs(Angle) > std::abs(TolAng))
   {
-    if (Abs(Abs(Angle) - M_PI) <= Abs(TolAng))
+    if (std::abs(std::abs(Angle) - M_PI) <= std::abs(TolAng))
     {
-      Paral2       = Standard_True;
+      Paral2       = true;
       TheDirection = Dir.Reversed();
     }
-    else if (Abs(Angle - M_PI / 2) <= Abs(TolAng))
+    else if (std::abs(Angle - M_PI / 2) <= std::abs(TolAng))
     {
       TheDirection = gp_Dir2d(-B, A);
     }
-    else if (Abs(Angle + M_PI / 2) <= Abs(TolAng))
+    else if (std::abs(Angle + M_PI / 2) <= std::abs(TolAng))
     {
       TheDirection = gp_Dir2d(B, -A);
     }
     else
     {
-      TheDirection = gp_Dir2d(A * Cos(Angle) - B * Sin(Angle), A * Sin(Angle) + B * Cos(Angle));
+      TheDirection = gp_Dir2d(A * std::cos(Angle) - B * std::sin(Angle),
+                              A * std::sin(Angle) + B * std::cos(Angle));
     }
   }
   else
   {
-    Paral2 = Standard_True;
+    Paral2 = true;
   }
   Geom2dGcc_FunctionTanObl func(Cu1, TheDirection);
-  math_FunctionRoot sol(func, Param1, Geom2dGcc_CurveTool::EpsX(Cu1, Abs(TolAng)), U1, U2, 100);
+  math_FunctionRoot        sol(func,
+                        Param1,
+                        Geom2dGcc_CurveTool::EpsX(Cu1, std::abs(TolAng)),
+                        U1,
+                        U2,
+                        100);
   if (sol.IsDone())
   {
-    Standard_Real Usol = sol.Root();
-    gp_Pnt2d      Origine;
-    gp_Vec2d      Vect1, Vect2;
+    double   Usol = sol.Root();
+    gp_Pnt2d Origine;
+    gp_Vec2d Vect1, Vect2;
     Geom2dGcc_CurveTool::D2(Cu1, Usol, Origine, Vect1, Vect2);
-    Standard_Real sign1 = Vect1.XY().Dot(TheDirection.XY());
-    Standard_Real sign2 = Vect2.XY().Crossed(TheDirection.XY());
+    double sign1 = Vect1.XY().Dot(TheDirection.XY());
+    double sign2 = Vect2.XY().Crossed(TheDirection.XY());
     if (Qualified1.IsUnqualified() || (Qualified1.IsEnclosing() && sign2 <= 0.)
         || (Qualified1.IsOutside() && sign1 <= 0. && sign2 >= 0.)
         || (Qualified1.IsEnclosed() && sign1 >= 0. && sign2 >= 0.))
     {
-      WellDone   = Standard_True;
+      WellDone   = true;
       linsol     = gp_Lin2d(Origine, TheDirection);
       pnttg1sol  = Origine;
       qualifier1 = Qualified1.Qualifier();
@@ -121,7 +127,7 @@ Geom2dGcc_Lin2dTanOblIter::Geom2dGcc_Lin2dTanOblIter(const Geom2dGcc_QCurve& Qua
   }
 }
 
-Standard_Boolean Geom2dGcc_Lin2dTanOblIter::IsDone() const
+bool Geom2dGcc_Lin2dTanOblIter::IsDone() const
 {
   return WellDone;
 }
@@ -146,14 +152,12 @@ void Geom2dGcc_Lin2dTanOblIter::WhichQualifier(GccEnt_Position& Qualif1) const
   }
 }
 
-Standard_Boolean Geom2dGcc_Lin2dTanOblIter::IsParallel2() const
+bool Geom2dGcc_Lin2dTanOblIter::IsParallel2() const
 {
   return Paral2;
 }
 
-void Geom2dGcc_Lin2dTanOblIter::Tangency1(Standard_Real& ParSol,
-                                          Standard_Real& ParArg,
-                                          gp_Pnt2d&      PntSol) const
+void Geom2dGcc_Lin2dTanOblIter::Tangency1(double& ParSol, double& ParArg, gp_Pnt2d& PntSol) const
 {
   if (!WellDone)
   {
@@ -167,9 +171,9 @@ void Geom2dGcc_Lin2dTanOblIter::Tangency1(Standard_Real& ParSol,
   }
 }
 
-void Geom2dGcc_Lin2dTanOblIter::Intersection2(Standard_Real& ParSol,
-                                              Standard_Real& ParArg,
-                                              gp_Pnt2d&      PntSol) const
+void Geom2dGcc_Lin2dTanOblIter::Intersection2(double&   ParSol,
+                                              double&   ParArg,
+                                              gp_Pnt2d& PntSol) const
 {
   if (!WellDone)
   {

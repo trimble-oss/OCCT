@@ -14,18 +14,17 @@
 #include <Vrml_DirectionalLight.hxx>
 
 Vrml_DirectionalLight::Vrml_DirectionalLight()
-    : myOnOff(Standard_True),
+    : myOnOff(true),
       myIntensity(1),
       myColor(Quantity_NOC_WHITE),
       myDirection(0, 0, -1)
 {
-  //
 }
 
-Vrml_DirectionalLight::Vrml_DirectionalLight(const Standard_Boolean aOnOff,
-                                             const Standard_Real    aIntensity,
-                                             const Quantity_Color&  aColor,
-                                             const gp_Vec&          aDirection)
+Vrml_DirectionalLight::Vrml_DirectionalLight(const bool            aOnOff,
+                                             const double          aIntensity,
+                                             const Quantity_Color& aColor,
+                                             const gp_Vec&         aDirection)
 {
   myOnOff = aOnOff;
   if (aIntensity < 0. || aIntensity > 1.)
@@ -37,17 +36,17 @@ Vrml_DirectionalLight::Vrml_DirectionalLight(const Standard_Boolean aOnOff,
   myDirection = aDirection;
 }
 
-void Vrml_DirectionalLight::SetOnOff(const Standard_Boolean aOnOff)
+void Vrml_DirectionalLight::SetOnOff(const bool aOnOff)
 {
   myOnOff = aOnOff;
 }
 
-Standard_Boolean Vrml_DirectionalLight::OnOff() const
+bool Vrml_DirectionalLight::OnOff() const
 {
   return myOnOff;
 }
 
-void Vrml_DirectionalLight::SetIntensity(const Standard_Real aIntensity)
+void Vrml_DirectionalLight::SetIntensity(const double aIntensity)
 {
   if (aIntensity < 0. || aIntensity > 1.)
   {
@@ -56,7 +55,7 @@ void Vrml_DirectionalLight::SetIntensity(const Standard_Real aIntensity)
   myIntensity = aIntensity;
 }
 
-Standard_Real Vrml_DirectionalLight::Intensity() const
+double Vrml_DirectionalLight::Intensity() const
 {
   return myIntensity;
 }
@@ -85,29 +84,29 @@ Standard_OStream& Vrml_DirectionalLight::Print(Standard_OStream& anOStream) cons
 {
   anOStream << "DirectionalLight {\n";
 
-  if (myOnOff != Standard_True)
+  if (!myOnOff)
   {
     anOStream << "    on\t\tFALSE\n";
     //    anOStream << myOnOff << "\n";
   }
 
-  if (Abs(myIntensity - 1) > 0.0001)
+  if (std::abs(myIntensity - 1) > 0.0001)
   {
     anOStream << "    intensity\t";
     anOStream << myIntensity << "\n";
   }
 
-  if (Abs(myColor.Red() - 1) > 0.0001 || Abs(myColor.Green() - 1) > 0.0001
-      || Abs(myColor.Blue() - 1) > 0.0001)
+  if (std::abs(myColor.Red() - 1) > 0.0001 || std::abs(myColor.Green() - 1) > 0.0001
+      || std::abs(myColor.Blue() - 1) > 0.0001)
   {
-    NCollection_Vec3<Standard_Real> aColor_sRGB;
+    NCollection_Vec3<double> aColor_sRGB;
     myColor.Values(aColor_sRGB.r(), aColor_sRGB.g(), aColor_sRGB.b(), Quantity_TOC_sRGB);
     anOStream << "    color\t";
     anOStream << aColor_sRGB.r() << " " << aColor_sRGB.g() << " " << aColor_sRGB.b() << "\n";
   }
 
-  if (Abs(myDirection.X() - 0) > 0.0001 || Abs(myDirection.Y() - 0) > 0.0001
-      || Abs(myDirection.Z() + 1) > 0.0001)
+  if (std::abs(myDirection.X() - 0) > 0.0001 || std::abs(myDirection.Y() - 0) > 0.0001
+      || std::abs(myDirection.Z() + 1) > 0.0001)
   {
     anOStream << "    direction" << '\t';
     anOStream << myDirection.X() << " " << myDirection.Y() << " " << myDirection.Z() << "\n";

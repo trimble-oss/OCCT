@@ -661,7 +661,7 @@ static void APIENTRY glMultiDrawElements(GLenum             theMode,
                                          const void* const* theIndices,
                                          GLsizei            theDrawCount)
 {
-  if (theCount == NULL || theIndices == NULL)
+  if (theCount == nullptr || theIndices == nullptr)
   {
     return;
   }
@@ -1635,8 +1635,7 @@ bool OpenGl_GlFunctions::debugPrintError(const char* theName)
 
 //=================================================================================================
 
-void OpenGl_GlFunctions::readGlVersion(Standard_Integer& theGlVerMajor,
-                                       Standard_Integer& theGlVerMinor)
+void OpenGl_GlFunctions::readGlVersion(int& theGlVerMajor, int& theGlVerMinor)
 {
   // reset values
   theGlVerMajor = 0;
@@ -1689,7 +1688,7 @@ void OpenGl_GlFunctions::readGlVersion(Standard_Integer& theGlVerMajor,
   // New drivers also returns micro version of GL like '3.3.0' which has no meaning
   // and should be considered as vendor-specific too.
   const char* aVerStr = (const char*)::glGetString(GL_VERSION);
-  if (aVerStr == NULL || *aVerStr == '\0')
+  if (aVerStr == nullptr || *aVerStr == '\0')
   {
     // invalid GL context
     return;
@@ -1762,13 +1761,13 @@ void OpenGl_GlFunctions::readGlVersion(Standard_Integer& theGlVerMajor,
 
 //=================================================================================================
 
-void OpenGl_GlFunctions::load(OpenGl_Context& theCtx, Standard_Boolean theIsCoreProfile)
+void OpenGl_GlFunctions::load(OpenGl_Context& theCtx, bool theIsCoreProfile)
 {
 #if !defined(GL_ES_VERSION_2_0)
   bool isCoreProfile = false;
   if (theCtx.GraphicsLibrary() == Aspect_GraphicsLibrary_OpenGL && theCtx.IsGlGreaterEqual(3, 2))
   {
-    isCoreProfile = (theIsCoreProfile == true);
+    isCoreProfile = (theIsCoreProfile);
 
     // detect Core profile
     if (!isCoreProfile)
@@ -1916,33 +1915,33 @@ void OpenGl_GlFunctions::load(OpenGl_Context& theCtx, Standard_Boolean theIsCore
 #if defined(GL_ES_VERSION_2_0)
   theCtx.core11ffp = NULL;
 #else
-  theCtx.core11ffp = !isCoreProfile ? (OpenGl_GlCore11*)this : NULL;
+  theCtx.core11ffp = !isCoreProfile ? (OpenGl_GlCore11*)this : nullptr;
 #endif
   theCtx.core11fwd      = (OpenGl_GlCore11Fwd*)this;
-  theCtx.core15         = NULL;
-  theCtx.core15fwd      = NULL;
-  theCtx.core20         = NULL;
-  theCtx.core20fwd      = NULL;
-  theCtx.core30         = NULL;
-  theCtx.core32         = NULL;
-  theCtx.core33         = NULL;
-  theCtx.core41         = NULL;
-  theCtx.core42         = NULL;
-  theCtx.core43         = NULL;
-  theCtx.core44         = NULL;
-  theCtx.core45         = NULL;
-  theCtx.core46         = NULL;
-  theCtx.arbTBO         = NULL;
+  theCtx.core15         = nullptr;
+  theCtx.core15fwd      = nullptr;
+  theCtx.core20         = nullptr;
+  theCtx.core20fwd      = nullptr;
+  theCtx.core30         = nullptr;
+  theCtx.core32         = nullptr;
+  theCtx.core33         = nullptr;
+  theCtx.core41         = nullptr;
+  theCtx.core42         = nullptr;
+  theCtx.core43         = nullptr;
+  theCtx.core44         = nullptr;
+  theCtx.core45         = nullptr;
+  theCtx.core46         = nullptr;
+  theCtx.arbTBO         = nullptr;
   theCtx.arbTboRGB32    = false;
   theCtx.arbClipControl = false;
-  theCtx.arbIns         = NULL;
-  theCtx.arbDbg         = NULL;
-  theCtx.arbFBO         = NULL;
-  theCtx.arbFBOBlit     = NULL;
-  theCtx.extGS          = NULL;
+  theCtx.arbIns         = nullptr;
+  theCtx.arbDbg         = nullptr;
+  theCtx.arbFBO         = nullptr;
+  theCtx.arbFBOBlit     = nullptr;
+  theCtx.extGS          = nullptr;
 
   //! Make record shorter to retrieve function pointer using variable with same name
-  const char* aLastFailedProc = NULL;
+  const char* aLastFailedProc = nullptr;
 #define FindProcShort(theFunc) theCtx.FindProcVerbose(aLastFailedProc, #theFunc, this->theFunc)
 #define checkExtensionShort theCtx.CheckExtension
 #define isGlGreaterEqualShort(theMaj, theMin) theCtx.IsGlGreaterEqual(theMaj, theMin)
@@ -2018,7 +2017,7 @@ void OpenGl_GlFunctions::load(OpenGl_Context& theCtx, Standard_Boolean theIsCore
   ::glGetShaderPrecisionFormat(GL_FRAGMENT_SHADER, GL_HIGH_FLOAT, aRange, &aPrec);
   if (aPrec != 0)
   {
-    theCtx.hasHighp = Standard_True;
+    theCtx.hasHighp = true;
   }
 
   theCtx.arbTexFloat = (isGlGreaterEqualShort(3, 0) && FindProcShort(glTexImage3D))
@@ -2478,7 +2477,7 @@ void OpenGl_GlFunctions::load(OpenGl_Context& theCtx, Standard_Boolean theIsCore
   if (has20)
   {
     const char* aGlslVer = (const char*)::glGetString(GL_SHADING_LANGUAGE_VERSION);
-    if (aGlslVer == NULL || *aGlslVer == '\0')
+    if (aGlslVer == nullptr || *aGlslVer == '\0')
     {
       // broken context has been detected
       theCtx.checkWrongVersion(2, 0, "GLSL 1.1");
@@ -3061,7 +3060,7 @@ void OpenGl_GlFunctions::load(OpenGl_Context& theCtx, Standard_Boolean theIsCore
   // initialize debug context extension
   if (checkExtensionShort("GL_ARB_debug_output"))
   {
-    theCtx.arbDbg = NULL;
+    theCtx.arbDbg = nullptr;
     if (has43)
     {
       theCtx.arbDbg = (OpenGl_ArbDbg*)this;
@@ -3080,7 +3079,7 @@ void OpenGl_GlFunctions::load(OpenGl_Context& theCtx, Standard_Boolean theIsCore
   {
     theCtx.arbFBO     = (OpenGl_ArbFBO*)this;
     theCtx.arbFBOBlit = (OpenGl_ArbFBOBlit*)this;
-    theCtx.extPDS     = Standard_True; // extension for EXT, but part of ARB
+    theCtx.extPDS     = true; // extension for EXT, but part of ARB
   }
 
   // initialize GS extension (EXT)

@@ -15,44 +15,54 @@
 
 #include <NCollection_SparseArrayBase.hxx>
 #include <Standard_ProgramError.hxx>
+#include <Standard.hxx>
+
+#include <algorithm>
+#include <cstring>
 
 //=================================================================================================
 
-void NCollection_SparseArrayBase::allocData(const Standard_Size iBlock)
+void NCollection_SparseArrayBase::allocData(const size_t iBlock)
 {
   if (iBlock < myNbBlocks)
     return;
 
   // the allocation of blocks starts from myBlockSize items
   // and then is multiplied by 2 every time reallocation is needed
-  Standard_Size newNbBlocks = (myNbBlocks ? myNbBlocks * 2 : myBlockSize);
+  size_t newNbBlocks = (myNbBlocks ? myNbBlocks * 2 : myBlockSize);
   while (iBlock >= newNbBlocks)
     newNbBlocks *= 2;
 
-  Standard_Address* newData = (Standard_Address*)malloc(newNbBlocks * sizeof(Standard_Address));
+  void** newData = (void**)Standard::AllocateOptimal(newNbBlocks * sizeof(void*));
   if (myNbBlocks > 0)
-    memcpy(newData, myData, myNbBlocks * sizeof(Standard_Address));
-  memset(newData + myNbBlocks, 0, (newNbBlocks - myNbBlocks) * sizeof(Standard_Address));
+    memcpy(newData, myData, myNbBlocks * sizeof(void*));
+  memset(newData + myNbBlocks, 0, (newNbBlocks - myNbBlocks) * sizeof(void*));
 
-  free(myData);
+  Standard::Free(myData);
   myData     = newData;
   myNbBlocks = newNbBlocks;
 }
 
 //=================================================================================================
 
-void NCollection_SparseArrayBase::freeBlock(const Standard_Size iBlock)
+void NCollection_SparseArrayBase::freeBlock(const size_t iBlock)
 {
-  Standard_Address& anAddr = myData[iBlock];
-  Block             aBlock = getBlock(anAddr);
-  for (Standard_Size anInd = 0; anInd < myBlockSize; anInd++)
+  void*& anAddr = myData[iBlock];
+  if (!anAddr)
+    return;
+
+  Block aBlock = getBlock(anAddr);
+  // Destroy all items in the block
+  for (size_t anInd = 0; anInd < myBlockSize; anInd++)
+  {
     if (aBlock.IsSet(anInd))
     {
       destroyItem(getItem(aBlock, anInd));
       mySize--;
     }
-  free(anAddr);
-  anAddr = 0;
+  }
+  Standard::Free(anAddr);
+  anAddr = nullptr;
 }
 
 //=================================================================================================
@@ -60,14 +70,19 @@ void NCollection_SparseArrayBase::freeBlock(const Standard_Size iBlock)
 void NCollection_SparseArrayBase::Clear()
 {
   // free block data
-  for (Standard_Size iBlock = 0; iBlock < myNbBlocks; iBlock++)
+  for (size_t iBlock = 0; iBlock < myNbBlocks; iBlock++)
+  {
     if (myData[iBlock])
+    {
       freeBlock(iBlock);
+    }
+  }
 
-  // free blocks and reset counters
-  free(myData);
-  myData     = 0;
+  // free blocks array and reset counters
+  Standard::Free(myData);
+  myData     = nullptr;
   myNbBlocks = 0;
+  mySize     = 0;
 
   // consistency check
   Standard_ProgramError_Raise_if(
@@ -88,7 +103,7 @@ void NCollection_SparseArrayBase::assign(const NCollection_SparseArrayBase& theO
   myBlockSize = theOther.myBlockSize;
 
   // iterate by blocks in theOther
-  Standard_Size iBlock = 0;
+  size_t iBlock = 0;
   for (; iBlock < theOther.myNbBlocks; iBlock++)
   {
     if (!theOther.myData[iBlock])
@@ -104,15 +119,17 @@ void NCollection_SparseArrayBase::assign(const NCollection_SparseArrayBase& theO
     Block anOtherBlock = getBlock(theOther.myData[iBlock]);
 
     // if block not yet allocated, just allocate and fill
-    Standard_Address& anAddr = myData[iBlock];
+    void*& anAddr = myData[iBlock];
     if (!anAddr)
     {
-      anAddr = calloc(Block::Size(myBlockSize, myItemSize), sizeof(char));
+      const size_t aBlockSize = Block::Size(myBlockSize, myItemSize);
+      anAddr                  = Standard::AllocateOptimal(aBlockSize);
+      memset(anAddr, 0, aBlockSize);
       Block aBlock(getBlock(anAddr));
-      for (Standard_Size anInd = 0; anInd < myBlockSize; anInd++)
+      for (size_t anInd = 0; anInd < myBlockSize; anInd++)
         if (anOtherBlock.IsSet(anInd))
         {
-          Standard_Address anItem = getItem(aBlock, anInd);
+          void* anItem = getItem(aBlock, anInd);
           aBlock.Set(anInd);
           (*aBlock.Count)++;
           mySize++;
@@ -123,12 +140,12 @@ void NCollection_SparseArrayBase::assign(const NCollection_SparseArrayBase& theO
     else
     {
       Block aBlock(getBlock(anAddr));
-      for (Standard_Size anInd = 0; anInd < myBlockSize; anInd++)
+      for (size_t anInd = 0; anInd < myBlockSize; anInd++)
       {
-        Standard_Address anItem = getItem(aBlock, anInd);
+        void* anItem = getItem(aBlock, anInd);
         if (anOtherBlock.IsSet(anInd))
         {
-          Standard_Address anOtherItem = getItem(anOtherBlock, anInd);
+          void* anOtherItem = getItem(anOtherBlock, anInd);
           if (aBlock.IsSet(anInd)) // copy
           {
             copyItem(anItem, anOtherItem);
@@ -165,51 +182,45 @@ void NCollection_SparseArrayBase::assign(const NCollection_SparseArrayBase& theO
 
 //=================================================================================================
 
-template <class T>
-static inline void sswap(T& a, T& b)
-{
-  T c = a;
-  a   = b;
-  b   = c;
-}
-
-void NCollection_SparseArrayBase::exchange(NCollection_SparseArrayBase& theOther)
+void NCollection_SparseArrayBase::exchange(NCollection_SparseArrayBase& theOther) noexcept
 {
   if (this == &theOther)
     return;
 
-  // swap fields of this and theOther
-  sswap(myItemSize, theOther.myItemSize);
-  sswap(myBlockSize, theOther.myBlockSize);
-  sswap(myNbBlocks, theOther.myNbBlocks);
-  sswap(mySize, theOther.mySize);
-  sswap(myData, theOther.myData);
+  // swap fields of this and theOther using std::swap for better optimization
+  std::swap(myItemSize, theOther.myItemSize);
+  std::swap(myBlockSize, theOther.myBlockSize);
+  std::swap(myNbBlocks, theOther.myNbBlocks);
+  std::swap(mySize, theOther.mySize);
+  std::swap(myData, theOther.myData);
 }
 
 //=================================================================================================
 
-Standard_Address NCollection_SparseArrayBase::setValue(const Standard_Size    theIndex,
-                                                       const Standard_Address theValue)
+void* NCollection_SparseArrayBase::setValue(const size_t theIndex, void* const theValue)
 {
-  Standard_Size iBlock = theIndex / myBlockSize;
+  size_t iBlock = theIndex / myBlockSize;
 
   // resize blocks array if necessary
   if (iBlock >= myNbBlocks)
     allocData(iBlock);
 
   // allocate block if necessary
-  Standard_Address& anAddr = myData[iBlock];
+  void*& anAddr = myData[iBlock];
   if (!anAddr)
-    anAddr = calloc(Block::Size(myBlockSize, myItemSize), sizeof(char));
+  {
+    const size_t aBlockSize = Block::Size(myBlockSize, myItemSize);
+    anAddr                  = Standard::AllocateOptimal(aBlockSize);
+    memset(anAddr, 0, aBlockSize);
+  }
 
-  // get a block
-  Block aBlock(getBlock(anAddr));
-
-  // mark item as defined
-  Standard_Size    anInd  = theIndex % myBlockSize;
-  Standard_Address anItem = getItem(aBlock, anInd);
+  // get a block and calculate item index
+  Block  aBlock(getBlock(anAddr));
+  size_t anInd  = theIndex % myBlockSize;
+  void*  anItem = getItem(aBlock, anInd);
 
   // either create an item by copy constructor if it is new, or assign it
+  // Optimize: Set() returns non-zero if bit was not set previously
   if (aBlock.Set(anInd))
   {
     (*aBlock.Count)++;
@@ -217,34 +228,37 @@ Standard_Address NCollection_SparseArrayBase::setValue(const Standard_Size    th
     createItem(anItem, theValue);
   }
   else
+  {
+    // Item already exists, just copy the value
     copyItem(anItem, theValue);
+  }
 
   return anItem;
 }
 
 //=================================================================================================
 
-Standard_Boolean NCollection_SparseArrayBase::HasValue(const Standard_Size theIndex) const
+bool NCollection_SparseArrayBase::HasValue(const size_t theIndex) const
 {
-  Standard_Size iBlock = theIndex / myBlockSize;
+  size_t iBlock = theIndex / myBlockSize;
   if (iBlock >= myNbBlocks || !myData[iBlock])
-    return Standard_False;
-  return getBlock(myData[iBlock]).IsSet(theIndex % myBlockSize) ? Standard_True : Standard_False;
+    return false;
+  return getBlock(myData[iBlock]).IsSet(theIndex % myBlockSize) != 0;
 }
 
 //=================================================================================================
 
-Standard_Boolean NCollection_SparseArrayBase::UnsetValue(const Standard_Size theIndex)
+bool NCollection_SparseArrayBase::UnsetValue(const size_t theIndex)
 {
   // check that the item is defined
-  Standard_Size iBlock = theIndex / myBlockSize;
+  size_t iBlock = theIndex / myBlockSize;
   if (iBlock >= myNbBlocks || !myData[iBlock])
-    return Standard_False;
+    return false;
 
-  Block         aBlock(getBlock(myData[iBlock]));
-  Standard_Size anInd = theIndex % myBlockSize;
+  Block  aBlock(getBlock(myData[iBlock]));
+  size_t anInd = theIndex % myBlockSize;
   if (!aBlock.Unset(anInd))
-    return Standard_False;
+    return false;
 
   // destroy the item
   destroyItem(getItem(aBlock, anInd));
@@ -255,17 +269,17 @@ Standard_Boolean NCollection_SparseArrayBase::UnsetValue(const Standard_Size the
   if (!(*aBlock.Count))
     freeBlock(iBlock);
 
-  return Standard_True;
+  return true;
 }
 
 //=================================================================================================
 
 NCollection_SparseArrayBase::Iterator::Iterator(const NCollection_SparseArrayBase* theArray)
     : myArr((NCollection_SparseArrayBase*)theArray),
-      myHasMore(Standard_False),
+      myHasMore(false),
       myIBlock(0),
       myInd(0),
-      myBlock(0, 0, 0)
+      myBlock(nullptr, 0, 0)
 {
   init(theArray);
 }
@@ -287,7 +301,7 @@ void NCollection_SparseArrayBase::Iterator::Next()
       {
         if (myIBlock >= myArr->myNbBlocks) // end
         {
-          myHasMore = Standard_False;
+          myHasMore = false;
           return;
         }
         if (myArr->myData[myIBlock])
@@ -309,7 +323,7 @@ void NCollection_SparseArrayBase::Iterator::Next()
 void NCollection_SparseArrayBase::Iterator::init(const NCollection_SparseArrayBase* theArray)
 {
   myArr     = (NCollection_SparseArrayBase*)theArray;
-  myHasMore = Standard_False;
+  myHasMore = false;
   if (myArr)
   {
     myInd = 0;
@@ -318,7 +332,7 @@ void NCollection_SparseArrayBase::Iterator::init(const NCollection_SparseArrayBa
     {
       if (!myArr->myData[myIBlock])
         continue;
-      myHasMore = Standard_True;
+      myHasMore = true;
       myBlock   = Block(myArr->myData[myIBlock], myArr->myBlockSize, myArr->myItemSize);
       // if first item in the block is not set, advance to the next defined item
       if (!myBlock.IsSet(myInd))

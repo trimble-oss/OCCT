@@ -29,15 +29,14 @@ IMPLEMENT_STANDARD_RTTIEXT(Units_UnitsLexicon, Units_Lexicon)
 //=================================================================================================
 
 Units_UnitsLexicon::Units_UnitsLexicon()
-    : Units_Lexicon()
-{
-}
+
+  = default;
 
 //=================================================================================================
 
-void Units_UnitsLexicon::Creates(const Standard_Boolean amode)
+void Units_UnitsLexicon::Creates(const bool amode)
 {
-  Handle(Units_UnitsDictionary) unitsdictionary;
+  occ::handle<Units_UnitsDictionary> unitsdictionary;
 
   Units_Lexicon::Creates();
 

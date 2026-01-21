@@ -15,7 +15,6 @@
 
 #include <DESTL_Provider.hxx>
 #include <DE_ConfigurationContext.hxx>
-#include <DE_PluginHolder.hxx>
 #include <NCollection_Buffer.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(DESTL_ConfigurationNode, DE_ConfigurationNode)
@@ -28,20 +27,18 @@ static const TCollection_AsciiString& THE_CONFIGURATION_SCOPE()
   return aScope;
 }
 
-// Wrapper to auto-load DE component
-DE_PluginHolder<DESTL_ConfigurationNode> THE_OCCT_STL_COMPONENT_PLUGIN;
 } // namespace
 
 //=================================================================================================
 
 DESTL_ConfigurationNode::DESTL_ConfigurationNode()
-    : DE_ConfigurationNode()
-{
-}
+
+  = default;
 
 //=================================================================================================
 
-DESTL_ConfigurationNode::DESTL_ConfigurationNode(const Handle(DESTL_ConfigurationNode)& theNode)
+DESTL_ConfigurationNode::DESTL_ConfigurationNode(
+  const occ::handle<DESTL_ConfigurationNode>& theNode)
     : DE_ConfigurationNode(theNode)
 {
   InternalParameters = theNode->InternalParameters;
@@ -49,7 +46,7 @@ DESTL_ConfigurationNode::DESTL_ConfigurationNode(const Handle(DESTL_Configuratio
 
 //=================================================================================================
 
-bool DESTL_ConfigurationNode::Load(const Handle(DE_ConfigurationContext)& theResource)
+bool DESTL_ConfigurationNode::Load(const occ::handle<DE_ConfigurationContext>& theResource)
 {
   TCollection_AsciiString aScope =
     THE_CONFIGURATION_SCOPE() + "." + GetFormat() + "." + GetVendor();
@@ -106,14 +103,14 @@ TCollection_AsciiString DESTL_ConfigurationNode::Save() const
 
 //=================================================================================================
 
-Handle(DE_ConfigurationNode) DESTL_ConfigurationNode::Copy() const
+occ::handle<DE_ConfigurationNode> DESTL_ConfigurationNode::Copy() const
 {
   return new DESTL_ConfigurationNode(*this);
 }
 
 //=================================================================================================
 
-Handle(DE_Provider) DESTL_ConfigurationNode::BuildProvider()
+occ::handle<DE_Provider> DESTL_ConfigurationNode::BuildProvider()
 {
   return new DESTL_Provider(this);
 }
@@ -134,6 +131,13 @@ bool DESTL_ConfigurationNode::IsExportSupported() const
 
 //=================================================================================================
 
+bool DESTL_ConfigurationNode::IsStreamSupported() const
+{
+  return true;
+}
+
+//=================================================================================================
+
 TCollection_AsciiString DESTL_ConfigurationNode::GetFormat() const
 {
   return TCollection_AsciiString("STL");
@@ -148,26 +152,22 @@ TCollection_AsciiString DESTL_ConfigurationNode::GetVendor() const
 
 //=================================================================================================
 
-TColStd_ListOfAsciiString DESTL_ConfigurationNode::GetExtensions() const
+NCollection_List<TCollection_AsciiString> DESTL_ConfigurationNode::GetExtensions() const
 {
-  TColStd_ListOfAsciiString anExt;
+  NCollection_List<TCollection_AsciiString> anExt;
   anExt.Append("stl");
   return anExt;
 }
 
 //=================================================================================================
 
-bool DESTL_ConfigurationNode::CheckContent(const Handle(NCollection_Buffer)& theBuffer) const
+bool DESTL_ConfigurationNode::CheckContent(const occ::handle<NCollection_Buffer>& theBuffer) const
 {
   if (theBuffer.IsNull() || theBuffer->Size() < 7)
   {
     return false;
   }
   const char* aBytes = (const char*)theBuffer->Data();
-  if (!(::strncmp(aBytes, "solid", 5) || ::strncmp(aBytes, "SOLID", 5)) && isspace(aBytes[5]))
-  {
-    return true;
-  }
   // binary STL has no header for identification - format can be detected only by file extension
-  return false;
+  return !(::strncmp(aBytes, "solid", 5) || ::strncmp(aBytes, "SOLID", 5)) && isspace(aBytes[5]);
 }

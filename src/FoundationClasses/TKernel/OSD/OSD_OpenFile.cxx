@@ -69,8 +69,10 @@ int OSD_OpenFileDescriptor(const TCollection_ExtendedString& theName,
     return -1;
   }
 #else
-  NCollection_Utf8String aString(theName.ToExtString());
-  aFileDesc = open(aString.ToCString(), aFlags);
+  NCollection_UtfString<char> aString(theName.ToExtString());
+  // Mode 0600 is used when O_CREAT is set
+  // (owner read+write only, similar to Windows _S_IREAD | _S_IWRITE)
+  aFileDesc = open(aString.ToCString(), aFlags, S_IRUSR | S_IWUSR);
 #endif
   return aFileDesc;
 }
@@ -79,11 +81,11 @@ int OSD_OpenFileDescriptor(const TCollection_ExtendedString& theName,
 
 FILE* OSD_OpenFile(const char* theName, const char* theMode)
 {
-  FILE* aFile = 0;
+  FILE* aFile = nullptr;
 #if defined(_WIN32)
   // file name is treated as UTF-8 string and converted to UTF-16 one
-  const TCollection_ExtendedString aFileNameW(theName, Standard_True);
-  const TCollection_ExtendedString aFileModeW(theMode, Standard_True);
+  const TCollection_ExtendedString aFileNameW(theName, true);
+  const TCollection_ExtendedString aFileModeW(theMode, true);
   aFile = ::_wfopen(aFileNameW.ToWideString(), aFileModeW.ToWideString());
 #else
   aFile = ::fopen(theName, theMode);
@@ -95,13 +97,13 @@ FILE* OSD_OpenFile(const char* theName, const char* theMode)
 
 FILE* OSD_OpenFile(const TCollection_ExtendedString& theName, const char* theMode)
 {
-  FILE* aFile = 0;
+  FILE* aFile = nullptr;
 #if defined(_WIN32)
-  const TCollection_ExtendedString aFileModeW(theMode, Standard_True);
+  const TCollection_ExtendedString aFileModeW(theMode, true);
   aFile = ::_wfopen(theName.ToWideString(), aFileModeW.ToWideString());
 #else
   // conversion in UTF-8 for linux
-  NCollection_Utf8String aString(theName.ToExtString());
+  NCollection_UtfString<char> aString(theName.ToExtString());
   aFile = ::fopen(aString.ToCString(), theMode);
 #endif
   return aFile;
@@ -109,22 +111,22 @@ FILE* OSD_OpenFile(const TCollection_ExtendedString& theName, const char* theMod
 
 //=================================================================================================
 
-Standard_Time OSD_FileStatCTime(const char* theName)
+std::time_t OSD_FileStatCTime(const char* theName)
 {
-  Standard_Time aTime = 0;
+  std::time_t aTime = 0;
 #if defined(_WIN32)
   // file name is treated as UTF-8 string and converted to UTF-16 one
-  const TCollection_ExtendedString aFileNameW(theName, Standard_True);
+  const TCollection_ExtendedString aFileNameW(theName, true);
   struct __stat64                  aStat;
   if (_wstat64(aFileNameW.ToWideString(), &aStat) == 0)
   {
-    aTime = (Standard_Time)aStat.st_ctime;
+    aTime = (std::time_t)aStat.st_ctime;
   }
 #else
   struct stat aStat;
   if (stat(theName, &aStat) == 0)
   {
-    aTime = (Standard_Time)aStat.st_ctime;
+    aTime = (std::time_t)aStat.st_ctime;
   }
 #endif
   return aTime;

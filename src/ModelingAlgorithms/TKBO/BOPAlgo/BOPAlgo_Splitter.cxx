@@ -21,20 +21,19 @@
 //=================================================================================================
 
 BOPAlgo_Splitter::BOPAlgo_Splitter()
-    : BOPAlgo_ToolsProvider()
-{
-}
+
+  = default;
 
 //=================================================================================================
 
-BOPAlgo_Splitter::BOPAlgo_Splitter(const Handle(NCollection_BaseAllocator)& theAllocator)
+BOPAlgo_Splitter::BOPAlgo_Splitter(const occ::handle<NCollection_BaseAllocator>& theAllocator)
     : BOPAlgo_ToolsProvider(theAllocator)
 {
 }
 
 //=================================================================================================
 
-BOPAlgo_Splitter::~BOPAlgo_Splitter() {}
+BOPAlgo_Splitter::~BOPAlgo_Splitter() = default;
 
 //=================================================================================================
 
@@ -61,14 +60,14 @@ void BOPAlgo_Splitter::Perform(const Message_ProgressRange& theRange)
     if (myPaveFiller)
     {
       delete myPaveFiller;
-      myPaveFiller = NULL;
+      myPaveFiller = nullptr;
     }
   }
   //
   // prepare shapes for intersection
-  TopTools_ListOfShape aLS;
+  NCollection_List<TopoDS_Shape> aLS;
   //
-  TopTools_ListIteratorOfListOfShape aItLS(myArguments);
+  NCollection_List<TopoDS_Shape>::Iterator aItLS(myArguments);
   for (; aItLS.More(); aItLS.Next())
   {
     aLS.Append(aItLS.Value());

@@ -14,8 +14,9 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#include <BRepPrim_Builder.hxx>
 #include <BRepPrim_OneAxis.hxx>
+
+#include <BRepPrim_Builder.hxx>
 #include <gp_Ax2.hxx>
 #include <gp_Circ.hxx>
 #include <gp_Circ2d.hxx>
@@ -30,51 +31,74 @@
 #include <TopoDS_Shell.hxx>
 #include <TopoDS_Vertex.hxx>
 
-#define NBVERTICES 6
-#define VAXISTOP 0
-#define VAXISBOT 1
-#define VTOPSTART 2
-#define VTOPEND 3
-#define VBOTSTART 4
-#define VBOTEND 5
-#define NBEDGES 9
-#define EAXIS 0
-#define ESTART 1
-#define EEND 2
-#define ETOPSTART 3
-#define ETOPEND 4
-#define EBOTSTART 5
-#define EBOTEND 6
-#define ETOP 7
-#define EBOTTOM 8
-#define NBWIRES 9
-#define WLATERAL 0
-#define WLATERALSTART 0
-#define WLATERALEND 1
-#define WTOP 2
-#define WBOTTOM 3
-#define WSTART 5
-#define WAXISSTART 6
-#define WEND 7
-#define WAXISEND 8
-#define NBFACES 5
-#define FLATERAL 0
-#define FTOP 1
-#define FBOTTOM 2
-#define FSTART 3
-#define FEND 4
+namespace
+{
+//! Multiplier for Precision::Confusion() to separate overlapping pcurves
+//! when heights at VMin and VMax are equal.
+constexpr double THE_PCURVE_OFFSET_FACTOR = 10.0;
+
+//! Vertex array indices.
+enum VertexIndex
+{
+  VAXISTOP = 0,
+  VAXISBOT,
+  VTOPSTART,
+  VTOPEND,
+  VBOTSTART,
+  VBOTEND,
+  NBVERTICES
+};
+
+//! Edge array indices.
+enum EdgeIndex
+{
+  EAXIS = 0,
+  ESTART,
+  EEND,
+  ETOPSTART,
+  ETOPEND,
+  EBOTSTART,
+  EBOTEND,
+  ETOP,
+  EBOTTOM,
+  NBEDGES
+};
+
+//! Wire array indices.
+//! Note: Index 4 is intentionally skipped to preserve historical array sizing.
+enum WireIndex
+{
+  WLATERAL      = 0,
+  WLATERALSTART = WLATERAL,
+  WLATERALEND,
+  WTOP,
+  WBOTTOM,
+  WSTART = 5,
+  WAXISSTART,
+  WEND,
+  WAXISEND,
+  NBWIRES
+};
+
+//! Face array indices.
+enum FaceIndex
+{
+  FLATERAL = 0,
+  FTOP,
+  FBOTTOM,
+  FSTART,
+  FEND,
+  NBFACES
+};
 
 //=======================================================================
 // function : BRepPrim_OneAxis_Check
 // purpose  : raise Standard_DomainError if something was built
 //=======================================================================
 
-static void BRepPrim_OneAxis_Check(const Standard_Boolean V[],
-                                   const Standard_Boolean E[],
-                                   const Standard_Boolean W[],
-                                   const Standard_Boolean F[])
+static void BRepPrim_OneAxis_Check(const bool V[], const bool E[], const bool W[], const bool F[])
 {
-  Standard_Integer i;
+  int i;
   for (i = 0; i < NBVERTICES; i++)
     if (V[i])
       throw Standard_DomainError();
@@ -88,13 +112,14 @@ static void BRepPrim_OneAxis_Check(const Standard_Boolean V[],
     if (F[i])
       throw Standard_DomainError();
 }
+} // namespace
 
 //=================================================================================================
 
 BRepPrim_OneAxis::BRepPrim_OneAxis(const BRepPrim_Builder& B,
                                    const gp_Ax2&           A,
-                                   const Standard_Real     VMin,
-                                   const Standard_Real     VMax)
+                                   const double            VMin,
+                                   const double            VMax)
     : myBuilder(B),
       myAxes(A),
       myAngle(2 * M_PI),
@@ -104,25 +129,25 @@ BRepPrim_OneAxis::BRepPrim_OneAxis(const BRepPrim_Builder& B,
 
 {
   // init Built flags
-  Standard_Integer i;
-  ShellBuilt = Standard_False;
+  int i;
+  ShellBuilt = false;
   for (i = 0; i < NBVERTICES; i++)
-    VerticesBuilt[i] = Standard_False;
+    VerticesBuilt[i] = false;
   for (i = 0; i < NBEDGES; i++)
-    EdgesBuilt[i] = Standard_False;
+    EdgesBuilt[i] = false;
   for (i = 0; i < NBWIRES; i++)
-    WiresBuilt[i] = Standard_False;
+    WiresBuilt[i] = false;
   for (i = 0; i < NBFACES; i++)
-    FacesBuilt[i] = Standard_False;
+    FacesBuilt[i] = false;
 }
 
 //=================================================================================================
 
-BRepPrim_OneAxis::~BRepPrim_OneAxis() {}
+BRepPrim_OneAxis::~BRepPrim_OneAxis() = default;
 
 //=================================================================================================
 
-void BRepPrim_OneAxis::SetMeridianOffset(const Standard_Real O)
+void BRepPrim_OneAxis::SetMeridianOffset(const double O)
 {
   myMeridianOffset = O;
 }
@@ -143,34 +168,34 @@ void BRepPrim_OneAxis::Axes(const gp_Ax2& A)
   myAxes = A;
 }
 
-Standard_Real BRepPrim_OneAxis::Angle() const
+double BRepPrim_OneAxis::Angle() const
 {
   return myAngle;
 }
 
-void BRepPrim_OneAxis::Angle(const Standard_Real A)
+void BRepPrim_OneAxis::Angle(const double A)
 {
   BRepPrim_OneAxis_Check(VerticesBuilt, EdgesBuilt, WiresBuilt, FacesBuilt);
   myAngle = A;
 }
 
-Standard_Real BRepPrim_OneAxis::VMin() const
+double BRepPrim_OneAxis::VMin() const
 {
   return myVMin;
 }
 
-void BRepPrim_OneAxis::VMin(const Standard_Real V)
+void BRepPrim_OneAxis::VMin(const double V)
 {
   BRepPrim_OneAxis_Check(VerticesBuilt, EdgesBuilt, WiresBuilt, FacesBuilt);
   myVMin = V;
 }
 
-Standard_Real BRepPrim_OneAxis::VMax() const
+double BRepPrim_OneAxis::VMax() const
 {
   return myVMax;
 }
 
-void BRepPrim_OneAxis::VMax(const Standard_Real V)
+void BRepPrim_OneAxis::VMax(const double V)
 {
   BRepPrim_OneAxis_Check(VerticesBuilt, EdgesBuilt, WiresBuilt, FacesBuilt);
   myVMax = V;
@@ -178,65 +203,92 @@ void BRepPrim_OneAxis::VMax(const Standard_Real V)
 
 //=================================================================================================
 
-Standard_Boolean BRepPrim_OneAxis::MeridianOnAxis(const Standard_Real V) const
+bool BRepPrim_OneAxis::MeridianOnAxis(const double V) const
 {
-  return Abs(MeridianValue(V).X()) < Precision::Confusion();
+  return std::abs(MeridianValue(V).X()) < Precision::Confusion();
 }
 
 //=================================================================================================
 
-Standard_Boolean BRepPrim_OneAxis::MeridianClosed() const
+bool BRepPrim_OneAxis::MeridianClosed() const
 {
   if (VMaxInfinite())
-    return Standard_False;
+    return false;
   if (VMinInfinite())
-    return Standard_False;
+    return false;
   return MeridianValue(myVMin).IsEqual(MeridianValue(myVMax), Precision::Confusion());
 }
 
 //=================================================================================================
 
-Standard_Boolean BRepPrim_OneAxis::VMaxInfinite() const
+bool BRepPrim_OneAxis::VMaxInfinite() const
 {
   return Precision::IsPositiveInfinite(myVMax);
 }
 
 //=================================================================================================
 
-Standard_Boolean BRepPrim_OneAxis::VMinInfinite() const
+bool BRepPrim_OneAxis::VMinInfinite() const
 {
   return Precision::IsNegativeInfinite(myVMin);
 }
 
 //=================================================================================================
 
-Standard_Boolean BRepPrim_OneAxis::HasTop() const
+bool BRepPrim_OneAxis::isHeightInverted() const
+{
+  if (VMaxInfinite() || VMinInfinite())
+  {
+    return false;
+  }
+  const double yMax = MeridianValue(myVMax).Y();
+  const double yMin = MeridianValue(myVMin).Y();
+  // Use tolerance to avoid floating-point issues (e.g., for closed meridian where yMax ~ yMin)
+  return yMax < yMin - Precision::Confusion();
+}
+
+//=================================================================================================
+
+bool BRepPrim_OneAxis::areHeightsEqual() const
+{
+  if (VMaxInfinite() || VMinInfinite())
+  {
+    return false;
+  }
+  const double yMax = MeridianValue(myVMax).Y();
+  const double yMin = MeridianValue(myVMin).Y();
+  return std::abs(yMax - yMin) < Precision::Confusion();
+}
+
+//=================================================================================================
+
+bool BRepPrim_OneAxis::HasTop() const
 {
   if (VMaxInfinite())
-    return Standard_False;
+    return false;
   if (MeridianClosed())
-    return Standard_False;
+    return false;
   if (MeridianOnAxis(myVMax))
-    return Standard_False;
-  return Standard_True;
+    return false;
+  return true;
 }
 
 //=================================================================================================
 
-Standard_Boolean BRepPrim_OneAxis::HasBottom() const
+bool BRepPrim_OneAxis::HasBottom() const
 {
   if (VMinInfinite())
-    return Standard_False;
+    return false;
   if (MeridianClosed())
-    return Standard_False;
+    return false;
   if (MeridianOnAxis(myVMin))
-    return Standard_False;
-  return Standard_True;
+    return false;
+  return true;
 }
 
 //=================================================================================================
 
-Standard_Boolean BRepPrim_OneAxis::HasSides() const
+bool BRepPrim_OneAxis::HasSides() const
 {
   return 2 * M_PI - myAngle > Precision::Angular();
 }
@@ -262,7 +314,7 @@ const TopoDS_Shell& BRepPrim_OneAxis::Shell()
 
     myShell.Closed(BRep_Tool::IsClosed(myShell));
     myBuilder.CompleteShell(myShell);
-    ShellBuilt = Standard_True;
+    ShellBuilt = true;
   }
   return myShell;
 }
@@ -296,8 +348,8 @@ const TopoDS_Face& BRepPrim_OneAxis::LateralFace()
       // closed edge
       myBuilder.SetPCurve(myEdges[ETOP],
                           myFaces[FLATERAL],
-                          gp_Lin2d(gp_Pnt2d(0, myVMin), gp_Dir2d(1, 0)),
-                          gp_Lin2d(gp_Pnt2d(0, myVMax), gp_Dir2d(1, 0)));
+                          gp_Lin2d(gp_Pnt2d(0, myVMin), gp_Dir2d(gp_Dir2d::D::X)),
+                          gp_Lin2d(gp_Pnt2d(0, myVMax), gp_Dir2d(gp_Dir2d::D::X)));
     }
     else
     {
@@ -305,7 +357,7 @@ const TopoDS_Face& BRepPrim_OneAxis::LateralFace()
       {
         myBuilder.SetPCurve(myEdges[ETOP],
                             myFaces[FLATERAL],
-                            gp_Lin2d(gp_Pnt2d(0, myVMax), gp_Dir2d(1, 0)));
+                            gp_Lin2d(gp_Pnt2d(0, myVMax), gp_Dir2d(gp_Dir2d::D::X)));
         if (!HasSides() || MeridianOnAxis(myVMax))
         {
           // closed edge set parameters
@@ -316,7 +368,7 @@ const TopoDS_Face& BRepPrim_OneAxis::LateralFace()
       {
         myBuilder.SetPCurve(myEdges[EBOTTOM],
                             myFaces[FLATERAL],
-                            gp_Lin2d(gp_Pnt2d(0, myVMin), gp_Dir2d(1, 0)));
+                            gp_Lin2d(gp_Pnt2d(0, myVMin), gp_Dir2d(gp_Dir2d::D::X)));
         if (!HasSides() || MeridianOnAxis(myVMin))
         {
           // closed edge set parameters
@@ -328,22 +380,22 @@ const TopoDS_Face& BRepPrim_OneAxis::LateralFace()
     {
       myBuilder.SetPCurve(myEdges[ESTART],
                           myFaces[FLATERAL],
-                          gp_Lin2d(gp_Pnt2d(0, -myMeridianOffset), gp_Dir2d(0, 1)));
+                          gp_Lin2d(gp_Pnt2d(0, -myMeridianOffset), gp_Dir2d(gp_Dir2d::D::Y)));
 
       myBuilder.SetPCurve(myEdges[EEND],
                           myFaces[FLATERAL],
-                          gp_Lin2d(gp_Pnt2d(myAngle, -myMeridianOffset), gp_Dir2d(0, 1)));
+                          gp_Lin2d(gp_Pnt2d(myAngle, -myMeridianOffset), gp_Dir2d(gp_Dir2d::D::Y)));
     }
     else
     {
       // closed edge
       myBuilder.SetPCurve(myEdges[ESTART],
                           myFaces[FLATERAL],
-                          gp_Lin2d(gp_Pnt2d(myAngle, -myMeridianOffset), gp_Dir2d(0, 1)),
-                          gp_Lin2d(gp_Pnt2d(0, -myMeridianOffset), gp_Dir2d(0, 1)));
+                          gp_Lin2d(gp_Pnt2d(myAngle, -myMeridianOffset), gp_Dir2d(gp_Dir2d::D::Y)),
+                          gp_Lin2d(gp_Pnt2d(0, -myMeridianOffset), gp_Dir2d(gp_Dir2d::D::Y)));
     }
     myBuilder.CompleteFace(myFaces[FLATERAL]);
-    FacesBuilt[FLATERAL] = Standard_True;
+    FacesBuilt[FLATERAL] = true;
   }
   return myFaces[FLATERAL];
 }
@@ -362,8 +414,8 @@ const TopoDS_Face& BRepPrim_OneAxis::TopFace()
     Standard_DomainError_Raise_if(!HasTop(), "BRepPrim_OneAxis::TopFace:No top face");
 
     // make the empty face by translating the axes
-    Standard_Real z = MeridianValue(myVMax).Y();
-    gp_Vec        V = myAxes.Direction();
+    double z = MeridianValue(myVMax).Y();
+    gp_Vec V = myAxes.Direction();
     V.Multiply(z);
     myBuilder.MakeFace(myFaces[FTOP], gp_Pln(myAxes.Translated(V)));
 
@@ -373,19 +425,19 @@ const TopoDS_Face& BRepPrim_OneAxis::TopFace()
     myBuilder.SetPCurve(
       myEdges[ETOP],
       myFaces[FTOP],
-      gp_Circ2d(gp_Ax2d(gp_Pnt2d(0, 0), gp_Dir2d(1, 0)), MeridianValue(myVMax).X()));
+      gp_Circ2d(gp_Ax2d(gp_Pnt2d(0, 0), gp_Dir2d(gp_Dir2d::D::X)), MeridianValue(myVMax).X()));
     if (HasSides())
     {
       myBuilder.SetPCurve(myEdges[ETOPSTART],
                           myFaces[FTOP],
-                          gp_Lin2d(gp_Pnt2d(0, 0), gp_Dir2d(1, 0)));
+                          gp_Lin2d(gp_Pnt2d(0, 0), gp_Dir2d(gp_Dir2d::D::X)));
       myBuilder.SetPCurve(myEdges[ETOPEND],
                           myFaces[FTOP],
-                          gp_Lin2d(gp_Pnt2d(0, 0), gp_Dir2d(Cos(myAngle), Sin(myAngle))));
+                          gp_Lin2d(gp_Pnt2d(0, 0), gp_Dir2d(std::cos(myAngle), std::sin(myAngle))));
     }
 
     myBuilder.CompleteFace(myFaces[FTOP]);
-    FacesBuilt[FTOP] = Standard_True;
+    FacesBuilt[FTOP] = true;
   }
 
   return myFaces[FTOP];
@@ -402,8 +454,8 @@ const TopoDS_Face& BRepPrim_OneAxis::BottomFace()
     Standard_DomainError_Raise_if(!HasBottom(), "BRepPrim_OneAxis::BottomFace:No bottom face");
 
     // make the empty face by translating the axes
-    Standard_Real z = MeridianValue(myVMin).Y();
-    gp_Vec        V = myAxes.Direction();
+    double z = MeridianValue(myVMin).Y();
+    gp_Vec V = myAxes.Direction();
     V.Multiply(z);
     gp_Ax2 axes = myAxes.Translated(V);
     myBuilder.MakeFace(myFaces[FBOTTOM], gp_Pln(axes));
@@ -414,19 +466,19 @@ const TopoDS_Face& BRepPrim_OneAxis::BottomFace()
     myBuilder.SetPCurve(
       myEdges[EBOTTOM],
       myFaces[FBOTTOM],
-      gp_Circ2d(gp_Ax2d(gp_Pnt2d(0, 0), gp_Dir2d(1, 0)), MeridianValue(myVMin).X()));
+      gp_Circ2d(gp_Ax2d(gp_Pnt2d(0, 0), gp_Dir2d(gp_Dir2d::D::X)), MeridianValue(myVMin).X()));
     if (HasSides())
     {
       myBuilder.SetPCurve(myEdges[EBOTSTART],
                           myFaces[FBOTTOM],
-                          gp_Lin2d(gp_Pnt2d(0, 0), gp_Dir2d(1, 0)));
+                          gp_Lin2d(gp_Pnt2d(0, 0), gp_Dir2d(gp_Dir2d::D::X)));
       myBuilder.SetPCurve(myEdges[EBOTEND],
                           myFaces[FBOTTOM],
-                          gp_Lin2d(gp_Pnt2d(0, 0), gp_Dir2d(Cos(myAngle), Sin(myAngle))));
+                          gp_Lin2d(gp_Pnt2d(0, 0), gp_Dir2d(std::cos(myAngle), std::sin(myAngle))));
     }
 
     myBuilder.CompleteFace(myFaces[FBOTTOM]);
-    FacesBuilt[FBOTTOM] = Standard_True;
+    FacesBuilt[FBOTTOM] = true;
   }
 
   return myFaces[FBOTTOM];
@@ -446,6 +498,16 @@ const TopoDS_Face& BRepPrim_OneAxis::StartFace()
     gp_Ax2 axes(myAxes.Location(), myAxes.YDirection().Reversed(), myAxes.XDirection());
     myBuilder.MakeFace(myFaces[FSTART], gp_Pln(axes));
 
+    // When heights are inverted, the wire traversal direction changes due to the
+    // AxisEdge running in the opposite direction. Reverse the face to compensate.
+    // For equal heights with open meridian (not closed), AxisEdge is skipped.
+    // Note: For closed meridian, areHeightsEqual() may be true but we don't change
+    // the wire structure, so don't apply equal heights reversal.
+    if (isHeightInverted() || (areHeightsEqual() && !MeridianClosed()))
+    {
+      myBuilder.ReverseFace(myFaces[FSTART]);
+    }
+
     if (VMaxInfinite() && VMinInfinite())
       myBuilder.AddFaceWire(myFaces[FSTART], AxisStartWire());
 
@@ -453,21 +515,28 @@ const TopoDS_Face& BRepPrim_OneAxis::StartFace()
 
     // parametric curves
     SetMeridianPCurve(myEdges[ESTART], myFaces[FSTART]);
-    if (EdgesBuilt[EAXIS])
+    // Skip AxisEdge pcurve when heights are equal since the edge is not in the wire
+    if (EdgesBuilt[EAXIS] && !areHeightsEqual())
       myBuilder.SetPCurve(myEdges[EAXIS],
                           myFaces[FSTART],
-                          gp_Lin2d(gp_Pnt2d(0, 0), gp_Dir2d(0, 1)));
+                          gp_Lin2d(gp_Pnt2d(0, 0), gp_Dir2d(gp_Dir2d::D::Y)));
+    // When heights are equal, the pcurves for TopStart and BotStart edges
+    // would overlap at Y = height. Use small offsets to separate them.
+    const double aPCurveOffset =
+      areHeightsEqual() ? Precision::Confusion() * THE_PCURVE_OFFSET_FACTOR : 0.0;
     if (EdgesBuilt[ETOPSTART])
-      myBuilder.SetPCurve(myEdges[ETOPSTART],
-                          myFaces[FSTART],
-                          gp_Lin2d(gp_Pnt2d(0, MeridianValue(myVMax).Y()), gp_Dir2d(1, 0)));
+      myBuilder.SetPCurve(
+        myEdges[ETOPSTART],
+        myFaces[FSTART],
+        gp_Lin2d(gp_Pnt2d(0, MeridianValue(myVMax).Y() + aPCurveOffset), gp_Dir2d(gp_Dir2d::D::X)));
     if (EdgesBuilt[EBOTSTART])
-      myBuilder.SetPCurve(myEdges[EBOTSTART],
-                          myFaces[FSTART],
-                          gp_Lin2d(gp_Pnt2d(0, MeridianValue(myVMin).Y()), gp_Dir2d(1, 0)));
+      myBuilder.SetPCurve(
+        myEdges[EBOTSTART],
+        myFaces[FSTART],
+        gp_Lin2d(gp_Pnt2d(0, MeridianValue(myVMin).Y() - aPCurveOffset), gp_Dir2d(gp_Dir2d::D::X)));
 
     myBuilder.CompleteFace(myFaces[FSTART]);
-    FacesBuilt[FSTART] = Standard_True;
+    FacesBuilt[FSTART] = true;
   }
 
   return myFaces[FSTART];
@@ -487,7 +556,15 @@ const TopoDS_Face& BRepPrim_OneAxis::EndFace()
     gp_Ax2 axes(myAxes.Location(), myAxes.YDirection().Reversed(), myAxes.XDirection());
     axes.Rotate(myAxes.Axis(), myAngle);
     myBuilder.MakeFace(myFaces[FEND], gp_Pln(axes));
-    myBuilder.ReverseFace(myFaces[FEND]);
+    // When heights are inverted, the wire traversal direction changes due to the
+    // AxisEdge running in the opposite direction. Don't reverse the face in this case.
+    // For equal heights with open meridian (not closed), AxisEdge is skipped.
+    // Note: For closed meridian, areHeightsEqual() may be true but we don't change
+    // the wire structure, so don't apply equal heights reversal.
+    if (!isHeightInverted() && (!areHeightsEqual() || MeridianClosed()))
+    {
+      myBuilder.ReverseFace(myFaces[FEND]);
+    }
 
     if (VMaxInfinite() && VMinInfinite())
       myBuilder.AddFaceWire(myFaces[FEND], AxisEndWire());
@@ -495,19 +572,28 @@ const TopoDS_Face& BRepPrim_OneAxis::EndFace()
 
     // parametric curves
     SetMeridianPCurve(myEdges[EEND], myFaces[FEND]);
-    if (EdgesBuilt[EAXIS])
-      myBuilder.SetPCurve(myEdges[EAXIS], myFaces[FEND], gp_Lin2d(gp_Pnt2d(0, 0), gp_Dir2d(0, 1)));
+    // Skip AxisEdge pcurve when heights are equal since the edge is not in the wire
+    if (EdgesBuilt[EAXIS] && !areHeightsEqual())
+      myBuilder.SetPCurve(myEdges[EAXIS],
+                          myFaces[FEND],
+                          gp_Lin2d(gp_Pnt2d(0, 0), gp_Dir2d(gp_Dir2d::D::Y)));
+    // When heights are equal, the pcurves for TopEnd and BotEnd edges
+    // would overlap at Y = height. Use small offsets to separate them.
+    const double aPCurveOffset =
+      areHeightsEqual() ? Precision::Confusion() * THE_PCURVE_OFFSET_FACTOR : 0.0;
     if (EdgesBuilt[ETOPEND])
-      myBuilder.SetPCurve(myEdges[ETOPEND],
-                          myFaces[FEND],
-                          gp_Lin2d(gp_Pnt2d(0, MeridianValue(myVMax).Y()), gp_Dir2d(1, 0)));
+      myBuilder.SetPCurve(
+        myEdges[ETOPEND],
+        myFaces[FEND],
+        gp_Lin2d(gp_Pnt2d(0, MeridianValue(myVMax).Y() + aPCurveOffset), gp_Dir2d(gp_Dir2d::D::X)));
     if (EdgesBuilt[EBOTEND])
-      myBuilder.SetPCurve(myEdges[EBOTEND],
-                          myFaces[FEND],
-                          gp_Lin2d(gp_Pnt2d(0, MeridianValue(myVMin).Y()), gp_Dir2d(1, 0)));
+      myBuilder.SetPCurve(
+        myEdges[EBOTEND],
+        myFaces[FEND],
+        gp_Lin2d(gp_Pnt2d(0, MeridianValue(myVMin).Y() - aPCurveOffset), gp_Dir2d(gp_Dir2d::D::X)));
 
     myBuilder.CompleteFace(myFaces[FEND]);
-    FacesBuilt[FEND] = Standard_True;
+    FacesBuilt[FEND] = true;
   }
 
   return myFaces[FEND];
@@ -524,14 +610,14 @@ const TopoDS_Wire& BRepPrim_OneAxis::LateralWire()
     myBuilder.MakeWire(myWires[WLATERAL]);
 
     if (!VMaxInfinite())
-      myBuilder.AddWireEdge(myWires[WLATERAL], TopEdge(), Standard_False);
-    myBuilder.AddWireEdge(myWires[WLATERAL], EndEdge(), Standard_True);
+      myBuilder.AddWireEdge(myWires[WLATERAL], TopEdge(), false);
+    myBuilder.AddWireEdge(myWires[WLATERAL], EndEdge(), true);
     if (!VMinInfinite())
-      myBuilder.AddWireEdge(myWires[WLATERAL], BottomEdge(), Standard_True);
-    myBuilder.AddWireEdge(myWires[WLATERAL], StartEdge(), Standard_False);
+      myBuilder.AddWireEdge(myWires[WLATERAL], BottomEdge(), true);
+    myBuilder.AddWireEdge(myWires[WLATERAL], StartEdge(), false);
 
     myBuilder.CompleteWire(myWires[WLATERAL]);
-    WiresBuilt[WLATERAL] = Standard_True;
+    WiresBuilt[WLATERAL] = true;
   }
 
   return myWires[WLATERAL];
@@ -547,10 +633,10 @@ const TopoDS_Wire& BRepPrim_OneAxis::LateralStartWire()
 
     myBuilder.MakeWire(myWires[WLATERALSTART]);
 
-    myBuilder.AddWireEdge(myWires[WLATERALSTART], StartEdge(), Standard_False);
+    myBuilder.AddWireEdge(myWires[WLATERALSTART], StartEdge(), false);
 
     myBuilder.CompleteWire(myWires[WLATERALSTART]);
-    WiresBuilt[WLATERALSTART] = Standard_True;
+    WiresBuilt[WLATERALSTART] = true;
   }
 
   return myWires[WLATERALSTART];
@@ -566,10 +652,10 @@ const TopoDS_Wire& BRepPrim_OneAxis::LateralEndWire()
 
     myBuilder.MakeWire(myWires[WLATERALEND]);
 
-    myBuilder.AddWireEdge(myWires[WLATERALEND], EndEdge(), Standard_True);
+    myBuilder.AddWireEdge(myWires[WLATERALEND], EndEdge(), true);
 
     myBuilder.CompleteWire(myWires[WLATERALEND]);
-    WiresBuilt[WLATERALEND] = Standard_True;
+    WiresBuilt[WLATERALEND] = true;
   }
 
   return myWires[WLATERALEND];
@@ -587,14 +673,14 @@ const TopoDS_Wire& BRepPrim_OneAxis::TopWire()
 
     myBuilder.MakeWire(myWires[WTOP]);
 
-    myBuilder.AddWireEdge(myWires[WTOP], TopEdge(), Standard_True);
+    myBuilder.AddWireEdge(myWires[WTOP], TopEdge(), true);
     if (HasSides())
     {
-      myBuilder.AddWireEdge(myWires[WTOP], StartTopEdge(), Standard_True);
-      myBuilder.AddWireEdge(myWires[WTOP], EndTopEdge(), Standard_False);
+      myBuilder.AddWireEdge(myWires[WTOP], StartTopEdge(), true);
+      myBuilder.AddWireEdge(myWires[WTOP], EndTopEdge(), false);
     }
     myBuilder.CompleteWire(myWires[WTOP]);
-    WiresBuilt[WTOP] = Standard_True;
+    WiresBuilt[WTOP] = true;
   }
 
   return myWires[WTOP];
@@ -612,15 +698,15 @@ const TopoDS_Wire& BRepPrim_OneAxis::BottomWire()
 
     myBuilder.MakeWire(myWires[WBOTTOM]);
 
-    myBuilder.AddWireEdge(myWires[WBOTTOM], BottomEdge(), Standard_False);
+    myBuilder.AddWireEdge(myWires[WBOTTOM], BottomEdge(), false);
     if (HasSides())
     {
-      myBuilder.AddWireEdge(myWires[WBOTTOM], EndBottomEdge(), Standard_True);
-      myBuilder.AddWireEdge(myWires[WBOTTOM], StartBottomEdge(), Standard_False);
+      myBuilder.AddWireEdge(myWires[WBOTTOM], EndBottomEdge(), true);
+      myBuilder.AddWireEdge(myWires[WBOTTOM], StartBottomEdge(), false);
     }
 
     myBuilder.CompleteWire(myWires[WBOTTOM]);
-    WiresBuilt[WBOTTOM] = Standard_True;
+    WiresBuilt[WBOTTOM] = true;
   }
 
   return myWires[WBOTTOM];
@@ -638,21 +724,28 @@ const TopoDS_Wire& BRepPrim_OneAxis::StartWire()
 
     myBuilder.MakeWire(myWires[WSTART]);
 
-    if (HasBottom())
-      myBuilder.AddWireEdge(myWires[WSTART], StartBottomEdge(), Standard_True);
+    // When heights are inverted, the AxisEdge direction is flipped.
+    // To maintain wire connectivity, we need to flip the reversed flag for AxisEdge.
+    // When heights are equal, skip the degenerate AxisEdge - the wire still closes
+    // because AxisTopVertex and AxisBottomVertex are the same vertex.
+    const bool isInverted   = isHeightInverted();
+    const bool heightsEqual = areHeightsEqual();
 
-    if (!MeridianClosed())
+    if (HasBottom())
+      myBuilder.AddWireEdge(myWires[WSTART], StartBottomEdge(), true);
+
+    if (!MeridianClosed() && !heightsEqual)
     {
       if (!VMaxInfinite() || !VMinInfinite())
-        myBuilder.AddWireEdge(myWires[WSTART], AxisEdge(), Standard_False);
+        myBuilder.AddWireEdge(myWires[WSTART], AxisEdge(), isInverted);
     }
 
     if (HasTop())
-      myBuilder.AddWireEdge(myWires[WSTART], StartTopEdge(), Standard_False);
-    myBuilder.AddWireEdge(myWires[WSTART], StartEdge(), Standard_True);
+      myBuilder.AddWireEdge(myWires[WSTART], StartTopEdge(), false);
+    myBuilder.AddWireEdge(myWires[WSTART], StartEdge(), true);
 
     myBuilder.CompleteWire(myWires[WSTART]);
-    WiresBuilt[WSTART] = Standard_True;
+    WiresBuilt[WSTART] = true;
   }
 
   return myWires[WSTART];
@@ -676,10 +769,10 @@ const TopoDS_Wire& BRepPrim_OneAxis::AxisStartWire()
 
     myBuilder.MakeWire(myWires[WAXISSTART]);
 
-    myBuilder.AddWireEdge(myWires[WAXISSTART], AxisEdge(), Standard_False);
+    myBuilder.AddWireEdge(myWires[WAXISSTART], AxisEdge(), false);
 
     myBuilder.CompleteWire(myWires[WAXISSTART]);
-    WiresBuilt[WAXISSTART] = Standard_True;
+    WiresBuilt[WAXISSTART] = true;
   }
 
   return myWires[WAXISSTART];
@@ -697,21 +790,28 @@ const TopoDS_Wire& BRepPrim_OneAxis::EndWire()
 
     myBuilder.MakeWire(myWires[WEND]);
 
+    // When heights are inverted, the AxisEdge direction is flipped.
+    // To maintain wire connectivity, we need to flip the reversed flag for AxisEdge.
+    // When heights are equal, skip the degenerate AxisEdge - the wire still closes
+    // because AxisTopVertex and AxisBottomVertex are the same vertex.
+    const bool isInverted   = isHeightInverted();
+    const bool heightsEqual = areHeightsEqual();
+
     if (HasTop())
-      myBuilder.AddWireEdge(myWires[WEND], EndTopEdge(), Standard_True);
-    if (!MeridianClosed())
+      myBuilder.AddWireEdge(myWires[WEND], EndTopEdge(), true);
+    if (!MeridianClosed() && !heightsEqual)
     {
       if (!VMaxInfinite() || !VMinInfinite())
       {
-        myBuilder.AddWireEdge(myWires[WEND], AxisEdge(), Standard_True);
+        myBuilder.AddWireEdge(myWires[WEND], AxisEdge(), !isInverted);
       }
     }
     if (HasBottom())
-      myBuilder.AddWireEdge(myWires[WEND], EndBottomEdge(), Standard_False);
-    myBuilder.AddWireEdge(myWires[WEND], EndEdge(), Standard_False);
+      myBuilder.AddWireEdge(myWires[WEND], EndBottomEdge(), false);
+    myBuilder.AddWireEdge(myWires[WEND], EndEdge(), false);
 
     myBuilder.CompleteWire(myWires[WEND]);
-    WiresBuilt[WEND] = Standard_True;
+    WiresBuilt[WEND] = true;
   }
   return myWires[WEND];
 }
@@ -734,10 +834,10 @@ const TopoDS_Wire& BRepPrim_OneAxis::AxisEndWire()
 
     myBuilder.MakeWire(myWires[WAXISEND]);
 
-    myBuilder.AddWireEdge(myWires[WAXISEND], AxisEdge(), Standard_True);
+    myBuilder.AddWireEdge(myWires[WAXISEND], AxisEdge(), true);
 
     myBuilder.CompleteWire(myWires[WAXISEND]);
-    WiresBuilt[WAXISEND] = Standard_True;
+    WiresBuilt[WAXISEND] = true;
   }
   return myWires[WAXISEND];
 }
@@ -756,22 +856,34 @@ const TopoDS_Edge& BRepPrim_OneAxis::AxisEdge()
     Standard_DomainError_Raise_if(!HasSides(), "BRepPrim_OneAxis::AxisEdge:no sides");
     Standard_DomainError_Raise_if(MeridianClosed(), "BRepPrim_OneAxis::AxisEdge:closed");
 
-    // build the empty edge.
-    myBuilder.MakeEdge(myEdges[EAXIS], gp_Lin(myAxes.Axis()));
+    if (areHeightsEqual())
+    {
+      // When heights are equal, the AxisEdge is degenerate (zero length).
+      // Create a degenerate edge at the shared vertex.
+      const double aHeight = MeridianValue(myVMax).Y();
+      myBuilder.MakeDegeneratedEdge(myEdges[EAXIS]);
+      myBuilder.AddEdgeVertex(myEdges[EAXIS], AxisTopVertex(), aHeight, aHeight);
+    }
+    else
+    {
+      // build the empty edge.
+      myBuilder.MakeEdge(myEdges[EAXIS], gp_Lin(myAxes.Axis()));
 
-    if (!VMaxInfinite())
-      myBuilder.AddEdgeVertex(myEdges[EAXIS],
-                              AxisTopVertex(),
-                              MeridianValue(myVMax).Y(),
-                              Standard_False);
-    if (!VMinInfinite())
-      myBuilder.AddEdgeVertex(myEdges[EAXIS],
-                              AxisBottomVertex(),
-                              MeridianValue(myVMin).Y(),
-                              Standard_True);
+      // When heights are inverted (VMax is geometrically below VMin), we need to swap
+      // the first flags to ensure the edge parameter range is valid (increasing).
+      // The edge should always run from the geometrically lower vertex to the higher one.
+      const bool   isInverted = isHeightInverted();
+      const double yMax       = MeridianValue(myVMax).Y();
+      const double yMin       = MeridianValue(myVMin).Y();
+
+      if (!VMaxInfinite())
+        myBuilder.AddEdgeVertex(myEdges[EAXIS], AxisTopVertex(), yMax, isInverted);
+      if (!VMinInfinite())
+        myBuilder.AddEdgeVertex(myEdges[EAXIS], AxisBottomVertex(), yMin, !isInverted);
+    }
 
     myBuilder.CompleteEdge(myEdges[EAXIS]);
-    EdgesBuilt[EAXIS] = Standard_True;
+    EdgesBuilt[EAXIS] = true;
   }
 
   return myEdges[EAXIS];
@@ -810,20 +922,20 @@ const TopoDS_Edge& BRepPrim_OneAxis::StartEdge()
           myBuilder.AddEdgeVertex(myEdges[ESTART],
                                   TopStartVertex(),
                                   myVMax + myMeridianOffset,
-                                  Standard_False);
+                                  false);
         }
         if (!VMinInfinite())
         {
           myBuilder.AddEdgeVertex(myEdges[ESTART],
                                   BottomStartVertex(),
                                   myVMin + myMeridianOffset,
-                                  Standard_True);
+                                  true);
         }
       }
     }
 
     myBuilder.CompleteEdge(myEdges[ESTART]);
-    EdgesBuilt[ESTART] = Standard_True;
+    EdgesBuilt[ESTART] = true;
   }
 
   return myEdges[ESTART];
@@ -858,23 +970,20 @@ const TopoDS_Edge& BRepPrim_OneAxis::EndEdge()
       {
         if (!VMaxInfinite())
         {
-          myBuilder.AddEdgeVertex(myEdges[EEND],
-                                  TopEndVertex(),
-                                  myVMax + myMeridianOffset,
-                                  Standard_False);
+          myBuilder.AddEdgeVertex(myEdges[EEND], TopEndVertex(), myVMax + myMeridianOffset, false);
         }
         if (!VMinInfinite())
         {
           myBuilder.AddEdgeVertex(myEdges[EEND],
                                   BottomEndVertex(),
                                   myVMin + myMeridianOffset,
-                                  Standard_True);
+                                  true);
         }
       }
     }
 
     myBuilder.CompleteEdge(myEdges[EEND]);
-    EdgesBuilt[EEND] = Standard_True;
+    EdgesBuilt[EEND] = true;
   }
 
   return myEdges[EEND];
@@ -897,14 +1006,11 @@ const TopoDS_Edge& BRepPrim_OneAxis::StartTopEdge()
     gp_Pnt P = myAxes.Location().Translated(V);
     myBuilder.MakeEdge(myEdges[ETOPSTART], gp_Lin(P, myAxes.XDirection()));
 
-    myBuilder.AddEdgeVertex(myEdges[ETOPSTART], AxisTopVertex(), 0., Standard_True);
-    myBuilder.AddEdgeVertex(myEdges[ETOPSTART],
-                            TopStartVertex(),
-                            MeridianValue(myVMax).X(),
-                            Standard_False);
+    myBuilder.AddEdgeVertex(myEdges[ETOPSTART], AxisTopVertex(), 0., true);
+    myBuilder.AddEdgeVertex(myEdges[ETOPSTART], TopStartVertex(), MeridianValue(myVMax).X(), false);
 
     myBuilder.CompleteEdge(myEdges[ETOPSTART]);
-    EdgesBuilt[ETOPSTART] = Standard_True;
+    EdgesBuilt[ETOPSTART] = true;
   }
 
   return myEdges[ETOPSTART];
@@ -930,11 +1036,11 @@ const TopoDS_Edge& BRepPrim_OneAxis::StartBottomEdge()
     myBuilder.AddEdgeVertex(myEdges[EBOTSTART],
                             BottomStartVertex(),
                             MeridianValue(myVMin).X(),
-                            Standard_False);
-    myBuilder.AddEdgeVertex(myEdges[EBOTSTART], AxisBottomVertex(), 0., Standard_True);
+                            false);
+    myBuilder.AddEdgeVertex(myEdges[EBOTSTART], AxisBottomVertex(), 0., true);
 
     myBuilder.CompleteEdge(myEdges[EBOTSTART]);
-    EdgesBuilt[EBOTSTART] = Standard_True;
+    EdgesBuilt[EBOTSTART] = true;
   }
 
   return myEdges[EBOTSTART];
@@ -959,14 +1065,11 @@ const TopoDS_Edge& BRepPrim_OneAxis::EndTopEdge()
     L.Rotate(myAxes.Axis(), myAngle);
     myBuilder.MakeEdge(myEdges[ETOPEND], L);
 
-    myBuilder.AddEdgeVertex(myEdges[ETOPEND], AxisTopVertex(), 0., Standard_True);
-    myBuilder.AddEdgeVertex(myEdges[ETOPEND],
-                            TopEndVertex(),
-                            MeridianValue(myVMax).X(),
-                            Standard_False);
+    myBuilder.AddEdgeVertex(myEdges[ETOPEND], AxisTopVertex(), 0., true);
+    myBuilder.AddEdgeVertex(myEdges[ETOPEND], TopEndVertex(), MeridianValue(myVMax).X(), false);
 
     myBuilder.CompleteEdge(myEdges[ETOPEND]);
-    EdgesBuilt[ETOPEND] = Standard_True;
+    EdgesBuilt[ETOPEND] = true;
   }
 
   return myEdges[ETOPEND];
@@ -991,14 +1094,11 @@ const TopoDS_Edge& BRepPrim_OneAxis::EndBottomEdge()
     L.Rotate(myAxes.Axis(), myAngle);
     myBuilder.MakeEdge(myEdges[EBOTEND], L);
 
-    myBuilder.AddEdgeVertex(myEdges[EBOTEND], AxisBottomVertex(), 0., Standard_True);
-    myBuilder.AddEdgeVertex(myEdges[EBOTEND],
-                            BottomEndVertex(),
-                            MeridianValue(myVMin).X(),
-                            Standard_False);
+    myBuilder.AddEdgeVertex(myEdges[EBOTEND], AxisBottomVertex(), 0., true);
+    myBuilder.AddEdgeVertex(myEdges[EBOTEND], BottomEndVertex(), MeridianValue(myVMin).X(), false);
 
     myBuilder.CompleteEdge(myEdges[EBOTEND]);
-    EdgesBuilt[EBOTEND] = Standard_True;
+    EdgesBuilt[EBOTEND] = true;
   }
 
   return myEdges[EBOTEND];
@@ -1041,13 +1141,13 @@ const TopoDS_Edge& BRepPrim_OneAxis::TopEdge()
       }
       else
       {
-        myBuilder.AddEdgeVertex(myEdges[ETOP], TopEndVertex(), myAngle, Standard_False);
-        myBuilder.AddEdgeVertex(myEdges[ETOP], TopStartVertex(), 0., Standard_True);
+        myBuilder.AddEdgeVertex(myEdges[ETOP], TopEndVertex(), myAngle, false);
+        myBuilder.AddEdgeVertex(myEdges[ETOP], TopStartVertex(), 0., true);
       }
     }
 
     myBuilder.CompleteEdge(myEdges[ETOP]);
-    EdgesBuilt[ETOP] = Standard_True;
+    EdgesBuilt[ETOP] = true;
   }
 
   return myEdges[ETOP];
@@ -1091,13 +1191,13 @@ const TopoDS_Edge& BRepPrim_OneAxis::BottomEdge()
       }
       else
       {
-        myBuilder.AddEdgeVertex(myEdges[EBOTTOM], BottomEndVertex(), myAngle, Standard_False);
-        myBuilder.AddEdgeVertex(myEdges[EBOTTOM], BottomStartVertex(), 0., Standard_True);
+        myBuilder.AddEdgeVertex(myEdges[EBOTTOM], BottomEndVertex(), myAngle, false);
+        myBuilder.AddEdgeVertex(myEdges[EBOTTOM], BottomStartVertex(), 0., true);
       }
     }
 
     myBuilder.CompleteEdge(myEdges[EBOTTOM]);
-    EdgesBuilt[EBOTTOM] = Standard_True;
+    EdgesBuilt[EBOTTOM] = true;
   }
 
   return myEdges[EBOTTOM];
@@ -1118,6 +1218,10 @@ const TopoDS_Vertex& BRepPrim_OneAxis::AxisTopVertex()
     else if (MeridianOnAxis(myVMax) && VerticesBuilt[VTOPEND])
       myVertices[VAXISTOP] = myVertices[VTOPEND];
 
+    // Share with AxisBottomVertex if heights are equal (handles case when bottom is built first)
+    else if (VerticesBuilt[VAXISBOT] && areHeightsEqual())
+      myVertices[VAXISTOP] = myVertices[VAXISBOT];
+
     else
     {
       Standard_DomainError_Raise_if(MeridianClosed(), "BRepPrim_OneAxis::AxisTopVertex");
@@ -1129,7 +1233,7 @@ const TopoDS_Vertex& BRepPrim_OneAxis::AxisTopVertex()
       myBuilder.MakeVertex(myVertices[VAXISTOP], P);
     }
 
-    VerticesBuilt[VAXISTOP] = Standard_True;
+    VerticesBuilt[VAXISTOP] = true;
   }
 
   return myVertices[VAXISTOP];
@@ -1150,6 +1254,10 @@ const TopoDS_Vertex& BRepPrim_OneAxis::AxisBottomVertex()
     else if (MeridianOnAxis(myVMin) && VerticesBuilt[VBOTEND])
       myVertices[VAXISBOT] = myVertices[VBOTEND];
 
+    // Share with AxisTopVertex if heights are equal (within tolerance)
+    else if (VerticesBuilt[VAXISTOP] && areHeightsEqual())
+      myVertices[VAXISBOT] = myVertices[VAXISTOP];
+
     else
     {
       Standard_DomainError_Raise_if(MeridianClosed(), "BRepPrim_OneAxis::AxisBottomVertex");
@@ -1161,7 +1269,7 @@ const TopoDS_Vertex& BRepPrim_OneAxis::AxisBottomVertex()
       myBuilder.MakeVertex(myVertices[VAXISBOT], P);
     }
 
-    VerticesBuilt[VAXISBOT] = Standard_True;
+    VerticesBuilt[VAXISBOT] = true;
   }
 
   return myVertices[VAXISBOT];
@@ -1197,7 +1305,7 @@ const TopoDS_Vertex& BRepPrim_OneAxis::TopStartVertex()
       myBuilder.MakeVertex(myVertices[VTOPSTART], P);
     }
 
-    VerticesBuilt[VTOPSTART] = Standard_True;
+    VerticesBuilt[VTOPSTART] = true;
   }
 
   return myVertices[VTOPSTART];
@@ -1234,7 +1342,7 @@ const TopoDS_Vertex& BRepPrim_OneAxis::TopEndVertex()
       myBuilder.MakeVertex(myVertices[VTOPEND], P);
     }
 
-    VerticesBuilt[VTOPEND] = Standard_True;
+    VerticesBuilt[VTOPEND] = true;
   }
 
   return myVertices[VTOPEND];
@@ -1270,7 +1378,7 @@ const TopoDS_Vertex& BRepPrim_OneAxis::BottomStartVertex()
       myBuilder.MakeVertex(myVertices[VBOTSTART], P);
     }
 
-    VerticesBuilt[VBOTSTART] = Standard_True;
+    VerticesBuilt[VBOTSTART] = true;
   }
 
   return myVertices[VBOTSTART];
@@ -1307,7 +1415,7 @@ const TopoDS_Vertex& BRepPrim_OneAxis::BottomEndVertex()
       myBuilder.MakeVertex(myVertices[VBOTEND], P);
     }
 
-    VerticesBuilt[VBOTEND] = Standard_True;
+    VerticesBuilt[VBOTEND] = true;
   }
 
   return myVertices[VBOTEND];

@@ -15,7 +15,6 @@
 
 #include <DEPLY_Provider.hxx>
 #include <DE_ConfigurationContext.hxx>
-#include <DE_PluginHolder.hxx>
 #include <NCollection_Buffer.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(DEPLY_ConfigurationNode, DE_ConfigurationNode)
@@ -28,20 +27,18 @@ static const TCollection_AsciiString& THE_CONFIGURATION_SCOPE()
   return aScope;
 }
 
-// Wrapper to auto-load DE component
-DE_PluginHolder<DEPLY_ConfigurationNode> THE_OCCT_PLY_COMPONENT_PLUGIN;
 } // namespace
 
 //=================================================================================================
 
 DEPLY_ConfigurationNode::DEPLY_ConfigurationNode()
-    : DE_ConfigurationNode()
-{
-}
+
+  = default;
 
 //=================================================================================================
 
-DEPLY_ConfigurationNode::DEPLY_ConfigurationNode(const Handle(DEPLY_ConfigurationNode)& theNode)
+DEPLY_ConfigurationNode::DEPLY_ConfigurationNode(
+  const occ::handle<DEPLY_ConfigurationNode>& theNode)
     : DE_ConfigurationNode(theNode)
 {
   InternalParameters = theNode->InternalParameters;
@@ -49,7 +46,7 @@ DEPLY_ConfigurationNode::DEPLY_ConfigurationNode(const Handle(DEPLY_Configuratio
 
 //=================================================================================================
 
-bool DEPLY_ConfigurationNode::Load(const Handle(DE_ConfigurationContext)& theResource)
+bool DEPLY_ConfigurationNode::Load(const occ::handle<DE_ConfigurationContext>& theResource)
 {
   TCollection_AsciiString aScope =
     THE_CONFIGURATION_SCOPE() + "." + GetFormat() + "." + GetVendor();
@@ -80,7 +77,7 @@ bool DEPLY_ConfigurationNode::Load(const Handle(DE_ConfigurationContext)& theRes
     theResource->StringVal("write.comment", InternalParameters.WriteComment, aScope);
   InternalParameters.WriteAuthor =
     theResource->StringVal("write.author", InternalParameters.WriteAuthor, aScope);
-  return Standard_True;
+  return true;
 }
 
 //=================================================================================================
@@ -171,14 +168,14 @@ TCollection_AsciiString DEPLY_ConfigurationNode::Save() const
 
 //=================================================================================================
 
-Handle(DE_ConfigurationNode) DEPLY_ConfigurationNode::Copy() const
+occ::handle<DE_ConfigurationNode> DEPLY_ConfigurationNode::Copy() const
 {
   return new DEPLY_ConfigurationNode(*this);
 }
 
 //=================================================================================================
 
-Handle(DE_Provider) DEPLY_ConfigurationNode::BuildProvider()
+occ::handle<DE_Provider> DEPLY_ConfigurationNode::BuildProvider()
 {
   return new DEPLY_Provider(this);
 }
@@ -187,14 +184,14 @@ Handle(DE_Provider) DEPLY_ConfigurationNode::BuildProvider()
 
 bool DEPLY_ConfigurationNode::IsImportSupported() const
 {
-  return Standard_False;
+  return false;
 }
 
 //=================================================================================================
 
 bool DEPLY_ConfigurationNode::IsExportSupported() const
 {
-  return Standard_True;
+  return true;
 }
 
 //=================================================================================================
@@ -213,25 +210,21 @@ TCollection_AsciiString DEPLY_ConfigurationNode::GetVendor() const
 
 //=================================================================================================
 
-TColStd_ListOfAsciiString DEPLY_ConfigurationNode::GetExtensions() const
+NCollection_List<TCollection_AsciiString> DEPLY_ConfigurationNode::GetExtensions() const
 {
-  TColStd_ListOfAsciiString anExt;
+  NCollection_List<TCollection_AsciiString> anExt;
   anExt.Append("ply");
   return anExt;
 }
 
 //=================================================================================================
 
-bool DEPLY_ConfigurationNode::CheckContent(const Handle(NCollection_Buffer)& theBuffer) const
+bool DEPLY_ConfigurationNode::CheckContent(const occ::handle<NCollection_Buffer>& theBuffer) const
 {
   if (theBuffer.IsNull() || theBuffer->Size() < 4)
   {
     return false;
   }
   const char* aBytes = (const char*)theBuffer->Data();
-  if (!::strncmp(aBytes, "ply", 3) && ::isspace(aBytes[3]))
-  {
-    return true;
-  }
-  return false;
+  return !::strncmp(aBytes, "ply", 3) && ::isspace(aBytes[3]);
 }

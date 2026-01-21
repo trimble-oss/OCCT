@@ -16,13 +16,13 @@
 #include <StepData_StepWriter.hxx>
 #include <StepVisual_PresentationSet.hxx>
 
-RWStepVisual_RWPresentationSet::RWStepVisual_RWPresentationSet() {}
+RWStepVisual_RWPresentationSet::RWStepVisual_RWPresentationSet() = default;
 
 void RWStepVisual_RWPresentationSet::ReadStep(
-  const Handle(StepData_StepReaderData)& data,
-  const Standard_Integer                 num,
-  Handle(Interface_Check)&               ach,
-  const Handle(StepVisual_PresentationSet)& /*ent*/) const
+  const occ::handle<StepData_StepReaderData>& data,
+  const int                                   num,
+  occ::handle<Interface_Check>&               ach,
+  const occ::handle<StepVisual_PresentationSet>& /*ent*/) const
 {
 
   // --- Number of Parameter Control ---
@@ -35,6 +35,6 @@ void RWStepVisual_RWPresentationSet::ReadStep(
 
 void RWStepVisual_RWPresentationSet::WriteStep(
   StepData_StepWriter& /*SW*/,
-  const Handle(StepVisual_PresentationSet)& /*ent*/) const
+  const occ::handle<StepVisual_PresentationSet>& /*ent*/) const
 {
 }

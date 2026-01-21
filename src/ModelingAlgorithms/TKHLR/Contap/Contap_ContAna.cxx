@@ -26,10 +26,10 @@
 #include <Standard_OutOfRange.hxx>
 #include <StdFail_NotDone.hxx>
 
-static const Standard_Real Tolpetit = 1.e-8;
+static const double Tolpetit = 1.e-8;
 
 Contap_ContAna::Contap_ContAna()
-    : done(Standard_False),
+    : done(false),
       nbSol(0),
       typL(GeomAbs_OtherCurve),
       prm(0.0)
@@ -38,11 +38,11 @@ Contap_ContAna::Contap_ContAna()
 
 void Contap_ContAna::Perform(const gp_Sphere& S, const gp_Dir& D)
 {
-  done = Standard_False;
+  done = false;
   typL = GeomAbs_Circle;
   pt1  = S.Location();
   dir1 = D;
-  if (Abs(D.Dot(S.XAxis().Direction())) < 0.9999999999999)
+  if (std::abs(D.Dot(S.XAxis().Direction())) < 0.9999999999999)
   {
     dir2 = D.Crossed(S.XAxis().Direction());
   }
@@ -52,16 +52,16 @@ void Contap_ContAna::Perform(const gp_Sphere& S, const gp_Dir& D)
   }
   prm   = S.Radius();
   nbSol = 1;
-  done  = Standard_True;
+  done  = true;
 }
 
-void Contap_ContAna::Perform(const gp_Sphere& S, const gp_Dir& D, const Standard_Real Angle)
+void Contap_ContAna::Perform(const gp_Sphere& S, const gp_Dir& D, const double Angle)
 {
-  done = Standard_False;
+  done = false;
   typL = GeomAbs_Circle;
 
   dir1 = D;
-  if (Abs(D.Dot(S.XAxis().Direction())) < 0.9999999999999)
+  if (std::abs(D.Dot(S.XAxis().Direction())) < 0.9999999999999)
   {
     dir2 = D.Crossed(S.XAxis().Direction());
   }
@@ -69,19 +69,19 @@ void Contap_ContAna::Perform(const gp_Sphere& S, const gp_Dir& D, const Standard
   {
     dir2 = D.Crossed(S.YAxis().Direction());
   }
-  Standard_Real alpha = (S.Direct() ? Angle : -Angle);
+  double alpha = (S.Direct() ? Angle : -Angle);
   pt1.SetXYZ(S.Location().XYZ() - S.Radius() * sin(alpha) * D.XYZ());
   prm   = S.Radius() * cos(alpha);
   nbSol = 1;
-  done  = Standard_True;
+  done  = true;
 }
 
 void Contap_ContAna::Perform(const gp_Sphere& S, const gp_Pnt& Eye)
 {
-  done = Standard_False;
+  done = false;
 
-  Standard_Real radius = S.Radius();
-  Standard_Real dist   = Eye.Distance(S.Location());
+  double radius = S.Radius();
+  double dist   = Eye.Distance(S.Location());
   if (dist <= radius)
   {
     nbSol = 0;
@@ -98,7 +98,7 @@ void Contap_ContAna::Perform(const gp_Sphere& S, const gp_Pnt& Eye)
       gp_XYZ locxyz(S.Location().XYZ());
       dir1.SetXYZ(Eye.XYZ() - locxyz);
       pt1.SetXYZ(locxyz + (radius * radius / dist) * dir1.XYZ());
-      if (Abs(dir1.Dot(S.XAxis().Direction())) < 0.9999999999999)
+      if (std::abs(dir1.Dot(S.XAxis().Direction())) < 0.9999999999999)
       {
         dir2 = dir1.Crossed(S.XAxis().Direction());
       }
@@ -110,12 +110,12 @@ void Contap_ContAna::Perform(const gp_Sphere& S, const gp_Pnt& Eye)
       typL  = GeomAbs_Circle;
     }
   }
-  done = Standard_True;
+  done = true;
 }
 
 void Contap_ContAna::Perform(const gp_Cylinder& C, const gp_Dir& D)
 {
-  done = Standard_False;
+  done = false;
 
   gp_XYZ normale(C.Position().Direction().XYZ());
   normale.Cross(D.XYZ());
@@ -134,21 +134,21 @@ void Contap_ContAna::Perform(const gp_Cylinder& C, const gp_Dir& D)
     nbSol = 2;
   }
 
-  done = Standard_True;
+  done = true;
 }
 
-void Contap_ContAna::Perform(const gp_Cylinder& C, const gp_Dir& D, const Standard_Real Angle)
+void Contap_ContAna::Perform(const gp_Cylinder& C, const gp_Dir& D, const double Angle)
 {
-  done = Standard_False;
+  done = false;
 
-  Standard_Real Coefcos = D.Dot(C.Position().XDirection());
-  Standard_Real Coefsin = D.Dot(C.Position().YDirection());
-  Standard_Real Coefcst = cos(M_PI * 0.5 + Angle);
+  double Coefcos = D.Dot(C.Position().XDirection());
+  double Coefsin = D.Dot(C.Position().YDirection());
+  double Coefcst = cos(M_PI * 0.5 + Angle);
 
-  Standard_Real norm1 = Coefcos * Coefcos + Coefsin * Coefsin;
-  Standard_Real norm2 = sqrt(norm1);
+  double norm1 = Coefcos * Coefcos + Coefsin * Coefsin;
+  double norm2 = sqrt(norm1);
 
-  if (Abs(Coefcst) < norm2)
+  if (std::abs(Coefcst) < norm2)
   {
     typL  = GeomAbs_Line;
     nbSol = 2;
@@ -163,13 +163,13 @@ void Contap_ContAna::Perform(const gp_Cylinder& C, const gp_Dir& D, const Standa
     // Necessary to solve Coefcos*cos(t) + Coefsin*sin(t) = Coefcst
     // and the origins of solution are in the reference of the
     // cylinder in (R*cost0, R*sint0,0) and (R*cost1,R*sint1,0)
-    // By setting cos(phi) = Coefcos/Sqrt(Coefcos**2 + Coefsin**2) and
-    //           sin(phi) = Coefsin/Sqrt(Coefcos**2 + Coefsin**2)
+    // By setting cos(phi) = Coefcos/std::sqrt(Coefcos**2 + Coefsin**2) and
+    //           sin(phi) = Coefsin/std::sqrt(Coefcos**2 + Coefsin**2)
     // and by using trigonometric relations the values of cosinus
     // and sinus to the solutions are obtained.
 
-    prm = Sqrt(norm1 - Coefcst * Coefcst);
-    Standard_Real cost0, sint0, cost1, sint1;
+    prm = std::sqrt(norm1 - Coefcst * Coefcst);
+    double cost0, sint0, cost1, sint1;
 
     cost0 = (Coefcos * Coefcst - Coefsin * prm) / norm1;
     cost1 = (Coefcos * Coefcst + Coefsin * prm) / norm1;
@@ -194,16 +194,16 @@ void Contap_ContAna::Perform(const gp_Cylinder& C, const gp_Dir& D, const Standa
     nbSol = 0;
   }
 
-  done = Standard_True;
+  done = true;
 }
 
 void Contap_ContAna::Perform(const gp_Cylinder& C, const gp_Pnt& Eye)
 {
-  done = Standard_False;
+  done = false;
 
-  Standard_Real radius = C.Radius();
-  gp_Lin        theaxis(C.Axis());
-  Standard_Real dist = theaxis.Distance(Eye);
+  double radius = C.Radius();
+  gp_Lin theaxis(C.Axis());
+  double dist = theaxis.Distance(Eye);
   if (dist <= radius)
   {
     nbSol = 0;
@@ -222,30 +222,30 @@ void Contap_ContAna::Perform(const gp_Cylinder& C, const gp_Pnt& Eye)
     pt1.SetXYZ(pt1.XYZ() + prm * normale);
     nbSol = 2;
   }
-  done = Standard_True;
+  done = true;
 }
 
 void Contap_ContAna::Perform(const gp_Cone& C, const gp_Dir& D)
 {
-  done = Standard_False;
+  done = false;
 
-  Standard_Real Tgtalpha = Tan(C.SemiAngle());
+  double Tgtalpha = std::tan(C.SemiAngle());
 
-  Standard_Real Coefcos = D.Dot(C.Position().XDirection());
-  Standard_Real Coefsin = D.Dot(C.Position().YDirection());
-  Standard_Real Coefcst = D.Dot(C.Axis().Direction()) * Tgtalpha;
+  double Coefcos = D.Dot(C.Position().XDirection());
+  double Coefsin = D.Dot(C.Position().YDirection());
+  double Coefcst = D.Dot(C.Axis().Direction()) * Tgtalpha;
 
-  Standard_Real norm1 = Coefcos * Coefcos + Coefsin * Coefsin;
-  Standard_Real norm2 = Sqrt(norm1);
-  //  if (Abs(Abs(Coefcst)-norm2) <= Tolpetit) { // tol angulaire 1.e-8
+  double norm1 = Coefcos * Coefcos + Coefsin * Coefsin;
+  double norm2 = std::sqrt(norm1);
+  //  if (std::abs(std::abs(Coefcst)-norm2) <= Tolpetit) { // tol angulaire 1.e-8
   //    typL = GeomAbs_Line;
   //    nbSol = 1;
   //    pt1 = C.Apex();
   //    dir1 = D;
   //  }
-  //  else if (Abs(Coefcst) < norm2) {
+  //  else if (std::abs(Coefcst) < norm2) {
 
-  if (Abs(Coefcst) < norm2)
+  if (std::abs(Coefcst) < norm2)
   {
     typL  = GeomAbs_Line;
     nbSol = 2;
@@ -254,13 +254,13 @@ void Contap_ContAna::Perform(const gp_Cone& C, const gp_Dir& D)
     // Necessary to solve Coefcos*cos(t) + Coefsin*sin(t) = Coefcst
     // and director vectors of solutions are
     // cos(t0) * XDirection + sin(t0) * YDirection + ZDirection/Tgtalpha
-    // By setting cos(phi) = Coefcos/Sqrt(Coefcos**2 + Coefsin**2) and
-    //           sin(phi) = Coefsin/Sqrt(Coefcos**2 + Coefsin**2)
+    // By setting cos(phi) = Coefcos/std::sqrt(Coefcos**2 + Coefsin**2) and
+    //           sin(phi) = Coefsin/std::sqrt(Coefcos**2 + Coefsin**2)
     // and by using trigonometric relations the values of cosinus
     // and sinus to the solutions are obtained.
 
-    prm = Sqrt(norm1 - Coefcst * Coefcst);
-    Standard_Real cost0, sint0, cost1, sint1;
+    prm = std::sqrt(norm1 - Coefcst * Coefcst);
+    double cost0, sint0, cost1, sint1;
 
     cost0 = (Coefcos * Coefcst - Coefsin * prm) / norm1;
     cost1 = (Coefcos * Coefcst + Coefsin * prm) / norm1;
@@ -283,46 +283,46 @@ void Contap_ContAna::Perform(const gp_Cone& C, const gp_Dir& D)
   {
     nbSol = 0;
   }
-  done = Standard_True;
+  done = true;
 }
 
-void Contap_ContAna::Perform(const gp_Cone& C, const gp_Dir& D, const Standard_Real Angle)
+void Contap_ContAna::Perform(const gp_Cone& C, const gp_Dir& D, const double Angle)
 {
-  done  = Standard_False;
+  done  = false;
   nbSol = 0;
 
-  Standard_Real Ang  = C.SemiAngle();
-  Standard_Real Cosa = cos(Ang);
-  Standard_Real Sina = sin(Ang);
+  double Ang  = C.SemiAngle();
+  double Cosa = cos(Ang);
+  double Sina = sin(Ang);
 
-  Standard_Real Coefcos = D.Dot(C.Position().XDirection());
-  Standard_Real Coefsin = D.Dot(C.Position().YDirection());
+  double Coefcos = D.Dot(C.Position().XDirection());
+  double Coefsin = D.Dot(C.Position().YDirection());
 
-  Standard_Real Coefcst1 = cos(M_PI * 0.5 + Angle);
+  double Coefcst1 = cos(M_PI * 0.5 + Angle);
 
-  Standard_Real norm1 = Coefcos * Coefcos + Coefsin * Coefsin;
-  Standard_Real norm2 = Sqrt(norm1);
+  double norm1 = Coefcos * Coefcos + Coefsin * Coefsin;
+  double norm2 = std::sqrt(norm1);
 
-  Standard_Real Coefnz  = D.Dot(C.Axis().Direction()) * Sina;
-  Standard_Real Coefcst = (Coefcst1 + Coefnz) / Cosa;
+  double Coefnz  = D.Dot(C.Axis().Direction()) * Sina;
+  double Coefcst = (Coefcst1 + Coefnz) / Cosa;
 
-  if (Abs(Coefcst) < norm2)
+  if (std::abs(Coefcst) < norm2)
   {
     typL = GeomAbs_Line;
     nbSol += 2;
     pt1 = C.Apex();
     pt2 = pt1;
 
-    // It is requiredto solve Coefcos*cos(t) + Coefsin*sin(t) = Coefcst
+    // It is required to solve Coefcos*cos(t) + Coefsin*sin(t) = Coefcst
     // and the director vectors of solutions are
     // cos(t0) * XDirection + sin(t0) * YDirection + ZDirection/Tgtalpha
-    // By setting cos(phi) = Coefcos/Sqrt(Coefcos**2 + Coefsin**2) and
-    //           sin(phi) = Coefsin/Sqrt(Coefcos**2 + Coefsin**2)
+    // By setting cos(phi) = Coefcos/std::sqrt(Coefcos**2 + Coefsin**2) and
+    //           sin(phi) = Coefsin/std::sqrt(Coefcos**2 + Coefsin**2)
     // and by using trigonometric relations the values of cosinus
     // and sinus to the solutions are obtained.
 
-    prm = Sqrt(norm1 - Coefcst * Coefcst);
-    Standard_Real cost0, sint0, cost1, sint1;
+    prm = std::sqrt(norm1 - Coefcst * Coefcst);
+    double cost0, sint0, cost1, sint1;
 
     cost0 = (Coefcos * Coefcst - Coefsin * prm) / norm1;
     cost1 = (Coefcos * Coefcst + Coefsin * prm) / norm1;
@@ -348,15 +348,15 @@ void Contap_ContAna::Perform(const gp_Cone& C, const gp_Dir& D, const Standard_R
 
   Coefcst = (Coefcst1 - Coefnz) / Cosa;
 
-  if (Abs(Coefcst) < norm2)
+  if (std::abs(Coefcst) < norm2)
   {
     typL = GeomAbs_Line;
     nbSol += 2;
     pt3 = C.Apex();
     pt4 = pt3;
 
-    prm = Sqrt(norm1 - Coefcst * Coefcst);
-    Standard_Real cost0, sint0, cost1, sint1;
+    prm = std::sqrt(norm1 - Coefcst * Coefcst);
+    double cost0, sint0, cost1, sint1;
 
     cost0 = (Coefcos * Coefcst - Coefsin * prm) / norm1;
     cost1 = (Coefcos * Coefcst + Coefsin * prm) / norm1;
@@ -387,33 +387,33 @@ void Contap_ContAna::Perform(const gp_Cone& C, const gp_Dir& D, const Standard_R
     }
   }
 
-  done = Standard_True;
+  done = true;
 }
 
 void Contap_ContAna::Perform(const gp_Cone& C, const gp_Pnt& Eye)
 {
-  done = Standard_False;
+  done = false;
 
-  Standard_Real Tgtalpha = Tan(C.SemiAngle());
+  double Tgtalpha = std::tan(C.SemiAngle());
 
   gp_XYZ apexeye(Eye.XYZ());
   apexeye.Subtract(C.Apex().XYZ());
 
-  Standard_Real Coefcos = apexeye.Dot(C.Position().XDirection().XYZ());
-  Standard_Real Coefsin = apexeye.Dot(C.Position().YDirection().XYZ());
-  Standard_Real Coefcst = apexeye.Dot(C.Axis().Direction().XYZ()) * Tgtalpha;
+  double Coefcos = apexeye.Dot(C.Position().XDirection().XYZ());
+  double Coefsin = apexeye.Dot(C.Position().YDirection().XYZ());
+  double Coefcst = apexeye.Dot(C.Axis().Direction().XYZ()) * Tgtalpha;
 
-  Standard_Real norm1 = Coefcos * Coefcos + Coefsin * Coefsin;
-  Standard_Real norm2 = Sqrt(Coefcos * Coefcos + Coefsin * Coefsin);
-  //  if (Abs(Abs(Coefcst)-norm2) <= Tolpetit) { // tol angulaire 1.e-8
+  double norm1 = Coefcos * Coefcos + Coefsin * Coefsin;
+  double norm2 = std::sqrt(Coefcos * Coefcos + Coefsin * Coefsin);
+  //  if (std::abs(std::abs(Coefcst)-norm2) <= Tolpetit) { // tol angulaire 1.e-8
   //    typL = GeomAbs_Line;
   //    nbSol = 1;
   //    pt1 = C.Apex();
   //    dir1.SetXYZ(apexeye);
   //  }
-  //  else if (Abs(Coefcst) < norm2) {
+  //  else if (std::abs(Coefcst) < norm2) {
 
-  if (Abs(Coefcst) < norm2)
+  if (std::abs(Coefcst) < norm2)
   {
     typL  = GeomAbs_Line;
     nbSol = 2;
@@ -422,13 +422,13 @@ void Contap_ContAna::Perform(const gp_Cone& C, const gp_Pnt& Eye)
     // It is required to solve Coefcos*cos(t) + Coefsin*sin(t) = Coefcst
     // and the director vectors of solutions are
     // cos(t0) * XDirection + sin(t0) * YDirection + ZDirection/Tgtalpha
-    // By setting cos(phi) = Coefcos/Sqrt(Coefcos**2 + Coefsin**2) and
-    //           sin(phi) = Coefsin/Sqrt(Coefcos**2 + Coefsin**2)
+    // By setting cos(phi) = Coefcos/std::sqrt(Coefcos**2 + Coefsin**2) and
+    //           sin(phi) = Coefsin/std::sqrt(Coefcos**2 + Coefsin**2)
     // and by using trigonometric relations the values of cosinus
     // and sinus to the solutions are obtained.
 
-    prm = Sqrt(norm1 - Coefcst * Coefcst);
-    Standard_Real cost0, sint0, cost1, sint1;
+    prm = std::sqrt(norm1 - Coefcst * Coefcst);
+    double cost0, sint0, cost1, sint1;
 
     cost0 = (Coefcos * Coefcst - Coefsin * prm) / norm1;
     cost1 = (Coefcos * Coefcst + Coefsin * prm) / norm1;
@@ -451,10 +451,10 @@ void Contap_ContAna::Perform(const gp_Cone& C, const gp_Pnt& Eye)
   {
     nbSol = 0;
   }
-  done = Standard_True;
+  done = true;
 }
 
-gp_Lin Contap_ContAna::Line(const Standard_Integer Index) const
+gp_Lin Contap_ContAna::Line(const int Index) const
 {
   if (!done)
   {

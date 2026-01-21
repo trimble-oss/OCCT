@@ -25,7 +25,7 @@
 void NCollection_BaseList::PClear(NCollection_DelListNode fDel)
 {
   NCollection_ListNode* pCur  = myFirst;
-  NCollection_ListNode* pNext = NULL;
+  NCollection_ListNode* pNext = nullptr;
   while (pCur)
   {
     pNext = pCur->Next();
@@ -33,7 +33,7 @@ void NCollection_BaseList::PClear(NCollection_DelListNode fDel)
     pCur = pNext;
   }
   myLength = 0;
-  myFirst = myLast = NULL;
+  myFirst = myLast = nullptr;
 }
 
 //=======================================================================
@@ -41,13 +41,13 @@ void NCollection_BaseList::PClear(NCollection_DelListNode fDel)
 // purpose  : Appends one item at the end
 //=======================================================================
 
-void NCollection_BaseList::PAppend(NCollection_ListNode* theNode)
+void NCollection_BaseList::PAppend(NCollection_ListNode* theNode) noexcept
 {
   if (myLength)
     myLast->Next() = theNode;
   else
     myFirst = theNode;
-  theNode->Next() = NULL;
+  theNode->Next() = nullptr;
   myLast          = theNode;
   myLength++;
 }
@@ -57,7 +57,7 @@ void NCollection_BaseList::PAppend(NCollection_ListNode* theNode)
 // purpose  : Appends another list at the end
 //=======================================================================
 
-void NCollection_BaseList::PAppend(NCollection_BaseList& theOther)
+void NCollection_BaseList::PAppend(NCollection_BaseList& theOther) noexcept
 {
   if (this == &theOther || theOther.IsEmpty())
     return;
@@ -67,7 +67,7 @@ void NCollection_BaseList::PAppend(NCollection_BaseList& theOther)
   else
     myLast->Next() = theOther.myFirst;
   myLast           = theOther.myLast;
-  theOther.myFirst = theOther.myLast = NULL;
+  theOther.myFirst = theOther.myLast = nullptr;
 
   myLength += theOther.myLength;
   theOther.myLength = 0;
@@ -78,18 +78,18 @@ void NCollection_BaseList::PAppend(NCollection_BaseList& theOther)
 // purpose  : Prepends one item at the beginning
 //=======================================================================
 
-void NCollection_BaseList::PPrepend(NCollection_ListNode* theNode)
+void NCollection_BaseList::PPrepend(NCollection_ListNode* theNode) noexcept
 {
   theNode->Next() = myFirst;
   myFirst         = theNode;
-  if (myLast == NULL)
+  if (myLast == nullptr)
     myLast = myFirst;
   myLength++;
 }
 
 //=================================================================================================
 
-void NCollection_BaseList::PPrepend(NCollection_BaseList& theOther)
+void NCollection_BaseList::PPrepend(NCollection_BaseList& theOther) noexcept
 {
   if (this == &theOther || theOther.IsEmpty())
     return;
@@ -99,7 +99,7 @@ void NCollection_BaseList::PPrepend(NCollection_BaseList& theOther)
   else
     theOther.myLast->Next() = myFirst;
   myFirst          = theOther.myFirst;
-  theOther.myFirst = theOther.myLast = NULL;
+  theOther.myFirst = theOther.myLast = nullptr;
 
   myLength += theOther.myLength;
   theOther.myLength = 0;
@@ -115,7 +115,7 @@ void NCollection_BaseList::PRemoveFirst(NCollection_DelListNode fDel)
   fDel(pItem, myAllocator);
   myLength--;
   if (myLength == 0)
-    myLast = NULL;
+    myLast = nullptr;
 }
 
 //=================================================================================================
@@ -123,7 +123,7 @@ void NCollection_BaseList::PRemoveFirst(NCollection_DelListNode fDel)
 void NCollection_BaseList::PRemove(Iterator& theIter, NCollection_DelListNode fDel)
 {
   Standard_NoSuchObject_Raise_if(!theIter.More(), "NCollection_BaseList::PRemove");
-  if (theIter.myPrevious == NULL)
+  if (theIter.myPrevious == nullptr)
   {
     PRemoveFirst(fDel);
     theIter.myCurrent = myFirst;
@@ -134,7 +134,7 @@ void NCollection_BaseList::PRemove(Iterator& theIter, NCollection_DelListNode fD
     (theIter.myPrevious)->Next() = pNode;
     fDel(theIter.myCurrent, myAllocator);
     theIter.myCurrent = pNode;
-    if (pNode == NULL)
+    if (pNode == nullptr)
       myLast = theIter.myPrevious;
     myLength--;
   }
@@ -145,7 +145,7 @@ void NCollection_BaseList::PRemove(Iterator& theIter, NCollection_DelListNode fD
 void NCollection_BaseList::PInsertBefore(NCollection_ListNode* theNode, Iterator& theIter)
 {
   Standard_NoSuchObject_Raise_if(!theIter.More(), "NCollection_BaseList::PInsertBefore");
-  if (theIter.myPrevious == NULL)
+  if (theIter.myPrevious == nullptr)
   {
     PPrepend(theNode);
     theIter.myPrevious = myFirst;
@@ -164,7 +164,7 @@ void NCollection_BaseList::PInsertBefore(NCollection_ListNode* theNode, Iterator
 void NCollection_BaseList::PInsertBefore(NCollection_BaseList& theOther, Iterator& theIter)
 {
   Standard_NoSuchObject_Raise_if(!theIter.More(), "NCollection_BaseList::PInsertBefore");
-  if (theIter.myPrevious == NULL)
+  if (theIter.myPrevious == nullptr)
   {
     theIter.myPrevious = theOther.myLast;
     PPrepend(theOther);
@@ -175,7 +175,7 @@ void NCollection_BaseList::PInsertBefore(NCollection_BaseList& theOther, Iterato
     (theIter.myPrevious)->Next() = theOther.myFirst;
     (theOther.myLast)->Next()    = theIter.myCurrent;
     theIter.myPrevious           = theOther.myLast;
-    theOther.myLast = theOther.myFirst = NULL;
+    theOther.myLast = theOther.myFirst = nullptr;
     theOther.myLength                  = 0;
   }
 }
@@ -211,20 +211,20 @@ void NCollection_BaseList::PInsertAfter(NCollection_BaseList& theOther, Iterator
     myLength += theOther.myLength;
     (theOther.myLast)->Next()   = (theIter.myCurrent)->Next();
     (theIter.myCurrent)->Next() = theOther.myFirst;
-    theOther.myLast = theOther.myFirst = NULL;
+    theOther.myLast = theOther.myFirst = nullptr;
     theOther.myLength                  = 0;
   }
 }
 
 //=================================================================================================
 
-void NCollection_BaseList::PReverse()
+void NCollection_BaseList::PReverse() noexcept
 {
   if (myLength > 1)
   {
     NCollection_ListNode* aHead = myFirst->Next();
     NCollection_ListNode* aNeck = myFirst;
-    aNeck->Next()               = NULL;
+    aNeck->Next()               = nullptr;
     while (aHead)
     {
       NCollection_ListNode* aTmp = aHead->Next();

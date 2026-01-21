@@ -25,19 +25,19 @@ IMPLEMENT_STANDARD_RTTIEXT(XmlMDF_ADriver, Standard_Transient)
 
 //=================================================================================================
 
-XmlMDF_ADriver::XmlMDF_ADriver(const Handle(Message_Messenger)& theMsgDriver,
-                               const Standard_CString           theNS,
-                               const Standard_CString           theName)
-    : myNamespace(theNS == NULL ? "" : theNS),
+XmlMDF_ADriver::XmlMDF_ADriver(const occ::handle<Message_Messenger>& theMsgDriver,
+                               const char*                           theNS,
+                               const char*                           theName)
+    : myNamespace(theNS == nullptr ? "" : theNS),
       myMessageDriver(theMsgDriver)
 {
-  if (theNS != NULL)
+  if (theNS != nullptr)
     if (theNS[0] != '\0')
     {
       myTypeName = theNS;
       myTypeName += ':';
     }
-  if (theName != NULL)
+  if (theName != nullptr)
     myTypeName += theName;
 }
 
@@ -46,14 +46,14 @@ XmlMDF_ADriver::XmlMDF_ADriver(const Handle(Message_Messenger)& theMsgDriver,
 // purpose  : default version number from which the driver is available
 //=======================================================================
 
-Standard_Integer XmlMDF_ADriver::VersionNumber() const
+int XmlMDF_ADriver::VersionNumber() const
 {
   return 0;
 }
 
 //=================================================================================================
 
-Handle(Standard_Type) XmlMDF_ADriver::SourceType() const
+occ::handle<Standard_Type> XmlMDF_ADriver::SourceType() const
 {
   return NewEmpty()->DynamicType();
 }
@@ -62,7 +62,7 @@ Handle(Standard_Type) XmlMDF_ADriver::SourceType() const
 
 const TCollection_AsciiString& XmlMDF_ADriver::TypeName() const
 {
-  const Standard_CString aString = myTypeName.ToCString();
+  const char* aString = myTypeName.ToCString();
   if (myTypeName.Length() == 0 || aString[myTypeName.Length() - 1] == ':')
     (TCollection_AsciiString&)myTypeName += SourceType()->Name();
   return myTypeName;

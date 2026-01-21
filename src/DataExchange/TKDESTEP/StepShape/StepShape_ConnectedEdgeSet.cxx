@@ -22,13 +22,13 @@ IMPLEMENT_STANDARD_RTTIEXT(StepShape_ConnectedEdgeSet, StepShape_TopologicalRepr
 
 //=================================================================================================
 
-StepShape_ConnectedEdgeSet::StepShape_ConnectedEdgeSet() {}
+StepShape_ConnectedEdgeSet::StepShape_ConnectedEdgeSet() = default;
 
 //=================================================================================================
 
 void StepShape_ConnectedEdgeSet::Init(
-  const Handle(TCollection_HAsciiString)& aRepresentationItem_Name,
-  const Handle(StepShape_HArray1OfEdge)&  aCesEdges)
+  const occ::handle<TCollection_HAsciiString>&                         aRepresentationItem_Name,
+  const occ::handle<NCollection_HArray1<occ::handle<StepShape_Edge>>>& aCesEdges)
 {
   StepShape_TopologicalRepresentationItem::Init(aRepresentationItem_Name);
 
@@ -37,14 +37,16 @@ void StepShape_ConnectedEdgeSet::Init(
 
 //=================================================================================================
 
-Handle(StepShape_HArray1OfEdge) StepShape_ConnectedEdgeSet::CesEdges() const
+occ::handle<NCollection_HArray1<occ::handle<StepShape_Edge>>> StepShape_ConnectedEdgeSet::CesEdges()
+  const
 {
   return theCesEdges;
 }
 
 //=================================================================================================
 
-void StepShape_ConnectedEdgeSet::SetCesEdges(const Handle(StepShape_HArray1OfEdge)& aCesEdges)
+void StepShape_ConnectedEdgeSet::SetCesEdges(
+  const occ::handle<NCollection_HArray1<occ::handle<StepShape_Edge>>>& aCesEdges)
 {
   theCesEdges = aCesEdges;
 }

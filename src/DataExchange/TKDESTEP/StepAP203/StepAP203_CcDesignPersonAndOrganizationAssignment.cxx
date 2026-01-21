@@ -26,17 +26,15 @@ IMPLEMENT_STANDARD_RTTIEXT(StepAP203_CcDesignPersonAndOrganizationAssignment,
 //=================================================================================================
 
 StepAP203_CcDesignPersonAndOrganizationAssignment::
-  StepAP203_CcDesignPersonAndOrganizationAssignment()
-{
-}
+  StepAP203_CcDesignPersonAndOrganizationAssignment() = default;
 
 //=================================================================================================
 
 void StepAP203_CcDesignPersonAndOrganizationAssignment::Init(
-  const Handle(StepBasic_PersonAndOrganization)&
+  const occ::handle<StepBasic_PersonAndOrganization>&
     aPersonAndOrganizationAssignment_AssignedPersonAndOrganization,
-  const Handle(StepBasic_PersonAndOrganizationRole)&       aPersonAndOrganizationAssignment_Role,
-  const Handle(StepAP203_HArray1OfPersonOrganizationItem)& aItems)
+  const occ::handle<StepBasic_PersonAndOrganizationRole>& aPersonAndOrganizationAssignment_Role,
+  const occ::handle<NCollection_HArray1<StepAP203_PersonOrganizationItem>>& aItems)
 {
   StepBasic_PersonAndOrganizationAssignment::Init(
     aPersonAndOrganizationAssignment_AssignedPersonAndOrganization,
@@ -47,7 +45,7 @@ void StepAP203_CcDesignPersonAndOrganizationAssignment::Init(
 
 //=================================================================================================
 
-Handle(StepAP203_HArray1OfPersonOrganizationItem)
+occ::handle<NCollection_HArray1<StepAP203_PersonOrganizationItem>>
   StepAP203_CcDesignPersonAndOrganizationAssignment::Items() const
 {
   return theItems;
@@ -56,7 +54,7 @@ Handle(StepAP203_HArray1OfPersonOrganizationItem)
 //=================================================================================================
 
 void StepAP203_CcDesignPersonAndOrganizationAssignment::SetItems(
-  const Handle(StepAP203_HArray1OfPersonOrganizationItem)& aItems)
+  const occ::handle<NCollection_HArray1<StepAP203_PersonOrganizationItem>>& aItems)
 {
   theItems = aItems;
 }

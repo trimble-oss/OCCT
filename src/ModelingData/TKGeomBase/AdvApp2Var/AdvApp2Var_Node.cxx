@@ -33,9 +33,9 @@ AdvApp2Var_Node::AdvApp2Var_Node()
 
 //=================================================================================================
 
-AdvApp2Var_Node::AdvApp2Var_Node(const Standard_Integer iu, const Standard_Integer iv)
-    : myTruePoints(0, Max(0, iu), 0, Max(0, iv)),
-      myErrors(0, Max(0, iu), 0, Max(0, iv)),
+AdvApp2Var_Node::AdvApp2Var_Node(const int iu, const int iv)
+    : myTruePoints(0, std::max(0, iu), 0, std::max(0, iv)),
+      myErrors(0, std::max(0, iu), 0, std::max(0, iv)),
       myOrdInU(iu),
       myOrdInV(iv)
 {
@@ -46,9 +46,7 @@ AdvApp2Var_Node::AdvApp2Var_Node(const Standard_Integer iu, const Standard_Integ
 
 //=================================================================================================
 
-AdvApp2Var_Node::AdvApp2Var_Node(const gp_XY&           UV,
-                                 const Standard_Integer iu,
-                                 const Standard_Integer iv)
+AdvApp2Var_Node::AdvApp2Var_Node(const gp_XY& UV, const int iu, const int iv)
     : myTruePoints(0, iu, 0, iv),
       myErrors(0, iu, 0, iv),
       myCoord(UV),

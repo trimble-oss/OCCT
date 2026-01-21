@@ -28,16 +28,16 @@
 #include <gp_XY.hxx>
 #include <Standard_ConstructionError.hxx>
 
-void gp_Trsf2d::SetMirror(const gp_Ax2d& A)
+void gp_Trsf2d::SetMirror(const gp_Ax2d& A) noexcept
 {
   shape              = gp_Ax1Mirror;
   scale              = -1.0;
   const gp_Dir2d& V  = A.Direction();
   const gp_Pnt2d& P  = A.Location();
-  Standard_Real   VX = V.X();
-  Standard_Real   VY = V.Y();
-  Standard_Real   X0 = P.X();
-  Standard_Real   Y0 = P.Y();
+  double          VX = V.X();
+  double          VY = V.Y();
+  double          X0 = P.X();
+  double          Y0 = P.Y();
   matrix.SetCol(1, gp_XY(1.0 - 2.0 * VX * VX, -2.0 * VX * VY));
   matrix.SetCol(2, gp_XY(-2.0 * VX * VY, 1.0 - 2.0 * VY * VY));
 
@@ -85,14 +85,8 @@ void gp_Trsf2d::SetTransformation(const gp_Ax2d& A)
 
 void gp_Trsf2d::SetTranslationPart(const gp_Vec2d& V)
 {
-  loc             = V.XY();
-  Standard_Real X = loc.X();
-  if (X < 0)
-    X = -X;
-  Standard_Real Y = loc.Y();
-  if (Y < 0)
-    Y = -Y;
-  if (X <= gp::Resolution() && Y <= gp::Resolution())
+  loc = V.XY();
+  if (std::abs(loc.X()) <= gp::Resolution() && std::abs(loc.Y()) <= gp::Resolution())
   {
     if (shape == gp_Identity || shape == gp_PntMirror || shape == gp_Scale || shape == gp_Rotation
         || shape == gp_Ax1Mirror)
@@ -123,14 +117,14 @@ void gp_Trsf2d::SetTranslationPart(const gp_Vec2d& V)
   }
 }
 
-void gp_Trsf2d::SetScaleFactor(const Standard_Real S)
+void gp_Trsf2d::SetScaleFactor(const double S)
 {
   if (S == 1.0)
   {
-    Standard_Real X = loc.X();
+    double X = loc.X();
     if (X < 0)
       X = -X;
-    Standard_Real Y = loc.Y();
+    double Y = loc.Y();
     if (Y < 0)
       Y = -Y;
     if (X <= gp::Resolution() && Y <= gp::Resolution())
@@ -209,9 +203,9 @@ gp_Mat2d gp_Trsf2d::VectorialPart() const
   return M;
 }
 
-Standard_Real gp_Trsf2d::RotationPart() const
+double gp_Trsf2d::RotationPart() const
 {
-  return ATan2(matrix.Value(2, 1), matrix.Value(1, 1));
+  return std::atan2(matrix.Value(2, 1), matrix.Value(1, 1));
 }
 
 void gp_Trsf2d::Invert()
@@ -230,20 +224,14 @@ void gp_Trsf2d::Invert()
   }
   else if (shape == gp_Scale)
   {
-    Standard_Real As = scale;
-    if (As < 0)
-      As = -As;
-    Standard_ConstructionError_Raise_if(As <= gp::Resolution(),
+    Standard_ConstructionError_Raise_if(std::abs(scale) <= gp::Resolution(),
                                         "gp_Trsf2d::Invert() - transformation has zero scale");
     scale = 1.0 / scale;
     loc.Multiply(-scale);
   }
   else
   {
-    Standard_Real As = scale;
-    if (As < 0)
-      As = -As;
-    Standard_ConstructionError_Raise_if(As <= gp::Resolution(),
+    Standard_ConstructionError_Raise_if(std::abs(scale) <= gp::Resolution(),
                                         "gp_Trsf2d::Invert() - transformation has zero scale");
     scale = 1.0 / scale;
     matrix.Transpose();
@@ -379,7 +367,7 @@ void gp_Trsf2d::Multiply(const gp_Trsf2d& T)
   }
 }
 
-void gp_Trsf2d::Power(const Standard_Integer N)
+void gp_Trsf2d::Power(const int N)
 {
   if (shape == gp_Identity)
   {
@@ -404,7 +392,7 @@ void gp_Trsf2d::Power(const Standard_Integer N)
         Invert();
       if (shape == gp_Translation)
       {
-        Standard_Integer Npower = N;
+        int Npower = N;
         if (Npower < 0)
           Npower = -Npower;
         Npower--;
@@ -421,12 +409,12 @@ void gp_Trsf2d::Power(const Standard_Integer N)
       }
       else if (shape == gp_Scale)
       {
-        Standard_Integer Npower = N;
+        int Npower = N;
         if (Npower < 0)
           Npower = -Npower;
         Npower--;
-        gp_XY         Temploc   = loc;
-        Standard_Real Tempscale = scale;
+        gp_XY  Temploc   = loc;
+        double Tempscale = scale;
         for (;;)
         {
           if (IsOdd(Npower))
@@ -443,7 +431,7 @@ void gp_Trsf2d::Power(const Standard_Integer N)
       }
       else if (shape == gp_Rotation)
       {
-        Standard_Integer Npower = N;
+        int Npower = N;
         if (Npower < 0)
           Npower = -Npower;
         Npower--;
@@ -490,15 +478,15 @@ void gp_Trsf2d::Power(const Standard_Integer N)
       }
       else
       {
-        shape                   = gp_CompoundTrsf;
-        Standard_Integer Npower = N;
+        shape      = gp_CompoundTrsf;
+        int Npower = N;
         if (Npower < 0)
           Npower = -Npower;
         Npower--;
         matrix.SetDiagonal(scale * matrix.Value(1, 1), scale * matrix.Value(2, 2));
-        gp_XY         Temploc   = loc;
-        Standard_Real Tempscale = scale;
-        gp_Mat2d      Tempmatrix(matrix);
+        gp_XY    Temploc   = loc;
+        double   Tempscale = scale;
+        gp_Mat2d Tempmatrix(matrix);
         for (;;)
         {
           if (IsOdd(Npower))
@@ -641,23 +629,20 @@ void gp_Trsf2d::PreMultiply(const gp_Trsf2d& T)
 
 //=================================================================================================
 
-void gp_Trsf2d::SetValues(const Standard_Real a11,
-                          const Standard_Real a12,
-                          const Standard_Real a13,
-                          const Standard_Real a21,
-                          const Standard_Real a22,
-                          const Standard_Real a23)
+void gp_Trsf2d::SetValues(const double a11,
+                          const double a12,
+                          const double a13,
+                          const double a21,
+                          const double a22,
+                          const double a23)
 {
   gp_XY col1(a11, a21);
   gp_XY col2(a12, a22);
   gp_XY col3(a13, a23);
   // compute the determinant
-  gp_Mat2d      M(col1, col2);
-  Standard_Real s  = M.Determinant();
-  Standard_Real As = s;
-  if (As < 0)
-    As = -As;
-  Standard_ConstructionError_Raise_if(As < gp::Resolution(),
+  gp_Mat2d M(col1, col2);
+  double   s = M.Determinant();
+  Standard_ConstructionError_Raise_if(std::abs(s) < gp::Resolution(),
                                       "gp_Trsf2d::SetValues, null determinant");
 
   if (s > 0)

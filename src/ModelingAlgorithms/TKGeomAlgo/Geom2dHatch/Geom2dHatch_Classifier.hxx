@@ -39,49 +39,47 @@ public:
   //! Empty constructor, undefined algorithm.
   Standard_EXPORT Geom2dHatch_Classifier();
 
-  //! Creates an algorithm to classify the Point  P with
+  //! Creates an algorithm to classify the Point P with
   //! Tolerance <T> on the face described by <F>.
   Standard_EXPORT Geom2dHatch_Classifier(Geom2dHatch_Elements& F,
                                          const gp_Pnt2d&       P,
-                                         const Standard_Real   Tol);
+                                         const double          Tol);
 
-  //! Classify  the Point  P  with  Tolerance <T> on the
+  //! Classify the Point P with Tolerance <T> on the
   //! face described by <F>.
-  Standard_EXPORT void Perform(Geom2dHatch_Elements& F, const gp_Pnt2d& P, const Standard_Real Tol);
+  Standard_EXPORT void Perform(Geom2dHatch_Elements& F, const gp_Pnt2d& P, const double Tol);
 
   //! Returns the result of the classification.
   Standard_EXPORT TopAbs_State State() const;
 
-  //! Returns  True when  the   state was computed by  a
+  //! Returns True when the state was computed by a
   //! rejection. The state is OUT.
-  Standard_Boolean Rejected() const;
+  bool Rejected() const;
 
-  //! Returns True if  the face  contains  no wire.  The
-  //! state is IN.
-  Standard_Boolean NoWires() const;
+  //! Returns True if the face contains no wire.
+  //! The state is IN.
+  bool NoWires() const;
 
-  //! Returns   the    Edge  used   to    determine  the
-  //! classification. When the State is ON  this  is the
+  //! Returns the Edge used to determine the
+  //! classification. When the State is ON this is the
   //! Edge containing the point.
   Standard_EXPORT const Geom2dAdaptor_Curve& Edge() const;
 
-  //! Returns the parameter on Edge() used to determine  the
+  //! Returns the parameter on Edge() used to determine the
   //! classification.
-  Standard_EXPORT Standard_Real EdgeParameter() const;
+  Standard_EXPORT double EdgeParameter() const;
 
-  //! Returns the  position of  the   point on the  edge
+  //! Returns the position of the point on the edge
   //! returned by Edge.
   IntRes2d_Position Position() const;
 
 protected:
   Geom2dHatch_FClass2dOfClassifier myClassifier;
   Geom2dAdaptor_Curve              myEdge;
-  Standard_Real                    myEdgeParameter;
+  double                           myEdgeParameter;
   IntRes2d_Position                myPosition;
-  Standard_Boolean                 rejected;
-  Standard_Boolean                 nowires;
-
-private:
+  bool                             rejected;
+  bool                             nowires;
 };
 
 #define TheFaceExplorer Geom2dHatch_Elements

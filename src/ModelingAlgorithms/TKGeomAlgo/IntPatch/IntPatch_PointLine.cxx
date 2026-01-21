@@ -22,21 +22,21 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(IntPatch_PointLine, IntPatch_Line)
 
-IntPatch_PointLine::IntPatch_PointLine(const Standard_Boolean  Tang,
+IntPatch_PointLine::IntPatch_PointLine(const bool              Tang,
                                        const IntSurf_TypeTrans Trans1,
                                        const IntSurf_TypeTrans Trans2)
     : IntPatch_Line(Tang, Trans1, Trans2)
 {
 }
 
-IntPatch_PointLine::IntPatch_PointLine(const Standard_Boolean  Tang,
+IntPatch_PointLine::IntPatch_PointLine(const bool              Tang,
                                        const IntSurf_Situation Situ1,
                                        const IntSurf_Situation Situ2)
     : IntPatch_Line(Tang, Situ1, Situ2)
 {
 }
 
-IntPatch_PointLine::IntPatch_PointLine(const Standard_Boolean Tang)
+IntPatch_PointLine::IntPatch_PointLine(const bool Tang)
     : IntPatch_Line(Tang)
 {
 }
@@ -47,15 +47,14 @@ IntPatch_PointLine::IntPatch_PointLine(const Standard_Boolean Tang)
 //        ATTENTION!!!
 //            Returns negative value if computation is not possible
 //=======================================================================
-Standard_Real IntPatch_PointLine::CurvatureRadiusOfIntersLine(
-  const Handle(Adaptor3d_Surface)& theS1,
-  const Handle(Adaptor3d_Surface)& theS2,
-  const IntSurf_PntOn2S&           theUVPoint)
+double IntPatch_PointLine::CurvatureRadiusOfIntersLine(const occ::handle<Adaptor3d_Surface>& theS1,
+                                                       const occ::handle<Adaptor3d_Surface>& theS2,
+                                                       const IntSurf_PntOn2S& theUVPoint)
 {
-  constexpr Standard_Real aSmallValue   = 1.0 / Precision::Infinite();
-  constexpr Standard_Real aSqSmallValue = aSmallValue * aSmallValue;
+  constexpr double aSmallValue   = 1.0 / Precision::Infinite();
+  constexpr double aSqSmallValue = aSmallValue * aSmallValue;
 
-  Standard_Real aU1 = 0.0, aV1 = 0.0, aU2 = 0.0, aV2 = 0.0;
+  double aU1 = 0.0, aV1 = 0.0, aU2 = 0.0, aV2 = 0.0;
   theUVPoint.Parameters(aU1, aV1, aU2, aV2);
   gp_Pnt aPt;
   gp_Vec aDU1, aDV1, aDUU1, aDUV1, aDVV1;
@@ -64,63 +63,10 @@ Standard_Real IntPatch_PointLine::CurvatureRadiusOfIntersLine(
   theS1->D2(aU1, aV1, aPt, aDU1, aDV1, aDUU1, aDVV1, aDUV1);
   theS2->D2(aU2, aV2, aPt, aDU2, aDV2, aDUU2, aDVV2, aDUV2);
 
-#if 0
-  //The code in this block contains TEST CASES for
-  //this algorithm only. It is stupedly to create OCCT-test for
-  //the method, which will be changed possibly never.
-  //However, if we do something in this method we can check its
-  //functionality easily. For that:
-  //  1. Initialize aTestID variable by the correct value;
-  //  2. Compile this test code fragment.
-
-  int aTestID = 0;
-  Standard_Real anExpectedSqRad = -1.0;
-  switch(aTestID)
-  {
-  case 1:
-    //Intersection between two spherical surfaces: O1(0.0, 0.0, 0.0), R1 = 3
-    //and O2(5.0, 0.0, 0.0), R2 = 5.0.
-    //Considered point has coordinates: (0.9, 0.0, 0.3*sqrt(91.0)).
-
-    aDU1.SetCoord(0.00000000000000000, 0.90000000000000002, 0.00000000000000000);
-    aDV1.SetCoord(-2.8618176042508372, 0.00000000000000000, 0.90000000000000002);
-    aDUU1.SetCoord(-0.90000000000000002, 0.00000000000000000, 0.00000000000000000);
-    aDUV1.SetCoord(0.00000000000000000, -2.8618176042508372, 0.00000000000000000);
-    aDVV1.SetCoord(-0.90000000000000002, 0.00000000000000000, -2.8618176042508372);
-    aDU2.SetCoord(0.00000000000000000, -4.0999999999999996, 0.00000000000000000);
-    aDV2.SetCoord(-2.8618176042508372, 0.00000000000000000, -4.0999999999999996);
-    aDUU2.SetCoord(4.0999999999999996, 0.00000000000000000, 0.00000000000000000);
-    aDUV2.SetCoord(0.00000000000000000, -2.8618176042508372, 0.00000000000000000);
-    aDVV2.SetCoord(4.0999999999999996, 0.00000000000000000, -2.8618176042508372);
-    anExpectedSqRad = 819.0/100.0;
-    break;
-  case 2:
-    //Intersection between spherical surfaces: O1(0.0, 0.0, 0.0), R1 = 10
-    //and the plane 3*x+4*y+z=26.
-    //Considered point has coordinates: (-1.68, 5.76, 8.0).
-
-    aDU1.SetCoord(-5.76, -1.68, 0.0);
-    aDV1.SetCoord(2.24, -7.68, 6.0);
-    aDUU1.SetCoord(1.68, -5.76, 0.0);
-    aDUV1.SetCoord(7.68, 2.24, 0.0);
-    aDVV1.SetCoord(1.68, -5.76, -8.0);
-    aDU2.SetCoord(1.0, 0.0, -3.0);
-    aDV2.SetCoord(0.0, 1.0, -4.0);
-    aDUU2.SetCoord(0.0, 0.0, 0.0);
-    aDUV2.SetCoord(0.0, 0.0, 0.0);
-    aDVV2.SetCoord(0.0, 0.0, 0.0);
-    anExpectedSqRad = 74.0;
-    break;
-  default:
-    aTestID = 0;
-    break;
-  }
-#endif
-
   const gp_Vec aN1(aDU1.Crossed(aDV1)), aN2(aDU2.Crossed(aDV2));
   // Tangent vector to the intersection curve
-  const gp_Vec        aCTan(aN1.Crossed(aN2));
-  const Standard_Real aSqMagnFDer = aCTan.SquareMagnitude();
+  const gp_Vec aCTan(aN1.Crossed(aN2));
+  const double aSqMagnFDer = aCTan.SquareMagnitude();
 
   if (aSqMagnFDer < 1.0e-8)
   {
@@ -130,18 +76,18 @@ Standard_Real IntPatch_PointLine::CurvatureRadiusOfIntersLine(
     return -1.0;
   }
 
-  Standard_Real aDuS1 = 0.0, aDvS1 = 0.0, aDuS2 = 0.0, aDvS2 = 1.0;
+  double aDuS1 = 0.0, aDvS1 = 0.0, aDuS2 = 0.0, aDvS2 = 1.0;
 
   {
     // This algorithm is described in NonSingularProcessing() function
     // in ApproxInt_ImpPrmSvSurfaces.gxx file
-    Standard_Real aSqNMagn = aN1.SquareMagnitude();
-    gp_Vec        aTgU(aCTan.Crossed(aDU1)), aTgV(aCTan.Crossed(aDV1));
-    Standard_Real aDeltaU = aTgV.SquareMagnitude() / aSqNMagn;
-    Standard_Real aDeltaV = aTgU.SquareMagnitude() / aSqNMagn;
+    double aSqNMagn = aN1.SquareMagnitude();
+    gp_Vec aTgU(aCTan.Crossed(aDU1)), aTgV(aCTan.Crossed(aDV1));
+    double aDeltaU = aTgV.SquareMagnitude() / aSqNMagn;
+    double aDeltaV = aTgU.SquareMagnitude() / aSqNMagn;
 
-    aDuS1 = Sign(sqrt(aDeltaU), aTgV.Dot(aN1));
-    aDvS1 = -Sign(sqrt(aDeltaV), aTgU.Dot(aN1));
+    aDuS1 = std::copysign(sqrt(aDeltaU), aTgV.Dot(aN1));
+    aDvS1 = -std::copysign(sqrt(aDeltaV), aTgU.Dot(aN1));
 
     aSqNMagn = aN2.SquareMagnitude();
     aTgU.SetXYZ(aCTan.Crossed(aDU2).XYZ());
@@ -149,8 +95,8 @@ Standard_Real IntPatch_PointLine::CurvatureRadiusOfIntersLine(
     aDeltaU = aTgV.SquareMagnitude() / aSqNMagn;
     aDeltaV = aTgU.SquareMagnitude() / aSqNMagn;
 
-    aDuS2 = Sign(sqrt(aDeltaU), aTgV.Dot(aN2));
-    aDvS2 = -Sign(sqrt(aDeltaV), aTgU.Dot(aN2));
+    aDuS2 = std::copysign(sqrt(aDeltaU), aTgV.Dot(aN2));
+    aDvS2 = -std::copysign(sqrt(aDeltaV), aTgU.Dot(aN2));
   }
 
   // According to "Marching along surface/surface intersection curves
@@ -164,24 +110,24 @@ Standard_Real IntPatch_PointLine::CurvatureRadiusOfIntersLine(
   // After that, 2nd derivative of the intersection curve can be computed as
   //             r''(t)=a*aN1+b*aN2.
 
-  const Standard_Real aA = aN1.Dot(aN1), aB = aN1.Dot(aN2), aC = aN2.Dot(aN2);
-  const Standard_Real aDetSyst = aB * aB - aA * aC;
+  const double aA = aN1.Dot(aN1), aB = aN1.Dot(aN2), aC = aN2.Dot(aN2);
+  const double aDetSyst = aB * aB - aA * aC;
 
-  if (Abs(aDetSyst) < aSmallValue)
+  if (std::abs(aDetSyst) < aSmallValue)
   {
     // Undetermined system solution
     return -1.0;
   }
 
-  const Standard_Real aF1 = aDuS1 * aDuS1 * aDUU1.Dot(aN1) + 2.0 * aDuS1 * aDvS1 * aDUV1.Dot(aN1)
-                            + aDvS1 * aDvS1 * aDVV1.Dot(aN1);
-  const Standard_Real aF2 = aDuS2 * aDuS2 * aDUU2.Dot(aN2) + 2.0 * aDuS2 * aDvS2 * aDUV2.Dot(aN2)
-                            + aDvS2 * aDvS2 * aDVV2.Dot(aN2);
+  const double aF1 = aDuS1 * aDuS1 * aDUU1.Dot(aN1) + 2.0 * aDuS1 * aDvS1 * aDUV1.Dot(aN1)
+                     + aDvS1 * aDvS1 * aDVV1.Dot(aN1);
+  const double aF2 = aDuS2 * aDuS2 * aDUU2.Dot(aN2) + 2.0 * aDuS2 * aDvS2 * aDUV2.Dot(aN2)
+                     + aDvS2 * aDvS2 * aDVV2.Dot(aN2);
 
   // Principal normal to the intersection curve
-  const gp_Vec        aCNorm((aF1 * aC - aF2 * aB) / aDetSyst * aN1
+  const gp_Vec aCNorm((aF1 * aC - aF2 * aB) / aDetSyst * aN1
                       + (aA * aF2 - aF1 * aB) / aDetSyst * aN2);
-  const Standard_Real aSqMagnSDer = aCNorm.CrossSquareMagnitude(aCTan);
+  const double aSqMagnSDer = aCNorm.CrossSquareMagnitude(aCTan);
 
   if (aSqMagnSDer < aSqSmallValue)
   { // Intersection curve has null curvature in observed point
@@ -189,22 +135,7 @@ Standard_Real IntPatch_PointLine::CurvatureRadiusOfIntersLine(
   }
 
   // square of curvature radius
-  const Standard_Real aFactSqRad = aSqMagnFDer * aSqMagnFDer * aSqMagnFDer / aSqMagnSDer;
-
-#if 0
-  if(aTestID)
-  {
-    if(Abs(aFactSqRad - anExpectedSqRad) < Precision::Confusion())
-    {
-      printf("OK: Curvature radius is equal to expected (%5.10g)", anExpectedSqRad);
-    }
-    else
-    {
-      printf("Error: Curvature radius is not equal to expected: %5.10g != %5.10g",
-              aFactSqRad, anExpectedSqRad);
-    }
-  }
-#endif
+  const double aFactSqRad = aSqMagnFDer * aSqMagnFDer * aSqMagnFDer / aSqMagnSDer;
 
   return sqrt(aFactSqRad);
 }

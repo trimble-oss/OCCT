@@ -13,7 +13,7 @@
 
 #include <Vrml_FontStyle.hxx>
 
-Vrml_FontStyle::Vrml_FontStyle(const Standard_Real        aSize,
+Vrml_FontStyle::Vrml_FontStyle(const double               aSize,
                                const Vrml_FontStyleFamily aFamily,
                                const Vrml_FontStyleStyle  aStyle)
 {
@@ -22,12 +22,12 @@ Vrml_FontStyle::Vrml_FontStyle(const Standard_Real        aSize,
   myStyle  = aStyle;
 }
 
-void Vrml_FontStyle::SetSize(const Standard_Real aSize)
+void Vrml_FontStyle::SetSize(const double aSize)
 {
   mySize = aSize;
 }
 
-Standard_Real Vrml_FontStyle::Size() const
+double Vrml_FontStyle::Size() const
 {
   return mySize;
 }
@@ -56,7 +56,7 @@ Standard_OStream& Vrml_FontStyle::Print(Standard_OStream& anOStream) const
 {
   anOStream << "FontStyle {\n";
 
-  if (Abs(mySize - 10) > 0.0001)
+  if (std::abs(mySize - 10) > 0.0001)
   {
     anOStream << "    size\t";
     anOStream << mySize << "\n";

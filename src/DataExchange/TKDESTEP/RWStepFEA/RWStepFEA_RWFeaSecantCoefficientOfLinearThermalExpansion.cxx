@@ -24,17 +24,15 @@
 //=================================================================================================
 
 RWStepFEA_RWFeaSecantCoefficientOfLinearThermalExpansion::
-  RWStepFEA_RWFeaSecantCoefficientOfLinearThermalExpansion()
-{
-}
+  RWStepFEA_RWFeaSecantCoefficientOfLinearThermalExpansion() = default;
 
 //=================================================================================================
 
 void RWStepFEA_RWFeaSecantCoefficientOfLinearThermalExpansion::ReadStep(
-  const Handle(StepData_StepReaderData)&                              data,
-  const Standard_Integer                                              num,
-  Handle(Interface_Check)&                                            ach,
-  const Handle(StepFEA_FeaSecantCoefficientOfLinearThermalExpansion)& ent) const
+  const occ::handle<StepData_StepReaderData>&                              data,
+  const int                                                                num,
+  occ::handle<Interface_Check>&                                            ach,
+  const occ::handle<StepFEA_FeaSecantCoefficientOfLinearThermalExpansion>& ent) const
 {
   // Check number of parameters
   if (!data->CheckNbParams(num, 3, ach, "fea_secant_coefficient_of_linear_thermal_expansion"))
@@ -42,7 +40,7 @@ void RWStepFEA_RWFeaSecantCoefficientOfLinearThermalExpansion::ReadStep(
 
   // Inherited fields of RepresentationItem
 
-  Handle(TCollection_HAsciiString) aRepresentationItem_Name;
+  occ::handle<TCollection_HAsciiString> aRepresentationItem_Name;
   data->ReadString(num, 1, "representation_item.name", ach, aRepresentationItem_Name);
 
   // Own fields of FeaSecantCoefficientOfLinearThermalExpansion
@@ -50,7 +48,7 @@ void RWStepFEA_RWFeaSecantCoefficientOfLinearThermalExpansion::ReadStep(
   StepFEA_SymmetricTensor23d aFeaConstants;
   data->ReadEntity(num, 2, "fea_constants", ach, aFeaConstants);
 
-  Standard_Real aReferenceTemperature;
+  double aReferenceTemperature;
   data->ReadReal(num, 3, "reference_temperature", ach, aReferenceTemperature);
 
   // Initialize entity
@@ -60,8 +58,8 @@ void RWStepFEA_RWFeaSecantCoefficientOfLinearThermalExpansion::ReadStep(
 //=================================================================================================
 
 void RWStepFEA_RWFeaSecantCoefficientOfLinearThermalExpansion::WriteStep(
-  StepData_StepWriter&                                                SW,
-  const Handle(StepFEA_FeaSecantCoefficientOfLinearThermalExpansion)& ent) const
+  StepData_StepWriter&                                                     SW,
+  const occ::handle<StepFEA_FeaSecantCoefficientOfLinearThermalExpansion>& ent) const
 {
 
   // Inherited fields of RepresentationItem
@@ -78,8 +76,8 @@ void RWStepFEA_RWFeaSecantCoefficientOfLinearThermalExpansion::WriteStep(
 //=================================================================================================
 
 void RWStepFEA_RWFeaSecantCoefficientOfLinearThermalExpansion::Share(
-  const Handle(StepFEA_FeaSecantCoefficientOfLinearThermalExpansion)& ent,
-  Interface_EntityIterator&                                           iter) const
+  const occ::handle<StepFEA_FeaSecantCoefficientOfLinearThermalExpansion>& ent,
+  Interface_EntityIterator&                                                iter) const
 {
 
   // Inherited fields of RepresentationItem

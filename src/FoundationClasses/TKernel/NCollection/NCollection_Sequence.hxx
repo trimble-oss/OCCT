@@ -54,10 +54,10 @@ public:
     }
 
     //! Constant value access
-    const TheItemType& Value() const { return myValue; }
+    const TheItemType& Value() const noexcept { return myValue; }
 
     //! Variable value access
-    TheItemType& ChangeValue() { return myValue; }
+    TheItemType& ChangeValue() noexcept { return myValue; }
 
   private:
     TheItemType myValue;
@@ -69,19 +69,19 @@ public:
   {
   public:
     //! Empty constructor - for later Init
-    Iterator(void) {}
+    Iterator() = default;
 
     //! Constructor with initialisation
-    Iterator(const NCollection_Sequence& theSeq, const Standard_Boolean isStart = Standard_True)
+    Iterator(const NCollection_Sequence& theSeq, const bool isStart = true)
         : NCollection_BaseSequence::Iterator(theSeq, isStart)
     {
     }
 
     //! Check end
-    Standard_Boolean More(void) const { return (myCurrent != NULL); }
+    bool More() const noexcept { return (myCurrent != nullptr); }
 
     //! Make step
-    void Next(void)
+    void Next() noexcept
     {
       if (myCurrent)
       {
@@ -91,13 +91,13 @@ public:
     }
 
     //! Constant value access
-    const TheItemType& Value(void) const { return ((const Node*)myCurrent)->Value(); }
+    const TheItemType& Value() const noexcept { return ((const Node*)myCurrent)->Value(); }
 
     //! Variable value access
-    TheItemType& ChangeValue(void) const { return ((Node*)myCurrent)->ChangeValue(); }
+    TheItemType& ChangeValue() const noexcept { return ((Node*)myCurrent)->ChangeValue(); }
 
     //! Performs comparison of two iterators.
-    Standard_Boolean IsEqual(const Iterator& theOther) const
+    bool IsEqual(const Iterator& theOther) const noexcept
     {
       return myCurrent == theOther.myCurrent;
     }
@@ -112,10 +112,10 @@ public:
     const_iterator;
 
   //! Returns an iterator pointing to the first element in the sequence.
-  iterator begin() const { return Iterator(*this, true); }
+  iterator begin() const noexcept { return Iterator(*this, true); }
 
   //! Returns an iterator referring to the past-the-end element in the sequence.
-  iterator end() const
+  iterator end() const noexcept
   {
     Iterator anIter(*this, false);
     anIter.Next();
@@ -123,10 +123,10 @@ public:
   }
 
   //! Returns a const iterator pointing to the first element in the sequence.
-  const_iterator cbegin() const { return Iterator(*this, true); }
+  const_iterator cbegin() const noexcept { return Iterator(*this, true); }
 
   //! Returns a const iterator referring to the past-the-end element in the sequence.
-  const_iterator cend() const
+  const_iterator cend() const noexcept
   {
     Iterator anIter(*this, false);
     anIter.Next();
@@ -138,12 +138,12 @@ public:
 
   //! Empty constructor.
   NCollection_Sequence()
-      : NCollection_BaseSequence(Handle(NCollection_BaseAllocator)())
+      : NCollection_BaseSequence(occ::handle<NCollection_BaseAllocator>())
   {
   }
 
   //! Constructor
-  explicit NCollection_Sequence(const Handle(NCollection_BaseAllocator)& theAllocator)
+  explicit NCollection_Sequence(const occ::handle<NCollection_BaseAllocator>& theAllocator)
       : NCollection_BaseSequence(theAllocator)
   {
   }
@@ -163,37 +163,37 @@ public:
   }
 
   //! Number of items
-  Standard_Integer Size(void) const { return mySize; }
+  int Size() const noexcept { return mySize; }
 
   //! Number of items
-  Standard_Integer Length(void) const { return mySize; }
+  int Length() const noexcept { return mySize; }
 
   //! Method for consistency with other collections.
   //! @return Lower bound (inclusive) for iteration.
-  Standard_Integer Lower() const { return 1; }
+  static constexpr int Lower() noexcept { return 1; }
 
   //! Method for consistency with other collections.
   //! @return Upper bound (inclusive) for iteration.
-  Standard_Integer Upper() const { return mySize; }
+  int Upper() const noexcept { return mySize; }
 
   //! Empty query
-  Standard_Boolean IsEmpty(void) const { return (mySize == 0); }
+  bool IsEmpty() const noexcept { return (mySize == 0); }
 
   //! Reverse sequence
-  void Reverse(void) { PReverse(); }
+  void Reverse() { PReverse(); }
 
   //! Exchange two members
-  void Exchange(const Standard_Integer I, const Standard_Integer J) { PExchange(I, J); }
+  void Exchange(const int I, const int J) { PExchange(I, J); }
 
   //! Static deleter to be passed to BaseSequence
-  static void delNode(NCollection_SeqNode* theNode, Handle(NCollection_BaseAllocator)& theAl)
+  static void delNode(NCollection_SeqNode* theNode, occ::handle<NCollection_BaseAllocator>& theAl)
   {
     ((Node*)theNode)->~Node();
     theAl->Free(theNode);
   }
 
   //! Clear the items out, take a new allocator if non null
-  void Clear(const Handle(NCollection_BaseAllocator)& theAllocator = 0L)
+  void Clear(const occ::handle<NCollection_BaseAllocator>& theAllocator = nullptr)
   {
     ClearSeq(delNode);
     if (!theAllocator.IsNull())
@@ -241,10 +241,10 @@ public:
   void Remove(Iterator& thePosition) { RemoveSeq(thePosition, delNode); }
 
   //! Remove one item
-  void Remove(const Standard_Integer theIndex) { RemoveSeq(theIndex, delNode); }
+  void Remove(const int theIndex) { RemoveSeq(theIndex, delNode); }
 
   //! Remove range of items
-  void Remove(const Standard_Integer theFromIndex, const Standard_Integer theToIndex)
+  void Remove(const int theFromIndex, const int theToIndex)
   {
     RemoveSeq(theFromIndex, theToIndex, delNode);
   }
@@ -306,19 +306,19 @@ public:
   }
 
   //! InsertBefore theIndex theItem
-  void InsertBefore(const Standard_Integer theIndex, const TheItemType& theItem)
+  void InsertBefore(const int theIndex, const TheItemType& theItem)
   {
     InsertAfter(theIndex - 1, theItem);
   }
 
   //! InsertBefore theIndex theItem
-  void InsertBefore(const Standard_Integer theIndex, TheItemType&& theItem)
+  void InsertBefore(const int theIndex, TheItemType&& theItem)
   {
     InsertAfter(theIndex - 1, theItem);
   }
 
   //! InsertBefore theIndex another sequence (making it empty)
-  void InsertBefore(const Standard_Integer theIndex, NCollection_Sequence& theSeq)
+  void InsertBefore(const int theIndex, NCollection_Sequence& theSeq)
   {
     InsertAfter(theIndex - 1, theSeq);
   }
@@ -336,7 +336,7 @@ public:
   }
 
   //! InsertAfter theIndex another sequence (making it empty)
-  void InsertAfter(const Standard_Integer theIndex, NCollection_Sequence& theSeq)
+  void InsertAfter(const int theIndex, NCollection_Sequence& theSeq)
   {
     if (this == &theSeq || theSeq.IsEmpty())
       return;
@@ -355,7 +355,7 @@ public:
   }
 
   //! InsertAfter theIndex theItem
-  void InsertAfter(const Standard_Integer theIndex, const TheItemType& theItem)
+  void InsertAfter(const int theIndex, const TheItemType& theItem)
   {
     Standard_OutOfRange_Raise_if(theIndex < 0 || theIndex > mySize,
                                  "NCollection_Sequence::InsertAfter");
@@ -363,7 +363,7 @@ public:
   }
 
   //! InsertAfter theIndex theItem
-  void InsertAfter(const Standard_Integer theIndex, TheItemType&& theItem)
+  void InsertAfter(const int theIndex, TheItemType&& theItem)
   {
     Standard_OutOfRange_Raise_if(theIndex < 0 || theIndex > mySize,
                                  "NCollection_Sequence::InsertAfter");
@@ -371,7 +371,7 @@ public:
   }
 
   //! Split in two sequences
-  void Split(const Standard_Integer theIndex, NCollection_Sequence& theSeq)
+  void Split(const int theIndex, NCollection_Sequence& theSeq)
   {
     theSeq.Clear(this->myAllocator);
     PSplit(theIndex, theSeq);
@@ -406,7 +406,7 @@ public:
   }
 
   //! Constant item access by theIndex
-  const TheItemType& Value(const Standard_Integer theIndex) const
+  const TheItemType& Value(const int theIndex) const
   {
     Standard_OutOfRange_Raise_if(theIndex <= 0 || theIndex > mySize, "NCollection_Sequence::Value");
 
@@ -417,10 +417,10 @@ public:
   }
 
   //! Constant operator()
-  const TheItemType& operator()(const Standard_Integer theIndex) const { return Value(theIndex); }
+  const TheItemType& operator()(const int theIndex) const { return Value(theIndex); }
 
   //! Variable item access by theIndex
-  TheItemType& ChangeValue(const Standard_Integer theIndex)
+  TheItemType& ChangeValue(const int theIndex)
   {
     Standard_OutOfRange_Raise_if(theIndex <= 0 || theIndex > mySize,
                                  "NCollection_Sequence::ChangeValue");
@@ -431,16 +431,13 @@ public:
   }
 
   //! Variable operator()
-  TheItemType& operator()(const Standard_Integer theIndex) { return ChangeValue(theIndex); }
+  TheItemType& operator()(const int theIndex) { return ChangeValue(theIndex); }
 
   //! Set item value by theIndex
-  void SetValue(const Standard_Integer theIndex, const TheItemType& theItem)
-  {
-    ChangeValue(theIndex) = theItem;
-  }
+  void SetValue(const int theIndex, const TheItemType& theItem) { ChangeValue(theIndex) = theItem; }
 
   // ******** Destructor - clears the Sequence
-  virtual ~NCollection_Sequence(void) { Clear(); }
+  ~NCollection_Sequence() override { Clear(); }
 
 private:
   // ---------- FRIEND CLASSES ------------
@@ -460,7 +457,7 @@ private:
   }
 
   //! insert the sequence headed by the given Node before the item with the given index
-  void prependSeq(const Node* pCur, Standard_Integer ind)
+  void prependSeq(const Node* pCur, int ind)
   {
     ind--;
     while (pCur)

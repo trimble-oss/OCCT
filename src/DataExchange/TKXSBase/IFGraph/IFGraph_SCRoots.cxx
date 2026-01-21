@@ -18,7 +18,7 @@
 #include <Standard_Transient.hxx>
 
 // #include <Interface_GraphContent.hxx>
-IFGraph_SCRoots::IFGraph_SCRoots(const Interface_Graph& agraph, const Standard_Boolean whole)
+IFGraph_SCRoots::IFGraph_SCRoots(const Interface_Graph& agraph, const bool whole)
     : IFGraph_StrongComponants(agraph, whole)
 {
 }
@@ -28,14 +28,14 @@ IFGraph_SCRoots::IFGraph_SCRoots(IFGraph_StrongComponants& subparts)
 {
 }
 
-// StrongComponants racines d un ensemble donne
-// On ne tient pas compte du reste eventuel (c est un autre probleme)
-// On part du fait que StrongComponants donne les Composants dans l ordre de
-// dependance, le premier ne dependant de rien (les autres, on ne sait pas ...)
+// Root StrongComponants of a given set
+// We don't consider the possible remainder (it's another problem)
+// We start from the fact that StrongComponants gives Components in the order of
+// dependence, the first depending on nothing (the others, we don't know ...)
 
 void IFGraph_SCRoots::Evaluate()
 {
-  IFGraph_StrongComponants complist(Model(), Standard_False);
+  IFGraph_StrongComponants complist(Model(), false);
   complist.GetFromIter(Loaded());
   //  Interface_Graph G(Model());
   Interface_Graph G(thegraph);
@@ -45,15 +45,15 @@ void IFGraph_SCRoots::Evaluate()
   G.ResetStatus();
   for (complist.Start(); complist.More(); complist.Next())
   {
-    Handle(Standard_Transient) ent = complist.FirstEntity();
-    Standard_Integer           num = G.EntityNumber(ent);
+    occ::handle<Standard_Transient> ent = complist.FirstEntity();
+    int                             num = G.EntityNumber(ent);
 #ifdef OCCT_DEBUG
-    std::cout << "   Iteration,num=" << num << (G.IsPresent(num) ? " Pris" : " A prendre")
+    std::cout << "   Iteration,num=" << num << (G.IsPresent(num) ? " Taken" : " To take")
               << std::endl;
 #endif
     if (!G.IsPresent(num))
-    { //  enregistrer pour suivants
-      G.GetFromEntity(ent, Standard_True);
+    { //  register for following
+      G.GetFromEntity(ent, true);
       Interface_EntityIterator list = complist.Entities();
       AddPart();
       GetFromIter(list);
@@ -61,7 +61,7 @@ void IFGraph_SCRoots::Evaluate()
   }
 }
 
-/*     ce qui suit, c etait autre chose : les SC qui n ont pas d ExternalSource
+/*     what follows, it was something else: the SC that have no ExternalSource
     Interface_EntityIterator list = complist.Entities();
     IFGraph_ExternalSources  eval (Model());
     eval.GetFromIter(list);

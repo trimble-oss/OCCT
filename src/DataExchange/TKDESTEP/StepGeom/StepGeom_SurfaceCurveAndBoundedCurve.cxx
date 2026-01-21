@@ -19,9 +19,9 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(StepGeom_SurfaceCurveAndBoundedCurve, StepGeom_SurfaceCurve)
 
-StepGeom_SurfaceCurveAndBoundedCurve::StepGeom_SurfaceCurveAndBoundedCurve() {}
+StepGeom_SurfaceCurveAndBoundedCurve::StepGeom_SurfaceCurveAndBoundedCurve() = default;
 
-Handle(StepGeom_BoundedCurve)& StepGeom_SurfaceCurveAndBoundedCurve::BoundedCurve()
+occ::handle<StepGeom_BoundedCurve>& StepGeom_SurfaceCurveAndBoundedCurve::BoundedCurve()
 {
   return myBoundedCurve;
 }

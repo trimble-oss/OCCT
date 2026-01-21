@@ -16,9 +16,12 @@
 #include <NCollection_BaseAllocator.hxx>
 
 #include <gtest/gtest.h>
+#include <algorithm>
+#include <list>
+#include <random>
 
 // Basic test type for the Sequence
-typedef Standard_Integer ItemType;
+typedef int ItemType;
 
 // Custom class for testing complex types in the Sequence
 class TestClass
@@ -326,8 +329,8 @@ TEST(NCollection_SequenceTest, ComplexTypeSequence)
 TEST(NCollection_SequenceTest, AllocatorTest)
 {
   // Test with custom allocator
-  Handle(NCollection_BaseAllocator) aAlloc = new NCollection_IncAllocator();
-  NCollection_Sequence<ItemType>    aSeq(aAlloc);
+  occ::handle<NCollection_BaseAllocator> aAlloc = new NCollection_IncAllocator();
+  NCollection_Sequence<ItemType>         aSeq(aAlloc);
 
   aSeq.Append(10);
   aSeq.Append(20);
@@ -339,7 +342,7 @@ TEST(NCollection_SequenceTest, AllocatorTest)
   EXPECT_EQ(aSeq(3), 30);
 
   // Test Clear with new allocator
-  Handle(NCollection_BaseAllocator) aAlloc2 = new NCollection_IncAllocator();
+  occ::handle<NCollection_BaseAllocator> aAlloc2 = new NCollection_IncAllocator();
   aSeq.Clear(aAlloc2);
   EXPECT_TRUE(aSeq.IsEmpty());
 
@@ -372,4 +375,88 @@ TEST(NCollection_SequenceTest, MoveOperations)
   EXPECT_TRUE(aSeq3.IsEmpty()); // Original sequence should be empty after move
   EXPECT_EQ(aSeq4.Size(), 1);
   EXPECT_EQ(aSeq4(1), 40);
+}
+
+TEST(NCollection_SequenceTest, STLAlgorithmCompatibility_MinMax)
+{
+  NCollection_Sequence<int> aSequence;
+  std::list<int>            aStdList;
+
+  std::mt19937                       aGenerator(1); // Fixed seed for reproducible tests
+  std::uniform_int_distribution<int> aDistribution(0, RAND_MAX);
+  for (int anIdx = 0; anIdx < 100; ++anIdx)
+  {
+    int aVal = aDistribution(aGenerator);
+    aSequence.Append(aVal);
+    aStdList.push_back(aVal);
+  }
+
+  auto aMinOCCT = std::min_element(aSequence.begin(), aSequence.end());
+  auto aMinStd  = std::min_element(aStdList.begin(), aStdList.end());
+
+  auto aMaxOCCT = std::max_element(aSequence.begin(), aSequence.end());
+  auto aMaxStd  = std::max_element(aStdList.begin(), aStdList.end());
+
+  EXPECT_EQ(*aMinOCCT, *aMinStd);
+  EXPECT_EQ(*aMaxOCCT, *aMaxStd);
+}
+
+TEST(NCollection_SequenceTest, STLAlgorithmCompatibility_Replace)
+{
+  NCollection_Sequence<int> aSequence;
+  std::list<int>            aStdList;
+
+  std::mt19937                       aGenerator(1); // Fixed seed for reproducible tests
+  std::uniform_int_distribution<int> aDistribution(0, RAND_MAX);
+  for (int anIdx = 0; anIdx < 100; ++anIdx)
+  {
+    int aVal = aDistribution(aGenerator);
+    aSequence.Append(aVal);
+    aStdList.push_back(aVal);
+  }
+
+  int aTargetValue = aStdList.back();
+  int aNewValue    = -1;
+
+  std::replace(aSequence.begin(), aSequence.end(), aTargetValue, aNewValue);
+  std::replace(aStdList.begin(), aStdList.end(), aTargetValue, aNewValue);
+
+  EXPECT_TRUE(std::equal(aSequence.begin(), aSequence.end(), aStdList.begin()));
+}
+
+TEST(NCollection_SequenceTest, STLAlgorithmCompatibility_Reverse)
+{
+  NCollection_Sequence<int> aSequence;
+  std::list<int>            aStdList;
+
+  for (int anIdx = 0; anIdx < 100; ++anIdx)
+  {
+    aSequence.Append(anIdx);
+    aStdList.push_back(anIdx);
+  }
+
+  std::reverse(aSequence.begin(), aSequence.end());
+  std::reverse(aStdList.begin(), aStdList.end());
+
+  EXPECT_TRUE(std::equal(aSequence.begin(), aSequence.end(), aStdList.begin()));
+}
+
+TEST(NCollection_SequenceTest, OCC26448_PrependEmptySequence)
+{
+  // Bug OCC26448: Method Prepend() of sequence breaks it if argument is empty sequence
+  // This test verifies that prepending an empty sequence doesn't affect the target sequence
+
+  // Test with NCollection_Sequence
+  NCollection_Sequence<double> aNSeq1, aNSeq2;
+  aNSeq1.Append(11.);
+  aNSeq1.Prepend(aNSeq2); // Prepend empty sequence
+  EXPECT_EQ(aNSeq1.Size(), 1);
+  EXPECT_DOUBLE_EQ(aNSeq1.First(), 11.0);
+
+  // Test with NCollection_Sequence<double>
+  NCollection_Sequence<double> aTSeq1, aTSeq2;
+  aTSeq1.Append(11.);
+  aTSeq1.Prepend(aTSeq2); // Prepend empty sequence
+  EXPECT_EQ(aTSeq1.Size(), 1);
+  EXPECT_DOUBLE_EQ(aTSeq1.First(), 11.0);
 }

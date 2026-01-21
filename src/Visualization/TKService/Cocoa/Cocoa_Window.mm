@@ -41,11 +41,11 @@ IMPLEMENT_STANDARD_RTTIEXT(Cocoa_Window,Aspect_Window)
   #define NSWindowStyleMaskTitled    NSTitledWindowMask
 #endif
 
-static Standard_Integer getScreenBottom()
+static int getScreenBottom()
 {
   Cocoa_LocalPool aLocalPool;
   NSArray* aScreens = [NSScreen screens];
-  if (aScreens == NULL || [aScreens count] == 0)
+  if (aScreens == nullptr || [aScreens count] == 0)
   {
     return 0;
   }
@@ -53,7 +53,7 @@ static Standard_Integer getScreenBottom()
   NSScreen* aScreen = (NSScreen* )[aScreens objectAtIndex: 0];
   NSDictionary* aDict = [aScreen deviceDescription];
   NSNumber* aNumber = [aDict objectForKey: @"NSScreenNumber"];
-  if (aNumber == NULL
+  if (aNumber == nullptr
   || [aNumber isKindOfClass: [NSNumber class]] == NO)
   {
     return 0;
@@ -61,7 +61,7 @@ static Standard_Integer getScreenBottom()
 
   CGDirectDisplayID aDispId = [aNumber unsignedIntValue];
   CGRect aRect = CGDisplayBounds(aDispId);
-  return Standard_Integer(aRect.origin.y + aRect.size.height);
+  return int(aRect.origin.y + aRect.size.height);
 }
 #endif
 
@@ -90,20 +90,18 @@ static Standard_Integer getScreenBottom()
   @end
 #endif
 
-// =======================================================================
-// function : Cocoa_Window
-// purpose  :
-// =======================================================================
-Cocoa_Window::Cocoa_Window (const Standard_CString theTitle,
-                            const Standard_Integer thePxLeft,
-                            const Standard_Integer thePxTop,
-                            const Standard_Integer thePxWidth,
-                            const Standard_Integer thePxHeight)
+//=================================================================================================
+
+Cocoa_Window::Cocoa_Window (const char* theTitle,
+                            const int thePxLeft,
+                            const int thePxTop,
+                            const int thePxWidth,
+                            const int thePxHeight)
 : Aspect_Window (),
 #if !(defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE)
-  myHWindow (NULL),
+  myHWindow (nullptr),
 #endif
-  myHView   (NULL),
+  myHView   (nullptr),
   myXLeft   (thePxLeft),
   myYTop    (thePxTop),
   myXRight  (thePxLeft + thePxWidth),
@@ -116,7 +114,7 @@ Cocoa_Window::Cocoa_Window (const Standard_CString theTitle,
   {
     throw Aspect_WindowDefinitionError("Coordinate(s) out of range");
   }
-  else if (NSApp == NULL)
+  else if (NSApp == nullptr)
   {
     throw Aspect_WindowDefinitionError("Cocoa application should be instantiated before window");
     return;
@@ -133,7 +131,7 @@ Cocoa_Window::Cocoa_Window (const Standard_CString theTitle,
                                           styleMask: aWinStyle
                                             backing: NSBackingStoreBuffered
                                               defer: NO];
-  if (myHWindow == NULL)
+  if (myHWindow == nullptr)
   {
     throw Aspect_WindowDefinitionError("Unable to create window");
   }
@@ -150,19 +148,17 @@ Cocoa_Window::Cocoa_Window (const Standard_CString theTitle,
 #endif
 }
 
-// =======================================================================
-// function : Cocoa_Window
-// purpose  :
-// =======================================================================
+//=================================================================================================
+
 #if defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE
 Cocoa_Window::Cocoa_Window (UIView* theViewNS)
 : Aspect_Window(),
 #else
 Cocoa_Window::Cocoa_Window (NSView* theViewNS)
 : Aspect_Window(),
-  myHWindow (NULL),
+  myHWindow (nullptr),
 #endif
-  myHView   (NULL),
+  myHView   (nullptr),
   myXLeft   (0),
   myYTop    (0),
   myXRight  (512),
@@ -186,35 +182,33 @@ Cocoa_Window::~Cocoa_Window()
   Cocoa_LocalPool aLocalPool;
 #endif
 #if !(defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE)
-  if (myHWindow != NULL)
+  if (myHWindow != nullptr)
   {
   #if !defined(HAVE_OBJC_ARC)
     //[myHWindow close];
     [myHWindow release];
   #endif
-    myHWindow = NULL;
+    myHWindow = nullptr;
   }
 #endif
-  if (myHView != NULL)
+  if (myHView != nullptr)
   {
   #if !defined(HAVE_OBJC_ARC)
     [myHView release];
   #endif
-    myHView = NULL;
+    myHView = nullptr;
   }
 }
 
-// =======================================================================
-// function : SetHView
-// purpose  :
-// =======================================================================
+//=================================================================================================
+
 #if defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE
 void Cocoa_Window::SetHView (UIView* theView)
 {
 #else
 void Cocoa_Window::SetHView (NSView* theView)
 {
-  if (myHWindow != NULL)
+  if (myHWindow != nullptr)
   {
     [myHWindow setContentView: theView];
   }
@@ -223,38 +217,34 @@ void Cocoa_Window::SetHView (NSView* theView)
 #if defined(HAVE_OBJC_ARC)
   myHView = theView;
 #else
-  if (myHView != NULL)
+  if (myHView != nullptr)
   {
     [myHView release];
-    myHView = NULL;
+    myHView = nullptr;
   }
   myHView = [theView retain];
 #endif
 }
 
-// =======================================================================
-// function : IsMapped
-// purpose  :
-// =======================================================================
-Standard_Boolean Cocoa_Window::IsMapped() const
+//=================================================================================================
+
+bool Cocoa_Window::IsMapped() const
 {
   if (IsVirtual())
   {
-    return Standard_True;
+    return true;
   }
 
 #if defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE
   return myHView != NULL;
 #else
-  return myHView != NULL
+  return myHView != nullptr
    &&  [[myHView window] isVisible];
 #endif
 }
 
-// =======================================================================
-// function : Map
-// purpose  :
-// =======================================================================
+//=================================================================================================
+
 void Cocoa_Window::Map() const
 {
   if (IsVirtual())
@@ -262,39 +252,35 @@ void Cocoa_Window::Map() const
     return;
   }
 
-  if (myHView != NULL)
+  if (myHView != nullptr)
   {
   #if defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE
     //
   #else
-    [[myHView window] orderFront: NULL];
+    [[myHView window] orderFront: nullptr];
   #endif
   }
 }
 
-// =======================================================================
-// function : Unmap
-// purpose  :
-// =======================================================================
+//=================================================================================================
+
 void Cocoa_Window::Unmap() const
 {
-  if (myHView != NULL)
+  if (myHView != nullptr)
   {
   #if defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE
     //
   #else
-    [[myHView window] orderOut: NULL];
+    [[myHView window] orderOut: nullptr];
   #endif
   }
 }
 
-// =======================================================================
-// function : DoResize
-// purpose  :
-// =======================================================================
+//=================================================================================================
+
 Aspect_TypeOfResize Cocoa_Window::DoResize()
 {
-  if (myHView == NULL)
+  if (myHView == nullptr)
   {
     return Aspect_TOR_UNKNOWN;
   }
@@ -304,13 +290,13 @@ Aspect_TypeOfResize Cocoa_Window::DoResize()
 #else
   NSRect aBounds = [myHView bounds];
 #endif
-  Standard_Integer aMask = 0;
+  int aMask = 0;
   Aspect_TypeOfResize aMode = Aspect_TOR_UNKNOWN;
 
-  if (Abs ((Standard_Integer )aBounds.origin.x                         - myXLeft  ) > 2) aMask |= 1;
-  if (Abs ((Standard_Integer )(aBounds.origin.x + aBounds.size.width)  - myXRight ) > 2) aMask |= 2;
-  if (Abs ((Standard_Integer )aBounds.origin.y                         - myYTop   ) > 2) aMask |= 4;
-  if (Abs ((Standard_Integer )(aBounds.origin.y + aBounds.size.height) - myYBottom) > 2) aMask |= 8;
+  if (Abs ((int )aBounds.origin.x                         - myXLeft  ) > 2) aMask |= 1;
+  if (Abs ((int )(aBounds.origin.x + aBounds.size.width)  - myXRight ) > 2) aMask |= 2;
+  if (Abs ((int )aBounds.origin.y                         - myYTop   ) > 2) aMask |= 4;
+  if (Abs ((int )(aBounds.origin.y + aBounds.size.height) - myYBottom) > 2) aMask |= 8;
   switch (aMask)
   {
     case 0:  aMode = Aspect_TOR_NO_BORDER;               break;
@@ -325,29 +311,25 @@ Aspect_TypeOfResize Cocoa_Window::DoResize()
     default: break;
   }
 
-  myXLeft   = (Standard_Integer )aBounds.origin.x;
-  myXRight  = (Standard_Integer )(aBounds.origin.x + aBounds.size.width);
-  myYTop    = (Standard_Integer )aBounds.origin.y;
-  myYBottom = (Standard_Integer )(aBounds.origin.y + aBounds.size.height);
+  myXLeft   = (int )aBounds.origin.x;
+  myXRight  = (int )(aBounds.origin.x + aBounds.size.width);
+  myYTop    = (int )aBounds.origin.y;
+  myYBottom = (int )(aBounds.origin.y + aBounds.size.height);
   return aMode;
 }
 
-// =======================================================================
-// function : DoMapping
-// purpose  :
-// =======================================================================
-Standard_Boolean Cocoa_Window::DoMapping() const
+//=================================================================================================
+
+bool Cocoa_Window::DoMapping() const
 {
-  return Standard_True;
+  return true;
 }
 
-// =======================================================================
-// function : Ratio
-// purpose  :
-// =======================================================================
-Standard_Real Cocoa_Window::Ratio() const
+//=================================================================================================
+
+double Cocoa_Window::Ratio() const
 {
-  if (myHView == NULL)
+  if (myHView == nullptr)
   {
     return 1.0;
   }
@@ -357,40 +339,36 @@ Standard_Real Cocoa_Window::Ratio() const
 #else
   NSRect aBounds = [myHView bounds];
 #endif
-  return Standard_Real (aBounds.size.width / aBounds.size.height);
+  return double (aBounds.size.width / aBounds.size.height);
 }
 
-// =======================================================================
-// function : Position
-// purpose  :
-// =======================================================================
-void Cocoa_Window::Position (Standard_Integer& X1, Standard_Integer& Y1,
-                             Standard_Integer& X2, Standard_Integer& Y2) const
+//=================================================================================================
+
+void Cocoa_Window::Position (int& X1, int& Y1,
+                             int& X2, int& Y2) const
 {
 #if defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE
   CGRect aBounds = [myHView bounds];
   X1 = 0;
   Y1 = 0;
-  X2 = (Standard_Integer )aBounds.size.width;
-  Y2 = (Standard_Integer )aBounds.size.height;
+  X2 = (int )aBounds.size.width;
+  Y2 = (int )aBounds.size.height;
 #else
   NSWindow* aWindow = [myHView window];
   NSRect aWindowRect = [aWindow frame];
-  X1 = (Standard_Integer) aWindowRect.origin.x;
-  Y1 = getScreenBottom() - (Standard_Integer) aWindowRect.origin.y - (Standard_Integer) aWindowRect.size.height;
-  X2 = X1 + (Standard_Integer) aWindowRect.size.width;
-  Y2 = Y1 + (Standard_Integer) aWindowRect.size.height;
+  X1 = (int) aWindowRect.origin.x;
+  Y1 = getScreenBottom() - (int) aWindowRect.origin.y - (int) aWindowRect.size.height;
+  X2 = X1 + (int) aWindowRect.size.width;
+  Y2 = Y1 + (int) aWindowRect.size.height;
 #endif
 }
 
-// =======================================================================
-// function : Size
-// purpose  :
-// =======================================================================
-void Cocoa_Window::Size (Standard_Integer& theWidth,
-                         Standard_Integer& theHeight) const
+//=================================================================================================
+
+void Cocoa_Window::Size (int& theWidth,
+                         int& theHeight) const
 {
-  if (myHView == NULL)
+  if (myHView == nullptr)
   {
     return;
   }
@@ -400,17 +378,15 @@ void Cocoa_Window::Size (Standard_Integer& theWidth,
 #else
   NSRect aBounds = [myHView bounds];
 #endif
-  theWidth  = (Standard_Integer )aBounds.size.width;
-  theHeight = (Standard_Integer )aBounds.size.height;
+  theWidth  = (int )aBounds.size.width;
+  theHeight = (int )aBounds.size.height;
 }
 
-// =======================================================================
-// function : SetTitle
-// purpose  :
-// =======================================================================
+//=================================================================================================
+
 void Cocoa_Window::SetTitle (const TCollection_AsciiString& theTitle)
 {
-  if (myHView == NULL)
+  if (myHView == nullptr)
   {
     return;
   }
@@ -425,29 +401,25 @@ void Cocoa_Window::SetTitle (const TCollection_AsciiString& theTitle)
 #endif
 }
 
-// =======================================================================
-// function : InvalidateContent
-// purpose  :
-// =======================================================================
-void Cocoa_Window::InvalidateContent (const Handle(Aspect_DisplayConnection)& )
+//=================================================================================================
+
+void Cocoa_Window::InvalidateContent (const occ::handle<Aspect_DisplayConnection>& )
 {
-  if (myHView == NULL)
+  if (myHView == nullptr)
   {
     return;
   }
 
   {
     [myHView performSelectorOnMainThread: @selector(invalidateContentOcct:)
-                              withObject: NULL
+                              withObject: nullptr
                            waitUntilDone: NO];
   }
 }
 
-// =======================================================================
-// function : VirtualKeyFromNative
-// purpose  :
-// =======================================================================
-Aspect_VKey Cocoa_Window::VirtualKeyFromNative (Standard_Integer theKey)
+//=================================================================================================
+
+Aspect_VKey Cocoa_Window::VirtualKeyFromNative (int theKey)
 {
   switch (theKey)
   {

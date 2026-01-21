@@ -39,10 +39,10 @@ IMPLEMENT_STANDARD_RTTIEXT(IVtkDraw_HighlightAndSelectionPipeline, Standard_Tran
 //=================================================================================================
 
 IVtkDraw_HighlightAndSelectionPipeline::IVtkDraw_HighlightAndSelectionPipeline(
-  const TopoDS_Shape&         theShape,
-  const Standard_Integer      theShapeID,
-  const Handle(Prs3d_Drawer)& theDrawerLink)
-    : Standard_Transient()
+  const TopoDS_Shape&              theShape,
+  const int                        theShapeID,
+  const occ::handle<Prs3d_Drawer>& theDrawerLink)
+
 {
   /* ===========================
    *  Allocate involved filters
@@ -158,7 +158,7 @@ void IVtkDraw_HighlightAndSelectionPipeline::RemoveFromRenderer(vtkRenderer* the
   theRenderer->RemoveActor(mySelActor);
 
   vtkSmartPointer<vtkRenderWindow> aWin = theRenderer->GetRenderWindow();
-  if (aWin != NULL)
+  if (aWin != nullptr)
   {
     myActor->ReleaseGraphicsResources(aWin);
     myHiliActor->ReleaseGraphicsResources(aWin);
@@ -223,14 +223,14 @@ IVtkTools_DisplayModeFilter* IVtkDraw_HighlightAndSelectionPipeline::GetSelectio
 
 void IVtkDraw_HighlightAndSelectionPipeline::SharedVerticesSelectionOn()
 {
-  this->GetHighlightDMFilter()->SetDisplaySharedVertices(Standard_True);
-  this->GetSelectionDMFilter()->SetDisplaySharedVertices(Standard_True);
+  this->GetHighlightDMFilter()->SetDisplaySharedVertices(true);
+  this->GetSelectionDMFilter()->SetDisplaySharedVertices(true);
 }
 
 //=================================================================================================
 
 void IVtkDraw_HighlightAndSelectionPipeline::SharedVerticesSelectionOff()
 {
-  this->GetHighlightDMFilter()->SetDisplaySharedVertices(Standard_False);
-  this->GetSelectionDMFilter()->SetDisplaySharedVertices(Standard_False);
+  this->GetHighlightDMFilter()->SetDisplaySharedVertices(false);
+  this->GetSelectionDMFilter()->SetDisplaySharedVertices(false);
 }

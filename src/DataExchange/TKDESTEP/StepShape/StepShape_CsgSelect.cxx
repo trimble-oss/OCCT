@@ -15,24 +15,25 @@
 #include <StepShape_CsgPrimitive.hxx>
 #include <StepShape_CsgSelect.hxx>
 
-StepShape_CsgSelect::StepShape_CsgSelect() {}
+StepShape_CsgSelect::StepShape_CsgSelect() = default;
 
-void StepShape_CsgSelect::SetTypeOfContent(const Standard_Integer aType)
+void StepShape_CsgSelect::SetTypeOfContent(const int aType)
 {
   theTypeOfContent = aType;
 }
 
-Standard_Integer StepShape_CsgSelect::TypeOfContent() const
+int StepShape_CsgSelect::TypeOfContent() const
 {
   return theTypeOfContent;
 }
 
-Handle(StepShape_BooleanResult) StepShape_CsgSelect::BooleanResult() const
+occ::handle<StepShape_BooleanResult> StepShape_CsgSelect::BooleanResult() const
 {
   return theBooleanResult;
 }
 
-void StepShape_CsgSelect::SetBooleanResult(const Handle(StepShape_BooleanResult)& aBooleanResult)
+void StepShape_CsgSelect::SetBooleanResult(
+  const occ::handle<StepShape_BooleanResult>& aBooleanResult)
 {
   theBooleanResult = aBooleanResult;
   theTypeOfContent = 1;

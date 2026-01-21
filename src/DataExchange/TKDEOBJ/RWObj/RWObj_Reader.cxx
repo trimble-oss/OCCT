@@ -48,8 +48,8 @@ namespace
 static const size_t THE_BUFFER_SIZE = 4 * 1024;
 
 //! Return TRUE if given polygon has clockwise node order.
-static bool isClockwisePolygon(const Handle(BRepMesh_DataStructureOfDelaun)& theMesh,
-                               const IMeshData::VectorOfInteger&             theIndexes)
+static bool isClockwisePolygon(const occ::handle<BRepMesh_DataStructureOfDelaun>& theMesh,
+                               const IMeshData::VectorOfInteger&                  theIndexes)
 {
   double    aPtSum       = 0;
   const int aNbElemNodes = theIndexes.Size();
@@ -67,7 +67,7 @@ static bool isClockwisePolygon(const Handle(BRepMesh_DataStructureOfDelaun)& the
 //=================================================================================================
 
 RWObj_Reader::RWObj_Reader()
-    : myMemLimitBytes(Standard_Size(-1)),
+    : myMemLimitBytes(size_t(-1)),
       myMemEstim(0),
       myNbLines(0),
       myNbProbeNodes(0),
@@ -75,15 +75,14 @@ RWObj_Reader::RWObj_Reader()
       myNbElemsBig(0),
       myToAbort(false)
 {
-  //
 }
 
 //=================================================================================================
 
-Standard_Boolean RWObj_Reader::read(std::istream&                  theStream,
-                                    const TCollection_AsciiString& theFile,
-                                    const Message_ProgressRange&   theProgress,
-                                    const Standard_Boolean         theToProbe)
+bool RWObj_Reader::read(std::istream&                  theStream,
+                        const TCollection_AsciiString& theFile,
+                        const Message_ProgressRange&   theProgress,
+                        const bool                     theToProbe)
 {
   myMemEstim     = 0;
   myNbLines      = 0;
@@ -109,36 +108,36 @@ Standard_Boolean RWObj_Reader::read(std::istream&                  theStream,
   if (!theStream.good())
   {
     Message::SendFail(TCollection_AsciiString("Error: file '") + theFile + "' is not found");
-    return Standard_False;
+    return false;
   }
 
   // determine length of file
-  theStream.seekg(0, theStream.end);
+  theStream.seekg(0, std::istream::end);
   const int64_t aFileLen = theStream.tellg();
-  theStream.seekg(0, theStream.beg);
+  theStream.seekg(0, std::istream::beg);
   if (aFileLen <= 0L)
   {
     Message::SendFail(TCollection_AsciiString("Error: file '") + theFile + "' is empty");
-    return Standard_False;
+    return false;
   }
 
   Standard_ReadLineBuffer aBuffer(THE_BUFFER_SIZE);
   aBuffer.SetMultilineMode(true);
 
-  const Standard_Integer aNbMiBTotal  = Standard_Integer(aFileLen / (1024 * 1024));
-  Standard_Integer       aNbMiBPassed = 0;
-  Message_ProgressScope  aPS(theProgress, "Reading text OBJ file", aNbMiBTotal);
-  OSD_Timer              aTimer;
+  const int             aNbMiBTotal  = int(aFileLen / (1024 * 1024));
+  int                   aNbMiBPassed = 0;
+  Message_ProgressScope aPS(theProgress, "Reading text OBJ file", aNbMiBTotal);
+  OSD_Timer             aTimer;
   aTimer.Start();
   bool        isStart    = true;
   int64_t     aPosition  = 0;
   size_t      aLineLen   = 0;
   int64_t     aReadBytes = 0;
-  const char* aLine      = NULL;
+  const char* aLine      = nullptr;
   for (;;)
   {
     aLine = aBuffer.ReadLine(theStream, aLineLen, aReadBytes);
-    if (aLine == NULL)
+    if (aLine == nullptr)
     {
       break;
     }
@@ -151,7 +150,7 @@ Standard_Boolean RWObj_Reader::read(std::istream&                  theStream,
         return false;
       }
 
-      const Standard_Integer aNbMiBRead = Standard_Integer(aPosition / (1024 * 1024));
+      const int aNbMiBRead = int(aPosition / (1024 * 1024));
       aPS.Next(aNbMiBRead - aNbMiBPassed);
       aNbMiBPassed = aNbMiBRead;
       aTimer.Reset();
@@ -284,12 +283,12 @@ Standard_Boolean RWObj_Reader::read(std::istream&                  theStream,
 
 void RWObj_Reader::pushIndices(const char* thePos)
 {
-  char* aNext = NULL;
+  char* aNext = nullptr;
 
-  Standard_Integer aNbElemNodes = 0;
-  for (Standard_Integer aNode = 0;; ++aNode)
+  int aNbElemNodes = 0;
+  for (int aNode = 0;; ++aNode)
   {
-    Graphic3d_Vec3i a3Indices(-1, -1, -1);
+    NCollection_Vec3<int> a3Indices(-1, -1, -1);
     a3Indices[0] = int(strtol(thePos, &aNext, 10) - 1);
     if (aNext == thePos)
     {
@@ -333,22 +332,22 @@ void RWObj_Reader::pushIndices(const char* thePos)
       a3Indices[2] += myObjNorms.Upper() + 2;
     }
 
-    Standard_Integer anIndex = -1;
+    int anIndex = -1;
     if (!myPackedIndices.Find(a3Indices, anIndex))
     {
       if (a3Indices[0] >= 0)
       {
-        myMemEstim += sizeof(Graphic3d_Vec3);
+        myMemEstim += sizeof(NCollection_Vec3<float>);
       }
       if (a3Indices[1] >= 0)
       {
-        myMemEstim += sizeof(Graphic3d_Vec2);
+        myMemEstim += sizeof(NCollection_Vec2<float>);
       }
       if (a3Indices[2] >= 0)
       {
-        myMemEstim += sizeof(Graphic3d_Vec3);
+        myMemEstim += sizeof(NCollection_Vec3<float>);
       }
-      myMemEstim += sizeof(Graphic3d_Vec4i) + sizeof(Standard_Integer); // naive map
+      myMemEstim += sizeof(NCollection_Vec4<int>) + sizeof(int); // naive map
       if (a3Indices[0] < myObjVerts.Lower() || a3Indices[0] > myObjVerts.Upper())
       {
         myToAbort = true;
@@ -370,7 +369,7 @@ void RWObj_Reader::pushIndices(const char* thePos)
         {
           Message::SendWarning(TCollection_AsciiString("Warning: invalid OBJ syntax at line ")
                                + myNbLines + ": UV index is out of range");
-          setNodeUV(anIndex, Graphic3d_Vec2(0.0f, 0.0f));
+          setNodeUV(anIndex, NCollection_Vec2<float>(0.0f, 0.0f));
         }
         else
         {
@@ -389,7 +388,7 @@ void RWObj_Reader::pushIndices(const char* thePos)
         {
           Message::SendWarning(TCollection_AsciiString("Warning: invalid OBJ syntax at line ")
                                + myNbLines + ": Normal index is out of range");
-          setNodeNormal(anIndex, Graphic3d_Vec3(0.0f, 0.0f, 1.0f));
+          setNodeNormal(anIndex, NCollection_Vec3<float>(0.0f, 0.0f, 1.0f));
         }
         else
         {
@@ -423,40 +422,38 @@ void RWObj_Reader::pushIndices(const char* thePos)
 
   if (aNbElemNodes == 3)
   {
-    myMemEstim += sizeof(Graphic3d_Vec4i);
+    myMemEstim += sizeof(NCollection_Vec4<int>);
     addElement(myCurrElem[0], myCurrElem[1], myCurrElem[2], -1);
   }
   else if (aNbElemNodes == 4)
   {
-    myMemEstim += sizeof(Graphic3d_Vec4i);
+    myMemEstim += sizeof(NCollection_Vec4<int>);
     addElement(myCurrElem[0], myCurrElem[1], myCurrElem[2], myCurrElem[3]);
   }
   else
   {
-    const NCollection_Array1<Standard_Integer> aCurrElemArray1(myCurrElem[0], 1, aNbElemNodes);
-    const Standard_Integer                     aNbAdded = triangulatePolygon(aCurrElemArray1);
+    const NCollection_Array1<int> aCurrElemArray1(myCurrElem[0], 1, aNbElemNodes);
+    const int                     aNbAdded = triangulatePolygon(aCurrElemArray1);
     if (aNbAdded < 1)
     {
       return;
     }
     ++myNbElemsBig;
-    myMemEstim += sizeof(Graphic3d_Vec4i) * aNbAdded;
+    myMemEstim += sizeof(NCollection_Vec4<int>) * aNbAdded;
   }
 }
 
 //=================================================================================================
 
-Standard_Integer RWObj_Reader::triangulatePolygonFan(
-  const NCollection_Array1<Standard_Integer>& theIndices)
+int RWObj_Reader::triangulatePolygonFan(const NCollection_Array1<int>& theIndices)
 {
-  const Standard_Integer aNbElemNodes = theIndices.Size();
-  for (Standard_Integer aNodeIter = 0; aNodeIter < aNbElemNodes - 2; ++aNodeIter)
+  const int aNbElemNodes = theIndices.Size();
+  for (int aNodeIter = 0; aNodeIter < aNbElemNodes - 2; ++aNodeIter)
   {
-    Graphic3d_Vec4i aTriNodes(-1, -1, -1, -1);
-    for (Standard_Integer aNodeInSubTriIter = 0; aNodeInSubTriIter < 3; ++aNodeInSubTriIter)
+    NCollection_Vec4<int> aTriNodes(-1, -1, -1, -1);
+    for (int aNodeInSubTriIter = 0; aNodeInSubTriIter < 3; ++aNodeInSubTriIter)
     {
-      const Standard_Integer aCurrNodeIndex =
-        (aNodeInSubTriIter == 0) ? 0 : (aNodeIter + aNodeInSubTriIter);
+      const int aCurrNodeIndex     = (aNodeInSubTriIter == 0) ? 0 : (aNodeIter + aNodeInSubTriIter);
       aTriNodes[aNodeInSubTriIter] = theIndices.Value(theIndices.Lower() + aCurrNodeIndex);
     }
     addElement(aTriNodes[0], aTriNodes[1], aTriNodes[2], -1);
@@ -466,7 +463,7 @@ Standard_Integer RWObj_Reader::triangulatePolygonFan(
 
 //=================================================================================================
 
-gp_XYZ RWObj_Reader::polygonCenter(const NCollection_Array1<Standard_Integer>& theIndices)
+gp_XYZ RWObj_Reader::polygonCenter(const NCollection_Array1<int>& theIndices)
 {
   if (theIndices.Size() < 3)
   {
@@ -481,19 +478,18 @@ gp_XYZ RWObj_Reader::polygonCenter(const NCollection_Array1<Standard_Integer>& t
   }
 
   gp_XYZ aCenter(0, 0, 0);
-  for (NCollection_Array1<Standard_Integer>::Iterator aPntIter(theIndices); aPntIter.More();
-       aPntIter.Next())
+  for (NCollection_Array1<int>::Iterator aPntIter(theIndices); aPntIter.More(); aPntIter.Next())
   {
     aCenter += getNode(aPntIter.Value()).XYZ();
   }
 
-  aCenter /= (Standard_Real)theIndices.Size();
+  aCenter /= (double)theIndices.Size();
   return aCenter;
 }
 
 //=================================================================================================
 
-gp_XYZ RWObj_Reader::polygonNormal(const NCollection_Array1<Standard_Integer>& theIndices)
+gp_XYZ RWObj_Reader::polygonNormal(const NCollection_Array1<int>& theIndices)
 {
   const gp_XYZ aCenter = polygonCenter(theIndices);
   gp_XYZ       aMaxDir = getNode(theIndices.First()).XYZ() - aCenter;
@@ -515,7 +511,7 @@ gp_XYZ RWObj_Reader::polygonNormal(const NCollection_Array1<Standard_Integer>& t
     aNormal += aDelta;
   }
 
-  const Standard_Real aMod = aNormal.Modulus();
+  const double aMod = aNormal.Modulus();
   if (aMod > gp::Resolution())
   {
     aNormal /= aMod;
@@ -525,10 +521,9 @@ gp_XYZ RWObj_Reader::polygonNormal(const NCollection_Array1<Standard_Integer>& t
 
 //=================================================================================================
 
-Standard_Integer RWObj_Reader::triangulatePolygon(
-  const NCollection_Array1<Standard_Integer>& theIndices)
+int RWObj_Reader::triangulatePolygon(const NCollection_Array1<int>& theIndices)
 {
-  const Standard_Integer aNbElemNodes = theIndices.Size();
+  const int aNbElemNodes = theIndices.Size();
   if (aNbElemNodes < 3)
   {
     return 0;
@@ -539,35 +534,37 @@ Standard_Integer RWObj_Reader::triangulatePolygon(
   // map polygon onto plane
   gp_XYZ aXDir;
   {
-    const double aAbsXYZ[] = {Abs(aPolygonNorm.X()), Abs(aPolygonNorm.Y()), Abs(aPolygonNorm.Z())};
-    Standard_Integer aMinI = (aAbsXYZ[0] < aAbsXYZ[1]) ? 0 : 1;
-    aMinI                  = (aAbsXYZ[aMinI] < aAbsXYZ[2]) ? aMinI : 2;
-    const Standard_Integer aI1   = (aMinI + 1) % 3 + 1;
-    const Standard_Integer aI2   = (aMinI + 2) % 3 + 1;
+    const double aAbsXYZ[]       = {std::abs(aPolygonNorm.X()),
+                                    std::abs(aPolygonNorm.Y()),
+                                    std::abs(aPolygonNorm.Z())};
+    int          aMinI           = (aAbsXYZ[0] < aAbsXYZ[1]) ? 0 : 1;
+    aMinI                        = (aAbsXYZ[aMinI] < aAbsXYZ[2]) ? aMinI : 2;
+    const int aI1                = (aMinI + 1) % 3 + 1;
+    const int aI2                = (aMinI + 2) % 3 + 1;
     aXDir.ChangeCoord(aMinI + 1) = 0;
     aXDir.ChangeCoord(aI1)       = aPolygonNorm.Coord(aI2);
     aXDir.ChangeCoord(aI2)       = -aPolygonNorm.Coord(aI1);
   }
   const gp_XYZ aYDir = aPolygonNorm ^ aXDir;
 
-  Handle(NCollection_IncAllocator)       anAllocator = new NCollection_IncAllocator();
-  Handle(BRepMesh_DataStructureOfDelaun) aMeshStructure =
+  occ::handle<NCollection_IncAllocator>       anAllocator = new NCollection_IncAllocator();
+  occ::handle<BRepMesh_DataStructureOfDelaun> aMeshStructure =
     new BRepMesh_DataStructureOfDelaun(anAllocator);
   IMeshData::VectorOfInteger anIndexes(aNbElemNodes, anAllocator);
-  for (Standard_Integer aNodeIter = 0; aNodeIter < aNbElemNodes; ++aNodeIter)
+  for (int aNodeIter = 0; aNodeIter < aNbElemNodes; ++aNodeIter)
   {
-    const Standard_Integer aNodeIndex = theIndices.Value(theIndices.Lower() + aNodeIter);
-    const gp_XYZ           aPnt3d     = getNode(aNodeIndex).XYZ();
-    gp_XY                  aPnt2d(aXDir * aPnt3d, aYDir * aPnt3d);
-    BRepMesh_Vertex        aVertex(aPnt2d, aNodeIndex, BRepMesh_Frontier);
+    const int       aNodeIndex = theIndices.Value(theIndices.Lower() + aNodeIter);
+    const gp_XYZ    aPnt3d     = getNode(aNodeIndex).XYZ();
+    gp_XY           aPnt2d(aXDir * aPnt3d, aYDir * aPnt3d);
+    BRepMesh_Vertex aVertex(aPnt2d, aNodeIndex, BRepMesh_Frontier);
     anIndexes.Append(aMeshStructure->AddNode(aVertex));
   }
 
   const bool isClockwiseOrdered = isClockwisePolygon(aMeshStructure, anIndexes);
-  for (Standard_Integer aIdx = anIndexes.Lower(); aIdx <= anIndexes.Upper(); ++aIdx)
+  for (int aIdx = anIndexes.Lower(); aIdx <= anIndexes.Upper(); ++aIdx)
   {
-    const Standard_Integer aPtIdx     = isClockwiseOrdered ? aIdx : (aIdx + 1) % anIndexes.Length();
-    const Standard_Integer aNextPtIdx = isClockwiseOrdered ? (aIdx + 1) % anIndexes.Length() : aIdx;
+    const int     aPtIdx     = isClockwiseOrdered ? aIdx : (aIdx + 1) % anIndexes.Length();
+    const int     aNextPtIdx = isClockwiseOrdered ? (aIdx + 1) % anIndexes.Length() : aIdx;
     BRepMesh_Edge anEdge(anIndexes.Value(aPtIdx), anIndexes.Value(aNextPtIdx), BRepMesh_Frontier);
     aMeshStructure->AddLink(anEdge);
   }
@@ -581,10 +578,10 @@ Standard_Integer RWObj_Reader::triangulatePolygon(
       return triangulatePolygonFan(theIndices);
     }
 
-    Standard_Integer aNbTrisAdded = 0;
+    int aNbTrisAdded = 0;
     for (IMeshData::MapOfInteger::Iterator aTriIter(aTriangles); aTriIter.More(); aTriIter.Next())
     {
-      const Standard_Integer   aTriangleId = aTriIter.Key();
+      const int                aTriangleId = aTriIter.Key();
       const BRepMesh_Triangle& aTriangle   = aMeshStructure->GetElement(aTriangleId);
       if (aTriangle.Movability() == BRepMesh_Deleted)
       {
@@ -608,7 +605,7 @@ Standard_Integer RWObj_Reader::triangulatePolygon(
   catch (Standard_Failure const& theFailure)
   {
     Message::SendWarning(TCollection_AsciiString("Error: exception raised during polygon split\n[")
-                         + theFailure.GetMessageString() + "]");
+                         + theFailure.what() + "]");
   }
   return triangulatePolygonFan(theIndices);
 }
@@ -727,7 +724,7 @@ bool RWObj_Reader::checkMemory()
   }
 
   Message::SendFail(TCollection_AsciiString("Error: OBJ file content does not fit into ")
-                    + Standard_Integer(myMemLimitBytes / (1024 * 1024)) + " MiB limit."
+                    + int(myMemLimitBytes / (1024 * 1024)) + " MiB limit."
                     + "\nMesh data will be truncated.");
   myToAbort = true;
   return false;

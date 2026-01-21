@@ -21,18 +21,18 @@ IMPLEMENT_STANDARD_RTTIEXT(IMeshTools_MeshBuilder, Message_Algorithm)
 
 //=================================================================================================
 
-IMeshTools_MeshBuilder::IMeshTools_MeshBuilder() {}
+IMeshTools_MeshBuilder::IMeshTools_MeshBuilder() = default;
 
 //=================================================================================================
 
-IMeshTools_MeshBuilder::IMeshTools_MeshBuilder(const Handle(IMeshTools_Context)& theContext)
+IMeshTools_MeshBuilder::IMeshTools_MeshBuilder(const occ::handle<IMeshTools_Context>& theContext)
     : myContext(theContext)
 {
 }
 
 //=================================================================================================
 
-IMeshTools_MeshBuilder::~IMeshTools_MeshBuilder() {}
+IMeshTools_MeshBuilder::~IMeshTools_MeshBuilder() = default;
 
 //=================================================================================================
 
@@ -40,7 +40,7 @@ void IMeshTools_MeshBuilder::Perform(const Message_ProgressRange& theRange)
 {
   ClearStatus();
 
-  const Handle(IMeshTools_Context)& aContext = GetContext();
+  const occ::handle<IMeshTools_Context>& aContext = GetContext();
   if (aContext.IsNull())
   {
     SetStatus(Message_Fail1);
@@ -96,7 +96,7 @@ void IMeshTools_MeshBuilder::Perform(const Message_ProgressRange& theRange)
   }
   else
   {
-    const Handle(IMeshTools_ModelBuilder)& aModelBuilder = aContext->GetModelBuilder();
+    const occ::handle<IMeshTools_ModelBuilder>& aModelBuilder = aContext->GetModelBuilder();
 
     if (aModelBuilder.IsNull())
     {

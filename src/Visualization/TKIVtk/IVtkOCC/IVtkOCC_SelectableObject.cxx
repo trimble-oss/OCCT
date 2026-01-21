@@ -45,15 +45,11 @@ IVtkOCC_SelectableObject::IVtkOCC_SelectableObject(const IVtkOCC_Shape::Handle& 
 IVtkOCC_SelectableObject::IVtkOCC_SelectableObject()
     : SelectMgr_SelectableObject(PrsMgr_TOP_AllView)
 {
-  //
 }
 
 //=================================================================================================
 
-IVtkOCC_SelectableObject::~IVtkOCC_SelectableObject()
-{
-  //
-}
+IVtkOCC_SelectableObject::~IVtkOCC_SelectableObject() = default;
 
 //=================================================================================================
 
@@ -72,8 +68,9 @@ void IVtkOCC_SelectableObject::SetShape(const IVtkOCC_Shape::Handle& theShape)
 
 //=================================================================================================
 
-void IVtkOCC_SelectableObject::ComputeSelection(const Handle(SelectMgr_Selection)& theSelection,
-                                                const Standard_Integer             theMode)
+void IVtkOCC_SelectableObject::ComputeSelection(
+  const occ::handle<SelectMgr_Selection>& theSelection,
+  const int                               theMode)
 {
   if (myShape.IsNull())
   {
@@ -87,10 +84,9 @@ void IVtkOCC_SelectableObject::ComputeSelection(const Handle(SelectMgr_Selection
     return;
   }
 
-  const TopAbs_ShapeEnum      aTypeOfSel = AIS_Shape::SelectionType(theMode);
-  const Handle(Prs3d_Drawer)& aDrawer    = myShape->Attributes();
-  const Standard_Real         aDeflection =
-    StdPrs_ToolTriangulatedShape::GetDeflection(anOcctShape, aDrawer);
+  const TopAbs_ShapeEnum           aTypeOfSel = AIS_Shape::SelectionType(theMode);
+  const occ::handle<Prs3d_Drawer>& aDrawer    = myShape->Attributes();
+  const double aDeflection = StdPrs_ToolTriangulatedShape::GetDeflection(anOcctShape, aDrawer);
   try
   {
     OCC_CATCH_SIGNALS
@@ -105,12 +101,12 @@ void IVtkOCC_SelectableObject::ComputeSelection(const Handle(SelectMgr_Selection
   catch (const Standard_Failure& anException)
   {
     Message::SendFail(TCollection_AsciiString("Error: IVtkOCC_SelectableObject::ComputeSelection(")
-                      + theMode + ") has failed (" + anException.GetMessageString() + ")");
+                      + theMode + ") has failed (" + anException.what() + ")");
     if (theMode == 0)
     {
-      Bnd_Box                       aBndBox       = BoundingBox();
-      Handle(StdSelect_BRepOwner)   aOwner        = new StdSelect_BRepOwner(anOcctShape, this);
-      Handle(Select3D_SensitiveBox) aSensitiveBox = new Select3D_SensitiveBox(aOwner, aBndBox);
+      Bnd_Box                            aBndBox       = BoundingBox();
+      occ::handle<StdSelect_BRepOwner>   aOwner        = new StdSelect_BRepOwner(anOcctShape, this);
+      occ::handle<Select3D_SensitiveBox> aSensitiveBox = new Select3D_SensitiveBox(aOwner, aBndBox);
       theSelection->Add(aSensitiveBox);
     }
   }

@@ -24,15 +24,14 @@ IMPLEMENT_STANDARD_RTTIEXT(StepFEA_AlignedSurface3dElementCoordinateSystem,
 
 //=================================================================================================
 
-StepFEA_AlignedSurface3dElementCoordinateSystem::StepFEA_AlignedSurface3dElementCoordinateSystem()
-{
-}
+StepFEA_AlignedSurface3dElementCoordinateSystem::StepFEA_AlignedSurface3dElementCoordinateSystem() =
+  default;
 
 //=================================================================================================
 
 void StepFEA_AlignedSurface3dElementCoordinateSystem::Init(
-  const Handle(TCollection_HAsciiString)&    aRepresentationItem_Name,
-  const Handle(StepFEA_FeaAxis2Placement3d)& aCoordinateSystem)
+  const occ::handle<TCollection_HAsciiString>&    aRepresentationItem_Name,
+  const occ::handle<StepFEA_FeaAxis2Placement3d>& aCoordinateSystem)
 {
   StepFEA_FeaRepresentationItem::Init(aRepresentationItem_Name);
 
@@ -41,7 +40,7 @@ void StepFEA_AlignedSurface3dElementCoordinateSystem::Init(
 
 //=================================================================================================
 
-Handle(StepFEA_FeaAxis2Placement3d) StepFEA_AlignedSurface3dElementCoordinateSystem::
+occ::handle<StepFEA_FeaAxis2Placement3d> StepFEA_AlignedSurface3dElementCoordinateSystem::
   CoordinateSystem() const
 {
   return theCoordinateSystem;
@@ -50,7 +49,7 @@ Handle(StepFEA_FeaAxis2Placement3d) StepFEA_AlignedSurface3dElementCoordinateSys
 //=================================================================================================
 
 void StepFEA_AlignedSurface3dElementCoordinateSystem::SetCoordinateSystem(
-  const Handle(StepFEA_FeaAxis2Placement3d)& aCoordinateSystem)
+  const occ::handle<StepFEA_FeaAxis2Placement3d>& aCoordinateSystem)
 {
   theCoordinateSystem = aCoordinateSystem;
 }

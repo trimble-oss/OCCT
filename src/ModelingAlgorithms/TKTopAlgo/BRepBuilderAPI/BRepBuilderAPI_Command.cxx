@@ -20,17 +20,17 @@
 //=================================================================================================
 
 BRepBuilderAPI_Command::BRepBuilderAPI_Command()
-    : myDone(Standard_False)
+    : myDone(false)
 {
 }
 
 //=================================================================================================
 
-BRepBuilderAPI_Command::~BRepBuilderAPI_Command() {}
+BRepBuilderAPI_Command::~BRepBuilderAPI_Command() = default;
 
 //=================================================================================================
 
-Standard_Boolean BRepBuilderAPI_Command::IsDone() const
+bool BRepBuilderAPI_Command::IsDone() const
 {
   return myDone;
 }
@@ -47,12 +47,12 @@ void BRepBuilderAPI_Command::Check() const
 
 void BRepBuilderAPI_Command::Done()
 {
-  myDone = Standard_True;
+  myDone = true;
 }
 
 //=================================================================================================
 
 void BRepBuilderAPI_Command::NotDone()
 {
-  myDone = Standard_False;
+  myDone = false;
 }

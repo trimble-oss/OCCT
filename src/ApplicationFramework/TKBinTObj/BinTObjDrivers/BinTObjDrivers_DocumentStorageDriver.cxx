@@ -24,17 +24,16 @@ IMPLEMENT_STANDARD_RTTIEXT(BinTObjDrivers_DocumentStorageDriver, BinLDrivers_Doc
 //=================================================================================================
 
 BinTObjDrivers_DocumentStorageDriver::BinTObjDrivers_DocumentStorageDriver()
-    : BinLDrivers_DocumentStorageDriver()
-{
-}
+
+  = default;
 
 //=================================================================================================
 
-Handle(BinMDF_ADriverTable) BinTObjDrivers_DocumentStorageDriver::AttributeDrivers(
-  const Handle(Message_Messenger)& theMsgDrv)
+occ::handle<BinMDF_ADriverTable> BinTObjDrivers_DocumentStorageDriver::AttributeDrivers(
+  const occ::handle<Message_Messenger>& theMsgDrv)
 {
   // Standard drivers
-  Handle(BinMDF_ADriverTable) aTable = BinLDrivers::AttributeDrivers(theMsgDrv);
+  occ::handle<BinMDF_ADriverTable> aTable = BinLDrivers::AttributeDrivers(theMsgDrv);
 
   // Native drivers
   BinTObjDrivers::AddDrivers(aTable, theMsgDrv);

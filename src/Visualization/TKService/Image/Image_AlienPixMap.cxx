@@ -44,7 +44,6 @@
 #include <Message.hxx>
 #include <Message_Messenger.hxx>
 #include <NCollection_Array1.hxx>
-#include <Standard_ArrayStreamBuffer.hxx>
 #include <TCollection_AsciiString.hxx>
 #include <TCollection_ExtendedString.hxx>
 #include <OSD_OpenFile.hxx>
@@ -134,14 +133,14 @@ public:
   //! Construct wrapper over input stream.
   Image_FreeImageStream(std::istream& theStream)
       : myIStream(&theStream),
-        myOStream(NULL),
+        myOStream(nullptr),
         myInitPos(theStream.tellg())
   {
   }
 
   //! Construct wrapper over output stream.
   Image_FreeImageStream(std::ostream& theStream)
-      : myIStream(NULL),
+      : myIStream(nullptr),
         myOStream(&theStream),
         myInitPos(theStream.tellp())
   {
@@ -152,13 +151,13 @@ public:
   {
     FreeImageIO anIo;
     memset(&anIo, 0, sizeof(anIo));
-    if (myIStream != NULL)
+    if (myIStream != nullptr)
     {
       anIo.read_proc = readProc;
       anIo.seek_proc = seekProcIn;
       anIo.tell_proc = tellProcIn;
     }
-    if (myOStream != NULL)
+    if (myOStream != nullptr)
     {
       anIo.write_proc = writeProc;
       // seek and tell are also used for saving in some formats (.tif for example)
@@ -176,7 +175,7 @@ public:
                                             fi_handle    theHandle)
   {
     Image_FreeImageStream* aThis = (Image_FreeImageStream*)theHandle;
-    if (aThis->myIStream == NULL)
+    if (aThis->myIStream == nullptr)
     {
       return 0;
     }
@@ -197,7 +196,7 @@ public:
                                              fi_handle    theHandle)
   {
     Image_FreeImageStream* aThis = (Image_FreeImageStream*)theHandle;
-    if (aThis->myOStream != NULL
+    if (aThis->myOStream != nullptr
         && aThis->myOStream->write((const char*)theBuffer,
                                    std::streamsize(theSize) * std::streamsize(theCount)))
     {
@@ -210,7 +209,7 @@ public:
   static int DLL_CALLCONV seekProcIn(fi_handle theHandle, long theOffset, int theOrigin)
   {
     Image_FreeImageStream* aThis = (Image_FreeImageStream*)theHandle;
-    if (aThis->myIStream == NULL)
+    if (aThis->myIStream == nullptr)
     {
       return -1;
     }
@@ -243,7 +242,7 @@ public:
   static int DLL_CALLCONV seekProcOut(fi_handle theHandle, long theOffset, int theOrigin)
   {
     Image_FreeImageStream* aThis = (Image_FreeImageStream*)theHandle;
-    if (aThis->myOStream == NULL)
+    if (aThis->myOStream == nullptr)
     {
       return -1;
     }
@@ -278,7 +277,7 @@ public:
   {
     Image_FreeImageStream* aThis = (Image_FreeImageStream*)theHandle;
     const long             aPos =
-      aThis->myIStream != NULL ? (long)(aThis->myIStream->tellg() - aThis->myInitPos) : 0;
+      aThis->myIStream != nullptr ? (long)(aThis->myIStream->tellg() - aThis->myInitPos) : 0;
     return aPos;
   }
 
@@ -286,7 +285,7 @@ public:
   {
     Image_FreeImageStream* aThis = (Image_FreeImageStream*)theHandle;
     const long             aPos =
-      aThis->myOStream != NULL ? (long)(aThis->myOStream->tellp() - aThis->myInitPos) : 0;
+      aThis->myOStream != nullptr ? (long)(aThis->myOStream->tellp() - aThis->myInitPos) : 0;
     return aPos;
   }
 
@@ -451,7 +450,7 @@ Image_AlienPixMap::Image_AlienPixMap()
 #ifdef HAVE_WINCODEC
     : myPalette(NULL)
 #else
-    : myLibImage(NULL)
+    : myLibImage(nullptr)
 #endif
 {
   SetTopDown(false);
@@ -467,10 +466,10 @@ Image_AlienPixMap::~Image_AlienPixMap()
 //=================================================================================================
 
 bool Image_AlienPixMap::InitWrapper(Image_Format,
-                                    Standard_Byte*,
-                                    const Standard_Size,
-                                    const Standard_Size,
-                                    const Standard_Size)
+                                    uint8_t*,
+                                    const size_t,
+                                    const size_t,
+                                    const size_t)
 {
   Clear();
   return false;
@@ -479,10 +478,10 @@ bool Image_AlienPixMap::InitWrapper(Image_Format,
 //=================================================================================================
 
 #ifdef HAVE_FREEIMAGE
-bool Image_AlienPixMap::InitTrash(Image_Format        thePixelFormat,
-                                  const Standard_Size theSizeX,
-                                  const Standard_Size theSizeY,
-                                  const Standard_Size /*theSizeRowBytes*/)
+bool Image_AlienPixMap::InitTrash(Image_Format thePixelFormat,
+                                  const size_t theSizeX,
+                                  const size_t theSizeY,
+                                  const size_t /*theSizeRowBytes*/)
 {
   Clear();
   FREE_IMAGE_TYPE aFormatFI     = convertToFreeFormat(thePixelFormat);
@@ -515,10 +514,10 @@ bool Image_AlienPixMap::InitTrash(Image_Format        thePixelFormat,
   return true;
 }
 #elif defined(HAVE_WINCODEC)
-bool Image_AlienPixMap::InitTrash(Image_Format        thePixelFormat,
-                                  const Standard_Size theSizeX,
-                                  const Standard_Size theSizeY,
-                                  const Standard_Size theSizeRowBytes)
+bool Image_AlienPixMap::InitTrash(Image_Format thePixelFormat,
+                                  const size_t theSizeX,
+                                  const size_t theSizeY,
+                                  const size_t theSizeRowBytes)
 {
   Clear();
   Image_Format aFormat = thePixelFormat;
@@ -545,10 +544,10 @@ bool Image_AlienPixMap::InitTrash(Image_Format        thePixelFormat,
   return true;
 }
 #else
-bool Image_AlienPixMap::InitTrash(Image_Format        thePixelFormat,
-                                  const Standard_Size theSizeX,
-                                  const Standard_Size theSizeY,
-                                  const Standard_Size theSizeRowBytes)
+bool Image_AlienPixMap::InitTrash(Image_Format thePixelFormat,
+                                  const size_t theSizeX,
+                                  const size_t theSizeY,
+                                  const size_t theSizeRowBytes)
 {
   return Image_PixMap::InitTrash(thePixelFormat, theSizeX, theSizeY, theSizeRowBytes);
 }
@@ -578,8 +577,8 @@ bool Image_AlienPixMap::InitCopy(const Image_PixMap& theCopy)
     }
 
     // copy row-by-row
-    const Standard_Size aRowSizeBytes = std::min(SizeRowBytes(), theCopy.SizeRowBytes());
-    for (Standard_Size aRow = 0; aRow < myData.SizeY; ++aRow)
+    const size_t aRowSizeBytes = std::min(SizeRowBytes(), theCopy.SizeRowBytes());
+    for (size_t aRow = 0; aRow < myData.SizeY; ++aRow)
     {
       memcpy(ChangeRow(aRow), theCopy.Row(aRow), aRowSizeBytes);
     }
@@ -597,10 +596,10 @@ void Image_AlienPixMap::Clear()
 {
   Image_PixMap::Clear();
 #ifdef HAVE_FREEIMAGE
-  if (myLibImage != NULL)
+  if (myLibImage != nullptr)
   {
     FreeImage_Unload(myLibImage);
-    myLibImage = NULL;
+    myLibImage = nullptr;
   }
 #elif defined(HAVE_WINCODEC)
   if (myPalette != NULL)
@@ -633,8 +632,8 @@ bool Image_AlienPixMap::IsTopDownDefault()
 //=================================================================================================
 
 #ifdef HAVE_FREEIMAGE
-bool Image_AlienPixMap::Load(const Standard_Byte*           theData,
-                             const Standard_Size            theLength,
+bool Image_AlienPixMap::Load(const uint8_t*                 theData,
+                             const size_t                   theLength,
                              const TCollection_AsciiString& theImagePath)
 {
   Clear();
@@ -643,8 +642,8 @@ bool Image_AlienPixMap::Load(const Standard_Byte*           theData,
   const TCollection_ExtendedString aFileNameW(theImagePath);
   #endif
   FREE_IMAGE_FORMAT aFIF   = FIF_UNKNOWN;
-  FIMEMORY*         aFiMem = NULL;
-  if (theData != NULL)
+  FIMEMORY*         aFiMem = nullptr;
+  if (theData != nullptr)
   {
     aFiMem = FreeImage_OpenMemory((BYTE*)theData, (DWORD)theLength);
     aFIF   = FreeImage_GetFileTypeFromMemory(aFiMem, 0);
@@ -666,7 +665,7 @@ bool Image_AlienPixMap::Load(const Standard_Byte*           theData,
   {
     ::Message::SendFail(TCollection_AsciiString("Error: image '") + theImagePath
                         + "' has unsupported file format");
-    if (aFiMem != NULL)
+    if (aFiMem != nullptr)
     {
       FreeImage_CloseMemory(aFiMem);
     }
@@ -686,12 +685,12 @@ bool Image_AlienPixMap::Load(const Standard_Byte*           theData,
     aLoadFlags = ICO_MAKEALPHA;
   }
 
-  FIBITMAP* anImage = NULL;
-  if (theData != NULL)
+  FIBITMAP* anImage = nullptr;
+  if (theData != nullptr)
   {
     anImage = FreeImage_LoadFromMemory(aFIF, aFiMem, aLoadFlags);
     FreeImage_CloseMemory(aFiMem);
-    aFiMem = NULL;
+    aFiMem = nullptr;
   }
   else
   {
@@ -701,7 +700,7 @@ bool Image_AlienPixMap::Load(const Standard_Byte*           theData,
     anImage = FreeImage_Load(aFIF, theImagePath.ToCString(), aLoadFlags);
   #endif
   }
-  if (anImage == NULL)
+  if (anImage == nullptr)
   {
     ::Message::SendFail(TCollection_AsciiString("Error: image file '") + theImagePath
                         + "' is missing or invalid");
@@ -715,7 +714,7 @@ bool Image_AlienPixMap::Load(const Standard_Byte*           theData,
     FreeImage_Unload(anImage);
     anImage = aTmpImage;
   }
-  if (anImage != NULL)
+  if (anImage != nullptr)
   {
     aFormat = convertFromFreeFormat(FreeImage_GetImageType(anImage),
                                     FreeImage_GetColorType(anImage),
@@ -725,7 +724,7 @@ bool Image_AlienPixMap::Load(const Standard_Byte*           theData,
       FIBITMAP* aTmpImage = FreeImage_ConvertTo24Bits(anImage);
       FreeImage_Unload(anImage);
       anImage = aTmpImage;
-      if (anImage != NULL)
+      if (anImage != nullptr)
       {
         aFormat = convertFromFreeFormat(FreeImage_GetImageType(anImage),
                                         FreeImage_GetColorType(anImage),
@@ -786,7 +785,7 @@ bool Image_AlienPixMap::Load(std::istream& theStream, const TCollection_AsciiStr
   }
 
   FIBITMAP* anImage = FreeImage_LoadFromHandle(aFIF, &aFiIO, &aStream, aLoadFlags);
-  if (anImage == NULL)
+  if (anImage == nullptr)
   {
     ::Message::SendFail(TCollection_AsciiString("Error: image stream '") + theFileName
                         + "' is missing or invalid");
@@ -816,8 +815,8 @@ bool Image_AlienPixMap::Load(std::istream& theStream, const TCollection_AsciiStr
 }
 
 #elif defined(HAVE_WINCODEC)
-bool Image_AlienPixMap::Load(const Standard_Byte*           theData,
-                             const Standard_Size            theLength,
+bool Image_AlienPixMap::Load(const uint8_t*                 theData,
+                             const size_t                   theLength,
                              const TCollection_AsciiString& theFileName)
 {
   Clear();
@@ -947,7 +946,7 @@ bool Image_AlienPixMap::Load(std::istream& theStream, const TCollection_AsciiStr
   // fallback copying stream data into transient buffer
   const std::streamoff aStart = theStream.tellg();
   theStream.seekg(0, std::ios::end);
-  const Standard_Integer aLen = Standard_Integer(theStream.tellg() - aStart);
+  const int aLen = int(theStream.tellg() - aStart);
   theStream.seekg(aStart);
   if (aLen <= 0)
   {
@@ -955,7 +954,7 @@ bool Image_AlienPixMap::Load(std::istream& theStream, const TCollection_AsciiStr
     return false;
   }
 
-  NCollection_Array1<Standard_Byte> aBuff(1, aLen);
+  NCollection_Array1<uint8_t> aBuff(1, aLen);
   if (!theStream.read((char*)&aBuff.ChangeFirst(), aBuff.Size()))
   {
     Message::SendFail("Error: unable to read stream");
@@ -972,8 +971,8 @@ bool Image_AlienPixMap::Load(std::istream&, const TCollection_AsciiString&)
   return false;
 }
 
-bool Image_AlienPixMap::Load(const Standard_Byte*           theData,
-                             const Standard_Size            theLength,
+bool Image_AlienPixMap::Load(const uint8_t*                 theData,
+                             const size_t                   theLength,
                              const TCollection_AsciiString& theImagePath)
 {
   Clear();
@@ -992,7 +991,7 @@ bool Image_AlienPixMap::Load(const Standard_Byte*           theData,
     return false;
   }
 
-  Image_PixMap::InitWrapper(Image_Format_RGBA, (Standard_Byte*)anImgData, aSizeX, aSizeY);
+  Image_PixMap::InitWrapper(Image_Format_RGBA, (uint8_t*)anImgData, aSizeX, aSizeY);
   SetTopDown(true);
   myLibImage = (FIBITMAP*)anImgData;
   return true;
@@ -1005,9 +1004,7 @@ bool Image_AlienPixMap::Load(std::istream&, const TCollection_AsciiString&)
   return false;
 }
 
-bool Image_AlienPixMap::Load(const Standard_Byte*,
-                             const Standard_Size,
-                             const TCollection_AsciiString&)
+bool Image_AlienPixMap::Load(const uint8_t*, const size_t, const TCollection_AsciiString&)
 {
   Clear();
   Message::SendFail("Error: no image library available");
@@ -1026,7 +1023,7 @@ bool Image_AlienPixMap::savePPM(const TCollection_AsciiString& theFileName) cons
 
   // Open file
   FILE* aFile = OSD_OpenFile(theFileName.ToCString(), "wb");
-  if (aFile == NULL)
+  if (aFile == nullptr)
   {
     return false;
   }
@@ -1035,18 +1032,18 @@ bool Image_AlienPixMap::savePPM(const TCollection_AsciiString& theFileName) cons
   fprintf(aFile, "P6\n%d %d\n255\n", (int)SizeX(), (int)SizeY());
 
   // Write pixel data
-  Standard_Byte aByte;
-  for (Standard_Size aRow = 0; aRow < SizeY(); ++aRow)
+  uint8_t aByte;
+  for (size_t aRow = 0; aRow < SizeY(); ++aRow)
   {
-    for (Standard_Size aCol = 0; aCol < SizeX(); ++aCol)
+    for (size_t aCol = 0; aCol < SizeX(); ++aCol)
     {
       // extremely SLOW but universal (implemented for all supported pixel formats)
-      const Quantity_ColorRGBA aColor = PixelColor((Standard_Integer)aCol, (Standard_Integer)aRow);
-      aByte                           = Standard_Byte(aColor.GetRGB().Red() * 255.0);
+      const Quantity_ColorRGBA aColor = PixelColor((int)aCol, (int)aRow);
+      aByte                           = static_cast<uint8_t>(aColor.GetRGB().Red() * 255.0);
       fwrite(&aByte, 1, 1, aFile);
-      aByte = Standard_Byte(aColor.GetRGB().Green() * 255.0);
+      aByte = static_cast<uint8_t>(aColor.GetRGB().Green() * 255.0);
       fwrite(&aByte, 1, 1, aFile);
-      aByte = Standard_Byte(aColor.GetRGB().Blue() * 255.0);
+      aByte = static_cast<uint8_t>(aColor.GetRGB().Blue() * 255.0);
       fwrite(&aByte, 1, 1, aFile);
     }
   }
@@ -1113,18 +1110,18 @@ static bool convertData(const Image_AlienPixMap&  theSrcPixMapData,
 
 //=================================================================================================
 
-bool Image_AlienPixMap::Save(Standard_Byte*                 theBuffer,
-                             const Standard_Size            theLength,
+bool Image_AlienPixMap::Save(uint8_t*                       theBuffer,
+                             const size_t                   theLength,
                              const TCollection_AsciiString& theFileName)
 {
 #ifdef HAVE_FREEIMAGE
-  if (myLibImage == NULL)
+  if (myLibImage == nullptr)
   {
     return false;
   }
 
   #ifdef _WIN32
-  const TCollection_ExtendedString aFileNameW(theFileName.ToCString(), Standard_True);
+  const TCollection_ExtendedString aFileNameW(theFileName.ToCString(), true);
   FREE_IMAGE_FORMAT anImageFormat = FreeImage_GetFIFFromFilenameU(aFileNameW.ToWideString());
   #else
   FREE_IMAGE_FORMAT anImageFormat = FreeImage_GetFIFFromFilename(theFileName.ToCString());
@@ -1145,19 +1142,19 @@ bool Image_AlienPixMap::Save(Standard_Byte*                 theBuffer,
 
   FIBITMAP* anImageToDump = getImageToDump(anImageFormat);
 
-  if (anImageToDump == NULL)
+  if (anImageToDump == nullptr)
   {
     return false;
   }
 
   bool isSaved = false;
-  if (theBuffer != NULL)
+  if (theBuffer != nullptr)
   {
     // a memory buffer wrapped by FreeImage is read only (images can be loaded but not be saved)
     // so we call FreeImage_OpenMemory() with default arguments and just memcpy in requested buffer.
     FIMEMORY* aFiMem = FreeImage_OpenMemory();
     isSaved          = (FreeImage_SaveToMemory(anImageFormat, anImageToDump, aFiMem) != FALSE);
-    BYTE* aData      = NULL;
+    BYTE* aData      = nullptr;
     DWORD aSize;
     FreeImage_AcquireMemory(aFiMem, &aData, &aSize);
     if (aSize > theLength)
@@ -1292,7 +1289,7 @@ bool Image_AlienPixMap::Save(Standard_Byte*                 theBuffer,
   }
   else
   {
-    for (Standard_Size aRow = 0; aRow < SizeY(); ++aRow)
+    for (size_t aRow = 0; aRow < SizeY(); ++aRow)
     {
       if (aWicFrameEncode->WritePixels(1,
                                        (UINT)SizeRowBytes(),
@@ -1318,12 +1315,12 @@ bool Image_AlienPixMap::Save(Standard_Byte*                 theBuffer,
   return true;
 #else
   (void)theLength;
-  if (theBuffer != NULL)
+  if (theBuffer != nullptr)
   {
     Message::SendFail("Error: no image library available");
     return false;
   }
-  const Standard_Integer aLen = theFileName.Length();
+  const int aLen = theFileName.Length();
   if ((aLen >= 4) && (theFileName.Value(aLen - 3) == '.')
       && strcasecmp(theFileName.ToCString() + aLen - 3, "ppm") == 0)
   {
@@ -1337,13 +1334,13 @@ bool Image_AlienPixMap::Save(Standard_Byte*                 theBuffer,
 bool Image_AlienPixMap::Save(std::ostream& theStream, const TCollection_AsciiString& theExtension)
 {
 #ifdef HAVE_FREEIMAGE
-  if (myLibImage == NULL)
+  if (myLibImage == nullptr)
   {
     return false;
   }
 
   #ifdef _WIN32
-  const TCollection_ExtendedString anExtW(theExtension.ToCString(), Standard_True);
+  const TCollection_ExtendedString anExtW(theExtension.ToCString(), true);
   FREE_IMAGE_FORMAT anImageFormat = FreeImage_GetFIFFromFilenameU(anExtW.ToWideString());
   #else
   FREE_IMAGE_FORMAT anImageFormat = FreeImage_GetFIFFromFilename(theExtension.ToCString());
@@ -1364,7 +1361,7 @@ bool Image_AlienPixMap::Save(std::ostream& theStream, const TCollection_AsciiStr
 
   FIBITMAP* anImageToDump = getImageToDump(anImageFormat);
 
-  if (anImageToDump == NULL)
+  if (anImageToDump == nullptr)
   {
     return false;
   }
@@ -1419,7 +1416,7 @@ bool Image_AlienPixMap::Save(std::ostream& theStream, const TCollection_AsciiStr
   Image_ComPtr<IStream>           aStream;
   Image_ComPtr<IWICBitmapEncoder> aWicEncoder;
 
-  if (CreateStreamOnHGlobal(NULL, Standard_True, &aStream.ChangePtr()) != S_OK)
+  if (CreateStreamOnHGlobal(NULL, true, &aStream.ChangePtr()) != S_OK)
   {
     Message::SendFail("Error: cannot create Stream on global");
     return false;
@@ -1470,7 +1467,7 @@ bool Image_AlienPixMap::Save(std::ostream& theStream, const TCollection_AsciiStr
   }
   else
   {
-    for (Standard_Size aRow = 0; aRow < SizeY(); ++aRow)
+    for (size_t aRow = 0; aRow < SizeY(); ++aRow)
     {
       if (aWicFrameEncode->WritePixels(1,
                                        (UINT)SizeRowBytes(),
@@ -1536,7 +1533,7 @@ bool Image_AlienPixMap::Save(std::ostream& theStream, const TCollection_AsciiStr
 
 //=================================================================================================
 
-bool Image_AlienPixMap::AdjustGamma(const Standard_Real theGammaCorr)
+bool Image_AlienPixMap::AdjustGamma(const double theGammaCorr)
 {
 #ifdef HAVE_FREEIMAGE
   return FreeImage_AdjustGamma(myLibImage, theGammaCorr) != FALSE;
@@ -1549,7 +1546,7 @@ bool Image_AlienPixMap::AdjustGamma(const Standard_Real theGammaCorr)
 #ifdef HAVE_FREEIMAGE
 //=================================================================================================
 
-FIBITMAP* Image_AlienPixMap::getImageToDump(const Standard_Integer theFormat)
+FIBITMAP* Image_AlienPixMap::getImageToDump(const int theFormat)
 {
   FIBITMAP* anImageToDump = myLibImage;
   // FreeImage doesn't provide flexible format conversion API
@@ -1561,9 +1558,9 @@ FIBITMAP* Image_AlienPixMap::getImageToDump(const Standard_Integer theFormat)
       if (Format() == Image_Format_BGR32 || Format() == Image_Format_RGB32)
       {
         // stupid FreeImage treats reserved byte as alpha if some bytes not set to 0xFF
-        for (Standard_Size aRow = 0; aRow < SizeY(); ++aRow)
+        for (size_t aRow = 0; aRow < SizeY(); ++aRow)
         {
-          for (Standard_Size aCol = 0; aCol < SizeX(); ++aCol)
+          for (size_t aCol = 0; aCol < SizeX(); ++aCol)
           {
             myData.ChangeValue(aRow, aCol)[3] = 0xFF;
           }
@@ -1580,9 +1577,9 @@ FIBITMAP* Image_AlienPixMap::getImageToDump(const Standard_Integer theFormat)
       if (FreeImage_GetImageType(myLibImage) != FIT_BITMAP)
       {
         aTmpBitmap = FreeImage_ConvertToType(myLibImage, FIT_BITMAP);
-        if (aTmpBitmap == NULL)
+        if (aTmpBitmap == nullptr)
         {
-          return NULL;
+          return nullptr;
         }
       }
 
@@ -1593,9 +1590,9 @@ FIBITMAP* Image_AlienPixMap::getImageToDump(const Standard_Integer theFormat)
         {
           FreeImage_Unload(aTmpBitmap);
         }
-        if (aTmpBitmap24 == NULL)
+        if (aTmpBitmap24 == nullptr)
         {
-          return NULL;
+          return nullptr;
         }
         aTmpBitmap = aTmpBitmap24;
       }
@@ -1632,9 +1629,9 @@ FIBITMAP* Image_AlienPixMap::getImageToDump(const Standard_Integer theFormat)
       if (FreeImage_GetImageType(myLibImage) != FIT_BITMAP)
       {
         anImageToDump = FreeImage_ConvertToType(myLibImage, FIT_BITMAP);
-        if (anImageToDump == NULL)
+        if (anImageToDump == nullptr)
         {
-          return NULL;
+          return nullptr;
         }
       }
 
@@ -1645,9 +1642,9 @@ FIBITMAP* Image_AlienPixMap::getImageToDump(const Standard_Integer theFormat)
         {
           FreeImage_Unload(anImageToDump);
         }
-        if (aTmpBitmap24 == NULL)
+        if (aTmpBitmap24 == nullptr)
         {
-          return NULL;
+          return nullptr;
         }
         anImageToDump = aTmpBitmap24;
       }

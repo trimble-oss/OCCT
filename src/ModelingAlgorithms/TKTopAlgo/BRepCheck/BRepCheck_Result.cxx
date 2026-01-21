@@ -25,10 +25,9 @@ IMPLEMENT_STANDARD_RTTIEXT(BRepCheck_Result, Standard_Transient)
 //=================================================================================================
 
 BRepCheck_Result::BRepCheck_Result()
-    : myMin(Standard_False),
-      myBlind(Standard_False)
+    : myMin(false),
+      myBlind(false)
 {
-  //
 }
 
 //=================================================================================================
@@ -36,8 +35,8 @@ BRepCheck_Result::BRepCheck_Result()
 void BRepCheck_Result::Init(const TopoDS_Shape& S)
 {
   myShape = S;
-  myMin   = Standard_False;
-  myBlind = Standard_False;
+  myMin   = false;
+  myBlind = false;
   myMap.Clear();
   Minimum();
 }
@@ -46,11 +45,12 @@ void BRepCheck_Result::Init(const TopoDS_Shape& S)
 
 void BRepCheck_Result::SetFailStatus(const TopoDS_Shape& S)
 {
-  Standard_Mutex::Sentry          aLock(myMutex.get());
-  Handle(BRepCheck_HListOfStatus) aList;
+  std::unique_lock<std::mutex> aLock =
+    myMutex ? std::unique_lock<std::mutex>(*myMutex) : std::unique_lock<std::mutex>();
+  occ::handle<NCollection_Shared<NCollection_List<BRepCheck_Status>>> aList;
   if (!myMap.Find(S, aList))
   {
-    aList = new BRepCheck_HListOfStatus();
+    aList = new NCollection_Shared<NCollection_List<BRepCheck_Status>>();
     myMap.Bind(S, aList);
   }
 
@@ -82,10 +82,10 @@ void BRepCheck_Result::NextShapeInContext()
 
 //=================================================================================================
 
-void BRepCheck_Result::SetParallel(Standard_Boolean theIsParallel)
+void BRepCheck_Result::SetParallel(bool theIsParallel)
 {
-  if (theIsParallel && myMutex.IsNull())
+  if (theIsParallel && !myMutex)
   {
-    myMutex.reset(new Standard_HMutex());
+    myMutex = opencascade::make_unique<std::mutex>();
   }
 }

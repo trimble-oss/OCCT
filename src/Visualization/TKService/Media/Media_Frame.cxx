@@ -113,7 +113,7 @@ int Media_Frame::FormatOcct2FFmpeg(Image_Format theFormat)
 //=================================================================================================
 
 Media_Frame::Media_Frame()
-    : myFrame(NULL),
+    : myFrame(nullptr),
       myFramePts(0.0),
       myPixelRatio(1.0f),
       myIsLocked(false)
@@ -155,7 +155,8 @@ bool Media_Frame::IsFullRangeYUV() const
 
 //=================================================================================================
 
-void Media_Frame::Swap(const Handle(Media_Frame)& theFrame1, const Handle(Media_Frame)& theFrame2)
+void Media_Frame::Swap(const occ::handle<Media_Frame>& theFrame1,
+                       const occ::handle<Media_Frame>& theFrame2)
 {
   std::swap(theFrame1->myFrame, theFrame2->myFrame);
 }
@@ -212,7 +213,7 @@ uint8_t* Media_Frame::Plane(int thePlaneId) const
   return myFrame->data[thePlaneId];
 #else
   (void)thePlaneId;
-  return NULL;
+  return nullptr;
 #endif
 }
 
@@ -241,7 +242,7 @@ int64_t Media_Frame::BestEffortTimestamp() const
 
 //=================================================================================================
 
-bool Media_Frame::InitWrapper(const Handle(Image_PixMap)& thePixMap)
+bool Media_Frame::InitWrapper(const occ::handle<Image_PixMap>& thePixMap)
 {
   Unref();
   if (thePixMap.IsNull())
@@ -262,7 +263,7 @@ bool Media_Frame::InitWrapper(const Handle(Image_PixMap)& thePixMap)
   myFrame->linesize[0] = (int)thePixMap->SizeRowBytes();
   for (int aPlaneIter = 1; aPlaneIter < AV_NUM_DATA_POINTERS; ++aPlaneIter)
   {
-    myFrame->data[aPlaneIter]     = NULL;
+    myFrame->data[aPlaneIter]     = nullptr;
     myFrame->linesize[aPlaneIter] = 0;
   }
   return true;

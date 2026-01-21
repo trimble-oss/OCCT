@@ -23,7 +23,7 @@
 
 #include <Draw_Interpretor.hxx>
 
-//! this  package  provides  elementary commands for  curves  and
+//! this package provides elementary commands for curves and
 //! surface.
 class GeomliteTest
 {
@@ -53,9 +53,6 @@ public:
   //! - Curve extension to point
   //! - Surface extension by length
   Standard_EXPORT static void ModificationCommands(Draw_Interpretor& I);
-
-protected:
-private:
 };
 
 #endif // _GeomliteTest_HeaderFile

@@ -25,9 +25,27 @@
 #include <IntSurf_PntOn2S.hxx>
 #include <gp_Vec.hxx>
 
-#define TheStartPoint IntSurf_PathPoint
-#define TheStartPoint_hxx <IntSurf_PathPoint.hxx>
-#define IntWalk_IWLine IntPatch_TheIWLineOfTheIWalking
-#define IntWalk_IWLine_hxx <IntPatch_TheIWLineOfTheIWalking.hxx>
-#define Handle_IntWalk_IWLine Handle(IntPatch_TheIWLineOfTheIWalking)
-#include <IntWalk_IWLine.gxx>
+IntPatch_TheIWLineOfTheIWalking::IntPatch_TheIWLineOfTheIWalking(
+  const IntSurf_Allocator& theAllocator)
+    : line(new IntSurf_LineOn2S(theAllocator)),
+      closed(false),
+      hasFirst(false),
+      hasLast(false),
+      firstIndex(-1),
+      lastIndex(-1),
+      indextg(-1),
+      istgtbeg(false),
+      istgtend(false)
+{
+}
+
+void IntPatch_TheIWLineOfTheIWalking::Reverse()
+{
+  line->Reverse();
+  int N        = line->NbPoints();
+  int NbCouple = couple.Length();
+  for (int i = 1; i <= NbCouple; i++)
+  {
+    couple(i) = IntSurf_Couple(N - couple(i).First() + 1, couple(i).Second());
+  }
+}

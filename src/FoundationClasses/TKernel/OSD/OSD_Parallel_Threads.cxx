@@ -19,8 +19,9 @@
 #include <OSD_ThreadPool.hxx>
 
 #include <NCollection_Array1.hxx>
-#include <Standard_Mutex.hxx>
 #include <OSD_Thread.hxx>
+
+#include <mutex>
 
 namespace
 {
@@ -55,23 +56,23 @@ public:
     //! Thread-safe method.
     inline OSD_Parallel::UniversalIterator It() const
     {
-      Standard_Mutex::Sentry aMutex(myMutex);
+      std::lock_guard<std::mutex> aMutex(myMutex);
       return (myIt != myEnd) ? myIt++ : myEnd;
     }
 
   private: //! @name private methods
     //! Empty copy constructor
-    Range(const Range& theCopy);
+    Range(const Range& theCopy) = delete;
 
     //! Empty copy operator.
-    Range& operator=(const Range& theCopy);
+    Range& operator=(const Range& theCopy) = delete;
 
   private:                                          //! @name private fields
     const OSD_Parallel::UniversalIterator& myBegin; //!< First element of range.
     const OSD_Parallel::UniversalIterator& myEnd;   //!< Last element of range.
                                                     // clang-format off
       mutable OSD_Parallel::UniversalIterator   myIt;    //!< First non processed element of range.
-      mutable Standard_Mutex                 myMutex; //!< Access controller for the first non processed element.
+      mutable std::mutex                        myMutex; //!< Access controller for the first non processed element.
                                                     // clang-format on
   };
 
@@ -88,7 +89,7 @@ public:
 
     //! Method is executed in the context of thread,
     //! so this method defines the main calculations.
-    virtual void Perform(int) Standard_OVERRIDE
+    void Perform(int) override
     {
       for (OSD_Parallel::UniversalIterator anIter = myRange.It(); anIter != myRange.End();
            anIter                                 = myRange.It())
@@ -99,10 +100,10 @@ public:
 
   private: //! @name private methods
     //! Empty copy constructor.
-    Task(const Task& theCopy);
+    Task(const Task& theCopy) = delete;
 
     //! Empty copy operator.
-    Task& operator=(const Task& theCopy);
+    Task& operator=(const Task& theCopy) = delete;
 
   private:                               //! @name private fields
     const FunctorInterface& myPerformer; //!< Link on functor
@@ -137,11 +138,11 @@ public:
 void OSD_Parallel::forEachOcct(UniversalIterator&      theBegin,
                                UniversalIterator&      theEnd,
                                const FunctorInterface& theFunctor,
-                               Standard_Integer        theNbItems)
+                               int                     theNbItems)
 {
-  const Handle(OSD_ThreadPool)& aThreadPool = OSD_ThreadPool::DefaultPool();
-  const Standard_Integer        aNbThreads =
-    theNbItems != -1 ? Min(theNbItems, aThreadPool->NbDefaultThreadsToLaunch()) : -1;
+  const occ::handle<OSD_ThreadPool>& aThreadPool = OSD_ThreadPool::DefaultPool();
+  const int                          aNbThreads =
+    theNbItems != -1 ? std::min(theNbItems, aThreadPool->NbDefaultThreadsToLaunch()) : -1;
   OSD_Parallel_Threads::UniversalLauncher aLauncher(*aThreadPool, aNbThreads);
   aLauncher.Perform(theBegin, theEnd, theFunctor);
 }
@@ -153,7 +154,7 @@ void OSD_Parallel::forEachOcct(UniversalIterator&      theBegin,
 void OSD_Parallel::forEachExternal(UniversalIterator&      theBegin,
                                    UniversalIterator&      theEnd,
                                    const FunctorInterface& theFunctor,
-                                   Standard_Integer        theNbItems)
+                                   int                     theNbItems)
 {
   forEachOcct(theBegin, theEnd, theFunctor, theNbItems);
 }

@@ -17,33 +17,33 @@
 #include <OSD_SharedLibrary.hxx>
 #include <Plugin.hxx>
 #include <Plugin_Failure.hxx>
-#include <Plugin_MapOfFunctions.hxx>
+#include <OSD_Function.hxx>
+#include <TCollection_AsciiString.hxx>
+#include <NCollection_DataMap.hxx>
 #include <Resource_Manager.hxx>
 #include <Standard_GUID.hxx>
 #include <Standard_Transient.hxx>
-#include <TCollection_AsciiString.hxx>
 
 #include <Standard_WarningDisableFunctionCast.hxx>
 
-static Standard_Character  tc[1000];
+static char                tc[1000];
 static Standard_PCharacter thePluginId = tc;
 
 //=================================================================================================
 
-Handle(Standard_Transient) Plugin::Load(const Standard_GUID&   aGUID,
-                                        const Standard_Boolean theVerbose)
+occ::handle<Standard_Transient> Plugin::Load(const Standard_GUID& aGUID, const bool theVerbose)
 {
 
   aGUID.ToCString(thePluginId);
-  TCollection_AsciiString      pid(thePluginId);
-  static Plugin_MapOfFunctions theMapOfFunctions;
-  OSD_Function                 f;
+  TCollection_AsciiString                                           pid(thePluginId);
+  static NCollection_DataMap<TCollection_AsciiString, OSD_Function> theMapOfFunctions;
+  OSD_Function                                                      f;
 
   if (!theMapOfFunctions.IsBound(pid))
   {
 
-    Handle(Resource_Manager) PluginResource = new Resource_Manager("Plugin");
-    TCollection_AsciiString  theResource(thePluginId);
+    occ::handle<Resource_Manager> PluginResource = new Resource_Manager("Plugin");
+    TCollection_AsciiString       theResource(thePluginId);
     theResource += ".Location";
 
     if (!PluginResource->Find(theResource.ToCString()))
@@ -85,7 +85,7 @@ Handle(Standard_Transient) Plugin::Load(const Standard_GUID&   aGUID,
       throw Plugin_Failure(aMsg.str().c_str());
     }
     f = theSharedLibrary.DlSymb("PLUGINFACTORY");
-    if (f == NULL)
+    if (f == nullptr)
     {
       TCollection_AsciiString error(theSharedLibrary.DlError());
       Standard_SStream        aMsg;
@@ -99,8 +99,10 @@ Handle(Standard_Transient) Plugin::Load(const Standard_GUID&   aGUID,
   else
     f = theMapOfFunctions(pid);
 
-  Standard_Transient* (*fp)(const Standard_GUID&) = NULL;
-  fp                                           = (Standard_Transient * (*)(const Standard_GUID&)) f;
-  Handle(Standard_Transient) theServiceFactory = (*fp)(aGUID);
+  // Cast through void* to avoid -Wcast-function-type-mismatch warning.
+  // This is safe for dynamically loaded plugin symbols.
+  Standard_Transient* (*fp)(const Standard_GUID&) =
+    reinterpret_cast<Standard_Transient* (*)(const Standard_GUID&)>(reinterpret_cast<void*>(f));
+  occ::handle<Standard_Transient> theServiceFactory = (*fp)(aGUID);
   return theServiceFactory;
 }

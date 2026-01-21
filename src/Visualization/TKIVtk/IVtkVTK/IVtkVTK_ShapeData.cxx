@@ -54,7 +54,7 @@ IVtkVTK_ShapeData::IVtkVTK_ShapeData()
 
 //=================================================================================================
 
-IVtkVTK_ShapeData::~IVtkVTK_ShapeData() {}
+IVtkVTK_ShapeData::~IVtkVTK_ShapeData() = default;
 
 //=================================================================================================
 
@@ -63,7 +63,7 @@ IVtk_PointId IVtkVTK_ShapeData::InsertPoint(const gp_Pnt&                  thePn
 {
   IVtk_PointId aPointId =
     myPolyData->GetPoints()->InsertNextPoint(thePnt.X(), thePnt.Y(), thePnt.Z());
-  if (myNormals.GetPointer() != NULL)
+  if (myNormals.GetPointer() != nullptr)
   {
     myNormals->InsertNextTuple(theNorm.GetData());
   }
@@ -95,15 +95,16 @@ void IVtkVTK_ShapeData::InsertLine(const IVtk_IdType   theShapeID,
 
 //=================================================================================================
 
-void IVtkVTK_ShapeData::InsertLine(const IVtk_IdType       theShapeID,
-                                   const IVtk_PointIdList* thePointIds,
-                                   const IVtk_MeshType     theMeshType)
+void IVtkVTK_ShapeData::InsertLine(const IVtk_IdType                     theShapeID,
+                                   const NCollection_List<IVtk_PointId>* thePointIds,
+                                   const IVtk_MeshType                   theMeshType)
 {
   if (!thePointIds->IsEmpty())
   {
     vtkSmartPointer<vtkIdList> anIdList = vtkSmartPointer<vtkIdList>::New();
-    // Fill the vtk id list by ids from IVtk_PointIdList.
-    IVtk_PointIdList::Iterator anIterOfIds = IVtk_PointIdList::Iterator(*thePointIds);
+    // Fill the vtk id list by ids from NCollection_List<IVtk_PointId>.
+    NCollection_List<IVtk_PointId>::Iterator anIterOfIds =
+      NCollection_List<IVtk_PointId>::Iterator(*thePointIds);
     anIdList->Allocate(thePointIds->Extent());
     for (; anIterOfIds.More(); anIterOfIds.Next())
     {

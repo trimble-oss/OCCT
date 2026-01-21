@@ -29,20 +29,21 @@
 //! Save geometric object identified by pointer to handle
 Standard_EXPORT const char* DrawTrSurf_Set(const char* theNameStr, void* theHandlePtr)
 {
-  if (theNameStr == 0 || theHandlePtr == 0)
+  if (theNameStr == nullptr || theHandlePtr == nullptr)
   {
     return "Error: argument is null";
   }
   try
   {
-    const Handle(Standard_Transient)& aHandle = *(Handle(Standard_Transient)*)theHandlePtr;
-    Handle(Geom_Geometry)             aGeom3d = Handle(Geom_Geometry)::DownCast(aHandle);
+    const occ::handle<Standard_Transient>& aHandle =
+      *(occ::handle<Standard_Transient>*)theHandlePtr;
+    occ::handle<Geom_Geometry> aGeom3d = occ::down_cast<Geom_Geometry>(aHandle);
     if (!aGeom3d.IsNull())
     {
       DrawTrSurf::Set(theNameStr, aGeom3d);
       return theNameStr;
     }
-    Handle(Geom2d_Curve) aGeom2d = Handle(Geom2d_Curve)::DownCast(aHandle);
+    occ::handle<Geom2d_Curve> aGeom2d = occ::down_cast<Geom2d_Curve>(aHandle);
     if (!aGeom2d.IsNull())
     {
       DrawTrSurf::Set(theNameStr, aGeom2d);
@@ -53,14 +54,14 @@ Standard_EXPORT const char* DrawTrSurf_Set(const char* theNameStr, void* theHand
   }
   catch (Standard_Failure const& anException)
   {
-    return anException.GetMessageString();
+    return anException.what();
   }
 }
 
 //! Set point to DRAW variable
 Standard_EXPORT const char* DrawTrSurf_SetPnt(const char* theNameStr, void* thePntPtr)
 {
-  if (theNameStr == 0 || thePntPtr == 0)
+  if (theNameStr == nullptr || thePntPtr == nullptr)
   {
     return "Error: argument is null";
   }
@@ -68,7 +69,7 @@ Standard_EXPORT const char* DrawTrSurf_SetPnt(const char* theNameStr, void* theP
   {
     const gp_Pnt& aP = *(gp_Pnt*)thePntPtr;
     static char   buff[256];
-    sprintf(buff,
+    Sprintf(buff,
             "Point (%.16g, %.16g, %.16g) set to DRAW variable %.80s",
             aP.X(),
             aP.Y(),
@@ -79,14 +80,14 @@ Standard_EXPORT const char* DrawTrSurf_SetPnt(const char* theNameStr, void* theP
   }
   catch (Standard_Failure const& anException)
   {
-    return anException.GetMessageString();
+    return anException.what();
   }
 }
 
 //! Set 2d point to DRAW variable
 Standard_EXPORT const char* DrawTrSurf_SetPnt2d(const char* theNameStr, void* thePnt2dPtr)
 {
-  if (theNameStr == 0 || thePnt2dPtr == 0)
+  if (theNameStr == nullptr || thePnt2dPtr == nullptr)
   {
     return "Error: argument is null";
   }
@@ -94,13 +95,13 @@ Standard_EXPORT const char* DrawTrSurf_SetPnt2d(const char* theNameStr, void* th
   {
     const gp_Pnt2d& aP = *(gp_Pnt2d*)thePnt2dPtr;
     static char     buff[256];
-    sprintf(buff, "Point (%.16g, %.16g) set to DRAW variable %.80s", aP.X(), aP.Y(), theNameStr);
+    Sprintf(buff, "Point (%.16g, %.16g) set to DRAW variable %.80s", aP.X(), aP.Y(), theNameStr);
     DrawTrSurf::Set(theNameStr, aP);
     return buff;
   }
   catch (Standard_Failure const& anException)
   {
-    return anException.GetMessageString();
+    return anException.what();
   }
 }
 
@@ -110,7 +111,8 @@ Standard_EXPORT const char* DrawTrSurf_SetPnt2d(const char* theNameStr, void* th
 // work with them (DBX could, on SUN Solaris).
 #ifndef _MSC_VER
 
-Standard_EXPORT const char* DrawTrSurf_Set(const char* name, const Handle(Standard_Transient)& G)
+Standard_EXPORT const char* DrawTrSurf_Set(const char*                            name,
+                                           const occ::handle<Standard_Transient>& G)
 {
   return DrawTrSurf_Set(name, (void*)&G);
 }
@@ -129,16 +131,16 @@ Standard_EXPORT const char* DrawTrSurf_Set(const char* theName, const gp_Pnt2d& 
 
 // old function, looks too dangerous to be used
 /*
-void DrawTrSurf_Get(const char* name, Handle(Standard_Transient)& G)
+void DrawTrSurf_Get(const char* name, occ::handle<Standard_Transient>& G)
 {
-  Handle(Geom_Geometry) GG = DrawTrSurf::Get(name);
+  occ::handle<Geom_Geometry> GG = DrawTrSurf::Get(name);
   std::cout << "Nom : " << name << std::endl;
   if (!GG.IsNull()) {
     G = GG;
     return;
   }
 
-  Handle(Geom2d_Curve) GC = DrawTrSurf::GetCurve2d(name);
+  occ::handle<Geom2d_Curve> GC = DrawTrSurf::GetCurve2d(name);
   if (!GC.IsNull()) {
     G = GC;
     return;

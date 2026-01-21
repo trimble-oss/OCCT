@@ -19,12 +19,12 @@ IMPLEMENT_STANDARD_RTTIEXT(StepDimTol_RunoutZoneOrientation, Standard_Transient)
 
 //=================================================================================================
 
-StepDimTol_RunoutZoneOrientation::StepDimTol_RunoutZoneOrientation() {}
+StepDimTol_RunoutZoneOrientation::StepDimTol_RunoutZoneOrientation() = default;
 
 //=================================================================================================
 
 void StepDimTol_RunoutZoneOrientation::Init(
-  const Handle(StepBasic_PlaneAngleMeasureWithUnit)& theAngle)
+  const occ::handle<StepBasic_PlaneAngleMeasureWithUnit>& theAngle)
 {
   // --- class own fields ---
   myAngle = theAngle;

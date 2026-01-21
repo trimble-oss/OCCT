@@ -12,8 +12,8 @@
 // commercial license or contractual agreement.
 
 // modif du 14/09/95 mjm
-// prise en compte de l'unite choisi par l'utilisateur
-// pour l'ecriture du fichier IGES.
+// taking into account the unit chosen by the user
+// for writing the IGES file.
 
 #include <Geom_CartesianPoint.hxx>
 #include <Geom_Point.hxx>
@@ -36,47 +36,46 @@ GeomToIGES_GeomPoint::GeomToIGES_GeomPoint(const GeomToIGES_GeomEntity& GE)
 
 GeomToIGES_GeomPoint::GeomToIGES_GeomPoint()
 
-    : GeomToIGES_GeomEntity()
-{
-}
+  = default;
 
 //=============================================================================
-// Transfer de Point de Geom vers IGES
+// Transfer of Point from Geom to IGES
 // TranferPoint
 //=============================================================================
 
-Handle(IGESGeom_Point) GeomToIGES_GeomPoint::TransferPoint(const Handle(Geom_Point)& P)
+occ::handle<IGESGeom_Point> GeomToIGES_GeomPoint::TransferPoint(const occ::handle<Geom_Point>& P)
 {
-  Handle(IGESGeom_Point) Piges = new IGESGeom_Point;
+  occ::handle<IGESGeom_Point> Piges = new IGESGeom_Point;
   if (P.IsNull())
   {
     return Piges;
   }
 
-  Standard_Real X, Y, Z;
+  double X, Y, Z;
   P->Coord(X, Y, Z);
-  Handle(IGESBasic_SubfigureDef) voidsubdef;
+  occ::handle<IGESBasic_SubfigureDef> voidsubdef;
   Piges->Init(gp_XYZ(X / GetUnit(), Y / GetUnit(), Z / GetUnit()), voidsubdef);
   return Piges;
 }
 
 //=============================================================================
-// Transfer de Point de Geom vers IGES
+// Transfer of Point from Geom to IGES
 // TranferPoint
 //=============================================================================
 
-Handle(IGESGeom_Point) GeomToIGES_GeomPoint::TransferPoint(const Handle(Geom_CartesianPoint)& P)
+occ::handle<IGESGeom_Point> GeomToIGES_GeomPoint::TransferPoint(
+  const occ::handle<Geom_CartesianPoint>& P)
 {
 
-  Handle(IGESGeom_Point) Piges = new IGESGeom_Point;
+  occ::handle<IGESGeom_Point> Piges = new IGESGeom_Point;
   if (P.IsNull())
   {
     return Piges;
   }
 
-  Standard_Real X, Y, Z;
+  double X, Y, Z;
   P->Coord(X, Y, Z);
-  Handle(IGESBasic_SubfigureDef) voidsubdef;
+  occ::handle<IGESBasic_SubfigureDef> voidsubdef;
   Piges->Init(gp_XYZ(X / GetUnit(), Y / GetUnit(), Z / GetUnit()), voidsubdef);
   return Piges;
 }

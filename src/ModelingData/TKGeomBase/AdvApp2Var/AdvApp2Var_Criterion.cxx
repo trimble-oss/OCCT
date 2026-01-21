@@ -16,11 +16,11 @@
 
 #include <AdvApp2Var_Criterion.hxx>
 
-AdvApp2Var_Criterion::~AdvApp2Var_Criterion() {}
+AdvApp2Var_Criterion::~AdvApp2Var_Criterion() = default;
 
 //=================================================================================================
 
-Standard_Real AdvApp2Var_Criterion::MaxValue() const
+double AdvApp2Var_Criterion::MaxValue() const
 {
   return myMaxValue;
 }

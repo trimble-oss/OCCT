@@ -12,25 +12,27 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
+#include <OSD_FileNode.hxx>
+
+#include <OSD_Protection.hxx>
+#include <Quantity_Date.hxx>
+#include <Standard_ProgramError.hxx>
+
 #ifndef _WIN32
 
 //----------------------------------------------------------------------------
 //------------------- Linux Sources of OSD_FileNode --------------------------
 //----------------------------------------------------------------------------
 
-  #include <OSD_FileNode.hxx>
   #include <OSD_OSDError.hxx>
   #include <OSD_Path.hxx>
-  #include <OSD_Protection.hxx>
   #include <OSD_WhoAmI.hxx>
-  #include <Quantity_Date.hxx>
   #include <Standard_NullObject.hxx>
-  #include <Standard_ProgramError.hxx>
 
-  #include <errno.h>
+  #include <cerrno>
   #include <fcntl.h>
-  #include <stdio.h>
-  #include <stdlib.h>
+  #include <cstdio>
+  #include <cstdlib>
   #include <sys/stat.h>
   #include <unistd.h>
 // For "system"
@@ -38,7 +40,7 @@ const OSD_WhoAmI Iam = OSD_WFileNode;
 
 // Create a file/directory object
 
-OSD_FileNode::OSD_FileNode() {}
+OSD_FileNode::OSD_FileNode() = default;
 
 // Create and initialize a file/directory object
 
@@ -64,7 +66,7 @@ void OSD_FileNode::SetPath(const OSD_Path& Name)
 
 // Test if specified file/directory exists
 
-Standard_Boolean OSD_FileNode::Exists()
+bool OSD_FileNode::Exists()
 {
   int status;
 
@@ -78,9 +80,9 @@ Standard_Boolean OSD_FileNode::Exists()
   status = access(aBuffer.ToCString(), F_OK);
 
   if (status == 0)
-    return (Standard_True);
+    return (true);
   else
-    return (Standard_False);
+    return (false);
 }
 
 // Physically remove a file/directory
@@ -364,7 +366,7 @@ void OSD_FileNode::Reset()
   myError.Reset();
 }
 
-Standard_Boolean OSD_FileNode::Failed() const
+bool OSD_FileNode::Failed() const
 {
   return (myError.Failed());
 }
@@ -374,7 +376,7 @@ void OSD_FileNode::Perror()
   myError.Perror();
 }
 
-Standard_Integer OSD_FileNode::Error() const
+int OSD_FileNode::Error() const
 {
   return (myError.Error());
 }
@@ -390,10 +392,6 @@ Standard_Integer OSD_FileNode::Error() const
   #endif
   #include <windows.h>
 
-  #include <OSD_FileNode.hxx>
-  #include <OSD_Protection.hxx>
-  #include <Quantity_Date.hxx>
-  #include <Standard_ProgramError.hxx>
   #include <TCollection_ExtendedString.hxx>
 
   #include <OSD_WNT.hxx>
@@ -414,12 +412,12 @@ PSECURITY_DESCRIPTOR __fastcall _osd_wnt_protection_to_sd(const OSD_Protection&,
                                                           const wchar_t*);
 BOOL __fastcall _osd_wnt_sd_to_protection(PSECURITY_DESCRIPTOR pSD, OSD_Protection& prot, BOOL);
   #endif
-Standard_Integer __fastcall _get_file_type(Standard_CString, HANDLE);
+int __fastcall _get_file_type(const char*, HANDLE);
 
-void _osd_wnt_set_error(OSD_Error&, Standard_Integer, ...);
+void _osd_wnt_set_error(OSD_Error&, int, ...);
 
 static BOOL __fastcall _get_file_time(const wchar_t*, LPSYSTEMTIME, BOOL);
-static void __fastcall _test_raise(TCollection_AsciiString, Standard_CString);
+static void __fastcall _test_raise(TCollection_AsciiString, const char*);
 
 //=================================================================================================
 
@@ -452,17 +450,17 @@ void OSD_FileNode::SetPath(const OSD_Path& Name)
 
 //=================================================================================================
 
-Standard_Boolean OSD_FileNode::Exists()
+bool OSD_FileNode::Exists()
 {
   myError.Reset();
 
-  Standard_Boolean        retVal = Standard_False;
+  bool                    retVal = false;
   TCollection_AsciiString fName;
 
   myPath.SystemName(fName);
 
   if (fName.IsEmpty())
-    return Standard_False;
+    return false;
   TEST_RAISE("Exists");
 
   // make wide character string from UTF-8
@@ -479,7 +477,7 @@ Standard_Boolean OSD_FileNode::Exists()
   }
   else
   {
-    retVal = Standard_True;
+    retVal = true;
   }
 
   return retVal;
@@ -776,7 +774,7 @@ Quantity_Date OSD_FileNode::CreationMoment()
 
 //=================================================================================================
 
-Standard_Boolean OSD_FileNode::Failed() const
+bool OSD_FileNode::Failed() const
 {
 
   return myError.Failed();
@@ -803,14 +801,14 @@ void OSD_FileNode::Perror()
 
 //=================================================================================================
 
-Standard_Integer OSD_FileNode::Error() const
+int OSD_FileNode::Error() const
 {
 
   return myError.Error();
 
 } // end OSD_FileNode :: Error
 
-void _osd_wnt_set_error(OSD_Error& err, Standard_Integer who, ...)
+void _osd_wnt_set_error(OSD_Error& err, int who, ...)
 {
 
   DWORD errCode;
@@ -831,7 +829,7 @@ void _osd_wnt_set_error(OSD_Error& err, Standard_Integer who, ...)
                       2048,
                       &arg_ptr))
   {
-    StringCchPrintfW(buffer, _countof(buffer), L"error code %d", (Standard_Integer)errCode);
+    StringCchPrintfW(buffer, _countof(buffer), L"error code %d", (int)errCode);
 
     SetLastError(errCode);
 
@@ -909,7 +907,7 @@ static BOOL __fastcall _get_file_time(const wchar_t* fName, LPSYSTEMTIME lpSysTi
     #undef __leave
   #endif
 
-static void __fastcall _test_raise(TCollection_AsciiString fName, Standard_CString str)
+static void __fastcall _test_raise(TCollection_AsciiString fName, const char* str)
 {
   if (fName.IsEmpty())
   {

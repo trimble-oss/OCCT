@@ -24,15 +24,14 @@ IMPLEMENT_STANDARD_RTTIEXT(StepFEA_ParametricCurve3dElementCoordinateSystem,
 
 //=================================================================================================
 
-StepFEA_ParametricCurve3dElementCoordinateSystem::StepFEA_ParametricCurve3dElementCoordinateSystem()
-{
-}
+StepFEA_ParametricCurve3dElementCoordinateSystem::
+  StepFEA_ParametricCurve3dElementCoordinateSystem() = default;
 
 //=================================================================================================
 
 void StepFEA_ParametricCurve3dElementCoordinateSystem::Init(
-  const Handle(TCollection_HAsciiString)&                            aRepresentationItem_Name,
-  const Handle(StepFEA_ParametricCurve3dElementCoordinateDirection)& aDirection)
+  const occ::handle<TCollection_HAsciiString>&                            aRepresentationItem_Name,
+  const occ::handle<StepFEA_ParametricCurve3dElementCoordinateDirection>& aDirection)
 {
   StepFEA_FeaRepresentationItem::Init(aRepresentationItem_Name);
 
@@ -41,7 +40,7 @@ void StepFEA_ParametricCurve3dElementCoordinateSystem::Init(
 
 //=================================================================================================
 
-Handle(StepFEA_ParametricCurve3dElementCoordinateDirection)
+occ::handle<StepFEA_ParametricCurve3dElementCoordinateDirection>
   StepFEA_ParametricCurve3dElementCoordinateSystem::Direction() const
 {
   return theDirection;
@@ -50,7 +49,7 @@ Handle(StepFEA_ParametricCurve3dElementCoordinateDirection)
 //=================================================================================================
 
 void StepFEA_ParametricCurve3dElementCoordinateSystem::SetDirection(
-  const Handle(StepFEA_ParametricCurve3dElementCoordinateDirection)& aDirection)
+  const occ::handle<StepFEA_ParametricCurve3dElementCoordinateDirection>& aDirection)
 {
   theDirection = aDirection;
 }

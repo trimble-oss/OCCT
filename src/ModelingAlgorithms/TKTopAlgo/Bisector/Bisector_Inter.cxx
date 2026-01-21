@@ -37,18 +37,11 @@
 #include <Precision.hxx>
 
 #ifdef OCCT_DEBUG
-  // #define DRAW
-  #ifdef DRAW
-    #include <DrawTrSurf.hxx>
-static char             name[100];
-static Standard_Boolean Affich = Standard_False;
-static Standard_Integer nbint  = 0;
-  #endif
 #endif
 
 //=================================================================================================
 
-Bisector_Inter::Bisector_Inter() {}
+Bisector_Inter::Bisector_Inter() = default;
 
 //=================================================================================================
 
@@ -56,23 +49,23 @@ Bisector_Inter::Bisector_Inter(const Bisector_Bisec&  C1,
                                const IntRes2d_Domain& D1,
                                const Bisector_Bisec&  C2,
                                const IntRes2d_Domain& D2,
-                               const Standard_Real    TolConf,
-                               const Standard_Real    Tol,
-                               const Standard_Boolean ComunElement)
+                               const double           TolConf,
+                               const double           Tol,
+                               const bool             ComunElement)
 {
   Perform(C1, D1, C2, D2, TolConf, Tol, ComunElement);
 }
 
 //=================================================================================================
 
-static Handle(Geom2d_Line) ConstructSegment(const gp_Pnt2d&     PMin,
-                                            const gp_Pnt2d&     PMax,
-                                            const Standard_Real UMin,
-                                            //					    const Standard_Real UMax)
-                                            const Standard_Real)
+static occ::handle<Geom2d_Line> ConstructSegment(const gp_Pnt2d& PMin,
+                                                 const gp_Pnt2d& PMax,
+                                                 const double    UMin,
+                                                 //					    const double UMax)
+                                                 const double)
 {
-  gp_Dir2d            Dir(PMax.X() - PMin.X(), PMax.Y() - PMin.Y());
-  Handle(Geom2d_Line) L =
+  gp_Dir2d                 Dir(PMax.X() - PMin.X(), PMax.Y() - PMin.Y());
+  occ::handle<Geom2d_Line> L =
     new Geom2d_Line(gp_Pnt2d(PMin.X() - UMin * Dir.X(), PMin.Y() - UMin * Dir.Y()), Dir);
   return L;
 }
@@ -83,23 +76,23 @@ void Bisector_Inter::Perform(const Bisector_Bisec&  C1,
                              const IntRes2d_Domain& D1,
                              const Bisector_Bisec&  C2,
                              const IntRes2d_Domain& D2,
-                             const Standard_Real    TolConf,
-                             const Standard_Real    Tol,
-                             const Standard_Boolean ComunElement)
+                             const double           TolConf,
+                             const double           Tol,
+                             const bool             ComunElement)
 {
-  Handle(Bisector_Curve) Bis1 = Handle(Bisector_Curve)::DownCast(C1.Value()->BasisCurve());
-  Handle(Bisector_Curve) Bis2 = Handle(Bisector_Curve)::DownCast(C2.Value()->BasisCurve());
+  occ::handle<Bisector_Curve> Bis1 = occ::down_cast<Bisector_Curve>(C1.Value()->BasisCurve());
+  occ::handle<Bisector_Curve> Bis2 = occ::down_cast<Bisector_Curve>(C2.Value()->BasisCurve());
 
-  Handle(Geom2d_Curve)* SBis1 = new Handle(Geom2d_Curve)[Bis1->NbIntervals() + 1];
-  Handle(Geom2d_Curve)* SBis2 = new Handle(Geom2d_Curve)[Bis2->NbIntervals() + 1];
-  IntRes2d_Domain*      SD1   = new IntRes2d_Domain[Bis1->NbIntervals() + 1];
-  IntRes2d_Domain*      SD2   = new IntRes2d_Domain[Bis2->NbIntervals() + 1];
+  occ::handle<Geom2d_Curve>* SBis1 = new occ::handle<Geom2d_Curve>[Bis1->NbIntervals() + 1];
+  occ::handle<Geom2d_Curve>* SBis2 = new occ::handle<Geom2d_Curve>[Bis2->NbIntervals() + 1];
+  IntRes2d_Domain*           SD1   = new IntRes2d_Domain[Bis1->NbIntervals() + 1];
+  IntRes2d_Domain*           SD2   = new IntRes2d_Domain[Bis2->NbIntervals() + 1];
 
-  Standard_Integer NB1 = 0;
-  Standard_Integer NB2 = 0;
-  Standard_Real    MinDomain, MaxDomain;
-  Standard_Real    UMin, UMax;
-  gp_Pnt2d         PMin, PMax;
+  int      NB1 = 0;
+  int      NB2 = 0;
+  double   MinDomain, MaxDomain;
+  double   UMin, UMax;
+  gp_Pnt2d PMin, PMax;
 
   //------------------------------------------------------
   // Return Min Max domain1.
@@ -126,16 +119,16 @@ void Bisector_Inter::Perform(const Bisector_Bisec&  C1,
   // Cutting the first curve by the intervals of
   // continuity taking account of D1
   //----------------------------------------------------------
-  // for (Standard_Integer IB1 = 1; IB1 <= Bis1->NbIntervals(); IB1++) {
-  Standard_Integer IB1;
+  // for (int IB1 = 1; IB1 <= Bis1->NbIntervals(); IB1++) {
+  int IB1;
   for (IB1 = 1; IB1 <= Bis1->NbIntervals(); IB1++)
   {
     UMin = Bis1->IntervalFirst(IB1);
     UMax = Bis1->IntervalLast(IB1);
     if (UMax > MinDomain && UMin < MaxDomain)
     {
-      UMin = Max(UMin, MinDomain);
-      UMax = Min(UMax, MaxDomain);
+      UMin = std::max(UMin, MinDomain);
+      UMax = std::min(UMax, MaxDomain);
       PMin = Bis1->Value(UMin);
       PMax = Bis1->Value(UMax);
       SD1[IB1].SetValues(PMin, UMin, D1.FirstTolerance(), PMax, UMax, D1.LastTolerance());
@@ -181,16 +174,16 @@ void Bisector_Inter::Perform(const Bisector_Bisec&  C1,
   // Cut the second curve following the intervals of
   // continuity taking account of D2
   //----------------------------------------------------------
-  // for (Standard_Integer IB2 = 1; IB2 <= Bis2->NbIntervals(); IB2++) {
-  Standard_Integer IB2;
+  // for (int IB2 = 1; IB2 <= Bis2->NbIntervals(); IB2++) {
+  int IB2;
   for (IB2 = 1; IB2 <= Bis2->NbIntervals(); IB2++)
   {
     UMin = Bis2->IntervalFirst(IB2);
     UMax = Bis2->IntervalLast(IB2);
     if (UMax > MinDomain && UMin < MaxDomain)
     {
-      UMin = Max(UMin, MinDomain);
-      UMax = Min(UMax, MaxDomain);
+      UMin = std::max(UMin, MinDomain);
+      UMax = std::min(UMax, MaxDomain);
       PMin = Bis2->Value(UMin);
       PMax = Bis2->Value(UMax);
       SD2[IB2].SetValues(PMin, UMin, D2.FirstTolerance(), PMax, UMax, D2.LastTolerance());
@@ -229,26 +222,26 @@ void Bisector_Inter::Perform(const Bisector_Bisec&  C1,
 
 //=================================================================================================
 
-void Bisector_Inter::SinglePerform(const Handle(Geom2d_Curve)& CBis1,
-                                   const IntRes2d_Domain&      D1,
-                                   const Handle(Geom2d_Curve)& CBis2,
-                                   const IntRes2d_Domain&      D2,
-                                   const Standard_Real         TolConf,
-                                   const Standard_Real         Tol,
-                                   const Standard_Boolean      ComunElement)
+void Bisector_Inter::SinglePerform(const occ::handle<Geom2d_Curve>& CBis1,
+                                   const IntRes2d_Domain&           D1,
+                                   const occ::handle<Geom2d_Curve>& CBis2,
+                                   const IntRes2d_Domain&           D2,
+                                   const double                     TolConf,
+                                   const double                     Tol,
+                                   const bool                       ComunElement)
 {
-  const Handle(Geom2d_Curve)& Bis1 = CBis1;
-  const Handle(Geom2d_Curve)& Bis2 = CBis2;
+  const occ::handle<Geom2d_Curve>& Bis1 = CBis1;
+  const occ::handle<Geom2d_Curve>& Bis2 = CBis2;
 
-  Handle(Standard_Type) Type1 = Bis1->DynamicType();
-  Handle(Standard_Type) Type2 = Bis2->DynamicType();
+  occ::handle<Standard_Type> Type1 = Bis1->DynamicType();
+  occ::handle<Standard_Type> Type2 = Bis2->DynamicType();
 
   if (Type1 == STANDARD_TYPE(Bisector_BisecAna) || Type2 == STANDARD_TYPE(Bisector_BisecAna))
   {
-    Handle(Geom2d_Curve) C2Bis1, C2Bis2;
+    occ::handle<Geom2d_Curve> C2Bis1, C2Bis2;
     if (Type1 == STANDARD_TYPE(Bisector_BisecAna))
     {
-      C2Bis1 = Handle(Bisector_BisecAna)::DownCast(Bis1)->Geom2dCurve();
+      C2Bis1 = occ::down_cast<Bisector_BisecAna>(Bis1)->Geom2dCurve();
     }
     else
     {
@@ -256,7 +249,7 @@ void Bisector_Inter::SinglePerform(const Handle(Geom2d_Curve)& CBis1,
     }
     if (Type2 == STANDARD_TYPE(Bisector_BisecAna))
     {
-      C2Bis2 = Handle(Bisector_BisecAna)::DownCast(Bis2)->Geom2dCurve();
+      C2Bis2 = occ::down_cast<Bisector_BisecAna>(Bis2)->Geom2dCurve();
     }
     else
     {
@@ -266,11 +259,11 @@ void Bisector_Inter::SinglePerform(const Handle(Geom2d_Curve)& CBis1,
     Type2 = C2Bis2->DynamicType();
     if (Type1 == STANDARD_TYPE(Geom2d_Line) && Type2 != STANDARD_TYPE(Geom2d_Line))
     {
-      TestBound(Handle(Geom2d_Line)::DownCast(C2Bis1), D1, C2Bis2, D2, TolConf, Standard_False);
+      TestBound(occ::down_cast<Geom2d_Line>(C2Bis1), D1, C2Bis2, D2, TolConf, false);
     }
     else if (Type2 == STANDARD_TYPE(Geom2d_Line) && Type1 != STANDARD_TYPE(Geom2d_Line))
     {
-      TestBound(Handle(Geom2d_Line)::DownCast(C2Bis2), D2, C2Bis1, D1, TolConf, Standard_True);
+      TestBound(occ::down_cast<Geom2d_Line>(C2Bis2), D2, C2Bis1, D1, TolConf, true);
     }
     Geom2dInt_GInter    Intersect;
     Geom2dAdaptor_Curve AC2Bis1(C2Bis1);
@@ -297,9 +290,9 @@ void Bisector_Inter::SinglePerform(const Handle(Geom2d_Curve)& CBis1,
   else if (ComunElement && Type1 == STANDARD_TYPE(Bisector_BisecCC)
            && Type2 == STANDARD_TYPE(Bisector_BisecCC))
   {
-    NeighbourPerform(Handle(Bisector_BisecCC)::DownCast(Bis1),
+    NeighbourPerform(occ::down_cast<Bisector_BisecCC>(Bis1),
                      D1,
-                     Handle(Bisector_BisecCC)::DownCast(Bis2),
+                     occ::down_cast<Bisector_BisecCC>(Bis2),
                      D2,
                      Tol);
   }
@@ -311,11 +304,11 @@ void Bisector_Inter::SinglePerform(const Handle(Geom2d_Curve)& CBis1,
 
     if (Type1 == STANDARD_TYPE(Geom2d_Line) && Type2 != STANDARD_TYPE(Geom2d_Line))
     {
-      TestBound(Handle(Geom2d_Line)::DownCast(Bis1), D1, Bis2, D2, TolConf, Standard_False);
+      TestBound(occ::down_cast<Geom2d_Line>(Bis1), D1, Bis2, D2, TolConf, false);
     }
     else if (Type2 == STANDARD_TYPE(Geom2d_Line) && Type1 != STANDARD_TYPE(Geom2d_Line))
     {
-      TestBound(Handle(Geom2d_Line)::DownCast(Bis2), D2, Bis1, D1, TolConf, Standard_True);
+      TestBound(occ::down_cast<Geom2d_Line>(Bis2), D2, Bis1, D1, TolConf, true);
     }
     Geom2dInt_GInter    Intersect;
     Geom2dAdaptor_Curve ABis1(Bis1);
@@ -327,25 +320,6 @@ void Bisector_Inter::SinglePerform(const Handle(Geom2d_Curve)& CBis1,
            D2.FirstParameter(),
            D2.LastParameter());
   }
-
-#ifdef DRAW
-  if (Affich)
-  {
-    sprintf(name, "i1_%d", ++nbint);
-    DrawTrSurf::Set(name, Bis1);
-    sprintf(name, "i2_%d", nbint);
-    DrawTrSurf::Set(name, Bis2);
-    if (IsDone() && !IsEmpty())
-    {
-      for (Standard_Integer k = 1; k <= NbPoints(); k++)
-      {
-        gp_Pnt2d P = Point(k).Value();
-        sprintf(name, "ip_%d_%d", nbint, k);
-        DrawTrSurf::Set(name, P);
-      }
-    }
-  }
-#endif
 }
 
 //===================================================================================
@@ -359,19 +333,19 @@ void Bisector_Inter::SinglePerform(const Handle(Geom2d_Curve)& CBis1,
 //            Let D1(u) = d(Bis1(u),B(u)) and D2(U) = d(Bis2(u),B(U))
 //            Parameter U0 for which D1(U0)-D2(U0) = 0 is found.
 //===================================================================================
-void Bisector_Inter::NeighbourPerform(const Handle(Bisector_BisecCC)& Bis1,
-                                      const IntRes2d_Domain&          D1,
-                                      const Handle(Bisector_BisecCC)& Bis2,
-                                      const IntRes2d_Domain&          D2,
-                                      const Standard_Real             Tol)
+void Bisector_Inter::NeighbourPerform(const occ::handle<Bisector_BisecCC>& Bis1,
+                                      const IntRes2d_Domain&               D1,
+                                      const occ::handle<Bisector_BisecCC>& Bis2,
+                                      const IntRes2d_Domain&               D2,
+                                      const double                         Tol)
 {
-  Standard_Real           USol, U1, U2, Dist;
-  Standard_Real           UMin = 0., UMax = 0.;
-  constexpr Standard_Real Eps = Precision::PConfusion();
-  gp_Pnt2d                PSol;
+  double           USol, U1, U2, Dist;
+  double           UMin = 0., UMax = 0.;
+  constexpr double Eps = Precision::PConfusion();
+  gp_Pnt2d         PSol;
 
-  Handle(Geom2d_Curve)     Guide;
-  Handle(Bisector_BisecCC) BisTemp;
+  occ::handle<Geom2d_Curve>     Guide;
+  occ::handle<Bisector_BisecCC> BisTemp;
 
   // Change guiedline on Bis2.
   BisTemp = Bis2->ChangeGuide();
@@ -384,10 +358,10 @@ void Bisector_Inter::NeighbourPerform(const Handle(Bisector_BisecCC)& Bis1,
   (void)P2E;
 
   // Calculate the domain of intersection on the guideline.
-  UMin = Max(D1.FirstParameter(), UMin);
-  UMax = Min(D1.LastParameter(), UMax);
+  UMin = std::max(D1.FirstParameter(), UMin);
+  UMax = std::min(D1.LastParameter(), UMax);
 
-  done = Standard_True;
+  done = true;
 
   if (UMin - Eps > UMax + Eps)
   {
@@ -408,7 +382,7 @@ void Bisector_Inter::NeighbourPerform(const Handle(Bisector_BisecCC)& Bis1,
   PSol = BisTemp->ValueAndDist(USol, U1, U2, Dist);
 
   IntRes2d_Transition        Trans1, Trans2;
-  IntRes2d_IntersectionPoint PointInterSol(PSol, USol, U2, Trans1, Trans2, Standard_False);
+  IntRes2d_IntersectionPoint PointInterSol(PSol, USol, U2, Trans1, Trans2, false);
   Append(PointInterSol);
 }
 
@@ -416,12 +390,12 @@ void Bisector_Inter::NeighbourPerform(const Handle(Bisector_BisecCC)& Bis1,
 // function : TestBound
 // purpose  : Test if the extremities of Bis2 are on the segment corresponding to Bis1.
 //=====================================================================================
-void Bisector_Inter::TestBound(const Handle(Geom2d_Line)&  Bis1,
-                               const IntRes2d_Domain&      D1,
-                               const Handle(Geom2d_Curve)& Bis2,
-                               const IntRes2d_Domain&      D2,
-                               const Standard_Real         TolConf,
-                               const Standard_Boolean      Reverse)
+void Bisector_Inter::TestBound(const occ::handle<Geom2d_Line>&  Bis1,
+                               const IntRes2d_Domain&           D1,
+                               const occ::handle<Geom2d_Curve>& Bis2,
+                               const IntRes2d_Domain&           D2,
+                               const double                     TolConf,
+                               const bool                       Reverse)
 {
   IntRes2d_Transition        Trans1, Trans2;
   IntRes2d_IntersectionPoint PointInterSol;
@@ -430,15 +404,15 @@ void Bisector_Inter::TestBound(const Handle(Geom2d_Line)&  Bis1,
   gp_Pnt2d PF = Bis2->Value(D2.FirstParameter());
   gp_Pnt2d PL = Bis2->Value(D2.LastParameter());
   //  Modified by skv - Mon May  5 14:43:28 2003 OCC616 Begin
-  //   Standard_Real Tol = Min(TolConf,Precision::Confusion());
+  //   double Tol = std::min(TolConf,Precision::Confusion());
   //   Tol = 10*Tol;
-  Standard_Real Tol = TolConf;
+  double Tol = TolConf;
   //  Modified by skv - Mon May  5 14:43:30 2003 OCC616 End
 
-  Standard_Boolean BisecAlgo = Standard_False;
+  bool BisecAlgo = false;
   if (Bis2->DynamicType() == STANDARD_TYPE(Bisector_BisecCC))
   {
-    BisecAlgo = Standard_True;
+    BisecAlgo = true;
     //  Modified by skv - Mon May  5 14:43:45 2003 OCC616 Begin
     //       Tol = 1.e-5;
     //  Modified by skv - Mon May  5 14:43:46 2003 OCC616 End
@@ -446,7 +420,7 @@ void Bisector_Inter::TestBound(const Handle(Geom2d_Line)&  Bis1,
 
   if (L1.Distance(PF) < Tol)
   {
-    Standard_Real U1 = ElCLib::Parameter(L1, PF);
+    double U1 = ElCLib::Parameter(L1, PF);
     //  Modified by skv - Mon May  5 14:48:12 2003 OCC616 Begin
     //     if ( D1.FirstParameter() - Tol <= U1 &&
     // 	 D1.LastParameter () + Tol >= U1   ) {
@@ -464,7 +438,7 @@ void Bisector_Inter::TestBound(const Handle(Geom2d_Line)&  Bis1,
 
   if (L1.Distance(PL) < Tol)
   {
-    Standard_Real U1 = ElCLib::Parameter(L1, PL);
+    double U1 = ElCLib::Parameter(L1, PL);
     //  Modified by skv - Mon May  5 15:05:48 2003 OCC616 Begin
     //     if ( D1.FirstParameter() - Tol <= U1 &&
     // 	 D1.LastParameter () + Tol >= U1   ) {

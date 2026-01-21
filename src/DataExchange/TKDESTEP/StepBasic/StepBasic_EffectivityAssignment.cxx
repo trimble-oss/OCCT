@@ -23,12 +23,12 @@ IMPLEMENT_STANDARD_RTTIEXT(StepBasic_EffectivityAssignment, Standard_Transient)
 
 //=================================================================================================
 
-StepBasic_EffectivityAssignment::StepBasic_EffectivityAssignment() {}
+StepBasic_EffectivityAssignment::StepBasic_EffectivityAssignment() = default;
 
 //=================================================================================================
 
 void StepBasic_EffectivityAssignment::Init(
-  const Handle(StepBasic_Effectivity)& aAssignedEffectivity)
+  const occ::handle<StepBasic_Effectivity>& aAssignedEffectivity)
 {
 
   theAssignedEffectivity = aAssignedEffectivity;
@@ -36,7 +36,7 @@ void StepBasic_EffectivityAssignment::Init(
 
 //=================================================================================================
 
-Handle(StepBasic_Effectivity) StepBasic_EffectivityAssignment::AssignedEffectivity() const
+occ::handle<StepBasic_Effectivity> StepBasic_EffectivityAssignment::AssignedEffectivity() const
 {
   return theAssignedEffectivity;
 }
@@ -44,7 +44,7 @@ Handle(StepBasic_Effectivity) StepBasic_EffectivityAssignment::AssignedEffectivi
 //=================================================================================================
 
 void StepBasic_EffectivityAssignment::SetAssignedEffectivity(
-  const Handle(StepBasic_Effectivity)& aAssignedEffectivity)
+  const occ::handle<StepBasic_Effectivity>& aAssignedEffectivity)
 {
   theAssignedEffectivity = aAssignedEffectivity;
 }

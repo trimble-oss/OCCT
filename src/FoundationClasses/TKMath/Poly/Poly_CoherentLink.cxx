@@ -23,7 +23,7 @@
 //=======================================================================
 
 Poly_CoherentLink::Poly_CoherentLink()
-    : myAttribute(0L)
+    : myAttribute(nullptr)
 {
   myNode[0]         = -1;
   myNode[1]         = -1;
@@ -33,14 +33,14 @@ Poly_CoherentLink::Poly_CoherentLink()
 
 //=================================================================================================
 
-Poly_CoherentLink::Poly_CoherentLink(const Poly_CoherentTriangle& theTri, Standard_Integer iSide)
-    : myAttribute(0L)
+Poly_CoherentLink::Poly_CoherentLink(const Poly_CoherentTriangle& theTri, int iSide)
+    : myAttribute(nullptr)
 {
-  static const Standard_Integer ind[] = {1, 2, 0, 1};
+  static const int ind[] = {1, 2, 0, 1};
   Standard_ProgramError_Raise_if(iSide < 0 || iSide > 2,
                                  "Poly_CoherentLink::Poly_CoherentLink: "
                                  "Wrong iSide parameter");
-  const Standard_Integer aNodeInd[2] = {theTri.Node(ind[iSide + 0]), theTri.Node(ind[iSide + 1])};
+  const int aNodeInd[2] = {theTri.Node(ind[iSide + 0]), theTri.Node(ind[iSide + 1])};
   if (aNodeInd[0] < aNodeInd[1])
   {
     myNode[0]         = aNodeInd[0];

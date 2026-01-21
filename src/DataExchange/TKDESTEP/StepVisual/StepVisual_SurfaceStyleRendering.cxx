@@ -20,13 +20,13 @@ IMPLEMENT_STANDARD_RTTIEXT(StepVisual_SurfaceStyleRendering, Standard_Transient)
 
 //=================================================================================================
 
-StepVisual_SurfaceStyleRendering::StepVisual_SurfaceStyleRendering() {}
+StepVisual_SurfaceStyleRendering::StepVisual_SurfaceStyleRendering() = default;
 
 //=================================================================================================
 
 void StepVisual_SurfaceStyleRendering::Init(
   const StepVisual_ShadingSurfaceMethod theRenderingMethod,
-  const Handle(StepVisual_Colour)&      theSurfaceColour)
+  const occ::handle<StepVisual_Colour>& theSurfaceColour)
 {
 
   myRenderingMethod = theRenderingMethod;
@@ -51,7 +51,7 @@ void StepVisual_SurfaceStyleRendering::SetRenderingMethod(
 
 //=================================================================================================
 
-Handle(StepVisual_Colour) StepVisual_SurfaceStyleRendering::SurfaceColour() const
+occ::handle<StepVisual_Colour> StepVisual_SurfaceStyleRendering::SurfaceColour() const
 {
   return mySurfaceColour;
 }
@@ -59,7 +59,7 @@ Handle(StepVisual_Colour) StepVisual_SurfaceStyleRendering::SurfaceColour() cons
 //=================================================================================================
 
 void StepVisual_SurfaceStyleRendering::SetSurfaceColour(
-  const Handle(StepVisual_Colour)& theSurfaceColour)
+  const occ::handle<StepVisual_Colour>& theSurfaceColour)
 {
   mySurfaceColour = theSurfaceColour;
 }

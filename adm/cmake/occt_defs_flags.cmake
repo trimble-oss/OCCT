@@ -28,6 +28,7 @@ if (MSVC)
   # suppress C26812 on VS2019/C++20 (prefer 'enum class' over 'enum')
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /fp:precise /wd26812")
   # suppress warning on using portable non-secure functions in favor of non-portable secure ones
+  # prevent min() and max() macros from Windows.h
   add_definitions (-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
 else()
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions")
@@ -39,8 +40,10 @@ else()
    add_definitions (-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
   endif()
   if (APPLE)
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
-    set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -Wno-deprecated-declarations")
+    # Suppress elaborated-enum-base warnings from Apple system headers (CoreFoundation/CoreGraphics)
+    # when using newer Clang versions (LLVM 18+) that are stricter about this C++ standard violation
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-elaborated-enum-base")
+    set (CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -Wno-elaborated-enum-base")
   endif()
   add_definitions(-DOCC_CONVERT_SIGNALS)
 endif()
@@ -194,8 +197,9 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "[Cc][Ll][Aa][Nn][Gg]")
     # CLang can be used with both libstdc++ and libc++, however on OS X libstdc++ is outdated.
     set (CMAKE_CXX_FLAGS "-stdlib=libc++ ${CMAKE_CXX_FLAGS}")
   endif()
-  if (NOT WIN32)
-    # Optimize size of binaries
+  if (NOT WIN32 AND NOT APPLE)
+    # Optimize size of binaries (strip symbols)
+    # Note: -s is obsolete on macOS, so we only apply it on Linux
     set (CMAKE_SHARED_LINKER_FLAGS_RELEASE "-Wl,-s ${CMAKE_SHARED_LINKER_FLAGS_RELEASE}")
   endif()
 endif()
@@ -212,6 +216,11 @@ if (CMAKE_COMPILER_IS_GNUCXX AND NOT APPLE)
   # Optimize size of binaries
   set (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
   set (CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -s")
+endif()
+
+if (WIN32)
+  # prevent Windows.h from redefining std::min/std::max
+  add_definitions(-DNOMINMAX)
 endif()
 
 if (BUILD_RELEASE_DISABLE_EXCEPTIONS)

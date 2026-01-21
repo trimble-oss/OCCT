@@ -17,40 +17,40 @@
 #include <Standard_Transient.hxx>
 #include <Standard_Type.hxx>
 #include <TCollection_AsciiString.hxx>
-#include <TColStd_IndexedMapOfTransient.hxx>
+#include <NCollection_IndexedMap.hxx>
 
-#include <stdio.h>
+#include <cstdio>
 IMPLEMENT_STANDARD_RTTIEXT(IFSelect_SelectExplore, IFSelect_SelectDeduct)
 
-IFSelect_SelectExplore::IFSelect_SelectExplore(const Standard_Integer level)
+IFSelect_SelectExplore::IFSelect_SelectExplore(const int level)
     : thelevel(level)
 {
 }
 
-Standard_Integer IFSelect_SelectExplore::Level() const
+int IFSelect_SelectExplore::Level() const
 {
   return thelevel;
 }
 
 Interface_EntityIterator IFSelect_SelectExplore::RootResult(const Interface_Graph& G) const
 {
-  //  Attention, voila comme on procede
-  //  On a une IndexedMapOfTransient en entree (entites deja traitees/a traiter)
-  //    Elle est initialisee par InputResult
-  //  Et une map en sortie (resultats pris) -> le resultat sera unique
-  //  En entree, un curseur d entite courante
-  //  Pour chaque entite, on appelle Explore. 3 cas possibles :
-  //    retour False, on passe
-  //    retour True et liste vide, on prend cette entite sans aller plus loin
-  //    retour True et liste non vide, on ne prend pas cette entite mais on
-  //      considere son resultat.
-  //      Si dernier niveau, on le prend en entier. Sinon, il alimente l entree
+  //  Attention, here's how we proceed
+  //  We have an IndexedMapOfTransient as input (entities already processed/to process)
+  //    It is initialized by InputResult
+  //  And a map as output (results taken) -> the result will be unique
+  //  As input, a cursor of current entity
+  //  For each entity, we call Explore. 3 possible cases:
+  //    return False, we skip
+  //    return True and empty list, we take this entity without going further
+  //    return True and non-empty list, we don't take this entity but we
+  //      consider its result.
+  //      If last level, we take it entirely. Otherwise, it feeds the input
 
-  Standard_Integer              nb = G.Size();
-  TColStd_IndexedMapOfTransient entrees(nb);
-  TColStd_IndexedMapOfTransient result(nb);
+  int                                                     nb = G.Size();
+  NCollection_IndexedMap<occ::handle<Standard_Transient>> entrees(nb);
+  NCollection_IndexedMap<occ::handle<Standard_Transient>> result(nb);
   //  Initialisation
-  Standard_Integer         i, j, level = 1, ilev = 0;
+  int                      i, j, level = 1, ilev = 0;
   Interface_EntityIterator input;
   input = InputResult(G);
   for (input.Start(); input.More(); input.Next())
@@ -69,15 +69,15 @@ Interface_EntityIterator IFSelect_SelectExplore::RootResult(const Interface_Grap
         break;
       ilev = entrees.Extent();
     }
-    Handle(Standard_Transient) ent = entrees.FindKey(i);
+    occ::handle<Standard_Transient> ent = entrees.FindKey(i);
     if (ent.IsNull())
       continue;
     Interface_EntityIterator exp;
     if (!Explore(level, ent, G, exp))
       continue;
 
-    //  On prend en compte : entite a prendre directement ?
-    //  reprendre liste en entree (niveau pas atteint) ou resultat (niveau atteint)
+    //  We take into account : entity to take directly ?
+    //  take back input list (level not reached) or result (level reached)
     if (exp.NbEntities() == 0)
     {
       j = result.Add(ent);
@@ -95,7 +95,7 @@ Interface_EntityIterator IFSelect_SelectExplore::RootResult(const Interface_Grap
     }
   }
 
-  //  On recolte le resultat
+  //  We collect the result
   Interface_EntityIterator res;
   nb = result.Extent();
   for (j = 1; j <= nb; j++)
@@ -111,7 +111,7 @@ TCollection_AsciiString IFSelect_SelectExplore::Label() const
   else if (thelevel > 0)
   {
     char lab[30];
-    sprintf(lab, "(Level %d)", thelevel);
+    Sprintf(lab, "(Level %d)", thelevel);
     labl.AssignCat(lab);
   }
   labl.AssignCat(ExploreLabel());

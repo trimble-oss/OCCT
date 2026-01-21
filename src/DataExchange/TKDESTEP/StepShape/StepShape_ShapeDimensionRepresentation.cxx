@@ -21,14 +21,14 @@ IMPLEMENT_STANDARD_RTTIEXT(StepShape_ShapeDimensionRepresentation, StepShape_Sha
 
 //=================================================================================================
 
-StepShape_ShapeDimensionRepresentation::StepShape_ShapeDimensionRepresentation() {}
+StepShape_ShapeDimensionRepresentation::StepShape_ShapeDimensionRepresentation() = default;
 
 //=================================================================================================
 
 void StepShape_ShapeDimensionRepresentation::Init(
-  const Handle(TCollection_HAsciiString)&             theName,
-  const Handle(StepRepr_HArray1OfRepresentationItem)& theItems,
-  const Handle(StepRepr_RepresentationContext)&       theContextOfItems)
+  const occ::handle<TCollection_HAsciiString>&                                      theName,
+  const occ::handle<NCollection_HArray1<occ::handle<StepRepr_RepresentationItem>>>& theItems,
+  const occ::handle<StepRepr_RepresentationContext>& theContextOfItems)
 {
   StepRepr_Representation::Init(theName, theItems, theContextOfItems);
 }
@@ -36,26 +36,26 @@ void StepShape_ShapeDimensionRepresentation::Init(
 //=================================================================================================
 
 void StepShape_ShapeDimensionRepresentation::Init(
-  const Handle(TCollection_HAsciiString)&                            theName,
-  const Handle(StepShape_HArray1OfShapeDimensionRepresentationItem)& theItems,
-  const Handle(StepRepr_RepresentationContext)&                      theContextOfItems)
+  const occ::handle<TCollection_HAsciiString>&                                        theName,
+  const occ::handle<NCollection_HArray1<StepShape_ShapeDimensionRepresentationItem>>& theItems,
+  const occ::handle<StepRepr_RepresentationContext>& theContextOfItems)
 {
-  StepRepr_Representation::Init(theName, NULL, theContextOfItems);
+  StepRepr_Representation::Init(theName, nullptr, theContextOfItems);
   itemsAP242 = theItems;
 }
 
 //=================================================================================================
 
 void StepShape_ShapeDimensionRepresentation::SetItemsAP242(
-  const Handle(StepShape_HArray1OfShapeDimensionRepresentationItem)& theItems)
+  const occ::handle<NCollection_HArray1<StepShape_ShapeDimensionRepresentationItem>>& theItems)
 {
   itemsAP242 = theItems;
 }
 
 //=================================================================================================
 
-Handle(StepShape_HArray1OfShapeDimensionRepresentationItem) StepShape_ShapeDimensionRepresentation::
-  ItemsAP242() const
+occ::handle<NCollection_HArray1<StepShape_ShapeDimensionRepresentationItem>>
+  StepShape_ShapeDimensionRepresentation::ItemsAP242() const
 {
   return itemsAP242;
 }

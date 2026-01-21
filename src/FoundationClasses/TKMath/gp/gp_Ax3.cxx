@@ -29,19 +29,13 @@
 gp_Ax3::gp_Ax3(const gp_Pnt& P, const gp_Dir& V)
     : axis(P, V)
 {
-  Standard_Real A    = V.X();
-  Standard_Real B    = V.Y();
-  Standard_Real C    = V.Z();
-  Standard_Real Aabs = A;
-  if (Aabs < 0)
-    Aabs = -Aabs;
-  Standard_Real Babs = B;
-  if (Babs < 0)
-    Babs = -Babs;
-  Standard_Real Cabs = C;
-  if (Cabs < 0)
-    Cabs = -Cabs;
-  gp_Dir D;
+  const double A    = V.X();
+  const double B    = V.Y();
+  const double C    = V.Z();
+  const double Aabs = std::abs(A);
+  const double Babs = std::abs(B);
+  const double Cabs = std::abs(C);
+  gp_Dir       D;
 
   //  pour determiner l axe X :
   //  on dit que le produit scalaire Vx.V = 0.
@@ -73,73 +67,75 @@ gp_Ax3::gp_Ax3(const gp_Pnt& P, const gp_Dir& V)
   vydir = V.Crossed(vxdir);
 }
 
-void gp_Ax3::Mirror(const gp_Pnt& P)
+void gp_Ax3::Mirror(const gp_Pnt& P) noexcept
 {
   axis.Mirror(P);
   vxdir.Reverse();
   vydir.Reverse();
 }
 
-gp_Ax3 gp_Ax3::Mirrored(const gp_Pnt& P) const
+gp_Ax3 gp_Ax3::Mirrored(const gp_Pnt& P) const noexcept
 {
   gp_Ax3 Temp = *this;
   Temp.Mirror(P);
   return Temp;
 }
 
-void gp_Ax3::Mirror(const gp_Ax1& A1)
+void gp_Ax3::Mirror(const gp_Ax1& A1) noexcept
 {
   vydir.Mirror(A1);
   vxdir.Mirror(A1);
   axis.Mirror(A1);
 }
 
-gp_Ax3 gp_Ax3::Mirrored(const gp_Ax1& A1) const
+gp_Ax3 gp_Ax3::Mirrored(const gp_Ax1& A1) const noexcept
 {
   gp_Ax3 Temp = *this;
   Temp.Mirror(A1);
   return Temp;
 }
 
-void gp_Ax3::Mirror(const gp_Ax2& A2)
+void gp_Ax3::Mirror(const gp_Ax2& A2) noexcept
 {
   vydir.Mirror(A2);
   vxdir.Mirror(A2);
   axis.Mirror(A2);
 }
 
-gp_Ax3 gp_Ax3::Mirrored(const gp_Ax2& A2) const
+gp_Ax3 gp_Ax3::Mirrored(const gp_Ax2& A2) const noexcept
 {
   gp_Ax3 Temp = *this;
   Temp.Mirror(A2);
   return Temp;
 }
 
-void gp_Ax3::DumpJson(Standard_OStream& theOStream, Standard_Integer) const {
-  OCCT_DUMP_VECTOR_CLASS(theOStream, "Location", 3, Location().X(), Location().Y(), Location().Z())
-    OCCT_DUMP_VECTOR_CLASS(theOStream,
-                           "Direction",
-                           3,
-                           Direction().X(),
-                           Direction().Y(),
-                           Direction().Z())
-
-      OCCT_DUMP_VECTOR_CLASS(theOStream,
-                             "XDirection",
-                             3,
-                             XDirection().X(),
-                             XDirection().Y(),
-                             XDirection().Z()) OCCT_DUMP_VECTOR_CLASS(theOStream,
-                                                                      "YDirection",
-                                                                      3,
-                                                                      YDirection().X(),
-                                                                      YDirection().Y(),
-                                                                      YDirection().Z())}
-
-Standard_Boolean gp_Ax3::InitFromJson(const Standard_SStream& theSStream,
-                                      Standard_Integer&       theStreamPos)
+void gp_Ax3::DumpJson(Standard_OStream& theOStream, int) const
 {
-  Standard_Integer        aPos       = theStreamPos;
+  OCCT_DUMP_VECTOR_CLASS(theOStream, "Location", 3, Location().X(), Location().Y(), Location().Z())
+  OCCT_DUMP_VECTOR_CLASS(theOStream,
+                         "Direction",
+                         3,
+                         Direction().X(),
+                         Direction().Y(),
+                         Direction().Z())
+
+  OCCT_DUMP_VECTOR_CLASS(theOStream,
+                         "XDirection",
+                         3,
+                         XDirection().X(),
+                         XDirection().Y(),
+                         XDirection().Z())
+  OCCT_DUMP_VECTOR_CLASS(theOStream,
+                         "YDirection",
+                         3,
+                         YDirection().X(),
+                         YDirection().Y(),
+                         YDirection().Z())
+}
+
+bool gp_Ax3::InitFromJson(const Standard_SStream& theSStream, int& theStreamPos)
+{
+  int                     aPos       = theStreamPos;
   TCollection_AsciiString aStreamStr = Standard_Dump::Text(theSStream);
 
   gp_XYZ anXYZLoc;
@@ -182,8 +178,8 @@ Standard_Boolean gp_Ax3::InitFromJson(const Standard_SStream& theSStream,
   vydir = gp_Dir(anYDir);
 
   if (!Direction().IsEqual(aDir, Precision::Angular()))
-    return Standard_False;
+    return false;
 
   theStreamPos = aPos;
-  return Standard_True;
+  return true;
 }

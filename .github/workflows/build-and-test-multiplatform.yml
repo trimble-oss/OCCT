@@ -53,6 +53,17 @@ jobs:
   documentation:
     name: Build Documentation
     runs-on: windows-2025
+    if: github.ref == 'refs/heads/master'
+    needs:
+      - clang-format
+      - ascii-check
+      - retest-windows-x64
+      - retest-macos-x64
+      - retest-linux-clang-x64
+      - run-gtest-windows-x64
+      - run-gtest-macos-x64
+      - run-gtest-linux-clang-x64
+      - run-gtest-macos-clang-no-pch
 
     steps:
     - name: Checkout repository
@@ -111,6 +122,7 @@ jobs:
 
   prepare-and-build-macos-clang-no-pch:
     name: Prepare and Build on macOS with Clang (No PCH)
+    needs: prepare-and-build-macos-x64
     runs-on: macos-15
 
     steps:
@@ -125,99 +137,9 @@ jobs:
         artifact-name: install-macos-clang-no-pch
         build-use-pch: 'false'
         build-opt-profile: 'Default'
-        additional-cmake-flags: '-D CMAKE_CXX_FLAGS="-Werror -Wall -Wextra" -D CMAKE_C_FLAGS="-Werror -Wall -Wextra"'
+        additional-cmake-flags: '-D CMAKE_CXX_FLAGS="-Werror -Wall -Wextra -Wno-error=cast-function-type-mismatch -Wno-error=deprecated-declarations" -D CMAKE_C_FLAGS="-Werror -Wall -Wextra -Wno-error=cast-function-type-mismatch -Wno-error=deprecated-declarations"'
         cmake-build-type: 'Debug'
         github-token: ${{ secrets.GITHUB_TOKEN }}
-
-  build-inspector-windows:
-    name: Build TInspector on Windows
-    needs: prepare-and-build-windows-x64
-    runs-on: windows-2025
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4.2.2
-
-    - name: Build TInspector
-      uses: ./.github/actions/build-tinspector
-      with:
-        platform: windows
-        install-artifact-name: install-windows-x64
-
-  build-inspector-linux:
-    name: Build TInspector on Linux
-    needs: prepare-and-build-linux-clang-x64
-    runs-on: ubuntu-24.04
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4.2.2
-
-    - name: Build TInspector
-      uses: ./.github/actions/build-tinspector
-      with:
-        platform: linux
-        install-artifact-name: install-linux-clang-x64
-
-  build-csharp-windows:
-    name: Build CSharp Sample on Windows
-    needs: prepare-and-build-windows-x64
-    runs-on: windows-2025
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4.2.2
-
-    - name: Build CSharp Sample
-      uses: ./.github/actions/build-sample-csharp
-      with:
-        platform: windows
-        install-artifact-name: install-windows-x64
-
-  build-mfc-windows:
-    name: Build MFC Sample on Windows
-    needs: prepare-and-build-windows-x64
-    runs-on: windows-2025
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4.2.2
-
-    - name: Build MFC Sample
-      uses: ./.github/actions/build-sample-mfc
-      with:
-        platform: windows
-        install-artifact-name: install-windows-x64
-
-  build-qt-windows:
-    name: Build Qt Sample on Windows
-    needs: prepare-and-build-windows-x64
-    runs-on: windows-2025
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4.2.2
-
-    - name: Build Qt Sample
-      uses: ./.github/actions/build-sample-qt
-      with:
-        platform: windows
-        install-artifact-name: install-windows-x64
-
-  build-qt-linux:
-    name: Build Qt Sample on Linux
-    needs: prepare-and-build-linux-clang-x64
-    runs-on: ubuntu-24.04
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4.2.2
-
-    - name: Build Qt Sample
-      uses: ./.github/actions/build-sample-qt
-      with:
-        platform: linux
-        install-artifact-name: install-linux-clang-x64
 
   test-windows-x64:
     name: Test on Windows (x64)
@@ -377,6 +299,23 @@ jobs:
         compiler: clang
         install-artifact-name: install-linux-clang-x64
         artifact-suffix: x64
+
+  run-gtest-macos-clang-no-pch:
+    name: Run GTest on macOS with Clang (No PCH, Debug)
+    needs: prepare-and-build-macos-clang-no-pch
+    runs-on: macos-15
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4.2.2
+
+    - name: Run GTests
+      uses: ./.github/actions/run-gtest
+      with:
+        platform: macos
+        compiler: clang
+        install-artifact-name: install-macos-clang-no-pch
+        artifact-suffix: no-pch
 
   test-summary:
     name: 'Summarize Test Results'

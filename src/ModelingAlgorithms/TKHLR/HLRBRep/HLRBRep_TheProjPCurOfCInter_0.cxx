@@ -21,21 +21,58 @@
 #include <HLRBRep_TheLocateExtPCOfTheProjPCurOfCInter.hxx>
 #include <HLRBRep_PCLocFOfTheLocateExtPCOfTheProjPCurOfCInter.hxx>
 #include <gp_Pnt2d.hxx>
+#include <Extrema_POnCurv2d.hxx>
 
-#define TheCurve Standard_Address
-#define TheCurve_hxx <Standard_Address.hxx>
-#define TheCurveTool HLRBRep_CurveTool
-#define TheCurveTool_hxx <HLRBRep_CurveTool.hxx>
-#define IntCurve_TheCurveLocator HLRBRep_TheCurveLocatorOfTheProjPCurOfCInter
-#define IntCurve_TheCurveLocator_hxx <HLRBRep_TheCurveLocatorOfTheProjPCurOfCInter.hxx>
-#define IntCurve_TheLocateExtPC HLRBRep_TheLocateExtPCOfTheProjPCurOfCInter
-#define IntCurve_TheLocateExtPC_hxx <HLRBRep_TheLocateExtPCOfTheProjPCurOfCInter.hxx>
-#define IntCurve_PCLocFOfTheLocateExtPC HLRBRep_PCLocFOfTheLocateExtPCOfTheProjPCurOfCInter
-#define IntCurve_PCLocFOfTheLocateExtPC_hxx                                                        \
-  <HLRBRep_PCLocFOfTheLocateExtPCOfTheProjPCurOfCInter.hxx>
-#define IntCurve_PCLocFOfTheLocateExtPC HLRBRep_PCLocFOfTheLocateExtPCOfTheProjPCurOfCInter
-#define IntCurve_PCLocFOfTheLocateExtPC_hxx                                                        \
-  <HLRBRep_PCLocFOfTheLocateExtPCOfTheProjPCurOfCInter.hxx>
-#define IntCurve_ProjPCurGen HLRBRep_TheProjPCurOfCInter
-#define IntCurve_ProjPCurGen_hxx <HLRBRep_TheProjPCurOfCInter.hxx>
-#include <IntCurve_ProjPCurGen.gxx>
+double HLRBRep_TheProjPCurOfCInter::FindParameter(const HLRBRep_CurvePtr& C,
+                                                  const gp_Pnt2d&         P,
+                                                  const double            LowParameter,
+                                                  const double            HighParameter,
+                                                  const double)
+{
+  double            theparam, defaultparam;
+  int               NbPts   = HLRBRep_CurveTool::NbSamples(C);
+  double            theEpsX = HLRBRep_CurveTool::EpsX(C);
+  Extrema_POnCurv2d POnC;
+
+  HLRBRep_TheCurveLocatorOfTheProjPCurOfCInter::Locate(P,
+                                                       C,
+                                                       NbPts,
+                                                       LowParameter,
+                                                       HighParameter,
+                                                       POnC);
+  defaultparam = POnC.Parameter();
+  HLRBRep_TheLocateExtPCOfTheProjPCurOfCInter Loc(P, C, defaultparam, theEpsX);
+
+  if (!Loc.IsDone())
+  {
+    //-- cout<<"\n Erreur dans LocateExtPC "<<endl;
+    theparam = defaultparam;
+  }
+  else
+  {
+    if (!Loc.IsMin())
+    {
+      //-- cout<<"\n Erreur dans LocateExtPC (Maximum trouve) "<<endl;
+      theparam = defaultparam;
+    }
+    else
+    {
+      theparam = Loc.Point().Parameter();
+    }
+  }
+  return theparam;
+}
+
+double HLRBRep_TheProjPCurOfCInter::FindParameter(const HLRBRep_CurvePtr& C,
+                                                  const gp_Pnt2d&         P,
+                                                  const double            Tol)
+{
+
+  double theParam;
+  theParam = FindParameter(C,
+                           P,
+                           HLRBRep_CurveTool::FirstParameter(C),
+                           HLRBRep_CurveTool::LastParameter(C),
+                           Tol);
+  return theParam;
+}

@@ -44,22 +44,16 @@
 #include <GeomAdaptor_Surface.hxx>
 #include <GeomAbs_SurfaceType.hxx>
 
-#ifdef DRAW
-  #include <DrawTrSurf.hxx>
-static Standard_Boolean AffichCurve = Standard_False;
-static Standard_Integer NbProj      = 1;
-#endif
-
 // POP pour NT
-#include <stdio.h>
+#include <cstdio>
 
 //=================================================================================================
 
-static Standard_Boolean isIsoU(const TopoDS_Face& Face, const TopoDS_Edge& Edge)
+static bool isIsoU(const TopoDS_Face& Face, const TopoDS_Edge& Edge)
 {
-  Handle(Geom2d_Curve) C;
-  Handle(Geom2d_Line)  Li;
-  Standard_Real        f, l;
+  occ::handle<Geom2d_Curve> C;
+  occ::handle<Geom2d_Line>  Li;
+  double                    f, l;
 
   C = BRep_Tool::CurveOnSurface(Edge, Face, f, l);
   if (C.IsNull())
@@ -69,10 +63,7 @@ static Standard_Boolean isIsoU(const TopoDS_Face& Face, const TopoDS_Edge& Edge)
 
   gp_Dir2d D = C->DN(f, 1);
 
-  if (Abs(D.Dot(gp::DX2d())) < Abs(D.Dot(gp::DY2d())))
-    return Standard_True;
-  else
-    return Standard_False;
+  return std::abs(D.Dot(gp::DX2d())) < std::abs(D.Dot(gp::DY2d()));
 }
 
 //=================================================================================================
@@ -85,21 +76,21 @@ BRepFill_MultiLine::BRepFill_MultiLine()
 
 //=================================================================================================
 
-BRepFill_MultiLine::BRepFill_MultiLine(const TopoDS_Face&          Face1,
-                                       const TopoDS_Face&          Face2,
-                                       const TopoDS_Edge&          Edge1,
-                                       const TopoDS_Edge&          Edge2,
-                                       const Standard_Boolean      Inv1,
-                                       const Standard_Boolean      Inv2,
-                                       const Handle(Geom2d_Curve)& Bissec)
+BRepFill_MultiLine::BRepFill_MultiLine(const TopoDS_Face&               Face1,
+                                       const TopoDS_Face&               Face2,
+                                       const TopoDS_Edge&               Edge1,
+                                       const TopoDS_Edge&               Edge2,
+                                       const bool                       Inv1,
+                                       const bool                       Inv2,
+                                       const occ::handle<Geom2d_Curve>& Bissec)
     : myFace1(Face1),
       myFace2(Face2),
       myBis(Bissec),
       myKPart(0)
 {
   //
-  constexpr Standard_Real mult = 5.;
-  constexpr Standard_Real eps  = mult * Precision::Confusion();
+  constexpr double mult = 5.;
+  constexpr double eps  = mult * Precision::Confusion();
   //
   myNbPnt2d = 2;
   myNbPnt   = 1;
@@ -109,51 +100,51 @@ BRepFill_MultiLine::BRepFill_MultiLine(const TopoDS_Face&          Face1,
   myIsoU2 = isIsoU(Face2, Edge2);
 
   // eval myU1, myV1, myU2, myV2;
-  Handle(Geom_Plane) RefPlane;
-  Handle(Geom_Plane) BasisPlane = new Geom_Plane(0., 0., 1., 0.);
-  TopLoc_Location    L;
+  occ::handle<Geom_Plane> RefPlane;
+  occ::handle<Geom_Plane> BasisPlane = new Geom_Plane(0., 0., 1., 0.);
+  TopLoc_Location         L;
 
   TopExp_Explorer Exp;
-  Standard_Real   Umin = 0., Vmin = 0., Umax = 0., Vmax = 0., U, V;
+  double          Umin = 0., Vmin = 0., Umax = 0., Vmax = 0., U, V;
   gp_Pnt2d        P1, P2;
   gp_Vec          DZ;
   gp_Pnt          P;
 
   // Result on Face1
-  Standard_Boolean First = Standard_True;
+  bool First = true;
   for (Exp.Init(myFace1, TopAbs_EDGE); Exp.More(); Exp.Next())
   {
     TopoDS_Edge CurEdge = TopoDS::Edge(Exp.Current());
     BRep_Tool::UVPoints(CurEdge, myFace1, P1, P2);
     if (First)
     {
-      First = Standard_False;
-      Umin  = Min(P1.X(), P2.X());
-      Umax  = Max(P1.X(), P2.X());
+      First = false;
+      Umin  = std::min(P1.X(), P2.X());
+      Umax  = std::max(P1.X(), P2.X());
 
-      Vmin = Min(P1.Y(), P2.Y());
-      Vmax = Max(P1.Y(), P2.Y());
+      Vmin = std::min(P1.Y(), P2.Y());
+      Vmax = std::max(P1.Y(), P2.Y());
     }
     else
     {
-      U    = Min(P1.X(), P2.X());
-      Umin = Min(Umin, U);
-      U    = Max(P1.X(), P2.X());
-      Umax = Max(Umax, U);
+      U    = std::min(P1.X(), P2.X());
+      Umin = std::min(Umin, U);
+      U    = std::max(P1.X(), P2.X());
+      Umax = std::max(Umax, U);
 
-      V    = Min(P1.Y(), P2.Y());
-      Vmin = Min(Vmin, V);
-      V    = Max(P1.Y(), P2.Y());
-      Vmax = Max(Vmax, V);
+      V    = std::min(P1.Y(), P2.Y());
+      Vmin = std::min(Vmin, V);
+      V    = std::max(P1.Y(), P2.Y());
+      Vmax = std::max(Vmax, V);
     }
   }
 
   // return isos in their domain of restriction.
-  Handle(Geom_Curve)   UU1, UU2, VV1, VV2;
-  Handle(Geom_Surface) S;
+  occ::handle<Geom_Curve>   UU1, UU2, VV1, VV2;
+  occ::handle<Geom_Surface> S;
   S = BRep_Tool::Surface(myFace1, L);
   if (!L.IsIdentity())
-    S = Handle(Geom_Surface)::DownCast(S->Transformed(L.Transformation()));
+    S = occ::down_cast<Geom_Surface>(S->Transformed(L.Transformation()));
 
   if (myIsoU1)
   {
@@ -202,7 +193,7 @@ BRepFill_MultiLine::BRepFill_MultiLine(const TopoDS_Face&          Face1,
 
   if (myIsoU1)
   {
-    Standard_Real dummyUmin = Umin, dummyUmax = Umax;
+    double dummyUmin = Umin, dummyUmax = Umax;
     Umin = Vmin;
     Umax = Vmax;
     Vmin = dummyUmin;
@@ -238,31 +229,31 @@ BRepFill_MultiLine::BRepFill_MultiLine(const TopoDS_Face&          Face1,
 
   myV1 = Geom2dAdaptor_Curve(GeomProjLib::Curve2d(VV1, RefPlane), Vmin, Vmax);
 
-  First = Standard_True;
+  First = true;
   for (Exp.Init(myFace2, TopAbs_EDGE); Exp.More(); Exp.Next())
   {
     TopoDS_Edge CurEdge = TopoDS::Edge(Exp.Current());
     BRep_Tool::UVPoints(CurEdge, myFace2, P1, P2);
     if (First)
     {
-      First = Standard_False;
-      Umin  = Min(P1.X(), P2.X());
-      Umax  = Max(P1.X(), P2.X());
+      First = false;
+      Umin  = std::min(P1.X(), P2.X());
+      Umax  = std::max(P1.X(), P2.X());
 
-      Vmin = Min(P1.Y(), P2.Y());
-      Vmax = Max(P1.Y(), P2.Y());
+      Vmin = std::min(P1.Y(), P2.Y());
+      Vmax = std::max(P1.Y(), P2.Y());
     }
     else
     {
-      U    = Min(P1.X(), P2.X());
-      Umin = Min(Umin, U);
-      U    = Max(P1.X(), P2.X());
-      Umax = Max(Umax, U);
+      U    = std::min(P1.X(), P2.X());
+      Umin = std::min(Umin, U);
+      U    = std::max(P1.X(), P2.X());
+      Umax = std::max(Umax, U);
 
-      V    = Min(P1.Y(), P2.Y());
-      Vmin = Min(Vmin, V);
-      V    = Max(P1.Y(), P2.Y());
-      Vmax = Max(Vmax, V);
+      V    = std::min(P1.Y(), P2.Y());
+      Vmin = std::min(Vmin, V);
+      V    = std::max(P1.Y(), P2.Y());
+      Vmax = std::max(Vmax, V);
     }
   }
 
@@ -270,7 +261,7 @@ BRepFill_MultiLine::BRepFill_MultiLine(const TopoDS_Face&          Face1,
   S = BRep_Tool::Surface(myFace2, L);
 
   if (!L.IsIdentity())
-    S = Handle(Geom_Surface)::DownCast(S->Transformed(L.Transformation()));
+    S = occ::down_cast<Geom_Surface>(S->Transformed(L.Transformation()));
 
   if (myIsoU2)
   {
@@ -319,7 +310,7 @@ BRepFill_MultiLine::BRepFill_MultiLine(const TopoDS_Face&          Face1,
 
   if (myIsoU2)
   {
-    Standard_Real dummyUmin = Umin, dummyUmax = Umax;
+    double dummyUmin = Umin, dummyUmax = Umax;
     Umin = Vmin;
     Umax = Vmax;
     Vmin = dummyUmin;
@@ -365,17 +356,17 @@ BRepFill_MultiLine::BRepFill_MultiLine(const TopoDS_Face&          Face1,
 
   if (myBis.GetType() == GeomAbs_Line)
   {
-    Standard_Real DeltaU = myBis.LastParameter() - myBis.FirstParameter();
-    gp_Pnt2d      aPnt1  = ValueOnF1(myBis.FirstParameter() + 0.1 * DeltaU);
-    gp_Pnt2d      aPnt2  = ValueOnF1(myBis.FirstParameter() + 0.9 * DeltaU);
+    double   DeltaU = myBis.LastParameter() - myBis.FirstParameter();
+    gp_Pnt2d aPnt1  = ValueOnF1(myBis.FirstParameter() + 0.1 * DeltaU);
+    gp_Pnt2d aPnt2  = ValueOnF1(myBis.FirstParameter() + 0.9 * DeltaU);
     if (myIsoU1)
     {
-      if (Abs(aPnt1.Y() - aPnt2.Y()) < eps)
+      if (std::abs(aPnt1.Y() - aPnt2.Y()) < eps)
         myKPart = 1;
     }
     else
     {
-      if (Abs(aPnt1.X() - aPnt2.X()) < eps)
+      if (std::abs(aPnt1.X() - aPnt2.X()) < eps)
         myKPart = 1;
     }
 
@@ -391,21 +382,21 @@ BRepFill_MultiLine::BRepFill_MultiLine(const TopoDS_Face&          Face1,
 
 //=================================================================================================
 
-Standard_Boolean BRepFill_MultiLine::IsParticularCase() const
+bool BRepFill_MultiLine::IsParticularCase() const
 {
   return (myKPart != 0);
 }
 
 //=================================================================================================
 
-void BRepFill_MultiLine::Curves(Handle(Geom_Curve)&   Curve,
-                                Handle(Geom2d_Curve)& PCurve1,
-                                Handle(Geom2d_Curve)& PCurve2) const
+void BRepFill_MultiLine::Curves(occ::handle<Geom_Curve>&   Curve,
+                                occ::handle<Geom2d_Curve>& PCurve1,
+                                occ::handle<Geom2d_Curve>& PCurve2) const
 {
   if (myKPart == 1)
   {
-    gp_Pnt2d      P1, P2, PMil;
-    Standard_Real f, l;
+    gp_Pnt2d P1, P2, PMil;
+    double   f, l;
 
     P1 = ValueOnF1(myBis.FirstParameter());
     P2 = ValueOnF1(myBis.LastParameter());
@@ -415,12 +406,12 @@ void BRepFill_MultiLine::Curves(Handle(Geom_Curve)&   Curve,
 
     PMil = ValueOnF1(0.5 * (myBis.FirstParameter() + myBis.LastParameter()));
 
-    TopLoc_Location      L;
-    Handle(Geom_Surface) S = BRep_Tool::Surface(myFace1, L);
+    TopLoc_Location           L;
+    occ::handle<Geom_Surface> S = BRep_Tool::Surface(myFace1, L);
     if (!L.IsIdentity())
-      S = Handle(Geom_Surface)::DownCast(S->Transformed(L.Transformation()));
+      S = occ::down_cast<Geom_Surface>(S->Transformed(L.Transformation()));
 
-    Standard_Boolean Sens;
+    bool Sens;
     if (!myIsoU1)
     {
       Curve = S->UIso(PMil.X());
@@ -482,35 +473,21 @@ void BRepFill_MultiLine::Curves(Handle(Geom_Curve)&   Curve,
   {
     TopLoc_Location L;
 
-    Handle(Geom_Surface) S = BRep_Tool::Surface(myFace1, L);
+    occ::handle<Geom_Surface> S = BRep_Tool::Surface(myFace1, L);
     if (!L.IsIdentity())
-      S = Handle(Geom_Surface)::DownCast(S->Transformed(L.Transformation()));
+      S = occ::down_cast<Geom_Surface>(S->Transformed(L.Transformation()));
 
     if (S->IsKind(STANDARD_TYPE(Geom_RectangularTrimmedSurface)))
-      S = Handle(Geom_RectangularTrimmedSurface)::DownCast(S)->BasisSurface();
+      S = occ::down_cast<Geom_RectangularTrimmedSurface>(S)->BasisSurface();
 
-    Handle(Geom_Plane) Plane = Handle(Geom_Plane)::DownCast(S);
+    occ::handle<Geom_Plane> Plane = occ::down_cast<Geom_Plane>(S);
     // eval the 3d curve corresponding to the bissectrice.
-    gp_Pnt2d          P    = myBis.Line().Location();
-    gp_Dir2d          D    = myBis.Line().Direction();
-    Handle(Geom_Line) Line = new Geom_Line(gp_Pnt(P.X(), P.Y(), 0.), gp_Dir(D.X(), D.Y(), 0.));
-    Handle(Geom_TrimmedCurve) TLine =
+    gp_Pnt2d               P    = myBis.Line().Location();
+    gp_Dir2d               D    = myBis.Line().Direction();
+    occ::handle<Geom_Line> Line = new Geom_Line(gp_Pnt(P.X(), P.Y(), 0.), gp_Dir(D.X(), D.Y(), 0.));
+    occ::handle<Geom_TrimmedCurve> TLine =
       new Geom_TrimmedCurve(Line, myBis.FirstParameter(), myBis.LastParameter());
-    Curve = GeomProjLib::ProjectOnPlane(TLine, Plane, gp::DZ(), Standard_False);
-
-#ifdef DRAW
-    if (AffichCurve)
-    {
-      char name[100];
-      sprintf(name, "C2_%d", NbProj);
-      DrawTrSurf::Set(name, TLine);
-      sprintf(name, "C3_%d", NbProj);
-      DrawTrSurf::Set(name, Curve);
-      sprintf(name, "SS_%d", NbProj);
-      DrawTrSurf::Set(name, Plane);
-      NbProj++;
-    }
-#endif
+    Curve = GeomProjLib::ProjectOnPlane(TLine, Plane, gp::DZ(), false);
 
     // eval PCurve1
     PCurve1 = GeomProjLib::Curve2d(Curve, Plane);
@@ -518,34 +495,34 @@ void BRepFill_MultiLine::Curves(Handle(Geom_Curve)&   Curve,
     // eval PCurve2
     S = BRep_Tool::Surface(myFace2, L);
     if (!L.IsIdentity())
-      S = Handle(Geom_Surface)::DownCast(S->Transformed(L.Transformation()));
+      S = occ::down_cast<Geom_Surface>(S->Transformed(L.Transformation()));
     if (S->IsKind(STANDARD_TYPE(Geom_RectangularTrimmedSurface)))
-      S = Handle(Geom_RectangularTrimmedSurface)::DownCast(S)->BasisSurface();
-    Plane   = Handle(Geom_Plane)::DownCast(S);
+      S = occ::down_cast<Geom_RectangularTrimmedSurface>(S)->BasisSurface();
+    Plane   = occ::down_cast<Geom_Plane>(S);
     PCurve2 = GeomProjLib::Curve2d(Curve, Plane);
   }
 }
 
 //=================================================================================================
 
-Standard_Real BRepFill_MultiLine::FirstParameter() const
+double BRepFill_MultiLine::FirstParameter() const
 {
   return myBis.FirstParameter();
 }
 
 //=================================================================================================
 
-Standard_Real BRepFill_MultiLine::LastParameter() const
+double BRepFill_MultiLine::LastParameter() const
 {
   return myBis.LastParameter();
 }
 
 //=================================================================================================
 
-gp_Pnt BRepFill_MultiLine::Value(const Standard_Real U) const
+gp_Pnt BRepFill_MultiLine::Value(const double U) const
 {
-  Handle(Geom_Surface) S;
-  TopLoc_Location      L;
+  occ::handle<Geom_Surface> S;
+  TopLoc_Location           L;
 
   S = BRep_Tool::Surface(myFace1, L);
 
@@ -559,31 +536,20 @@ gp_Pnt BRepFill_MultiLine::Value(const Standard_Real U) const
 
 //=================================================================================================
 
-static gp_Pnt2d ValueOnFace(const Standard_Real        U,
+static gp_Pnt2d ValueOnFace(const double               U,
                             const Geom2dAdaptor_Curve& TheBis,
                             const Geom2dAdaptor_Curve& TheU,
                             const Geom2dAdaptor_Curve& TheV,
-                            const Standard_Boolean     IsIsoU)
+                            const bool                 IsIsoU)
 {
   gp_Pnt2d P = TheBis.Value(U);
 
   Geom2dAPI_ProjectPointOnCurve Ext(P, TheU.Curve(), TheU.FirstParameter(), TheU.LastParameter());
-#ifdef DRAW
-  if (AffichCurve)
-  {
-    char* TheUname = "TheU";
-    char* PP1name  = "PP1";
-    DrawTrSurf::Set(TheUname, TheU.Curve());
-    DrawTrSurf::Set(PP1name, P);
-    //    DrawTrSurf::Set("TheU",TheU.Curve());
-    //    DrawTrSurf::Set("PP1",P);
-  }
-#endif
   //
-  constexpr Standard_Real mult = 5.;
-  constexpr Standard_Real eps  = mult * Precision::Confusion();
+  constexpr double mult = 5.;
+  constexpr double eps  = mult * Precision::Confusion();
   //
-  Standard_Real UU = 0., Dist = Precision::Infinite(), D1, D2;
+  double UU = 0., Dist = Precision::Infinite(), D1, D2;
 
   if (Ext.NbPoints() != 0)
   {
@@ -594,15 +560,15 @@ static gp_Pnt2d ValueOnFace(const Standard_Real        U,
   D1 = P.Distance(TheU.Value(TheU.FirstParameter()));
   D2 = P.Distance(TheU.Value(TheU.LastParameter()));
 
-  if (D1 < Dist || D2 < Dist || Abs(D1 - Dist) < eps || Abs(D2 - Dist) < eps)
+  if (D1 < Dist || D2 < Dist || std::abs(D1 - Dist) < eps || std::abs(D2 - Dist) < eps)
   {
-    if (Abs(D1 - D2) < eps)
+    if (std::abs(D1 - D2) < eps)
     {
       if (TheU.GetType() == GeomAbs_Circle)
       {
-        gp_Vec2d      Axis = TheU.Circle().XAxis().Direction();
-        gp_Vec2d      D12d = TheBis.DN(TheBis.FirstParameter(), 1);
-        Standard_Real Ang  = Axis.Angle(D12d);
+        gp_Vec2d Axis = TheU.Circle().XAxis().Direction();
+        gp_Vec2d D12d = TheBis.DN(TheBis.FirstParameter(), 1);
+        double   Ang  = Axis.Angle(D12d);
         if (!TheU.Circle().IsDirect())
           Ang = -Ang;
         UU   = ElCLib::InPeriod(Ang, TheU.FirstParameter(), TheU.FirstParameter() + 2 * M_PI);
@@ -629,42 +595,32 @@ static gp_Pnt2d ValueOnFace(const Standard_Real        U,
     }
   }
 
-  constexpr Standard_Real Tol = Precision::Confusion();
-  Standard_Real           VV;
+  constexpr double Tol = Precision::Confusion();
+  double           VV;
 
   gp_Pnt2d PF = TheV.Value(TheV.FirstParameter());
   gp_Pnt2d PL = TheV.Value(TheV.LastParameter());
 
-  if (Abs(Dist - Abs(PF.Y())) < Tol)
+  if (std::abs(Dist - std::abs(PF.Y())) < Tol)
   {
     VV = TheV.FirstParameter();
   }
-  else if (Abs(Dist - Abs(PL.Y())) < Tol)
+  else if (std::abs(Dist - std::abs(PL.Y())) < Tol)
   {
     VV = TheV.LastParameter();
   }
   else
   {
     // test if the curve is at the side `negative Y`.
-    if (Min(PF.Y(), PL.Y()) < -Tol)
+    if (std::min(PF.Y(), PL.Y()) < -Tol)
       Dist = -Dist;
 
-    Handle(Geom2d_Line) Line = new Geom2d_Line(gp_Pnt2d(0., Dist), gp::DX2d());
-
-#ifdef DRAW
-    if (AffichCurve)
-    {
-      static Standard_CString aTheV = "TheV";
-      DrawTrSurf::Set(aTheV, TheV.Curve());
-      static Standard_CString aLINF1 = "LINF1";
-      DrawTrSurf::Set(aLINF1, Line);
-    }
-#endif
+    occ::handle<Geom2d_Line> Line = new Geom2d_Line(gp_Pnt2d(0., Dist), gp::DX2d());
 
     const Geom2dAdaptor_Curve& Cu1 = TheV;
     Geom2dAdaptor_Curve        Cu2(Line);
 
-    Standard_Real TolConf = 0.;
+    double TolConf = 0.;
 
     Geom2dInt_GInter Intersector(Cu1, Cu2, TolConf, Tol);
 
@@ -685,11 +641,11 @@ static gp_Pnt2d ValueOnFace(const Standard_Real        U,
       else if (Intersector.NbSegments() > 0)
       {
         IntRes2d_IntersectionSegment Seg = Intersector.Segment(1);
-        Standard_Real                VS1 = Seg.FirstPoint().ParamOnFirst();
-        Standard_Real                VS2 = Seg.LastPoint().ParamOnFirst();
+        double                       VS1 = Seg.FirstPoint().ParamOnFirst();
+        double                       VS2 = Seg.LastPoint().ParamOnFirst();
         gp_Pnt2d                     PS1 = TheV.Value(VS1);
         gp_Pnt2d                     PS2 = TheV.Value(VS2);
-        Standard_Real                Alp = (Dist - PS1.Y()) / (PS2.Y() - PS1.Y());
+        double                       Alp = (Dist - PS1.Y()) / (PS2.Y() - PS1.Y());
         VV                               = Alp * (VS2 - VS1) + VS1;
       }
       else
@@ -698,7 +654,7 @@ static gp_Pnt2d ValueOnFace(const Standard_Real        U,
         std::cout << "Intersector done, but no points found" << std::endl;
         std::cout << "  ---> ValueonFace failed at parameter U = " << U << std::endl;
 #endif
-        if (Abs(Dist - PL.Y()) < Abs(Dist - PF.Y()))
+        if (std::abs(Dist - PL.Y()) < std::abs(Dist - PF.Y()))
           VV = TheV.LastParameter();
         else
           VV = TheV.FirstParameter();
@@ -714,30 +670,30 @@ static gp_Pnt2d ValueOnFace(const Standard_Real        U,
 
 //=================================================================================================
 
-gp_Pnt2d BRepFill_MultiLine::ValueOnF1(const Standard_Real U) const
+gp_Pnt2d BRepFill_MultiLine::ValueOnF1(const double U) const
 {
   return ValueOnFace(U, myBis, myU1, myV1, myIsoU1);
 }
 
 //=================================================================================================
 
-gp_Pnt2d BRepFill_MultiLine::ValueOnF2(const Standard_Real U) const
+gp_Pnt2d BRepFill_MultiLine::ValueOnF2(const double U) const
 {
   return ValueOnFace(U, myBis, myU2, myV2, myIsoU2);
 }
 
 //=================================================================================================
 
-void BRepFill_MultiLine::Value3dOnF1OnF2(const Standard_Real U,
-                                         gp_Pnt&             P3d,
-                                         gp_Pnt2d&           PF1,
-                                         gp_Pnt2d&           PF2) const
+void BRepFill_MultiLine::Value3dOnF1OnF2(const double U,
+                                         gp_Pnt&      P3d,
+                                         gp_Pnt2d&    PF1,
+                                         gp_Pnt2d&    PF2) const
 {
   PF1 = ValueOnFace(U, myBis, myU1, myV1, myIsoU1);
   PF2 = ValueOnFace(U, myBis, myU2, myV2, myIsoU2);
 
-  Handle(Geom_Surface) S;
-  TopLoc_Location      L;
+  occ::handle<Geom_Surface> S;
+  TopLoc_Location           L;
 
   S   = BRep_Tool::Surface(myFace1, L);
   P3d = S->Value(PF1.X(), PF1.Y());
@@ -753,21 +709,21 @@ GeomAbs_Shape BRepFill_MultiLine::Continuity() const
 
 //=================================================================================================
 
-Standard_Boolean BRepFill_MultiLine::Value(const Standard_Real           theT,
-                                           NCollection_Array1<gp_Pnt2d>& thePnt2d,
-                                           NCollection_Array1<gp_Pnt>&   thePnt) const
+bool BRepFill_MultiLine::Value(const double                  theT,
+                               NCollection_Array1<gp_Pnt2d>& thePnt2d,
+                               NCollection_Array1<gp_Pnt>&   thePnt) const
 {
   thePnt(1)   = Value(theT);
   thePnt2d(1) = ValueOnF1(theT);
   thePnt2d(2) = ValueOnF2(theT);
-  return Standard_True;
+  return true;
 }
 
 //=================================================================================================
 
-Standard_Boolean BRepFill_MultiLine::D1(const Standard_Real /*theT*/,
-                                        NCollection_Array1<gp_Vec2d>& /*theVec2d*/,
-                                        NCollection_Array1<gp_Vec>& /*theVec*/) const
+bool BRepFill_MultiLine::D1(const double /*theT*/,
+                            NCollection_Array1<gp_Vec2d>& /*theVec2d*/,
+                            NCollection_Array1<gp_Vec>& /*theVec*/) const
 {
-  return Standard_False;
+  return false;
 }

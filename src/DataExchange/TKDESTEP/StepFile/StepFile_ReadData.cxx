@@ -41,7 +41,7 @@ public:
   {
   }
 
-  ~Argument() {}
+  ~Argument() = default;
 
 public:
   Argument*           myNext;  //!< Next argument in the list for this record
@@ -61,7 +61,7 @@ public:
   {
   }
 
-  ~Record() {}
+  ~Record() = default;
 
 public:
   Record*   myNext;  //!< Next record in the list
@@ -100,7 +100,7 @@ public:
 class StepFile_ReadData::ErrorsPage
 {
 public:
-  ErrorsPage(Standard_CString theError)
+  ErrorsPage(const char* theError)
       : myNext(nullptr),
         myError(theError)
   {
@@ -113,7 +113,7 @@ public:
   void SetNextErrorPage(ErrorsPage* theNextErrorsPage) { myNext = theNextErrorsPage; }
 
   //! Returns an error message
-  Standard_CString ErrorMessage() const { return myError.ToCString(); }
+  const char* ErrorMessage() const { return myError.ToCString(); }
 
   DEFINE_STANDARD_ALLOC
 private:
@@ -124,15 +124,13 @@ private:
 //=================================================================================================
 
 StepFile_ReadData::StepFile_ReadData()
-    : myTextAlloc(),
-      myOtherAlloc(),
-      myModePrint(0),
+    : myModePrint(0),
       myNbRec(0),
       myNbHead(0),
       myNbPar(0),
       myYaRec(0),
       myNumSub(0),
-      myErrorArg(Standard_False),
+      myErrorArg(false),
       myResText(nullptr),
       myCurrType(TextValue::SubList),
       mySubArg(nullptr),
@@ -178,7 +176,7 @@ void StepFile_ReadData::CreateNewText(const char* theNewText, int theLenText)
 
 void StepFile_ReadData::RecordNewEntity()
 {
-  myErrorArg = Standard_False; // Reset error argument mod
+  myErrorArg = false; // Reset error argument mod
   AddNewRecord(myCurRec);
   SetTypeArg(Interface_ParamSub);
   mySubArg          = myCurRec->myIdent;
@@ -250,7 +248,7 @@ void StepFile_ReadData::RecordListStart()
     aSubRec->myLast  = nullptr;
     myCurRec         = aSubRec;
   }
-  myErrorArg = Standard_False; // Reset error arguments mode
+  myErrorArg = false; // Reset error arguments mode
   myNumSub++;
 }
 
@@ -267,7 +265,7 @@ void StepFile_ReadData::CreateNewArg()
     GetResultText(&aNewArg->myValue);
 
   if (myTypeArg == Interface_ParamMisc)
-    myErrorArg = Standard_True;
+    myErrorArg = true;
 
   if (myCurRec->myFirst == nullptr)
   {
@@ -298,7 +296,7 @@ void StepFile_ReadData::CreateErrorArg()
   {
     SetTypeArg(Interface_ParamMisc);
     CreateNewArg();
-    myErrorArg = Standard_True;
+    myErrorArg = true;
     return;
   }
 
@@ -361,7 +359,7 @@ void StepFile_ReadData::FinalOfScope()
 
 //=================================================================================================
 
-void StepFile_ReadData::ClearRecorder(const Standard_Integer theMode)
+void StepFile_ReadData::ClearRecorder(const int theMode)
 {
   if (theMode & 1)
   {
@@ -383,21 +381,19 @@ void StepFile_ReadData::ClearRecorder(const Standard_Integer theMode)
 
 //=================================================================================================
 
-Standard_Boolean StepFile_ReadData::GetArgDescription(Interface_ParamType* theType, char** theValue)
+bool StepFile_ReadData::GetArgDescription(Interface_ParamType* theType, char** theValue)
 {
   if (myCurrArg == nullptr)
-    return Standard_False;
+    return false;
   *theType  = myCurrArg->myType;
   *theValue = myCurrArg->myValue;
   myCurrArg = myCurrArg->myNext;
-  return Standard_True;
+  return true;
 }
 
 //=================================================================================================
 
-void StepFile_ReadData::GetFileNbR(Standard_Integer* theNbHead,
-                                   Standard_Integer* theNbRec,
-                                   Standard_Integer* theNbPage)
+void StepFile_ReadData::GetFileNbR(int* theNbHead, int* theNbRec, int* theNbPage)
 {
   myCurRec   = myFirstRec;
   *theNbHead = myNbHead;
@@ -407,17 +403,15 @@ void StepFile_ReadData::GetFileNbR(Standard_Integer* theNbHead,
 
 //=================================================================================================
 
-Standard_Boolean StepFile_ReadData::GetRecordDescription(char** theIdent,
-                                                         char** theType,
-                                                         int*   theNbArg)
+bool StepFile_ReadData::GetRecordDescription(char** theIdent, char** theType, int* theNbArg)
 {
   if (myCurRec == nullptr)
-    return Standard_False;
+    return false;
   *theIdent = myCurRec->myIdent;
   *theType  = myCurRec->myType;
   *theNbArg = (myCurRec->myFirst != nullptr);
   myCurrArg = myCurRec->myFirst;
-  return Standard_True;
+  return true;
 }
 
 //=================================================================================================
@@ -445,7 +439,7 @@ void StepFile_ReadData::PrintCurrentRecord()
 
 void StepFile_ReadData::PrepareNewArg()
 {
-  myErrorArg = Standard_False;
+  myErrorArg = false;
 }
 
 //=================================================================================================
@@ -464,28 +458,28 @@ void StepFile_ReadData::SetTypeArg(const Interface_ParamType theArgType)
 
 //=================================================================================================
 
-void StepFile_ReadData::SetModePrint(const Standard_Integer theMode)
+void StepFile_ReadData::SetModePrint(const int theMode)
 {
   myModePrint = theMode;
 }
 
 //=================================================================================================
 
-Standard_Integer StepFile_ReadData::GetModePrint() const
+int StepFile_ReadData::GetModePrint() const
 {
   return myModePrint;
 }
 
 //=================================================================================================
 
-Standard_Integer StepFile_ReadData::GetNbRecord() const
+int StepFile_ReadData::GetNbRecord() const
 {
   return myNbRec;
 }
 
 //=================================================================================================
 
-void StepFile_ReadData::AddError(Standard_CString theErrorMessage)
+void StepFile_ReadData::AddError(const char* theErrorMessage)
 {
   if (myFirstError == nullptr)
   {
@@ -503,7 +497,7 @@ void StepFile_ReadData::AddError(Standard_CString theErrorMessage)
 
 //=================================================================================================
 
-Standard_Boolean StepFile_ReadData::ErrorHandle(const Handle(Interface_Check)& theCheck) const
+bool StepFile_ReadData::ErrorHandle(const occ::handle<Interface_Check>& theCheck) const
 {
   if (myFirstError != nullptr)
   {
@@ -519,7 +513,7 @@ Standard_Boolean StepFile_ReadData::ErrorHandle(const Handle(Interface_Check)& t
 
 //=================================================================================================
 
-Standard_CString StepFile_ReadData::GetLastError() const
+const char* StepFile_ReadData::GetLastError() const
 {
   return myCurError != nullptr ? myCurError->ErrorMessage() : nullptr;
 }

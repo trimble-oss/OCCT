@@ -25,11 +25,11 @@ IMPLEMENT_STANDARD_RTTIEXT(NCollection_WinHeapAllocator, NCollection_BaseAllocat
 //=================================================================================================
 
 NCollection_WinHeapAllocator::NCollection_WinHeapAllocator(const size_t theInitSizeBytes)
-    : NCollection_BaseAllocator(),
+    :
 #if (defined(_WIN32) || defined(__WIN32__))
       myHeapH(HeapCreate(0, theInitSizeBytes, 0)),
 #endif
-      myToZeroMemory(Standard_False)
+      myToZeroMemory(false)
 {
 #if defined(_WIN32) && (_WIN32_WINNT >= 0x0501)
   // activate LHF to improve small size allocations
@@ -51,16 +51,16 @@ NCollection_WinHeapAllocator::~NCollection_WinHeapAllocator()
 
 //=================================================================================================
 
-void* NCollection_WinHeapAllocator::Allocate(const Standard_Size theSize)
+void* NCollection_WinHeapAllocator::Allocate(const size_t theSize)
 {
   // the size is rounded up to word size.
-  const Standard_Size aRoundSize = (theSize + 3) & ~0x3;
+  const size_t aRoundSize = (theSize + 3) & ~0x3;
 #if (defined(_WIN32) || defined(__WIN32__))
   void* aResult = HeapAlloc(myHeapH, myToZeroMemory ? HEAP_ZERO_MEMORY : 0, aRoundSize);
 #else
   void* aResult = malloc(aRoundSize);
 #endif
-  if (aResult == NULL)
+  if (aResult == nullptr)
   {
     char aBuf[128];
     Sprintf(aBuf, "Failed to allocate %" PRIuPTR " bytes in local dynamic heap", theSize);
@@ -73,7 +73,7 @@ void* NCollection_WinHeapAllocator::Allocate(const Standard_Size theSize)
 
 void NCollection_WinHeapAllocator::Free(void* theAddress)
 {
-  if (theAddress != NULL)
+  if (theAddress != nullptr)
   {
 #if (defined(_WIN32) || defined(__WIN32__))
     HeapFree(myHeapH, 0, theAddress);

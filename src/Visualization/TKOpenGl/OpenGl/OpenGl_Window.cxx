@@ -168,27 +168,26 @@ OpenGl_Window::OpenGl_Window()
     : myOwnGContext(false),
       mySwapInterval(0)
 {
-  //
 }
 
 //=================================================================================================
 
-void OpenGl_Window::Init(const Handle(OpenGl_GraphicDriver)& theDriver,
-                         const Handle(Aspect_Window)&        thePlatformWindow,
-                         const Handle(Aspect_Window)&        theSizeWindow,
-                         Aspect_RenderingContext             theGContext,
-                         const Handle(OpenGl_Caps)&          theCaps,
-                         const Handle(OpenGl_Context)&       theShareCtx)
+void OpenGl_Window::Init(const occ::handle<OpenGl_GraphicDriver>& theDriver,
+                         const occ::handle<Aspect_Window>&        thePlatformWindow,
+                         const occ::handle<Aspect_Window>&        theSizeWindow,
+                         Aspect_RenderingContext                  theGContext,
+                         const occ::handle<OpenGl_Caps>&          theCaps,
+                         const occ::handle<OpenGl_Context>&       theShareCtx)
 {
   myGlContext      = new OpenGl_Context(theCaps);
-  myOwnGContext    = (theGContext == 0);
+  myOwnGContext    = (theGContext == nullptr);
   myPlatformWindow = thePlatformWindow;
   mySizeWindow     = theSizeWindow;
   mySwapInterval   = theCaps->swapInterval;
 
   mySizeWindow->Size(mySize.x(), mySize.y());
 
-  Standard_Boolean isCoreProfile = Standard_False;
+  bool isCoreProfile = false;
 
   #if defined(HAVE_EGL)
   EGLDisplay anEglDisplay = (EGLDisplay)theDriver->getRawGlDisplay();
@@ -325,7 +324,7 @@ void OpenGl_Window::Init(const Handle(OpenGl_GraphicDriver)& theDriver,
   int aPixelFrmtId = ChoosePixelFormat(aWindowDC, &aPixelFrmt);
 
   // in case of failure try without stereo if any
-  const Standard_Boolean hasStereo = aPixelFrmtId != 0 && theCaps->contextStereo;
+  const bool hasStereo = aPixelFrmtId != 0 && theCaps->contextStereo;
   if (aPixelFrmtId == 0 && theCaps->contextStereo)
   {
     TCollection_ExtendedString aMsg(
@@ -535,7 +534,7 @@ void OpenGl_Window::Init(const Handle(OpenGl_GraphicDriver)& theDriver,
           theCaps->contextDebug ? WGL_CONTEXT_DEBUG_BIT_ARB : 0,
           0,
           0};
-        isCoreProfile = Standard_False;
+        isCoreProfile = false;
         aGContext     = aCreateCtxProc(aWindowDC, aSlaveCtx, aCtxAttribs);
 
         if (aGContext != NULL && !theCaps->contextCompatible)
@@ -605,7 +604,7 @@ void OpenGl_Window::Init(const Handle(OpenGl_GraphicDriver)& theDriver,
   Window     aWindow   = (Window)myPlatformWindow->NativeHandle();
   Display*   aDisp     = (Display*)theDriver->GetDisplayConnection()->GetDisplayAspect();
   GLXContext aGContext = (GLXContext)theGContext;
-  GLXContext aSlaveCtx = !theShareCtx.IsNull() ? (GLXContext)theShareCtx->myGContext : NULL;
+  GLXContext aSlaveCtx = !theShareCtx.IsNull() ? (GLXContext)theShareCtx->myGContext : nullptr;
 
   XWindowAttributes aWinAttribs;
   XGetWindowAttributes(aDisp, aWindow, &aWinAttribs);
@@ -617,7 +616,7 @@ void OpenGl_Window::Init(const Handle(OpenGl_GraphicDriver)& theDriver,
     XGetVisualInfo(aDisp, VisualIDMask | VisualScreenMask, &aVisInfo, &aNbItems),
     &XFree);
   int isGl = 0;
-  if (aVis.get() == NULL)
+  if (aVis.get() == nullptr)
   {
     throw Aspect_GraphicDeviceDefinitionError(
       "OpenGl_Window::CreateWindow: XGetVisualInfo is unable to choose needed configuration in "
@@ -632,7 +631,7 @@ void OpenGl_Window::Init(const Handle(OpenGl_GraphicDriver)& theDriver,
   // create new context
   GLXFBConfig anFBConfig = myPlatformWindow->NativeFBConfig();
   const char* aGlxExts   = glXQueryExtensionsString(aDisp, aVisInfo.screen);
-  if (myOwnGContext && anFBConfig != NULL
+  if (myOwnGContext && anFBConfig != nullptr
       && OpenGl_Context::CheckExtension(aGlxExts, "GLX_ARB_create_context_profile"))
   {
     // Replace default XError handler to ignore errors.
@@ -661,31 +660,31 @@ void OpenGl_Window::Init(const Handle(OpenGl_GraphicDriver)& theDriver,
                                0};
 
       // try to create the core profile of highest OpenGL version supported by OCCT
-      for (int aLowVer4 = 6; aLowVer4 >= 0 && aGContext == NULL; --aLowVer4)
+      for (int aLowVer4 = 6; aLowVer4 >= 0 && aGContext == nullptr; --aLowVer4)
       {
         aCoreCtxAttribs[1] = 4;
         aCoreCtxAttribs[3] = aLowVer4;
         aGContext          = aCreateCtxProc(aDisp, anFBConfig, aSlaveCtx, True, aCoreCtxAttribs);
       }
-      for (int aLowVer3 = 3; aLowVer3 >= 2 && aGContext == NULL; --aLowVer3)
+      for (int aLowVer3 = 3; aLowVer3 >= 2 && aGContext == nullptr; --aLowVer3)
       {
         aCoreCtxAttribs[1] = 3;
         aCoreCtxAttribs[3] = aLowVer3;
         aGContext          = aCreateCtxProc(aDisp, anFBConfig, aSlaveCtx, True, aCoreCtxAttribs);
       }
-      isCoreProfile = aGContext != NULL;
+      isCoreProfile = aGContext != nullptr;
     }
 
-    if (aGContext == NULL)
+    if (aGContext == nullptr)
     {
       int aCtxAttribs[] = {GLX_CONTEXT_FLAGS_ARB,
                            theCaps->contextDebug ? GLX_CONTEXT_DEBUG_BIT_ARB : 0,
                            0,
                            0};
-      isCoreProfile     = Standard_False;
+      isCoreProfile     = false;
       aGContext         = aCreateCtxProc(aDisp, anFBConfig, aSlaveCtx, True, aCtxAttribs);
 
-      if (aGContext != NULL && !theCaps->contextCompatible)
+      if (aGContext != nullptr && !theCaps->contextCompatible)
       {
         TCollection_ExtendedString aMsg(
           "OpenGl_Window::CreateWindow: core profile creation failed.");
@@ -699,10 +698,10 @@ void OpenGl_Window::Init(const Handle(OpenGl_GraphicDriver)& theDriver,
     XSetErrorHandler(anOldHandler);
   }
 
-  if (myOwnGContext && aGContext == NULL)
+  if (myOwnGContext && aGContext == nullptr)
   {
     aGContext = glXCreateContext(aDisp, aVis.get(), aSlaveCtx, GL_TRUE);
-    if (aGContext == NULL)
+    if (aGContext == nullptr)
     {
       throw Aspect_GraphicDeviceDefinitionError(
         "OpenGl_Window::CreateWindow: glXCreateContext failed.");
@@ -800,11 +799,11 @@ OpenGl_Window::~OpenGl_Window()
   GLXContext aThreadGContext = glXGetCurrentContext();
   myGlContext.Nullify();
 
-  if (aDisplay != NULL)
+  if (aDisplay != nullptr)
   {
     if (aThreadGContext == aWindowGContext)
     {
-      glXMakeCurrent(aDisplay, None, NULL);
+      glXMakeCurrent(aDisplay, None, nullptr);
     }
 
     // FSXXX sync necessary if non-direct rendering
@@ -820,7 +819,7 @@ OpenGl_Window::~OpenGl_Window()
 
 //=================================================================================================
 
-Standard_Boolean OpenGl_Window::Activate()
+bool OpenGl_Window::Activate()
 {
   return myGlContext->MakeCurrent();
 }
@@ -831,7 +830,7 @@ Standard_Boolean OpenGl_Window::Activate()
 
 void OpenGl_Window::Resize()
 {
-  Graphic3d_Vec2i aWinSize;
+  NCollection_Vec2<int> aWinSize;
   mySizeWindow->Size(aWinSize.x(), aWinSize.y());
   if (mySize == aWinSize)
   {
@@ -859,8 +858,8 @@ void OpenGl_Window::init()
     // define an offscreen default FBO to avoid rendering into EGL_NO_SURFACE;
     // note that this code is currently never called, since eglCreatePbufferSurface() is used
     // instead as more robust solution for offscreen rendering on bugged OpenGL ES drivers
-    Handle(OpenGl_FrameBuffer) aDefFbo =
-      myGlContext->SetDefaultFrameBuffer(Handle(OpenGl_FrameBuffer)());
+    occ::handle<OpenGl_FrameBuffer> aDefFbo =
+      myGlContext->SetDefaultFrameBuffer(occ::handle<OpenGl_FrameBuffer>());
     if (!aDefFbo.IsNull())
     {
       aDefFbo->Release(myGlContext.operator->());
@@ -870,7 +869,7 @@ void OpenGl_Window::init()
       aDefFbo = new OpenGl_FrameBuffer();
     }
 
-    OpenGl_ColorFormats aColorFormats;
+    NCollection_Vector<int> aColorFormats;
     aColorFormats.Append(GL_RGBA8);
     if (!aDefFbo->InitRenderBuffer(myGlContext, mySize, aColorFormats, GL_DEPTH24_STENCIL8))
     {
@@ -897,10 +896,10 @@ void OpenGl_Window::init()
 
   myGlContext->core11fwd->glDisable(GL_DITHER);
   myGlContext->core11fwd->glDisable(GL_SCISSOR_TEST);
-  const Standard_Integer aViewport[4] = {0, 0, mySize.x(), mySize.y()};
+  const int aViewport[4] = {0, 0, mySize.x(), mySize.y()};
   myGlContext->ResizeViewport(aViewport);
   myGlContext->SetDrawBuffer(GL_BACK);
-  if (myGlContext->core11ffp != NULL)
+  if (myGlContext->core11ffp != nullptr)
   {
     myGlContext->core11ffp->glMatrixMode(GL_MODELVIEW);
   }
@@ -908,9 +907,9 @@ void OpenGl_Window::init()
 
 //=================================================================================================
 
-void OpenGl_Window::SetSwapInterval(Standard_Boolean theToForceNoSync)
+void OpenGl_Window::SetSwapInterval(bool theToForceNoSync)
 {
-  const Standard_Integer aSwapInterval = theToForceNoSync ? 0 : myGlContext->caps->swapInterval;
+  const int aSwapInterval = theToForceNoSync ? 0 : myGlContext->caps->swapInterval;
   if (mySwapInterval != aSwapInterval)
   {
     mySwapInterval = aSwapInterval;

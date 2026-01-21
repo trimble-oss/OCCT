@@ -20,14 +20,14 @@ IMPLEMENT_STANDARD_RTTIEXT(StepKinematics_UnconstrainedPairValue, StepKinematics
 
 //=================================================================================================
 
-StepKinematics_UnconstrainedPairValue::StepKinematics_UnconstrainedPairValue() {}
+StepKinematics_UnconstrainedPairValue::StepKinematics_UnconstrainedPairValue() = default;
 
 //=================================================================================================
 
 void StepKinematics_UnconstrainedPairValue::Init(
-  const Handle(TCollection_HAsciiString)&     theRepresentationItem_Name,
-  const Handle(StepKinematics_KinematicPair)& thePairValue_AppliesToPair,
-  const Handle(StepGeom_Axis2Placement3d)&    theActualPlacement)
+  const occ::handle<TCollection_HAsciiString>&     theRepresentationItem_Name,
+  const occ::handle<StepKinematics_KinematicPair>& thePairValue_AppliesToPair,
+  const occ::handle<StepGeom_Axis2Placement3d>&    theActualPlacement)
 {
   StepKinematics_PairValue::Init(theRepresentationItem_Name, thePairValue_AppliesToPair);
 
@@ -36,7 +36,8 @@ void StepKinematics_UnconstrainedPairValue::Init(
 
 //=================================================================================================
 
-Handle(StepGeom_Axis2Placement3d) StepKinematics_UnconstrainedPairValue::ActualPlacement() const
+occ::handle<StepGeom_Axis2Placement3d> StepKinematics_UnconstrainedPairValue::ActualPlacement()
+  const
 {
   return myActualPlacement;
 }
@@ -44,7 +45,7 @@ Handle(StepGeom_Axis2Placement3d) StepKinematics_UnconstrainedPairValue::ActualP
 //=================================================================================================
 
 void StepKinematics_UnconstrainedPairValue::SetActualPlacement(
-  const Handle(StepGeom_Axis2Placement3d)& theActualPlacement)
+  const occ::handle<StepGeom_Axis2Placement3d>& theActualPlacement)
 {
   myActualPlacement = theActualPlacement;
 }

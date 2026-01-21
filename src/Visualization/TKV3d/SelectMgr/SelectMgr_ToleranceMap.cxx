@@ -19,7 +19,6 @@ SelectMgr_ToleranceMap::SelectMgr_ToleranceMap()
     : myLargestKey(-1),
       myCustomTolerance(-1)
 {
-  //
 }
 
 //=================================================================================================
@@ -31,14 +30,14 @@ SelectMgr_ToleranceMap::~SelectMgr_ToleranceMap()
 
 //=================================================================================================
 
-void SelectMgr_ToleranceMap::Add(const Standard_Integer& theTolerance)
+void SelectMgr_ToleranceMap::Add(const int& theTolerance)
 {
-  if (Standard_Integer* aFreq = myTolerances.ChangeSeek(theTolerance))
+  if (int* aFreq = myTolerances.ChangeSeek(theTolerance))
   {
     ++(*aFreq);
     if (*aFreq == 1 && theTolerance != myLargestKey)
     {
-      myLargestKey = Max(theTolerance, myLargestKey);
+      myLargestKey = std::max(theTolerance, myLargestKey);
     }
     return;
   }
@@ -50,16 +49,16 @@ void SelectMgr_ToleranceMap::Add(const Standard_Integer& theTolerance)
   }
   else
   {
-    myLargestKey = Max(theTolerance, myLargestKey);
+    myLargestKey = std::max(theTolerance, myLargestKey);
   }
 }
 
 //=================================================================================================
 
-void SelectMgr_ToleranceMap::Decrement(const Standard_Integer& theTolerance)
+void SelectMgr_ToleranceMap::Decrement(const int& theTolerance)
 {
-  Standard_Integer* aFreq = myTolerances.ChangeSeek(theTolerance);
-  if (aFreq == NULL)
+  int* aFreq = myTolerances.ChangeSeek(theTolerance);
+  if (aFreq == nullptr)
   {
     return;
   }
@@ -71,13 +70,11 @@ void SelectMgr_ToleranceMap::Decrement(const Standard_Integer& theTolerance)
   if (theTolerance == myLargestKey && *aFreq == 0)
   {
     myLargestKey = -1;
-    for (NCollection_DataMap<Standard_Integer, Standard_Integer>::Iterator anIter(myTolerances);
-         anIter.More();
-         anIter.Next())
+    for (NCollection_DataMap<int, int>::Iterator anIter(myTolerances); anIter.More(); anIter.Next())
     {
       if (anIter.Value() != 0)
       {
-        myLargestKey = Max(myLargestKey, anIter.Key());
+        myLargestKey = std::max(myLargestKey, anIter.Key());
       }
     }
   }

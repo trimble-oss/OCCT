@@ -20,69 +20,69 @@
 #include <Standard_Type.hxx>
 #include <TCollection_AsciiString.hxx>
 
-#include <stdio.h>
+#include <cstdio>
 IMPLEMENT_STANDARD_RTTIEXT(IFSelect_SelectAnyList, IFSelect_SelectDeduct)
 
-// ....    Definition de liste : methodes "deferred" NbItems & FillResult
-void IFSelect_SelectAnyList::SetRange(const Handle(IFSelect_IntParam)& rankfrom,
-                                      const Handle(IFSelect_IntParam)& rankto)
+// ....    List definition: "deferred" methods NbItems & FillResult
+void IFSelect_SelectAnyList::SetRange(const occ::handle<IFSelect_IntParam>& rankfrom,
+                                      const occ::handle<IFSelect_IntParam>& rankto)
 {
   thelower = rankfrom;
   theupper = rankto;
 }
 
-void IFSelect_SelectAnyList::SetOne(const Handle(IFSelect_IntParam)& rank)
+void IFSelect_SelectAnyList::SetOne(const occ::handle<IFSelect_IntParam>& rank)
 {
   thelower = theupper = rank;
 }
 
-void IFSelect_SelectAnyList::SetFrom(const Handle(IFSelect_IntParam)& rankfrom)
+void IFSelect_SelectAnyList::SetFrom(const occ::handle<IFSelect_IntParam>& rankfrom)
 {
   thelower = rankfrom;
   theupper.Nullify();
 }
 
-void IFSelect_SelectAnyList::SetUntil(const Handle(IFSelect_IntParam)& rankto)
+void IFSelect_SelectAnyList::SetUntil(const occ::handle<IFSelect_IntParam>& rankto)
 {
   thelower.Nullify();
   theupper = rankto;
 }
 
-Standard_Boolean IFSelect_SelectAnyList::HasLower() const
+bool IFSelect_SelectAnyList::HasLower() const
 {
   return (!thelower.IsNull());
 }
 
-Handle(IFSelect_IntParam) IFSelect_SelectAnyList::Lower() const
+occ::handle<IFSelect_IntParam> IFSelect_SelectAnyList::Lower() const
 {
   return thelower;
 }
 
-Standard_Integer IFSelect_SelectAnyList::LowerValue() const
+int IFSelect_SelectAnyList::LowerValue() const
 {
   if (thelower.IsNull())
     return 0;
   return thelower->Value();
 }
 
-Standard_Boolean IFSelect_SelectAnyList::HasUpper() const
+bool IFSelect_SelectAnyList::HasUpper() const
 {
   return (!theupper.IsNull());
 }
 
-Handle(IFSelect_IntParam) IFSelect_SelectAnyList::Upper() const
+occ::handle<IFSelect_IntParam> IFSelect_SelectAnyList::Upper() const
 {
   return theupper;
 }
 
-Standard_Integer IFSelect_SelectAnyList::UpperValue() const
+int IFSelect_SelectAnyList::UpperValue() const
 {
   if (theupper.IsNull())
     return 0;
   return theupper->Value();
 }
 
-//  On prend les sous-entites de lower a upper (inclus)
+//  Take the sub-entities from lower to upper (included)
 Interface_EntityIterator IFSelect_SelectAnyList::RootResult(const Interface_Graph& G) const
 {
   Interface_EntityIterator input = InputResult(G);
@@ -92,15 +92,15 @@ Interface_EntityIterator IFSelect_SelectAnyList::RootResult(const Interface_Grap
   if (input.NbEntities() == 0)
     return input;
 
-  Handle(Standard_Transient) ent;
+  occ::handle<Standard_Transient> ent;
   for (input.Start(); input.More(); input.Next())
     ent = input.Value();
 
-  Standard_Integer rankmax  = NbItems(ent);
-  Standard_Integer rankfrom = 1;
+  int rankmax  = NbItems(ent);
+  int rankfrom = 1;
   if (!thelower.IsNull())
     rankfrom = thelower->Value();
-  Standard_Integer rankto;
+  int rankto;
   if (!theupper.IsNull())
     rankto = theupper->Value();
   else
@@ -118,21 +118,21 @@ Interface_EntityIterator IFSelect_SelectAnyList::RootResult(const Interface_Grap
 
 TCollection_AsciiString IFSelect_SelectAnyList::Label() const
 {
-  char             lab[30];
-  Standard_Integer rankfrom = 0;
+  char lab[30];
+  int  rankfrom = 0;
   if (HasLower())
     rankfrom = LowerValue();
-  Standard_Integer rankto = 0;
+  int rankto = 0;
   if (HasUpper())
     rankto = UpperValue();
   if (rankfrom == rankto)
-    sprintf(lab, " (no %d)", rankfrom);
+    Sprintf(lab, " (no %d)", rankfrom);
   else if (rankfrom == 0)
-    sprintf(lab, " (-> %d)", rankfrom);
+    Sprintf(lab, " (-> %d)", rankfrom);
   else if (rankto == 0)
-    sprintf(lab, " (%d ->)", rankto);
+    Sprintf(lab, " (%d ->)", rankto);
   else
-    sprintf(lab, " (%d -> %d)", rankfrom, rankto);
+    Sprintf(lab, " (%d -> %d)", rankfrom, rankto);
 
   TCollection_AsciiString labl("In List ");
   labl.AssignCat(ListLabel());

@@ -17,14 +17,14 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(IGESData_LevelListEntity, IGESData_IGESEntity)
 
-// LevelListEntity ne sert qu'au controle de type (pour le directory part)
-Standard_Boolean IGESData_LevelListEntity::HasLevelNumber(const Standard_Integer level) const
+// LevelListEntity is only used for type control (for the directory part)
+bool IGESData_LevelListEntity::HasLevelNumber(const int level) const
 {
-  Standard_Integer nb = NbLevelNumbers();
-  for (Standard_Integer i = 1; i <= nb; i++)
+  int nb = NbLevelNumbers();
+  for (int i = 1; i <= nb; i++)
   {
     if (LevelNumber(i) == level)
-      return Standard_True;
+      return true;
   }
-  return Standard_False;
+  return false;
 }

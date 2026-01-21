@@ -31,7 +31,6 @@
 
 #include <Standard_ErrorHandler.hxx>
 #include <Standard_Failure.hxx>
-#include <Standard_Mutex.hxx>
 
 #include <Message.hxx>
 #include <Message_Messenger.hxx>
@@ -41,7 +40,8 @@
 
 #include "step.tab.hxx"
 
-#include <stdio.h>
+#include <cstdio>
+#include <mutex>
 
 #ifdef OCCT_DEBUG
   #define CHRONOMESURE
@@ -49,31 +49,35 @@
 
 namespace
 {
-static Standard_Mutex THE_GLOBAL_READ_MUTEX;
-}
-
-void StepFile_Interrupt(Standard_CString theErrorMessage, const Standard_Boolean theIsFail)
+static std::mutex& GetGlobalReadMutex()
 {
-  if (theErrorMessage == NULL)
+  static std::mutex THE_GLOBAL_READ_MUTEX;
+  return THE_GLOBAL_READ_MUTEX;
+}
+} // namespace
+
+void StepFile_Interrupt(const char* theErrorMessage, const bool theIsFail)
+{
+  if (theErrorMessage == nullptr)
     return;
 
   Message_Messenger::StreamBuffer sout = theIsFail ? Message::SendFail() : Message::SendTrace();
   sout << "**** ERR StepFile : " << theErrorMessage << "    ****" << std::endl;
 }
 
-static Standard_Integer StepFile_Read(const char*                            theName,
-                                      std::istream*                          theIStream,
-                                      const Handle(StepData_StepModel)&      theStepModel,
-                                      const Handle(StepData_Protocol)&       theProtocol,
-                                      const Handle(StepData_FileRecognizer)& theRecogHeader,
-                                      const Handle(StepData_FileRecognizer)& theRecogData)
+static int StepFile_Read(const char*                                 theName,
+                         std::istream*                               theIStream,
+                         const occ::handle<StepData_StepModel>&      theStepModel,
+                         const occ::handle<StepData_Protocol>&       theProtocol,
+                         const occ::handle<StepData_FileRecognizer>& theRecogHeader,
+                         const occ::handle<StepData_FileRecognizer>& theRecogData)
 {
   // if stream is not provided, open file stream here
   std::istream*                 aStreamPtr = theIStream;
   std::shared_ptr<std::istream> aFileStream;
   if (aStreamPtr == nullptr)
   {
-    const Handle(OSD_FileSystem)& aFileSystem = OSD_FileSystem::DefaultFileSystem();
+    const occ::handle<OSD_FileSystem>& aFileSystem = OSD_FileSystem::DefaultFileSystem();
     aFileStream = aFileSystem->OpenIStream(theName, std::ios::in | std::ios::binary);
     aStreamPtr  = aFileStream.get();
   }
@@ -102,7 +106,7 @@ static Standard_Integer StepFile_Read(const char*                            the
     aLetat = aParser.parse();
     if (aLetat != 0)
     {
-      StepFile_Interrupt(aFileDataModel.GetLastError(), Standard_True);
+      StepFile_Interrupt(aFileDataModel.GetLastError(), true);
       return 1;
     }
   }
@@ -119,18 +123,19 @@ static Standard_Integer StepFile_Read(const char*                            the
 
   sout << "      ...    STEP File   Read    ...\n";
 
-  Standard_Mutex::Sentry aLocker(THE_GLOBAL_READ_MUTEX);
-  Standard_Integer       nbhead, nbrec, nbpar;
+  std::lock_guard<std::mutex> aLock(GetGlobalReadMutex());
+
+  int nbhead, nbrec, nbpar;
   aFileDataModel.GetFileNbR(&nbhead, &nbrec, &nbpar); // renvoi par lex/yacc
-  Handle(StepData_StepReaderData) undirec =
+  occ::handle<StepData_StepReaderData> undirec =
     // clang-format off
     new StepData_StepReaderData(nbhead,nbrec,nbpar, theStepModel->SourceCodePage());  // creation tableau de records
   // clang-format on
-  for (Standard_Integer nr = 1; nr <= nbrec; nr++)
+  for (int nr = 1; nr <= nbrec; nr++)
   {
     int   nbarg;
     char* ident;
-    char* typrec = 0;
+    char* typrec = nullptr;
     aFileDataModel.GetRecordDescription(&ident, &typrec, &nbarg);
     undirec->SetRecord(nr, ident, typrec, nbarg);
 
@@ -148,7 +153,7 @@ static Standard_Integer StepFile_Read(const char*                            the
   }
 
   aFileDataModel.ErrorHandle(undirec->GlobalCheck());
-  Standard_Integer anFailsCount = undirec->GlobalCheck()->NbFails();
+  int anFailsCount = undirec->GlobalCheck()->NbFails();
   if (anFailsCount > 0)
   {
     Message::SendInfo() << "**** ERR StepFile : Incorrect Syntax : Fails Count : " << anFailsCount
@@ -168,7 +173,7 @@ static Standard_Integer StepFile_Read(const char*                            the
   //   Analyse : par StepReaderTool
 
   StepData_StepReaderTool readtool(undirec, theProtocol);
-  readtool.SetErrorHandle(Standard_True);
+  readtool.SetErrorHandle(true);
 
   readtool.PrepareHeader(theRecogHeader); // Header. reco nul -> pour Protocol
   readtool.Prepare(theRecogData);         // Data.   reco nul -> pour Protocol
@@ -194,7 +199,7 @@ static Standard_Integer StepFile_Read(const char*                            the
   undirec.Nullify();
 
   sout << "      ...   Objects analysed  ...\n";
-  Standard_Integer n = theStepModel->NbEntities();
+  int n = theStepModel->NbEntities();
   sout << "  STEP Loading done : " << n << " Entities";
 
 #ifdef CHRONOMESURE
@@ -204,11 +209,11 @@ static Standard_Integer StepFile_Read(const char*                            the
   return 0;
 }
 
-Standard_Integer StepFile_Read(const char*                       theName,
-                               std::istream*                     theIStream,
-                               const Handle(StepData_StepModel)& theStepModel,
-                               const Handle(StepData_Protocol)&  theProtocol)
+int StepFile_Read(const char*                            theName,
+                  std::istream*                          theIStream,
+                  const occ::handle<StepData_StepModel>& theStepModel,
+                  const occ::handle<StepData_Protocol>&  theProtocol)
 {
-  Handle(StepData_FileRecognizer) aNulRecog;
+  occ::handle<StepData_FileRecognizer> aNulRecog;
   return StepFile_Read(theName, theIStream, theStepModel, theProtocol, aNulRecog, aNulRecog);
 }

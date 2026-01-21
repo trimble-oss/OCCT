@@ -27,62 +27,62 @@ ChFiDS_Regul::ChFiDS_Regul()
 
 //=================================================================================================
 
-void ChFiDS_Regul::SetCurve(const Standard_Integer IC)
+void ChFiDS_Regul::SetCurve(const int IC)
 {
-  icurv = Abs(IC);
+  icurv = std::abs(IC);
 }
 
 //=================================================================================================
 
-void ChFiDS_Regul::SetS1(const Standard_Integer IS1, const Standard_Boolean IsFace)
-{
-  if (IsFace)
-    is1 = Abs(IS1);
-  else
-    is1 = -Abs(IS1);
-}
-
-//=================================================================================================
-
-void ChFiDS_Regul::SetS2(const Standard_Integer IS2, const Standard_Boolean IsFace)
+void ChFiDS_Regul::SetS1(const int IS1, const bool IsFace)
 {
   if (IsFace)
-    is2 = Abs(IS2);
+    is1 = std::abs(IS1);
   else
-    is2 = -Abs(IS2);
+    is1 = -std::abs(IS1);
 }
 
 //=================================================================================================
 
-Standard_Boolean ChFiDS_Regul::IsSurface1() const
+void ChFiDS_Regul::SetS2(const int IS2, const bool IsFace)
+{
+  if (IsFace)
+    is2 = std::abs(IS2);
+  else
+    is2 = -std::abs(IS2);
+}
+
+//=================================================================================================
+
+bool ChFiDS_Regul::IsSurface1() const
 {
   return (is1 < 0);
 }
 
 //=================================================================================================
 
-Standard_Boolean ChFiDS_Regul::IsSurface2() const
+bool ChFiDS_Regul::IsSurface2() const
 {
   return (is2 < 0);
 }
 
 //=================================================================================================
 
-Standard_Integer ChFiDS_Regul::Curve() const
+int ChFiDS_Regul::Curve() const
 {
   return icurv;
 }
 
 //=================================================================================================
 
-Standard_Integer ChFiDS_Regul::S1() const
+int ChFiDS_Regul::S1() const
 {
-  return Abs(is1);
+  return std::abs(is1);
 }
 
 //=================================================================================================
 
-Standard_Integer ChFiDS_Regul::S2() const
+int ChFiDS_Regul::S2() const
 {
-  return Abs(is2);
+  return std::abs(is2);
 }

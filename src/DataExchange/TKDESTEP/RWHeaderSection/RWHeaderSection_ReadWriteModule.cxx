@@ -15,7 +15,7 @@
 #include <HeaderSection_FileName.hxx>
 #include <HeaderSection_FileSchema.hxx>
 #include <HeaderSection_Protocol.hxx>
-#include <Interface_Macros.hxx>
+#include <MoniTool_Macros.hxx>
 #include <Interface_ReaderLib.hxx>
 #include <RWHeaderSection_ReadWriteModule.hxx>
 #include <RWHeaderSection_RWFileDescription.hxx>
@@ -29,26 +29,28 @@
 #include <StepData_WriterLib.hxx>
 #include <TCollection_AsciiString.hxx>
 
+#include <string_view>
+
 IMPLEMENT_STANDARD_RTTIEXT(RWHeaderSection_ReadWriteModule, StepData_ReadWriteModule)
 
 // -- General Declarations (Recognize, StepType) ---
-static TCollection_AsciiString PasReco(""); // neutralise StartEntity de SW
-static TCollection_AsciiString Reco_FileName("FILE_NAME");
-static TCollection_AsciiString Reco_FileDescription("FILE_DESCRIPTION");
-static TCollection_AsciiString Reco_FileSchema("FILE_SCHEMA");
+static constexpr std::string_view PasReco; // neutralise StartEntity de SW
+static constexpr std::string_view Reco_FileName("FILE_NAME");
+static constexpr std::string_view Reco_FileDescription("FILE_DESCRIPTION");
+static constexpr std::string_view Reco_FileSchema("FILE_SCHEMA");
 
 // -- Definition of the libraries --
 
 RWHeaderSection_ReadWriteModule::RWHeaderSection_ReadWriteModule()
 {
-  Handle(HeaderSection_Protocol) protocol = new HeaderSection_Protocol;
+  occ::handle<HeaderSection_Protocol> protocol = new HeaderSection_Protocol;
   StepData_WriterLib::SetGlobal(this, protocol);
   Interface_ReaderLib::SetGlobal(this, protocol);
 }
 
 // --- Case Recognition ---
 
-Standard_Integer RWHeaderSection_ReadWriteModule::CaseStep(const TCollection_AsciiString& key) const
+int RWHeaderSection_ReadWriteModule::CaseStep(const TCollection_AsciiString& key) const
 {
   if (key.IsEqual(Reco_FileName))
     return 1;
@@ -61,10 +63,10 @@ Standard_Integer RWHeaderSection_ReadWriteModule::CaseStep(const TCollection_Asc
 
 // --- External Mapping Case Recognition ---
 #ifdef OCCT_DEBUG
-Standard_Integer RWHeaderSection_ReadWriteModule::CaseStep(
-  const TColStd_SequenceOfAsciiString& types) const
+int RWHeaderSection_ReadWriteModule::CaseStep(
+  const NCollection_Sequence<TCollection_AsciiString>& types) const
 {
-  Standard_Integer NbComp = types.Length();
+  int NbComp = types.Length();
   if (NbComp < 2)
   {
     std::cout << "Plex Instance illegal " << std::endl;
@@ -72,8 +74,8 @@ Standard_Integer RWHeaderSection_ReadWriteModule::CaseStep(
   return 0;
 }
 #else
-Standard_Integer RWHeaderSection_ReadWriteModule::CaseStep(
-  const TColStd_SequenceOfAsciiString&) const
+int RWHeaderSection_ReadWriteModule::CaseStep(
+  const NCollection_Sequence<TCollection_AsciiString>&) const
 {
   return 0;
 }
@@ -81,13 +83,12 @@ Standard_Integer RWHeaderSection_ReadWriteModule::CaseStep(
 
 // --- External Mapping Recognition ---
 
-Standard_Boolean RWHeaderSection_ReadWriteModule::IsComplex(const Standard_Integer /*CN*/) const
+bool RWHeaderSection_ReadWriteModule::IsComplex(const int /*CN*/) const
 {
-  return Standard_False;
+  return false;
 }
 
-const TCollection_AsciiString& RWHeaderSection_ReadWriteModule::StepType(
-  const Standard_Integer CN) const
+const std::string_view& RWHeaderSection_ReadWriteModule::StepType(const int CN) const
 {
   switch (CN)
   {
@@ -104,11 +105,11 @@ const TCollection_AsciiString& RWHeaderSection_ReadWriteModule::StepType(
 
 // -- Reading of a file --
 
-void RWHeaderSection_ReadWriteModule::ReadStep(const Standard_Integer                 CN,
-                                               const Handle(StepData_StepReaderData)& data,
-                                               const Standard_Integer                 num,
-                                               Handle(Interface_Check)&               ach,
-                                               const Handle(Standard_Transient)&      ent) const
+void RWHeaderSection_ReadWriteModule::ReadStep(const int                                   CN,
+                                               const occ::handle<StepData_StepReaderData>& data,
+                                               const int                                   num,
+                                               occ::handle<Interface_Check>&               ach,
+                                               const occ::handle<Standard_Transient>& ent) const
 {
   if (CN == 0)
     return;
@@ -162,9 +163,9 @@ void RWHeaderSection_ReadWriteModule::ReadStep(const Standard_Integer           
 
 // -- Writing of a file --
 
-void RWHeaderSection_ReadWriteModule::WriteStep(const Standard_Integer            CN,
-                                                StepData_StepWriter&              SW,
-                                                const Handle(Standard_Transient)& ent) const
+void RWHeaderSection_ReadWriteModule::WriteStep(const int                              CN,
+                                                StepData_StepWriter&                   SW,
+                                                const occ::handle<Standard_Transient>& ent) const
 {
   if (CN == 0)
     return;

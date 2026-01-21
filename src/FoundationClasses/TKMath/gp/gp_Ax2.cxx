@@ -31,19 +31,13 @@
 gp_Ax2::gp_Ax2(const gp_Pnt& P, const gp_Dir& V)
     : axis(P, V)
 {
-  Standard_Real A    = V.X();
-  Standard_Real B    = V.Y();
-  Standard_Real C    = V.Z();
-  Standard_Real Aabs = A;
-  if (Aabs < 0)
-    Aabs = -Aabs;
-  Standard_Real Babs = B;
-  if (Babs < 0)
-    Babs = -Babs;
-  Standard_Real Cabs = C;
-  if (Cabs < 0)
-    Cabs = -Cabs;
-  gp_Dir D;
+  const double A    = V.X();
+  const double B    = V.Y();
+  const double C    = V.Z();
+  const double Aabs = std::abs(A);
+  const double Babs = std::abs(B);
+  const double Cabs = std::abs(C);
+  gp_Dir       D;
 
   //  pour determiner l axe X :
   //  on dit que le produit scalaire Vx.V = 0.
@@ -74,7 +68,7 @@ gp_Ax2::gp_Ax2(const gp_Pnt& P, const gp_Dir& V)
   SetXDirection(D);
 }
 
-void gp_Ax2::Mirror(const gp_Pnt& P)
+void gp_Ax2::Mirror(const gp_Pnt& P) noexcept
 {
   gp_Pnt Temp = axis.Location();
   Temp.Mirror(P);
@@ -83,7 +77,7 @@ void gp_Ax2::Mirror(const gp_Pnt& P)
   vydir.Reverse();
 }
 
-gp_Ax2 gp_Ax2::Mirrored(const gp_Pnt& P) const
+gp_Ax2 gp_Ax2::Mirrored(const gp_Pnt& P) const noexcept
 {
   gp_Ax2 Temp = *this;
   Temp.Mirror(P);
@@ -124,26 +118,28 @@ gp_Ax2 gp_Ax2::Mirrored(const gp_Ax2& A2) const
   return Temp;
 }
 
-void gp_Ax2::DumpJson(Standard_OStream& theOStream, Standard_Integer) const {
+void gp_Ax2::DumpJson(Standard_OStream& theOStream, int) const
+{
   OCCT_DUMP_VECTOR_CLASS(theOStream,
                          "Location",
                          3,
                          axis.Location().X(),
                          axis.Location().Y(),
-                         axis.Location().Z()) OCCT_DUMP_VECTOR_CLASS(theOStream,
-                                                                     "Direction",
-                                                                     3,
-                                                                     axis.Direction().X(),
-                                                                     axis.Direction().Y(),
-                                                                     axis.Direction().Z())
+                         axis.Location().Z())
+  OCCT_DUMP_VECTOR_CLASS(theOStream,
+                         "Direction",
+                         3,
+                         axis.Direction().X(),
+                         axis.Direction().Y(),
+                         axis.Direction().Z())
 
-    OCCT_DUMP_VECTOR_CLASS(theOStream, "XDirection", 3, vxdir.X(), vxdir.Y(), vxdir.Z())
-      OCCT_DUMP_VECTOR_CLASS(theOStream, "YDirection", 3, vydir.X(), vydir.Y(), vydir.Z())}
+  OCCT_DUMP_VECTOR_CLASS(theOStream, "XDirection", 3, vxdir.X(), vxdir.Y(), vxdir.Z())
+  OCCT_DUMP_VECTOR_CLASS(theOStream, "YDirection", 3, vydir.X(), vydir.Y(), vydir.Z())
+}
 
-Standard_Boolean gp_Ax2::InitFromJson(const Standard_SStream& theSStream,
-                                      Standard_Integer&       theStreamPos)
+bool gp_Ax2::InitFromJson(const Standard_SStream& theSStream, int& theStreamPos)
 {
-  Standard_Integer        aPos       = theStreamPos;
+  int                     aPos       = theStreamPos;
   TCollection_AsciiString aStreamStr = Standard_Dump::Text(theSStream);
 
   gp_XYZ anXYZLoc;
@@ -186,8 +182,8 @@ Standard_Boolean gp_Ax2::InitFromJson(const Standard_SStream& theSStream,
   vydir = gp_Dir(anYDir);
 
   if (!Direction().IsEqual(aDir, Precision::Confusion()))
-    return Standard_False;
+    return false;
 
   theStreamPos = aPos;
-  return Standard_True;
+  return true;
 }

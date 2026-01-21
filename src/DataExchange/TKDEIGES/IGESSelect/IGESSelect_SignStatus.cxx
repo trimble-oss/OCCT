@@ -18,7 +18,7 @@
 #include <Standard_Type.hxx>
 #include <TCollection_AsciiString.hxx>
 
-#include <stdio.h>
+#include <cstdio>
 IMPLEMENT_STANDARD_RTTIEXT(IGESSelect_SignStatus, IFSelect_Signature)
 
 static char theval[10];
@@ -28,43 +28,43 @@ IGESSelect_SignStatus::IGESSelect_SignStatus()
 {
 }
 
-Standard_CString IGESSelect_SignStatus::Value(
-  const Handle(Standard_Transient)& ent,
-  const Handle(Interface_InterfaceModel)& /*model*/) const
+const char* IGESSelect_SignStatus::Value(
+  const occ::handle<Standard_Transient>& ent,
+  const occ::handle<Interface_InterfaceModel>& /*model*/) const
 {
-  Handle(IGESData_IGESEntity) igesent = Handle(IGESData_IGESEntity)::DownCast(ent);
+  occ::handle<IGESData_IGESEntity> igesent = occ::down_cast<IGESData_IGESEntity>(ent);
   if (igesent.IsNull())
     return "";
-  Standard_Integer i, j, k, l;
+  int i, j, k, l;
   i = igesent->BlankStatus();
   j = igesent->SubordinateStatus();
   k = igesent->UseFlag();
   l = igesent->HierarchyStatus();
-  sprintf(theval, "%d,%d,%d,%d", i, j, k, l);
+  Sprintf(theval, "%d,%d,%d,%d", i, j, k, l);
   return theval;
 }
 
-Standard_Boolean IGESSelect_SignStatus::Matches(const Handle(Standard_Transient)& ent,
-                                                const Handle(Interface_InterfaceModel)& /*model*/,
-                                                const TCollection_AsciiString& text,
-                                                const Standard_Boolean         exact) const
+bool IGESSelect_SignStatus::Matches(const occ::handle<Standard_Transient>& ent,
+                                    const occ::handle<Interface_InterfaceModel>& /*model*/,
+                                    const TCollection_AsciiString& text,
+                                    const bool                     exact) const
 {
-  Handle(IGESData_IGESEntity) igesent = Handle(IGESData_IGESEntity)::DownCast(ent);
+  occ::handle<IGESData_IGESEntity> igesent = occ::down_cast<IGESData_IGESEntity>(ent);
   if (igesent.IsNull())
-    return Standard_False;
-  Standard_Integer i, j, k, l;
+    return false;
+  int i, j, k, l;
   i = igesent->BlankStatus();
   j = igesent->SubordinateStatus();
   k = igesent->UseFlag();
   l = igesent->HierarchyStatus();
-  Standard_Integer n, nb = text.Length();
+  int n, nb = text.Length();
   if (nb > 9)
     nb = 9;
   for (n = 1; n <= nb; n++)
     theval[n - 1] = text.Value(n);
   theval[nb] = '\0';
 
-  Standard_Integer vir = 0, val = 0;
+  int vir = 0, val = 0;
   for (n = 0; n < nb; n++)
   {
     char car = theval[n];
@@ -73,7 +73,7 @@ Standard_Boolean IGESSelect_SignStatus::Matches(const Handle(Standard_Transient)
       vir++;
       continue;
     }
-    val = Standard_Integer(car - 48);
+    val = int(car - 48);
     if (car == 'V' && vir == 0)
       val = 0;
     if (car == 'B' && vir == 0)
@@ -90,31 +90,31 @@ Standard_Boolean IGESSelect_SignStatus::Matches(const Handle(Standard_Transient)
     if (vir == 0)
     { // Blank
       if (i == val && !exact)
-        return Standard_True;
+        return true;
       if (i != val && exact)
-        return Standard_False;
+        return false;
     }
     if (vir == 1)
     { // Subord.
       if (j == val && !exact)
-        return Standard_True;
+        return true;
       if (j != val && exact)
-        return Standard_False;
+        return false;
     }
     if (vir == 2)
     { // UseFlag
       if (k == val && !exact)
-        return Standard_True;
+        return true;
       if (k != val && exact)
-        return Standard_False;
+        return false;
     }
     if (vir == 3)
     { // Hierarchy
       if (l == val && !exact)
-        return Standard_True;
+        return true;
       if (l != val && exact)
-        return Standard_False;
+        return false;
     }
   }
-  return exact; // un brin de reflexion pour arriver
+  return exact; // a bit of reflection to arrive
 }

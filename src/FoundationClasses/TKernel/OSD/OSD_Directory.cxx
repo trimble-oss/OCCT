@@ -28,10 +28,10 @@
     #include <tchar.h>
   #endif
 
-void _osd_wnt_set_error(OSD_Error&, Standard_Integer, ...);
+void _osd_wnt_set_error(OSD_Error&, int, ...);
 #else
-  #include <errno.h>
-  #include <stdio.h>
+  #include <cerrno>
+  #include <cstdio>
   #include <sys/stat.h>
   #include <unistd.h>
 
@@ -40,17 +40,13 @@ const OSD_WhoAmI Iam = OSD_WDirectory;
 
 //=================================================================================================
 
-OSD_Directory::OSD_Directory()
-{
-  //
-}
+OSD_Directory::OSD_Directory() = default;
 
 //=================================================================================================
 
 OSD_Directory::OSD_Directory(const OSD_Path& theName)
     : OSD_FileNode(theName)
 {
-  //
 }
 
 //=================================================================================================
@@ -65,7 +61,7 @@ void OSD_Directory::Build(const OSD_Protection& theProtect)
     throw Standard_ProgramError("OSD_Directory::Build(): incorrect call - no directory name");
   }
 
-  Standard_Boolean isOK = Exists();
+  bool isOK = Exists();
   if (!isOK)
   {
     // myError will be set to fail by Exists() if intermediate dirs do not exist
@@ -75,7 +71,7 @@ void OSD_Directory::Build(const OSD_Protection& theProtect)
     TCollection_ExtendedString aDirNameW(aDirName);
     if (CreateDirectoryW(aDirNameW.ToWideString(), NULL))
     {
-      isOK = Standard_True;
+      isOK = true;
     }
     // if failed due to absence of intermediate directories, create them recursively
     else if (GetLastError() == ERROR_PATH_NOT_FOUND)
@@ -156,7 +152,7 @@ OSD_Directory OSD_Directory::BuildTemporary()
 #else
   // create a temporary directory with 0700 permissions
   char aTmpName[] = "/tmp/CSFXXXXXX";
-  if (NULL == mkdtemp(aTmpName))
+  if (nullptr == mkdtemp(aTmpName))
   {
     return OSD_Directory(); // can't create a directory
   }

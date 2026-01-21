@@ -21,14 +21,15 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(StepBasic_SiUnitAndVolumeUnit, StepBasic_SiUnit)
 
-StepBasic_SiUnitAndVolumeUnit::StepBasic_SiUnitAndVolumeUnit() {}
+StepBasic_SiUnitAndVolumeUnit::StepBasic_SiUnitAndVolumeUnit() = default;
 
-void StepBasic_SiUnitAndVolumeUnit::SetVolumeUnit(const Handle(StepBasic_VolumeUnit)& aVolumeUnit)
+void StepBasic_SiUnitAndVolumeUnit::SetVolumeUnit(
+  const occ::handle<StepBasic_VolumeUnit>& aVolumeUnit)
 {
   volumeUnit = aVolumeUnit;
 }
 
-Handle(StepBasic_VolumeUnit) StepBasic_SiUnitAndVolumeUnit::VolumeUnit() const
+occ::handle<StepBasic_VolumeUnit> StepBasic_SiUnitAndVolumeUnit::VolumeUnit() const
 {
   return volumeUnit;
 }

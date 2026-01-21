@@ -35,31 +35,28 @@ public:
                                       const Quantity_Color&    aColor,
                                       const Quantity_Color&    aTenthColor);
 
-  Standard_EXPORT virtual ~V3d_RectangularGrid();
+  Standard_EXPORT ~V3d_RectangularGrid() override;
 
-  Standard_EXPORT virtual void SetColors(const Quantity_Color& aColor,
-                                         const Quantity_Color& aTenthColor) Standard_OVERRIDE;
+  Standard_EXPORT void SetColors(const Quantity_Color& aColor,
+                                 const Quantity_Color& aTenthColor) override;
 
-  Standard_EXPORT virtual void Display() Standard_OVERRIDE;
+  Standard_EXPORT void Display() override;
 
-  Standard_EXPORT virtual void Erase() const Standard_OVERRIDE;
+  Standard_EXPORT void Erase() const override;
 
-  Standard_EXPORT virtual Standard_Boolean IsDisplayed() const Standard_OVERRIDE;
+  Standard_EXPORT bool IsDisplayed() const override;
 
-  Standard_EXPORT void GraphicValues(Standard_Real& XSize,
-                                     Standard_Real& YSize,
-                                     Standard_Real& OffSet) const;
+  Standard_EXPORT void GraphicValues(double& XSize, double& YSize, double& OffSet) const;
 
-  Standard_EXPORT void SetGraphicValues(const Standard_Real XSize,
-                                        const Standard_Real YSize,
-                                        const Standard_Real OffSet);
+  Standard_EXPORT void SetGraphicValues(const double XSize,
+                                        const double YSize,
+                                        const double OffSet);
 
   //! Dumps the content of me into the stream
-  Standard_EXPORT virtual void DumpJson(Standard_OStream& theOStream,
-                                        Standard_Integer  theDepth = -1) const Standard_OVERRIDE;
+  Standard_EXPORT void DumpJson(Standard_OStream& theOStream, int theDepth = -1) const override;
 
 protected:
-  Standard_EXPORT virtual void UpdateDisplay() Standard_OVERRIDE;
+  Standard_EXPORT void UpdateDisplay() override;
 
 private:
   Standard_EXPORT void DefineLines();
@@ -71,23 +68,21 @@ private:
   class RectangularGridStructure;
 
 private:
-  Handle(Graphic3d_Structure) myStructure;
-  Handle(Graphic3d_Group)     myGroup;
-  gp_Ax3                      myCurViewPlane;
-  V3d_ViewerPointer           myViewer;
-  Standard_Boolean            myCurAreDefined;
-  Standard_Boolean            myToComputePrs;
-  Aspect_GridDrawMode         myCurDrawMode;
-  Standard_Real               myCurXo;
-  Standard_Real               myCurYo;
-  Standard_Real               myCurAngle;
-  Standard_Real               myCurXStep;
-  Standard_Real               myCurYStep;
-  Standard_Real               myXSize;
-  Standard_Real               myYSize;
-  Standard_Real               myOffSet;
+  occ::handle<Graphic3d_Structure> myStructure;
+  occ::handle<Graphic3d_Group>     myGroup;
+  gp_Ax3                           myCurViewPlane;
+  V3d_ViewerPointer                myViewer;
+  bool                             myCurAreDefined;
+  bool                             myToComputePrs;
+  Aspect_GridDrawMode              myCurDrawMode;
+  double                           myCurXo;
+  double                           myCurYo;
+  double                           myCurAngle;
+  double                           myCurXStep;
+  double                           myCurYStep;
+  double                           myXSize;
+  double                           myYSize;
+  double                           myOffSet;
 };
-
-DEFINE_STANDARD_HANDLE(V3d_RectangularGrid, Aspect_RectangularGrid)
 
 #endif // _V3d_RectangularGrid_HeaderFile

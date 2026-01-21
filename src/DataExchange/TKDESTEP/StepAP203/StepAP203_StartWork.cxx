@@ -23,12 +23,13 @@ IMPLEMENT_STANDARD_RTTIEXT(StepAP203_StartWork, StepBasic_ActionAssignment)
 
 //=================================================================================================
 
-StepAP203_StartWork::StepAP203_StartWork() {}
+StepAP203_StartWork::StepAP203_StartWork() = default;
 
 //=================================================================================================
 
-void StepAP203_StartWork::Init(const Handle(StepBasic_Action)& aActionAssignment_AssignedAction,
-                               const Handle(StepAP203_HArray1OfWorkItem)& aItems)
+void StepAP203_StartWork::Init(
+  const occ::handle<StepBasic_Action>&                        aActionAssignment_AssignedAction,
+  const occ::handle<NCollection_HArray1<StepAP203_WorkItem>>& aItems)
 {
   StepBasic_ActionAssignment::Init(aActionAssignment_AssignedAction);
 
@@ -37,14 +38,15 @@ void StepAP203_StartWork::Init(const Handle(StepBasic_Action)& aActionAssignment
 
 //=================================================================================================
 
-Handle(StepAP203_HArray1OfWorkItem) StepAP203_StartWork::Items() const
+occ::handle<NCollection_HArray1<StepAP203_WorkItem>> StepAP203_StartWork::Items() const
 {
   return theItems;
 }
 
 //=================================================================================================
 
-void StepAP203_StartWork::SetItems(const Handle(StepAP203_HArray1OfWorkItem)& aItems)
+void StepAP203_StartWork::SetItems(
+  const occ::handle<NCollection_HArray1<StepAP203_WorkItem>>& aItems)
 {
   theItems = aItems;
 }

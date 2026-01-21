@@ -46,10 +46,10 @@
  *     inline void                   Add (const MyBndType& other);
  *     // Updates me with other bounding
  *
- *     inline Standard_Boolean       IsOut (const MyBndType& other) const;
+ *     inline bool       IsOut (const MyBndType& other) const;
  *     // Classifies other bounding relatively me
  *
- *     inline Standard_Real          SquareExtent() const;
+ *     inline double          SquareExtent() const;
  *     // Computes the squared maximal linear extent of me.
  *     // (For box it is the squared diagonal of box)
  *   };
@@ -81,7 +81,7 @@ public:
      * Constructor
      */
     Selector()
-        : myStop(Standard_False)
+        : myStop(false)
     {
     }
 
@@ -90,7 +90,7 @@ public:
      * @return
      *   True if the bounding box does not conform to some selection conditions
      */
-    virtual Standard_Boolean Reject(const TheBndType&) const = 0;
+    virtual bool Reject(const TheBndType&) const = 0;
 
     /**
      * Confirm the object while making necessary tests on it. This method is
@@ -99,26 +99,26 @@ public:
      * @return
      *   True if the object is accepted
      */
-    virtual Standard_Boolean Accept(const TheObjType&) = 0;
+    virtual bool Accept(const TheObjType&) = 0;
 
     /**
      * This condition is checked after each call to Accept().
      * @return
      *   True signals that the selection process is stopped
      */
-    Standard_Boolean Stop() const { return myStop; }
+    bool Stop() const noexcept { return myStop; }
 
     /**
      * Destructor
      */
-    virtual ~Selector() {}
+    virtual ~Selector() = default;
 
   protected:
     /**
      * The method Accept() should set this flag if the selection process
      * is to be stopped
      */
-    Standard_Boolean myStop;
+    bool myStop;
   };
 
   /**
@@ -138,28 +138,28 @@ public:
     TreeNode(const TheObjType& theObj, const TheBndType& theBnd)
         : myBnd(theBnd),
           myObject(theObj),
-          myChildren(0),
-          myParent(0)
+          myChildren(nullptr),
+          myParent(nullptr)
     {
     }
 
-    Standard_Boolean IsLeaf() const { return !myChildren; }
+    bool IsLeaf() const noexcept { return !myChildren; }
 
-    Standard_Boolean IsRoot() const { return !myParent; }
+    bool IsRoot() const noexcept { return !myParent; }
 
-    const TheBndType& Bnd() const { return myBnd; }
+    const TheBndType& Bnd() const noexcept { return myBnd; }
 
-    TheBndType& ChangeBnd() { return myBnd; }
+    TheBndType& ChangeBnd() noexcept { return myBnd; }
 
-    const TheObjType& Object() const { return myObject; }
+    const TheObjType& Object() const noexcept { return myObject; }
 
-    const TreeNode& Child(const Standard_Integer i) const { return myChildren[i]; }
+    const TreeNode& Child(const int i) const noexcept { return myChildren[i]; }
 
-    TreeNode& ChangeChild(const Standard_Integer i) { return myChildren[i]; }
+    TreeNode& ChangeChild(const int i) noexcept { return myChildren[i]; }
 
-    const TreeNode& Parent() const { return *myParent; }
+    const TreeNode& Parent() const noexcept { return *myParent; }
 
-    TreeNode& ChangeParent() { return *myParent; }
+    TreeNode& ChangeParent() noexcept { return *myParent; }
 
     /**
      * Forces *this node being gemmated such a way that it becomes
@@ -175,10 +175,10 @@ public:
      *   allocator providing memory to the new child nodes, provided by the
      *   calling Tree instance.
      */
-    void Gemmate(const TheBndType&                        theNewBnd,
-                 const TheObjType&                        theObj,
-                 const TheBndType&                        theBnd,
-                 const Handle(NCollection_BaseAllocator)& theAlloc)
+    void Gemmate(const TheBndType&                             theNewBnd,
+                 const TheObjType&                             theObj,
+                 const TheBndType&                             theBnd,
+                 const occ::handle<NCollection_BaseAllocator>& theAlloc)
     {
       // TreeNode *children = new TreeNode [2];
       TreeNode* children = (TreeNode*)theAlloc->Allocate(2 * sizeof(TreeNode));
@@ -201,15 +201,15 @@ public:
     /**
      * Kills the i-th child, and *this accepts the content of another child
      */
-    void Kill(const Standard_Integer i, const Handle(NCollection_BaseAllocator)& theAlloc)
+    void Kill(const int i, const occ::handle<NCollection_BaseAllocator>& theAlloc)
     {
       if (!IsLeaf())
       {
-        TreeNode*              oldChildren = myChildren;
-        const Standard_Integer iopp        = 1 - i;
-        myBnd                              = oldChildren[iopp].myBnd;
-        myObject                           = oldChildren[iopp].myObject;
-        myChildren                         = oldChildren[iopp].myChildren;
+        TreeNode* oldChildren = myChildren;
+        const int iopp        = 1 - i;
+        myBnd                 = oldChildren[iopp].myBnd;
+        myObject              = oldChildren[iopp].myObject;
+        myChildren            = oldChildren[iopp].myChildren;
         if (!IsLeaf())
         {
           myChildren[0].myParent = this;
@@ -224,13 +224,13 @@ public:
     }
 
     //  ~TreeNode () { if (myChildren) delete [] myChildren; }
-    ~TreeNode() { myChildren = 0L; }
+    ~TreeNode() { myChildren = nullptr; }
 
     /**
      * Deleter of tree node. The whole hierarchy of its children also deleted.
      * This method should be used instead of operator delete.
      */
-    static void delNode(TreeNode* theNode, const Handle(NCollection_BaseAllocator)& theAlloc)
+    static void delNode(TreeNode* theNode, const occ::handle<NCollection_BaseAllocator>& theAlloc)
     {
       if (theNode)
       {
@@ -246,8 +246,8 @@ public:
 
   private:
     TreeNode()
-        : myChildren(0L),
-          myParent(0L)
+        : myChildren(nullptr),
+          myParent(nullptr)
     {
     }
 
@@ -263,8 +263,8 @@ public:
    * Empty constructor.
    */
   NCollection_UBTree()
-      : myRoot(0L),
-        myLastNode(0L),
+      : myRoot(nullptr),
+        myLastNode(nullptr),
         myAlloc(NCollection_BaseAllocator::CommonBaseAllocator())
   {
   }
@@ -272,9 +272,9 @@ public:
   /**
    * Constructor.
    */
-  explicit NCollection_UBTree(const Handle(NCollection_BaseAllocator)& theAllocator)
-      : myRoot(0L),
-        myLastNode(0L),
+  explicit NCollection_UBTree(const occ::handle<NCollection_BaseAllocator>& theAllocator)
+      : myRoot(nullptr),
+        myLastNode(nullptr),
         myAlloc(!theAllocator.IsNull() ? theAllocator
                                        : NCollection_BaseAllocator::CommonBaseAllocator())
   {
@@ -289,14 +289,14 @@ public:
    * @return
    *   always True
    */
-  virtual Standard_Boolean Add(const TheObjType& theObj, const TheBndType& theBnd);
+  virtual bool Add(const TheObjType& theObj, const TheBndType& theBnd);
 
   /**
    * Searches in the tree all objects conforming to the given selector.
    * return
    *   Number of objects accepted
    */
-  virtual Standard_Integer Select(Selector& theSelector) const
+  virtual int Select(Selector& theSelector) const
   {
     return (IsEmpty() ? 0 : Select(Root(), theSelector));
   }
@@ -309,26 +309,26 @@ public:
    *   (like NCollection_IncAllocator).  By default the previous allocator is
    *   kept.
    */
-  virtual void Clear(const Handle(NCollection_BaseAllocator)& aNewAlloc = 0L)
+  virtual void Clear(const occ::handle<NCollection_BaseAllocator>& aNewAlloc = nullptr)
   //      { if (myRoot) delete myRoot; myRoot = 0L; }
   {
     if (myRoot)
     {
       TreeNode::delNode(myRoot, this->myAlloc);
       this->myAlloc->Free(myRoot);
-      myRoot = 0L;
+      myRoot = nullptr;
     }
-    if (aNewAlloc.IsNull() == Standard_False)
+    if (!aNewAlloc.IsNull())
       myAlloc = aNewAlloc;
   }
 
-  Standard_Boolean IsEmpty() const { return !myRoot; }
+  bool IsEmpty() const noexcept { return !myRoot; }
 
   /**
    * @return
    *   the root node of the tree
    */
-  const TreeNode& Root() const { return *myRoot; }
+  const TreeNode& Root() const noexcept { return *myRoot; }
 
   /**
    * Destructor.
@@ -340,7 +340,7 @@ public:
    * @return
    *   Allocator object used in this instance of UBTree.
    */
-  const Handle(NCollection_BaseAllocator)& Allocator() const { return myAlloc; }
+  const occ::handle<NCollection_BaseAllocator>& Allocator() const noexcept { return myAlloc; }
 
 protected:
   // ---------- PROTECTED METHODS ----------
@@ -349,29 +349,29 @@ protected:
    * @return
    *   the last added node
    */
-  TreeNode& ChangeLastNode() { return *myLastNode; }
+  TreeNode& ChangeLastNode() noexcept { return *myLastNode; }
 
   /**
    * Searches in the branch all objects conforming to the given selector.
    * @return
    *   the number of objects accepted
    */
-  Standard_Integer Select(const TreeNode& theBranch, Selector& theSelector) const;
+  int Select(const TreeNode& theBranch, Selector& theSelector) const;
 
 private:
   // ---------- PRIVATE METHODS ----------
 
   /// Copy constructor (prohibited).
-  NCollection_UBTree(const NCollection_UBTree&);
+  NCollection_UBTree(const NCollection_UBTree&) = delete;
 
   /// Assignment operator (prohibited).
-  NCollection_UBTree& operator=(const NCollection_UBTree&);
+  NCollection_UBTree& operator=(const NCollection_UBTree&) = delete;
 
   // ---------- PRIVATE FIELDS ----------
 
-  TreeNode*                         myRoot;     ///< root of the tree
-  TreeNode*                         myLastNode; ///< the last added node
-  Handle(NCollection_BaseAllocator) myAlloc;    ///< Allocator for TreeNode
+  TreeNode*                              myRoot;     ///< root of the tree
+  TreeNode*                              myLastNode; ///< the last added node
+  occ::handle<NCollection_BaseAllocator> myAlloc;    ///< Allocator for TreeNode
 };
 
 // ================== METHODS TEMPLATES =====================
@@ -381,19 +381,19 @@ private:
 //=======================================================================
 
 template <class TheObjType, class TheBndType>
-Standard_Boolean NCollection_UBTree<TheObjType, TheBndType>::Add(const TheObjType& theObj,
-                                                                 const TheBndType& theBnd)
+bool NCollection_UBTree<TheObjType, TheBndType>::Add(const TheObjType& theObj,
+                                                     const TheBndType& theBnd)
 {
   if (IsEmpty())
   {
     // Accepting first object
     myRoot     = new (this->myAlloc) TreeNode(theObj, theBnd);
     myLastNode = myRoot;
-    return Standard_True;
+    return true;
   }
 
-  TreeNode*        pBranch       = myRoot;
-  Standard_Boolean isOutOfBranch = pBranch->Bnd().IsOut(theBnd);
+  TreeNode* pBranch       = myRoot;
+  bool      isOutOfBranch = pBranch->Bnd().IsOut(theBnd);
 
   for (;;)
   {
@@ -414,9 +414,8 @@ Standard_Boolean NCollection_UBTree<TheObjType, TheBndType>::Add(const TheObjTyp
     // Select the best child branch to accept the object:
     // 1. First check if one branch is out and another one is not.
     // 2. Else select the child having the least union with theBnd
-    Standard_Integer iBest   = 0;
-    Standard_Boolean isOut[] = {pBranch->Child(0).Bnd().IsOut(theBnd),
-                                pBranch->Child(1).Bnd().IsOut(theBnd)};
+    int  iBest   = 0;
+    bool isOut[] = {pBranch->Child(0).Bnd().IsOut(theBnd), pBranch->Child(1).Bnd().IsOut(theBnd)};
     if (isOut[0] != isOut[1])
       iBest = (isOut[0] ? 1 : 0);
     else
@@ -424,8 +423,8 @@ Standard_Boolean NCollection_UBTree<TheObjType, TheBndType>::Add(const TheObjTyp
       TheBndType aUnion[] = {theBnd, theBnd};
       aUnion[0].Add(pBranch->Child(0).Bnd());
       aUnion[1].Add(pBranch->Child(1).Bnd());
-      const Standard_Real d1 = aUnion[0].SquareExtent();
-      const Standard_Real d2 = aUnion[1].SquareExtent();
+      const double d1 = aUnion[0].SquareExtent();
+      const double d2 = aUnion[1].SquareExtent();
       if (d1 > d2)
         iBest = 1;
     }
@@ -434,7 +433,7 @@ Standard_Boolean NCollection_UBTree<TheObjType, TheBndType>::Add(const TheObjTyp
     isOutOfBranch = isOut[iBest];
     pBranch       = &pBranch->ChangeChild(iBest);
   }
-  return Standard_True;
+  return true;
 }
 
 //=======================================================================
@@ -445,14 +444,14 @@ Standard_Boolean NCollection_UBTree<TheObjType, TheBndType>::Add(const TheObjTyp
 //=======================================================================
 
 template <class TheObjType, class TheBndType>
-Standard_Integer NCollection_UBTree<TheObjType, TheBndType>::Select(const TreeNode& theBranch,
-                                                                    Selector& theSelector) const
+int NCollection_UBTree<TheObjType, TheBndType>::Select(const TreeNode& theBranch,
+                                                       Selector&       theSelector) const
 {
   // Try to reject the branch by bounding box
   if (theSelector.Reject(theBranch.Bnd()))
     return 0;
 
-  Standard_Integer nSel = 0;
+  int nSel = 0;
 
   if (theBranch.IsLeaf())
   {
@@ -491,7 +490,7 @@ Standard_Integer NCollection_UBTree<TheObjType, TheBndType>::Select(const TreeNo
     {                                                                                              \
     }                                                                                              \
     /* Empty constructor */                                                                        \
-    _HUBTREE(const Handle(NCollection_BaseAllocator)& theAlloc)                                    \
+    _HUBTREE(const occ::handle<NCollection_BaseAllocator>& theAlloc)                               \
         : myTree(new UBTree(theAlloc))                                                             \
     {                                                                                              \
     }                                                                                              \
@@ -499,12 +498,12 @@ Standard_Integer NCollection_UBTree<TheObjType, TheBndType>::Select(const TreeNo
                                                                                                    \
     /* Access to the methods of UBTree */                                                          \
                                                                                                    \
-    Standard_Boolean Add(const _OBJTYPE& theObj, const _BNDTYPE& theBnd)                           \
+    bool Add(const _OBJTYPE& theObj, const _BNDTYPE& theBnd)                                       \
     {                                                                                              \
       return ChangeTree().Add(theObj, theBnd);                                                     \
     }                                                                                              \
                                                                                                    \
-    Standard_Integer Select(UBTree::Selector& theSelector) const                                   \
+    int Select(UBTree::Selector& theSelector) const                                                \
     {                                                                                              \
       return Tree().Select(theSelector);                                                           \
     }                                                                                              \
@@ -514,7 +513,7 @@ Standard_Integer NCollection_UBTree<TheObjType, TheBndType>::Select(const TreeNo
       ChangeTree().Clear();                                                                        \
     }                                                                                              \
                                                                                                    \
-    Standard_Boolean IsEmpty() const                                                               \
+    bool IsEmpty() const noexcept                                                                  \
     {                                                                                              \
       return Tree().IsEmpty();                                                                     \
     }                                                                                              \
@@ -526,11 +525,11 @@ Standard_Integer NCollection_UBTree<TheObjType, TheBndType>::Select(const TreeNo
                                                                                                    \
     /* Access to the tree algorithm */                                                             \
                                                                                                    \
-    const UBTree& Tree() const                                                                     \
+    const UBTree& Tree() const noexcept                                                            \
     {                                                                                              \
       return *myTree;                                                                              \
     }                                                                                              \
-    UBTree& ChangeTree()                                                                           \
+    UBTree& ChangeTree() noexcept                                                                  \
     {                                                                                              \
       return *myTree;                                                                              \
     }                                                                                              \

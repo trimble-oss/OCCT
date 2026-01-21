@@ -17,9 +17,9 @@
 #include <StepShape_ValueFormatTypeQualifier.hxx>
 #include <StepShape_ValueQualifier.hxx>
 
-StepShape_ValueQualifier::StepShape_ValueQualifier() {}
+StepShape_ValueQualifier::StepShape_ValueQualifier() = default;
 
-Standard_Integer StepShape_ValueQualifier::CaseNum(const Handle(Standard_Transient)& ent) const
+int StepShape_ValueQualifier::CaseNum(const occ::handle<Standard_Transient>& ent) const
 {
   if (ent.IsNull())
     return 0;
@@ -32,18 +32,18 @@ Standard_Integer StepShape_ValueQualifier::CaseNum(const Handle(Standard_Transie
   return 0;
 }
 
-Handle(StepShape_PrecisionQualifier) StepShape_ValueQualifier::PrecisionQualifier() const
+occ::handle<StepShape_PrecisionQualifier> StepShape_ValueQualifier::PrecisionQualifier() const
 {
-  return Handle(StepShape_PrecisionQualifier)::DownCast(Value());
+  return occ::down_cast<StepShape_PrecisionQualifier>(Value());
 }
 
-Handle(StepShape_TypeQualifier) StepShape_ValueQualifier::TypeQualifier() const
+occ::handle<StepShape_TypeQualifier> StepShape_ValueQualifier::TypeQualifier() const
 {
-  return Handle(StepShape_TypeQualifier)::DownCast(Value());
+  return occ::down_cast<StepShape_TypeQualifier>(Value());
 }
 
-Handle(StepShape_ValueFormatTypeQualifier) StepShape_ValueQualifier::ValueFormatTypeQualifier()
+occ::handle<StepShape_ValueFormatTypeQualifier> StepShape_ValueQualifier::ValueFormatTypeQualifier()
   const
 {
-  return Handle(StepShape_ValueFormatTypeQualifier)::DownCast(Value());
+  return occ::down_cast<StepShape_ValueFormatTypeQualifier>(Value());
 }

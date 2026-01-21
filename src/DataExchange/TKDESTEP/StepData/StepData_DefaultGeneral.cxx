@@ -15,7 +15,7 @@
 #include <Interface_CopyTool.hxx>
 #include <Interface_EntityIterator.hxx>
 #include <Interface_GeneralLib.hxx>
-#include <Interface_Macros.hxx>
+#include <MoniTool_Macros.hxx>
 #include <Interface_ShareTool.hxx>
 #include <Interface_UndefinedContent.hxx>
 #include <Standard_Transient.hxx>
@@ -27,60 +27,66 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(StepData_DefaultGeneral, StepData_GeneralModule)
 
-//  DefaultGeneral de StepData  reconnait  UN SEUL TYPE : UndefinedEntity
+//  StepData DefaultGeneral recognizes ONLY ONE TYPE: UndefinedEntity
 StepData_DefaultGeneral::StepData_DefaultGeneral()
 {
+  // Register this module globally with the StepData protocol
   Interface_GeneralLib::SetGlobal(this, StepData::Protocol());
 }
 
-void StepData_DefaultGeneral::FillSharedCase(const Standard_Integer            casenum,
-                                             const Handle(Standard_Transient)& ent,
-                                             Interface_EntityIterator&         iter) const
+void StepData_DefaultGeneral::FillSharedCase(const int                              casenum,
+                                             const occ::handle<Standard_Transient>& ent,
+                                             Interface_EntityIterator&              iter) const
 {
+  // Fill iterator with shared entities from UndefinedEntity parameters
   if (casenum != 1)
-    return;
+    return; // Only handles case 1 (UndefinedEntity)
   DeclareAndCast(StepData_UndefinedEntity, undf, ent);
-  Handle(Interface_UndefinedContent) cont = undf->UndefinedContent();
-  Standard_Integer                   nb   = cont->NbParams();
-  for (Standard_Integer i = 1; i <= nb; i++)
+  occ::handle<Interface_UndefinedContent> cont = undf->UndefinedContent();
+  int                                     nb   = cont->NbParams();
+  // Iterate through all parameters looking for entity references
+  for (int i = 1; i <= nb; i++)
   {
     Interface_ParamType ptype = cont->ParamType(i);
     if (ptype == Interface_ParamSub)
     {
+      // Handle sub-entity parameters recursively
       DeclareAndCast(StepData_UndefinedEntity, subent, cont->ParamEntity(i));
       FillSharedCase(casenum, cont->ParamEntity(i), iter);
     }
     else if (ptype == Interface_ParamIdent)
     {
+      // Handle entity identifier parameters
       iter.GetOneItem(cont->ParamEntity(i));
     }
   }
 }
 
-void StepData_DefaultGeneral::CheckCase(const Standard_Integer,
-                                        const Handle(Standard_Transient)&,
+void StepData_DefaultGeneral::CheckCase(const int,
+                                        const occ::handle<Standard_Transient>&,
                                         const Interface_ShareTool&,
-                                        Handle(Interface_Check)&) const
+                                        occ::handle<Interface_Check>&) const
 {
-} //  pas de Check sur une UndefinedEntity
+} //  No validation check performed on an UndefinedEntity
 
-Standard_Boolean StepData_DefaultGeneral::NewVoid(const Standard_Integer      CN,
-                                                  Handle(Standard_Transient)& ent) const
+bool StepData_DefaultGeneral::NewVoid(const int CN, occ::handle<Standard_Transient>& ent) const
 {
+  // Create a new empty entity instance (only UndefinedEntity supported)
   if (CN != 1)
-    return Standard_False;
+    return false; // Only case 1 supported
   ent = new StepData_UndefinedEntity;
-  return Standard_True;
+  return true;
 }
 
-void StepData_DefaultGeneral::CopyCase(const Standard_Integer            casenum,
-                                       const Handle(Standard_Transient)& entfrom,
-                                       const Handle(Standard_Transient)& entto,
-                                       Interface_CopyTool&               TC) const
+void StepData_DefaultGeneral::CopyCase(const int                              casenum,
+                                       const occ::handle<Standard_Transient>& entfrom,
+                                       const occ::handle<Standard_Transient>& entto,
+                                       Interface_CopyTool&                    TC) const
 {
+  // Copy content from source UndefinedEntity to target UndefinedEntity
   if (casenum != 1)
-    return;
+    return; // Only handles case 1 (UndefinedEntity)
   DeclareAndCast(StepData_UndefinedEntity, undfrom, entfrom);
   DeclareAndCast(StepData_UndefinedEntity, undto, entto);
-  undto->GetFromAnother(undfrom, TC); //  On pourrait rapatrier cela
+  undto->GetFromAnother(undfrom, TC); //  We could optimize this operation
 }

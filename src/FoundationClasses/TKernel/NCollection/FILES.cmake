@@ -25,10 +25,7 @@ set(OCCT_NCollection_FILES
   NCollection_DataMap.hxx
   NCollection_DefaultHasher.hxx
   NCollection_DefineAlloc.hxx
-  NCollection_DefineHArray1.hxx
-  NCollection_DefineHArray2.hxx
   NCollection_DefineHasher.hxx
-  NCollection_DefineHSequence.hxx
   NCollection_DoubleMap.hxx
   NCollection_DynamicArray.hxx
   NCollection_EBTree.hxx
@@ -65,7 +62,6 @@ set(OCCT_NCollection_FILES
   NCollection_String.hxx
   NCollection_TListIterator.hxx
   NCollection_TListNode.hxx
-  NCollection_TypeDef.hxx
   NCollection_UBTree.hxx
   NCollection_UBTreeFiller.hxx
   NCollection_UtfIterator.hxx

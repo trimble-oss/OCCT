@@ -44,7 +44,7 @@ static void copyCells(vtkPolyData* theDst, vtkPolyData* theSrc, vtkIdList* theId
   const vtkIdType aNbPts       = theSrc->GetNumberOfPoints();
   vtkDataArray*   anOldNormals = theSrc->GetPointData()->GetNormals();
 
-  if (theDst->GetPoints() == NULL)
+  if (theDst->GetPoints() == nullptr)
   {
     theDst->SetPoints(vtkSmartPointer<vtkPoints>::New());
   }
@@ -56,7 +56,7 @@ static void copyCells(vtkPolyData* theDst, vtkPolyData* theSrc, vtkIdList* theId
   vtkCellData*                    aNewCellData = theDst->GetCellData();
   vtkPoints*                      aNewPoints   = theDst->GetPoints();
   vtkSmartPointer<vtkFloatArray>  aNewNormals;
-  if (anOldNormals != NULL)
+  if (anOldNormals != nullptr)
   {
     aNewNormals = vtkSmartPointer<vtkFloatArray>::New();
     aNewNormals->SetName("Normals");
@@ -91,7 +91,7 @@ static void copyCells(vtkPolyData* theDst, vtkPolyData* theSrc, vtkIdList* theId
         aPntMap->SetId(aPtId, aNewId);
         aNewPntData->CopyData(theSrc->GetPointData(), aPtId, aNewId);
 
-        if (anOldNormals != NULL)
+        if (anOldNormals != nullptr)
         {
           anOldNormals->GetTuple(aPtId, anXYZ.ChangeData());
           aNewNormals->InsertNextTuple(anXYZ.GetData());
@@ -116,12 +116,11 @@ vtkStandardNewMacro(IVtkTools_SubPolyDataFilter)
       myDoFiltering(true),
       myToCopyNormals(true)
 {
-  //
 }
 
 //=================================================================================================
 
-IVtkTools_SubPolyDataFilter::~IVtkTools_SubPolyDataFilter() {}
+IVtkTools_SubPolyDataFilter::~IVtkTools_SubPolyDataFilter() = default;
 
 //================================================================
 // Function : RequestData
@@ -154,7 +153,8 @@ int IVtkTools_SubPolyDataFilter::RequestData(vtkInformation*        vtkNotUsed(t
     vtkSmartPointer<vtkIdList> anIdList = vtkSmartPointer<vtkIdList>::New();
     anIdList->Allocate(myIdsSet.Extent()); // Allocate the list of ids
 
-    const vtkIdType aSize = aDataArray.GetPointer() != NULL ? aDataArray->GetNumberOfTuples() : 0;
+    const vtkIdType aSize =
+      aDataArray.GetPointer() != nullptr ? aDataArray->GetNumberOfTuples() : 0;
     if (aSize != 0)
     {
       anIdList->Allocate(aSize); // Allocate the list of ids
@@ -234,7 +234,7 @@ int IVtkTools_SubPolyDataFilter::RequestData(vtkInformation*        vtkNotUsed(t
 
     // Pass data arrays.
     // Create new arrays for output data
-    for (Standard_Integer anI = 0; anI < anInputCellData->GetNumberOfArrays(); anI++)
+    for (int anI = 0; anI < anInputCellData->GetNumberOfArrays(); anI++)
     {
       vtkSmartPointer<vtkDataArray> anInArr = anInputCellData->GetArray(anI);
       vtkSmartPointer<vtkDataArray> anOutArr =
@@ -258,7 +258,7 @@ int IVtkTools_SubPolyDataFilter::RequestData(vtkInformation*        vtkNotUsed(t
     }
 
     // Copy filtered arrays data
-    for (Standard_Integer anI = 0; anI < anInputCellData->GetNumberOfArrays(); anI++)
+    for (int anI = 0; anI < anInputCellData->GetNumberOfArrays(); anI++)
     {
       vtkSmartPointer<vtkDataArray> anInArr  = anInputCellData->GetArray(anI);
       vtkSmartPointer<vtkDataArray> anOutArr = anOutputCellData->GetArray(anI);
@@ -294,7 +294,7 @@ void IVtkTools_SubPolyDataFilter::PrintSelf(std::ostream& theOs, vtkIndent theIn
   theOs << theIndent << "   Number of cells to pass: " << myIdsSet.Extent() << "\n";
   theOs << theIndent << "   Cells ids to pass: {";
   // Print the content of the set of ids.
-  IVtk_IdTypeMap::Iterator anIter(myIdsSet);
+  NCollection_Map<IVtk_IdType>::Iterator anIter(myIdsSet);
   while (anIter.More())
   {
     theOs << " " << anIter.Value();
@@ -320,7 +320,7 @@ void IVtkTools_SubPolyDataFilter::Clear()
 // Function : SetData
 // Purpose  : Set ids to be passed through this filter.
 //================================================================
-void IVtkTools_SubPolyDataFilter::SetData(const IVtk_IdTypeMap theSet)
+void IVtkTools_SubPolyDataFilter::SetData(const NCollection_Map<IVtk_IdType>& theSet)
 {
   myIdsSet = theSet;
 }
@@ -329,9 +329,9 @@ void IVtkTools_SubPolyDataFilter::SetData(const IVtk_IdTypeMap theSet)
 // Function : AddData
 // Purpose  : Add ids to be passed through this filter.
 //================================================================
-void IVtkTools_SubPolyDataFilter::AddData(const IVtk_IdTypeMap theSet)
+void IVtkTools_SubPolyDataFilter::AddData(const NCollection_Map<IVtk_IdType>& theSet)
 {
-  for (IVtk_IdTypeMap::Iterator anIt(theSet); anIt.More(); anIt.Next())
+  for (NCollection_Map<IVtk_IdType>::Iterator anIt(theSet); anIt.More(); anIt.Next())
   {
     if (!myIdsSet.Contains(anIt.Value()))
     {
@@ -344,7 +344,7 @@ void IVtkTools_SubPolyDataFilter::AddData(const IVtk_IdTypeMap theSet)
 // Function : SetData
 // Purpose  : Set ids to be passed through this filter.
 //================================================================
-void IVtkTools_SubPolyDataFilter::SetData(const IVtk_ShapeIdList theIdList)
+void IVtkTools_SubPolyDataFilter::SetData(const NCollection_List<IVtk_IdType>& theIdList)
 {
   myIdsSet.Clear();
   AddData(theIdList);
@@ -354,9 +354,9 @@ void IVtkTools_SubPolyDataFilter::SetData(const IVtk_ShapeIdList theIdList)
 // Function : AddData
 // Purpose  : Add ids to be passed through this filter.
 //================================================================
-void IVtkTools_SubPolyDataFilter::AddData(const IVtk_ShapeIdList theIdList)
+void IVtkTools_SubPolyDataFilter::AddData(const NCollection_List<IVtk_IdType>& theIdList)
 {
-  for (IVtk_ShapeIdList::Iterator anIt(theIdList); anIt.More(); anIt.Next())
+  for (NCollection_List<IVtk_IdType>::Iterator anIt(theIdList); anIt.More(); anIt.Next())
   {
     if (!myIdsSet.Contains(anIt.Value()))
     {

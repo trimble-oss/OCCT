@@ -14,9 +14,12 @@
 // commercial license or contractual agreement.
 
 #include <LDOM_CharReference.hxx>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+
+#include <Standard_CString.hxx>
+
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
 //   Uncomment this line if you want that your XML files contain codes 0xc0-0xff
 //   as defined in Latin-1 code set. Otherwise these codes are written
@@ -25,14 +28,12 @@
 
 namespace
 {
-const int NORMAL_C  = 0;
-const int CHAR_REF  = -1;
-const int ENTI_AMP  = 1;
-const int ENTI_LT   = 2;
-const int ENTI_GT   = 3;
-const int ENTI_QUOT = 4;
-
-// const int ENTI_APOS = 5;
+constexpr int NORMAL_C  = 0;
+constexpr int CHAR_REF  = -1;
+constexpr int ENTI_AMP  = 1;
+constexpr int ENTI_LT   = 2;
+constexpr int ENTI_GT   = 3;
+constexpr int ENTI_QUOT = 4;
 
 struct entityRef
 {
@@ -53,30 +54,30 @@ struct entityRef
 //           Always returns the same string (shortened after replacements)
 //=======================================================================
 
-char* LDOM_CharReference::Decode(char* theSrc, Standard_Integer& theLen)
+char* LDOM_CharReference::Decode(char* theSrc, int& theLen)
 {
 #define IS_EQUAL(_ptr, _string) (!memcmp(_ptr, _string, sizeof(_string) - 1))
 
-  char *           aSrcPtr = theSrc, *aDstPtr = theSrc;
-  Standard_Integer anIncrCount = 0;
+  char *aSrcPtr = theSrc, *aDstPtr = theSrc;
+  int   anIncrCount = 0;
   for (;;)
   {
     char* aPtr = strchr(aSrcPtr, '&');
-    if (aPtr == NULL)
+    if (aPtr == nullptr)
     {
       //        End of the loop
       aPtr = strchr(aSrcPtr, '\0');
       if (anIncrCount == 0)
-        theLen = (Standard_Integer)(aPtr - theSrc);
+        theLen = (int)(aPtr - theSrc);
       else
       {
-        Standard_Integer aByteCount = (Standard_Integer)(aPtr - aSrcPtr);
+        int aByteCount = (int)(aPtr - aSrcPtr);
         memmove(aDstPtr, aSrcPtr, aByteCount + 1);
-        theLen = (Standard_Integer)(aDstPtr - theSrc) + aByteCount;
+        theLen = (int)(aDstPtr - theSrc) + aByteCount;
       }
       break;
     }
-    Standard_Integer aByteCount = (Standard_Integer)(aPtr - aSrcPtr);
+    int aByteCount = (int)(aPtr - aSrcPtr);
     if (aByteCount > 0 && aDstPtr != aSrcPtr)
       memmove(aDstPtr, aSrcPtr, aByteCount);
     aSrcPtr = aPtr;
@@ -91,9 +92,9 @@ char* LDOM_CharReference::Decode(char* theSrc, Standard_Integer& theLen)
         aChar = strtoul(&aSrcPtr[2], &aNewPtr, 10); // decimal encoding
       if (aNewPtr[0] != ';' || aChar == 0 || aChar > 255UL)
         //      Error reading an XML string
-        return NULL;
+        return nullptr;
       aDstPtr[-1] = (char)aChar;
-      anIncrCount += (Standard_Integer)(aNewPtr - aSrcPtr);
+      anIncrCount += (int)(aNewPtr - aSrcPtr);
       aSrcPtr = &aNewPtr[1];
     }
     else if (IS_EQUAL(aSrcPtr + 1, "amp;"))
@@ -150,21 +151,19 @@ char* LDOM_CharReference::Decode(char* theSrc, Standard_Integer& theLen)
 //           the returned string (whatever the case)
 //=======================================================================
 
-char* LDOM_CharReference::Encode(const char*            theSrc,
-                                 Standard_Integer&      theLen,
-                                 const Standard_Boolean isAttribute)
+char* LDOM_CharReference::Encode(const char* theSrc, int& theLen, const bool isAttribute)
 {
   // Initialising the constants
-  static const struct entityRef entity_ref[6] = {entityRef(NULL, 0),
+  static const struct entityRef entity_ref[6] = {entityRef(nullptr, 0),
                                                  entityRef("&amp;", 5),
                                                  entityRef("&lt;", 4),
                                                  entityRef("&gt;", 4),
                                                  entityRef("&quot;", 6),
                                                  entityRef("&apos;", 6)};
 
-  const char *     endSrc, *ptrSrc = theSrc;
-  char*            aDest  = (char*)theSrc;
-  Standard_Integer aCount = 0;
+  const char *endSrc, *ptrSrc = theSrc;
+  char*       aDest  = (char*)theSrc;
+  int         aCount = 0;
   //    Analyse if there is a non-standard character in the string
   for (;;)
   {
@@ -181,7 +180,7 @@ char* LDOM_CharReference::Encode(const char*            theSrc,
   }
   //    If there are such, copy the string with replacements
   if (!aCount)
-    theLen = (Standard_Integer)(endSrc - theSrc);
+    theLen = (int)(endSrc - theSrc);
   else
   {
     char* ptrDest = new char[(endSrc - theSrc) + aCount * 5 + 1];
@@ -194,11 +193,11 @@ char* LDOM_CharReference::Encode(const char*            theSrc,
         *ptrDest++ = *ptrSrc;
       else if (aCode == CHAR_REF)
       { // character reference
-        sprintf(ptrDest, "&#x%02x;", iSrc);
+        Sprintf(ptrDest, "&#x%02x;", iSrc);
         ptrDest += 6;
       }
       else // predefined entity reference
-        if (isAttribute == Standard_False && aCode == ENTI_QUOT)
+        if (!isAttribute && aCode == ENTI_QUOT)
           *ptrDest++ = *ptrSrc;
         else
         {
@@ -206,7 +205,7 @@ char* LDOM_CharReference::Encode(const char*            theSrc,
           ptrDest += entity_ref[aCode].length;
         }
     }
-    theLen   = (Standard_Integer)(ptrDest - aDest);
+    theLen   = (int)(ptrDest - aDest);
     *ptrDest = '\0';
   }
   return aDest;

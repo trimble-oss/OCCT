@@ -52,15 +52,15 @@
 //=================================================================================================
 
 Extrema_FuncExtSS::Extrema_FuncExtSS()
-    : myS1(NULL),
-      myS2(NULL),
+    : myS1(nullptr),
+      myS2(nullptr),
       myU1(0.0),
       myV1(0.0),
       myU2(0.0),
       myV2(0.0)
 {
-  myS1init = Standard_False;
-  myS2init = Standard_False;
+  myS1init = false;
+  myS2init = false;
 }
 
 //=================================================================================================
@@ -73,8 +73,8 @@ Extrema_FuncExtSS::Extrema_FuncExtSS(const Adaptor3d_Surface& S1, const Adaptor3
 {
   myS1     = &S1;
   myS2     = &S2;
-  myS1init = Standard_True;
-  myS2init = Standard_True;
+  myS1init = true;
+  myS2init = true;
 }
 
 //=================================================================================================
@@ -83,8 +83,8 @@ void Extrema_FuncExtSS::Initialize(const Adaptor3d_Surface& S1, const Adaptor3d_
 {
   myS1     = &S1;
   myS2     = &S2;
-  myS1init = Standard_True;
-  myS2init = Standard_True;
+  myS1init = true;
+  myS2init = true;
   myPoint1.Clear();
   myPoint2.Clear();
   mySqDist.Clear();
@@ -92,21 +92,21 @@ void Extrema_FuncExtSS::Initialize(const Adaptor3d_Surface& S1, const Adaptor3d_
 
 //=================================================================================================
 
-Standard_Integer Extrema_FuncExtSS::NbVariables() const
+int Extrema_FuncExtSS::NbVariables() const
 {
   return 4;
 }
 
 //=================================================================================================
 
-Standard_Integer Extrema_FuncExtSS::NbEquations() const
+int Extrema_FuncExtSS::NbEquations() const
 {
   return 4;
 }
 
 //=================================================================================================
 
-Standard_Boolean Extrema_FuncExtSS::Value(const math_Vector& UV, math_Vector& F)
+bool Extrema_FuncExtSS::Value(const math_Vector& UV, math_Vector& F)
 {
   if (!myS1init || !myS2init)
     throw Standard_TypeMismatch();
@@ -126,12 +126,12 @@ Standard_Boolean Extrema_FuncExtSS::Value(const math_Vector& UV, math_Vector& F)
   F(3) = P1P2.Dot(Du2s2);
   F(4) = P1P2.Dot(Dv2s2);
 
-  return Standard_True;
+  return true;
 }
 
 //=================================================================================================
 
-Standard_Boolean Extrema_FuncExtSS::Derivatives(const math_Vector& UV, math_Matrix& Df)
+bool Extrema_FuncExtSS::Derivatives(const math_Vector& UV, math_Matrix& Df)
 {
   math_Vector F(1, 4);
   return Values(UV, F, Df);
@@ -139,7 +139,7 @@ Standard_Boolean Extrema_FuncExtSS::Derivatives(const math_Vector& UV, math_Matr
 
 //=================================================================================================
 
-Standard_Boolean Extrema_FuncExtSS::Values(const math_Vector& UV, math_Vector& F, math_Matrix& Df)
+bool Extrema_FuncExtSS::Values(const math_Vector& UV, math_Vector& F, math_Matrix& Df)
 {
   if (!myS1init || !myS2init)
     throw Standard_TypeMismatch();
@@ -179,21 +179,15 @@ Standard_Boolean Extrema_FuncExtSS::Values(const math_Vector& UV, math_Vector& F
   Df(4, 3) = Df(3, 4);  // -Du2s2.Dot(Dv2s2) + P1P2.Dot(Du2v2s2);
   Df(4, 4) = -Dv2s2.SquareMagnitude() + P1P2.Dot(Dv2v2s2);
 
-  return Standard_True;
+  return true;
 }
 
 //=================================================================================================
 
-Standard_Integer Extrema_FuncExtSS::GetStateNumber()
+int Extrema_FuncExtSS::GetStateNumber()
 {
   if (!myS1init || !myS2init)
     throw Standard_TypeMismatch();
-#if 0
-  math_Vector Sol(1, 4), UVSol(1, 4);
-  UVSol(1) = myU1; UVSol(2) = myV1; UVSol(3) = myU2; UVSol(4) = myV2;
-  Value(UVSol, Sol);
-  std::cout <<"F(1)= "<<Sol(1)<<" F(2)= "<<Sol(2)<<" F(3)= "<<Sol(3)<<" F(4)= "<<Sol(4)<<std::endl;
-#endif
 
   mySqDist.Append(myP1.SquareDistance(myP2));
   myPoint1.Append(Extrema_POnSurf(myU1, myV1, myP1));
@@ -203,14 +197,14 @@ Standard_Integer Extrema_FuncExtSS::GetStateNumber()
 
 //=================================================================================================
 
-Standard_Integer Extrema_FuncExtSS::NbExt() const
+int Extrema_FuncExtSS::NbExt() const
 {
   return mySqDist.Length();
 }
 
 //=================================================================================================
 
-Standard_Real Extrema_FuncExtSS::SquareDistance(const Standard_Integer N) const
+double Extrema_FuncExtSS::SquareDistance(const int N) const
 {
   if (!myS1init || !myS2init)
     throw Standard_TypeMismatch();
@@ -219,7 +213,7 @@ Standard_Real Extrema_FuncExtSS::SquareDistance(const Standard_Integer N) const
 
 //=================================================================================================
 
-const Extrema_POnSurf& Extrema_FuncExtSS::PointOnS1(const Standard_Integer N) const
+const Extrema_POnSurf& Extrema_FuncExtSS::PointOnS1(const int N) const
 {
   if (!myS1init || !myS2init)
     throw Standard_TypeMismatch();
@@ -228,7 +222,7 @@ const Extrema_POnSurf& Extrema_FuncExtSS::PointOnS1(const Standard_Integer N) co
 
 //=================================================================================================
 
-const Extrema_POnSurf& Extrema_FuncExtSS::PointOnS2(const Standard_Integer N) const
+const Extrema_POnSurf& Extrema_FuncExtSS::PointOnS2(const int N) const
 {
   if (!myS1init || !myS2init)
     throw Standard_TypeMismatch();

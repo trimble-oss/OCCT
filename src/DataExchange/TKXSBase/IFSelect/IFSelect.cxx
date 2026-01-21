@@ -15,17 +15,15 @@
 #include <IFSelect_SessionFile.hxx>
 #include <IFSelect_WorkSession.hxx>
 
-//  Methodes de confort, evitant de devoir connaitre SessionFile, qui est un
-//  Tool non destine a l export (en particulier, pas un Handle)
-Standard_Boolean IFSelect::SaveSession(const Handle(IFSelect_WorkSession)& WS,
-                                       const Standard_CString              file)
+//  Convenience methods, avoiding having to know SessionFile, which is a
+//  Tool not intended for export (in particular, not a Handle)
+bool IFSelect::SaveSession(const occ::handle<IFSelect_WorkSession>& WS, const char* file)
 {
   IFSelect_SessionFile sesfile(WS, file);
   return sesfile.IsDone();
 }
 
-Standard_Boolean IFSelect::RestoreSession(const Handle(IFSelect_WorkSession)& WS,
-                                          const Standard_CString              file)
+bool IFSelect::RestoreSession(const occ::handle<IFSelect_WorkSession>& WS, const char* file)
 {
   IFSelect_SessionFile sesfile(WS);
   return (sesfile.Read(file) == 0);

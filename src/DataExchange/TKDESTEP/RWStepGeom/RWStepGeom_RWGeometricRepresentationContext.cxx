@@ -16,13 +16,14 @@
 #include <StepData_StepWriter.hxx>
 #include <StepGeom_GeometricRepresentationContext.hxx>
 
-RWStepGeom_RWGeometricRepresentationContext::RWStepGeom_RWGeometricRepresentationContext() {}
+RWStepGeom_RWGeometricRepresentationContext::RWStepGeom_RWGeometricRepresentationContext() =
+  default;
 
 void RWStepGeom_RWGeometricRepresentationContext::ReadStep(
-  const Handle(StepData_StepReaderData)&                 data,
-  const Standard_Integer                                 num,
-  Handle(Interface_Check)&                               ach,
-  const Handle(StepGeom_GeometricRepresentationContext)& ent) const
+  const occ::handle<StepData_StepReaderData>&                 data,
+  const int                                                   num,
+  occ::handle<Interface_Check>&                               ach,
+  const occ::handle<StepGeom_GeometricRepresentationContext>& ent) const
 {
 
   // --- Number of Parameter Control ---
@@ -32,20 +33,20 @@ void RWStepGeom_RWGeometricRepresentationContext::ReadStep(
 
   // --- inherited field : contextIdentifier ---
 
-  Handle(TCollection_HAsciiString) aContextIdentifier;
-  // szv#4:S4163:12Mar99 `Standard_Boolean stat1 =` not needed
+  occ::handle<TCollection_HAsciiString> aContextIdentifier;
+  // szv#4:S4163:12Mar99 `bool stat1 =` not needed
   data->ReadString(num, 1, "context_identifier", ach, aContextIdentifier);
 
   // --- inherited field : contextType ---
 
-  Handle(TCollection_HAsciiString) aContextType;
-  // szv#4:S4163:12Mar99 `Standard_Boolean stat2 =` not needed
+  occ::handle<TCollection_HAsciiString> aContextType;
+  // szv#4:S4163:12Mar99 `bool stat2 =` not needed
   data->ReadString(num, 2, "context_type", ach, aContextType);
 
   // --- own field : coordinateSpaceDimension ---
 
-  Standard_Integer aCoordinateSpaceDimension;
-  // szv#4:S4163:12Mar99 `Standard_Boolean stat3 =` not needed
+  int aCoordinateSpaceDimension;
+  // szv#4:S4163:12Mar99 `bool stat3 =` not needed
   data->ReadInteger(num, 3, "coordinate_space_dimension", ach, aCoordinateSpaceDimension);
 
   //--- Initialisation of the read entity ---
@@ -54,8 +55,8 @@ void RWStepGeom_RWGeometricRepresentationContext::ReadStep(
 }
 
 void RWStepGeom_RWGeometricRepresentationContext::WriteStep(
-  StepData_StepWriter&                                   SW,
-  const Handle(StepGeom_GeometricRepresentationContext)& ent) const
+  StepData_StepWriter&                                        SW,
+  const occ::handle<StepGeom_GeometricRepresentationContext>& ent) const
 {
 
   // --- inherited field contextIdentifier ---

@@ -22,9 +22,8 @@ IMPLEMENT_STANDARD_RTTIEXT(OpenGl_IndexBuffer, OpenGl_Buffer)
 //=================================================================================================
 
 OpenGl_IndexBuffer::OpenGl_IndexBuffer()
-    : OpenGl_Buffer()
-{
-}
+
+  = default;
 
 //=================================================================================================
 
@@ -35,7 +34,7 @@ unsigned int OpenGl_IndexBuffer::GetTarget() const
 
 //=================================================================================================
 
-void OpenGl_IndexBuffer::DumpJson(Standard_OStream& theOStream, Standard_Integer theDepth) const
+void OpenGl_IndexBuffer::DumpJson(Standard_OStream& theOStream, int theDepth) const
 {
   OCCT_DUMP_TRANSIENT_CLASS_BEGIN(theOStream)
   OCCT_DUMP_BASE_CLASS(theOStream, theDepth, OpenGl_Buffer)

@@ -29,16 +29,15 @@ OpenGl_GraphicDriverFactory::OpenGl_GraphicDriverFactory()
     : Graphic3d_GraphicDriverFactory(OpenGl_DRIVER_NAME),
       myDefaultCaps(new OpenGl_Caps())
 {
-  //
 }
 
 //=================================================================================================
 
-Handle(Graphic3d_GraphicDriver) OpenGl_GraphicDriverFactory::CreateDriver(
-  const Handle(Aspect_DisplayConnection)& theDisp)
+occ::handle<Graphic3d_GraphicDriver> OpenGl_GraphicDriverFactory::CreateDriver(
+  const occ::handle<Aspect_DisplayConnection>& theDisp)
 {
-  Handle(OpenGl_GraphicDriver) aDriver = new OpenGl_GraphicDriver(theDisp, false);
-  aDriver->ChangeOptions()             = *myDefaultCaps;
+  occ::handle<OpenGl_GraphicDriver> aDriver = new OpenGl_GraphicDriver(theDisp, false);
+  aDriver->ChangeOptions()                  = *myDefaultCaps;
   aDriver->InitContext();
   return aDriver;
 }

@@ -23,13 +23,13 @@ IMPLEMENT_STANDARD_RTTIEXT(StepAP203_CcDesignContract, StepBasic_ContractAssignm
 
 //=================================================================================================
 
-StepAP203_CcDesignContract::StepAP203_CcDesignContract() {}
+StepAP203_CcDesignContract::StepAP203_CcDesignContract() = default;
 
 //=================================================================================================
 
 void StepAP203_CcDesignContract::Init(
-  const Handle(StepBasic_Contract)&                aContractAssignment_AssignedContract,
-  const Handle(StepAP203_HArray1OfContractedItem)& aItems)
+  const occ::handle<StepBasic_Contract>& aContractAssignment_AssignedContract,
+  const occ::handle<NCollection_HArray1<StepAP203_ContractedItem>>& aItems)
 {
   StepBasic_ContractAssignment::Init(aContractAssignment_AssignedContract);
 
@@ -38,14 +38,15 @@ void StepAP203_CcDesignContract::Init(
 
 //=================================================================================================
 
-Handle(StepAP203_HArray1OfContractedItem) StepAP203_CcDesignContract::Items() const
+occ::handle<NCollection_HArray1<StepAP203_ContractedItem>> StepAP203_CcDesignContract::Items() const
 {
   return theItems;
 }
 
 //=================================================================================================
 
-void StepAP203_CcDesignContract::SetItems(const Handle(StepAP203_HArray1OfContractedItem)& aItems)
+void StepAP203_CcDesignContract::SetItems(
+  const occ::handle<NCollection_HArray1<StepAP203_ContractedItem>>& aItems)
 {
   theItems = aItems;
 }

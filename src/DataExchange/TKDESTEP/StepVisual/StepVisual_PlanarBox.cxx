@@ -16,12 +16,12 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(StepVisual_PlanarBox, StepVisual_PlanarExtent)
 
-StepVisual_PlanarBox::StepVisual_PlanarBox() {}
+StepVisual_PlanarBox::StepVisual_PlanarBox() = default;
 
-void StepVisual_PlanarBox::Init(const Handle(TCollection_HAsciiString)& aName,
-                                const Standard_Real                     aSizeInX,
-                                const Standard_Real                     aSizeInY,
-                                const StepGeom_Axis2Placement&          aPlacement)
+void StepVisual_PlanarBox::Init(const occ::handle<TCollection_HAsciiString>& aName,
+                                const double                                 aSizeInX,
+                                const double                                 aSizeInY,
+                                const StepGeom_Axis2Placement&               aPlacement)
 {
   // --- classe own fields ---
   placement = aPlacement;

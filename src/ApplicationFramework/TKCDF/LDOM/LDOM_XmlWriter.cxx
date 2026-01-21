@@ -144,13 +144,13 @@ static const char gEndComment[]   = {chDash, chDash, chCloseAngle, chNull};
 static char* getEncodingName(const char* theEncodingName)
 {
   const char* anEncoding = theEncodingName;
-  if (theEncodingName == NULL)
+  if (theEncodingName == nullptr)
   {
     static const char anUTFEncoding[] = {chLatin_U, chLatin_T, chLatin_F, chDash, chEight, chNull};
     anEncoding                        = anUTFEncoding;
   }
 
-  Standard_Integer aLen = 0;
+  int aLen = 0;
   while (anEncoding[aLen++] != chNull)
     ;
 
@@ -166,7 +166,7 @@ LDOM_XmlWriter::LDOM_XmlWriter(const char* theEncoding)
     : myEncodingName(::getEncodingName(theEncoding)),
       myIndent(0),
       myCurIndent(0),
-      myABuffer(NULL),
+      myABuffer(nullptr),
       myABufferLen(0)
 {
   ;
@@ -178,7 +178,7 @@ LDOM_XmlWriter::~LDOM_XmlWriter()
 {
   delete[] myEncodingName;
 
-  if (myABuffer != NULL)
+  if (myABuffer != nullptr)
   {
     delete[] myABuffer;
   }
@@ -235,7 +235,7 @@ void LDOM_XmlWriter::Write(Standard_OStream& theOStream, const LDOM_Node& theNod
       // Output any attributes of this element
       const LDOM_Element& anElemToWrite = (const LDOM_Element&)theNode;
       LDOM_NodeList       aListAtt      = anElemToWrite.GetAttributesList();
-      Standard_Integer    aListInd      = aListAtt.getLength();
+      int                 aListInd      = aListAtt.getLength();
 
       while (aListInd--)
       {
@@ -245,7 +245,7 @@ void LDOM_XmlWriter::Write(Standard_OStream& theOStream, const LDOM_Node& theNod
 
       //  Test for the presence of children
       LDOM_Node aChild = theNode.getFirstChild();
-      if (aChild != 0)
+      if (aChild != nullptr)
       {
         // There are children. Close start-tag, and output children.
         Write(theOStream, chCloseAngle);
@@ -254,8 +254,8 @@ void LDOM_XmlWriter::Write(Standard_OStream& theOStream, const LDOM_Node& theNod
           Write(theOStream, chLF);
         }
 
-        Standard_Boolean isChildElem = Standard_False;
-        while (aChild != 0)
+        bool isChildElem = false;
+        while (aChild != nullptr)
         {
           isChildElem = (aChild.getNodeType() == LDOM_Node::ELEMENT_NODE);
           if (isChildElem)
@@ -334,7 +334,7 @@ void LDOM_XmlWriter::Write(Standard_OStream& theOStream, const LDOMBasicString& 
   switch (theString.Type())
   {
     case LDOMBasicString::LDOM_Integer: {
-      Standard_Integer aValue;
+      int aValue;
       theString.GetInteger(aValue);
 
       TCollection_AsciiString aStrValue(aValue);
@@ -347,7 +347,7 @@ void LDOM_XmlWriter::Write(Standard_OStream& theOStream, const LDOMBasicString& 
       const char* aStr = theString.GetString();
       if (aStr)
       {
-        const Standard_Size aLen = strlen(aStr);
+        const size_t aLen = strlen(aStr);
         if (aLen > 0)
         {
           theOStream.write(aStr, aLen);
@@ -360,8 +360,8 @@ void LDOM_XmlWriter::Write(Standard_OStream& theOStream, const LDOMBasicString& 
       const char* aStr = theString.GetString();
       if (aStr)
       {
-        Standard_Integer aLen;
-        char*            encStr = LDOM_CharReference::Encode(aStr, aLen, Standard_False);
+        int   aLen;
+        char* encStr = LDOM_CharReference::Encode(aStr, aLen, false);
         if (aLen > 0)
         {
           theOStream.write(encStr, aLen);
@@ -390,7 +390,7 @@ void LDOM_XmlWriter::Write(Standard_OStream& theOStream, const char theChar)
 //=======================================================================
 void LDOM_XmlWriter::Write(Standard_OStream& theOStream, const char* theString)
 {
-  Standard_Size aLength = strlen(theString);
+  size_t aLength = strlen(theString);
   if (aLength > 0)
   {
     theOStream.write(theString, aLength);
@@ -411,13 +411,13 @@ void LDOM_XmlWriter::WriteAttribute(Standard_OStream& theOStream, const LDOM_Nod
   // Integer attribute value
   if (aValueStr.Type() == LDOMBasicString::LDOM_Integer)
   {
-    Standard_Integer anIntValue;
+    int anIntValue;
     aValueStr.GetInteger(anIntValue);
 
-    aLength = (Standard_Integer)(20 + strlen(aName));
+    aLength = (int)(20 + strlen(aName));
     if (aLength > myABufferLen)
     {
-      if (myABuffer != NULL)
+      if (myABuffer != nullptr)
       {
         delete[] myABuffer;
       }
@@ -425,7 +425,7 @@ void LDOM_XmlWriter::WriteAttribute(Standard_OStream& theOStream, const LDOM_Nod
       myABuffer    = new char[aLength + 1];
       myABufferLen = aLength;
     }
-    sprintf(myABuffer,
+    Sprintf(myABuffer,
             "%c%s%c%c%d%c",
             chSpace,
             aName,
@@ -433,7 +433,7 @@ void LDOM_XmlWriter::WriteAttribute(Standard_OStream& theOStream, const LDOM_Nod
             chDoubleQuote,
             anIntValue,
             chDoubleQuote);
-    aLength = (Standard_Integer)strlen(myABuffer);
+    aLength = (int)strlen(myABuffer);
   }
   else // String attribute value
   {
@@ -442,17 +442,17 @@ void LDOM_XmlWriter::WriteAttribute(Standard_OStream& theOStream, const LDOM_Nod
     if (aValueStr.Type() == LDOMBasicString::LDOM_AsciiDocClear)
     {
       encStr  = (char*)aValue;
-      aLength = (Standard_Integer)(4 + strlen(aValue) + strlen(aName));
+      aLength = (int)(4 + strlen(aValue) + strlen(aName));
     }
     else
     {
-      encStr = LDOM_CharReference::Encode(aValue, aLength, Standard_True);
-      aLength += (Standard_Integer)(4 + strlen(aName));
+      encStr = LDOM_CharReference::Encode(aValue, aLength, true);
+      aLength += (int)(4 + strlen(aName));
     }
 
     if (aLength > myABufferLen)
     {
-      if (myABuffer != NULL)
+      if (myABuffer != nullptr)
       {
         delete[] myABuffer;
       }
@@ -461,7 +461,7 @@ void LDOM_XmlWriter::WriteAttribute(Standard_OStream& theOStream, const LDOM_Nod
       myABufferLen = aLength;
     }
 
-    sprintf(myABuffer,
+    Sprintf(myABuffer,
             "%c%s%c%c%s%c",
             chSpace,
             aName,
