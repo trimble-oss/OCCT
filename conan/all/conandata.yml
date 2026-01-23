@@ -1,4 +1,7 @@
 sources:
+  "7.9.3":
+    url: "https://github.com/Open-Cascade-SAS/OCCT/archive/refs/tags/V7_9_3.tar.gz"
+    sha256: "5ecf094ec6b12d5413dfb851d8c3590c354058aee556e32e408bdfbf8c357d57"
   "7.8.0+TrimbleTech":
     url: "https://github.com/trimble-oss/OCCT/archive/refs/tags/7.8.0+TrimbleTech.tar.gz"
     sha256: "e486555e1842bb812f35cb5f636559b6b5d6507a974178ebcc38af2452a16f92"
