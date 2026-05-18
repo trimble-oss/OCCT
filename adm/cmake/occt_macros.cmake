@@ -398,12 +398,14 @@ function (COLLECT_AND_INSTALL_OCCT_HEADER_FILES THE_ROOT_TARGET_OCCT_DIR THE_OCC
 
     # Check if the file already exists in the target directory
     if (TO_FORCE_COPY OR NOT EXISTS "${TARGET_FILE}")
-      if (BUILD_INCLUDE_SYMLINK)
-        file (CREATE_LINK "${OCCT_HEADER_FILE}" "${TARGET_FILE}" SYMBOLIC)
-      else()
-        set (OCCT_HEADER_FILE_CONTENT "#include \"${OCCT_HEADER_FILE}\"")
-        configure_file ("${TEMPLATE_HEADER_PATH}" "${TARGET_FILE}" @ONLY)
-      endif()
+	  configure_file ("${OCCT_HEADER_FILE}" "${TARGET_FILE}" COPYONLY)
+  	  # JHL 2025-09-24, Copy files instead of symlink.
+      #if (BUILD_INCLUDE_SYMLINK)
+      #  file (CREATE_LINK "${OCCT_HEADER_FILE}" "${TARGET_FILE}" SYMBOLIC)
+      #else()
+      #  set (OCCT_HEADER_FILE_CONTENT "#include \"${OCCT_HEADER_FILE}\"")
+      #  configure_file ("${TEMPLATE_HEADER_PATH}" "${TARGET_FILE}" @ONLY)
+      #endif()
     endif()
   endforeach()
 

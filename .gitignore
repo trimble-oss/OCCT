@@ -124,3 +124,11 @@ cmake_install.cmake
 /.CONTINUE.md
 /.AIDER.md
 /.WINDSURF.md
+/install
+
+# CMake builds (trimble-technology)
+Build/
+BuildDll-142/
+BuildStatic-142/
+android-arm64/
+android-x86/
