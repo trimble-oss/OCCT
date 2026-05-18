@@ -22,7 +22,7 @@
 
 #include <math.hxx>
 #include <AppParCurves_MultiPoint.hxx>
-#include <AppCont_ContMatrices.hxx>
+#include <AppCont_ContMatrices.pxx>
 #include <PLib.hxx>
 
 //=================================================================================================
@@ -69,13 +69,17 @@ void AppCont_LeastSquare::FixSingleBorderPoint(const AppCont_Function&       the
 
       // from the third iteration
       if (anIter > 2 && aCurrDist / aPrevDist > 10.0)
+      {
         break;
+      }
     }
     aPrevP    = aTabP;
     aPrevP2d  = aTabP2d;
     aPrevDist = aCurrDist;
     if (aPrevDist <= eps)
+    {
       break;
+    }
   }
   theFix2d = aPrevP2d;
   theFix   = aPrevP;
@@ -128,14 +132,18 @@ AppCont_LeastSquare::AppCont_LeastSquare(const AppCont_Function&       SSP,
   {
     Ok = SSP.D1(U0, aTabV2d, aTabV);
     if (!Ok)
+    {
       myFirstC = AppParCurves_PassPoint;
+    }
   }
 
   if (myLastC == AppParCurves_TangencyPoint)
   {
     Ok = SSP.D1(U1, aTabV2d, aTabV);
     if (!Ok)
+    {
       myLastC = AppParCurves_PassPoint;
+    }
   }
 
   // Compute control points params on which approximation will be built.
@@ -212,9 +220,9 @@ AppCont_LeastSquare::AppCont_LeastSquare(const AppCont_Function&       SSP,
     }
   }
 
-  VBernstein(classe, myNbPoints, myVB);
+  AppCont_ContMatrices::VBernstein(classe, myNbPoints, myVB);
 
-  // Traitement du second membre:
+  // Processing of the right-hand side:
   NCollection_Array1<double> tmppoints(1, nbcol);
 
   for (c = 1; c <= classe; c++)
@@ -238,8 +246,8 @@ AppCont_LeastSquare::AppCont_LeastSquare(const AppCont_Function&       SSP,
   {
 
     math_Matrix InvM(1, classe, 1, classe);
-    InvMMatrix(classe, InvM);
-    // Calcul direct des poles:
+    AppCont_ContMatrices::InvMMatrix(classe, InvM);
+    // Direct computation of poles:
 
     for (i = 1; i <= classe; i++)
     {
@@ -257,7 +265,7 @@ AppCont_LeastSquare::AppCont_LeastSquare(const AppCont_Function&       SSP,
   else
   {
     math_Matrix M(1, classe, 1, classe);
-    MMatrix(classe, M);
+    AppCont_ContMatrices::MMatrix(classe, M);
     NCollection_Array1<gp_Pnt2d> aFixP2d(1, std::max(myNbP2d, 1));
     NCollection_Array1<gp_Pnt>   aFixP(1, std::max(myNbP, 1));
 
@@ -270,17 +278,25 @@ AppCont_LeastSquare::AppCont_LeastSquare(const AppCont_Function&       SSP,
       for (k = 1; k <= myNbP; k++)
       {
         if (aFixP(k).Distance(aTabP(k)) > 0.1)
+        {
           (aFixP(k)).Coord(myPoles(1, i2), myPoles(1, i2 + 1), myPoles(1, i2 + 2));
+        }
         else
+        {
           (aTabP(k)).Coord(myPoles(1, i2), myPoles(1, i2 + 1), myPoles(1, i2 + 2));
+        }
         i2 += 3;
       }
       for (k = 1; k <= myNbP2d; k++)
       {
         if (aFixP2d(k).Distance(aTabP2d(k)) > 0.1)
+        {
           (aFixP2d(k)).Coord(myPoles(1, i2), myPoles(1, i2 + 1));
+        }
         else
+        {
           (aTabP2d(k)).Coord(myPoles(1, i2), myPoles(1, i2 + 1));
+        }
         i2 += 2;
       }
 
@@ -305,17 +321,25 @@ AppCont_LeastSquare::AppCont_LeastSquare(const AppCont_Function&       SSP,
       for (k = 1; k <= myNbP; k++)
       {
         if (aFixP(k).Distance(aTabP(k)) > 0.1)
+        {
           (aFixP(k)).Coord(myPoles(classe, i2), myPoles(classe, i2 + 1), myPoles(classe, i2 + 2));
+        }
         else
+        {
           (aTabP(k)).Coord(myPoles(classe, i2), myPoles(classe, i2 + 1), myPoles(classe, i2 + 2));
+        }
         i2 += 3;
       }
       for (k = 1; k <= myNbP2d; k++)
       {
         if (aFixP2d(k).Distance(aTabP2d(k)) > 0.1)
+        {
           (aFixP2d(k)).Coord(myPoles(classe, i2), myPoles(classe, i2 + 1));
+        }
         else
+        {
           (aTabP2d(k)).Coord(myPoles(classe, i2), myPoles(classe, i2 + 1));
+        }
         i2 += 2;
       }
 
@@ -334,7 +358,7 @@ AppCont_LeastSquare::AppCont_LeastSquare(const AppCont_Function&       SSP,
     if (myFirstC == AppParCurves_PassPoint)
     {
       bdeb = 2;
-      // mise a jour du second membre:
+      // Update the right-hand side:
       for (i = 1; i <= classe; i++)
       {
         Coeff = M(i, 1);
@@ -360,7 +384,7 @@ AppCont_LeastSquare::AppCont_LeastSquare(const AppCont_Function&       SSP,
 
     if (myFirstC == AppParCurves_TangencyPoint)
     {
-      // On fixe le second pole::
+      // Fix the second pole:
       bdeb = 3;
       SSP.D1(U0, aTabV2d, aTabV);
 
@@ -448,16 +472,16 @@ AppCont_LeastSquare::AppCont_LeastSquare(const AppCont_Function&       SSP,
       // ===========
       math_Matrix IBP(bdeb, bfin, bdeb, bfin);
 
-      // dans IBPMatrix at IBTMatrix ne sont stockees que les resultats pour
-      // une classe inferieure ou egale a 26 (pour l instant du moins.)
+      // In IBPMatrix and IBTMatrix only results for a degree
+      // less than or equal to 26 are stored (for now at least).
 
       if (bdeb == 2 && bfin == classe - 1 && classe <= 26)
       {
-        IBPMatrix(classe, IBP);
+        AppCont_ContMatrices::IBPMatrix(classe, IBP);
       }
       else if (bdeb == 3 && bfin == classe - 2 && classe <= 26)
       {
-        IBTMatrix(classe, IBP);
+        AppCont_ContMatrices::IBTMatrix(classe, IBP);
       }
       else
       {
@@ -500,7 +524,7 @@ const AppParCurves_MultiCurve& AppCont_LeastSquare::Value()
   gp_Pnt2d Pt2d;
   int      ideb = 1, ifin = myDegre + 1;
 
-  // On met le resultat dans les curves correspondantes
+  // Store the result in the corresponding curves
   for (i = ideb; i <= ifin; i++)
   {
     j2 = 1;

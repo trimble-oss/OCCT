@@ -27,10 +27,7 @@
 #include <NCollection_Array1.hxx>
 #include <NCollection_HArray1.hxx>
 
-//=======================================================================
-// class : GeomConvert_ApproxCurve_Eval
-// purpose: evaluator class for approximation
-//=======================================================================
+//=================================================================================================
 class GeomConvert_ApproxCurve_Eval : public AdvApprox_EvaluatorFunction
 {
 public:
@@ -206,6 +203,6 @@ double GeomConvert_ApproxCurve::MaxError() const
 
 void GeomConvert_ApproxCurve::Dump(Standard_OStream& o) const
 {
-  o << "******* Dump of ApproxCurve *******" << std::endl;
-  o << "*******Error   " << MaxError() << std::endl;
+  o << "******* Dump of ApproxCurve *******" << '\n';
+  o << "*******Error   " << MaxError() << '\n';
 }

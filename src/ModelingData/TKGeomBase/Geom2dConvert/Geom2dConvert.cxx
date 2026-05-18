@@ -74,24 +74,12 @@ static occ::handle<Geom2d_BSplineCurve> BSplineCurveBuilder(
 {
 
   occ::handle<Geom2d_BSplineCurve> TheCurve;
-  int                              NbPoles = Convert.NbPoles();
-  int                              NbKnots = Convert.NbKnots();
-  Array1OfPnt2d                    Poles(1, NbPoles);
-  Array1OfReal                     Weights(1, NbPoles);
-  Array1OfReal                     Knots(1, NbKnots);
-  Array1OfInteger                  Mults(1, NbKnots);
-  int                              i;
-  for (i = 1; i <= NbPoles; i++)
-  {
-    Poles(i)   = Convert.Pole(i);
-    Weights(i) = Convert.Weight(i);
-  }
-  for (i = 1; i <= NbKnots; i++)
-  {
-    Knots(i) = Convert.Knot(i);
-    Mults(i) = Convert.Multiplicity(i);
-  }
-  TheCurve = new BSplineCurve(Poles, Weights, Knots, Mults, Convert.Degree(), Convert.IsPeriodic());
+  TheCurve = new BSplineCurve(Convert.Poles(),
+                              Convert.Weights(),
+                              Convert.Knots(),
+                              Convert.Multiplicities(),
+                              Convert.Degree(),
+                              Convert.IsPeriodic());
 
   gp_Ax22d Axis = TheConic->Position();
   if ((Axis.XDirection() ^ Axis.YDirection()) < 0.)
@@ -122,11 +110,15 @@ occ::handle<Geom2d_BSplineCurve> Geom2dConvert::SplitBSplineCurve(
   int TheFirst = C->FirstUKnotIndex();
   int TheLast  = C->LastUKnotIndex();
   if (FromK1 == ToK2)
+  {
     throw Standard_DomainError();
+  }
   int FirstK = std::min(FromK1, ToK2);
   int LastK  = std::max(FromK1, ToK2);
   if (FirstK < TheFirst || LastK > TheLast)
+  {
     throw Standard_OutOfRange();
+  }
 
   occ::handle<Geom2d_BSplineCurve> NewCurve = occ::down_cast<Geom2d_BSplineCurve>(C->Copy());
 
@@ -135,12 +127,16 @@ occ::handle<Geom2d_BSplineCurve> Geom2dConvert::SplitBSplineCurve(
   if (C->IsPeriodic())
   {
     if (!SameOrientation)
+    {
       NewCurve->Reverse();
+    }
   }
   else
   {
     if (FromK1 > ToK2)
+    {
       NewCurve->Reverse();
+    }
   }
   return NewCurve;
 }
@@ -165,12 +161,16 @@ occ::handle<Geom2d_BSplineCurve> Geom2dConvert::SplitBSplineCurve(
   if (C->IsPeriodic())
   {
     if (!SameOrientation)
+    {
       C1->Reverse();
+    }
   }
   else
   {
     if (FromU1 > ToU2)
+    {
       C1->Reverse();
+    }
   }
 
   return C1;
@@ -194,14 +194,18 @@ occ::handle<Geom2d_BSplineCurve> Geom2dConvert::CurveToBSplineCurve(
     double U1                              = Ctrim->FirstParameter();
     double U2                              = Ctrim->LastParameter();
 
-    // Si la courbe n'est pas vraiment restreinte, on ne risque pas
-    // le Raise dans le BS->Segment.
+    // If the curve is not truly restricted, there is no risk of
+    // a Raise in BS->Segment.
     if (!Curv->IsPeriodic())
     {
       if (U1 < Curv->FirstParameter())
+      {
         U1 = Curv->FirstParameter();
+      }
       if (U2 > Curv->LastParameter())
+      {
         U2 = Curv->LastParameter();
+      }
     }
 
     if (Curv->IsKind(STANDARD_TYPE(Geom2d_Line)))
@@ -322,21 +326,17 @@ occ::handle<Geom2d_BSplineCurve> Geom2dConvert::CurveToBSplineCurve(
       occ::handle<Geom2d_BezierCurve> CBez = occ::down_cast<Geom2d_BezierCurve>(Curv->Copy());
 
       CBez->Segment(U1, U2);
-      int             NbPoles = CBez->NbPoles();
-      int             Degree  = CBez->Degree();
-      Array1OfPnt2d   Poles(1, NbPoles);
+      int             Degree = CBez->Degree();
       Array1OfReal    Knots(1, 2);
       Array1OfInteger Mults(1, 2);
-      Knots(1) = 0.0;
-      Knots(2) = 1.0;
-      Mults(1) = Degree + 1;
-      Mults(2) = Degree + 1;
-      CBez->Poles(Poles);
+      Knots(1)                   = 0.0;
+      Knots(2)                   = 1.0;
+      Mults(1)                   = Degree + 1;
+      Mults(2)                   = Degree + 1;
+      const Array1OfPnt2d& Poles = CBez->Poles();
       if (CBez->IsRational())
       {
-        Array1OfReal Weights(1, NbPoles);
-        CBez->Weights(Weights);
-        TheCurve = new BSplineCurve(Poles, Weights, Knots, Mults, Degree);
+        TheCurve = new BSplineCurve(Poles, CBez->WeightsArray(), Knots, Mults, Degree);
       }
       else
       {
@@ -358,9 +358,13 @@ occ::handle<Geom2d_BSplineCurve> Geom2dConvert::CurveToBSplineCurve(
       int                       MaxSegments = 16, MaxDegree = 14;
       Geom2dConvert_ApproxCurve ApprCOffs(C, Tol2d, Order, MaxSegments, MaxDegree);
       if (ApprCOffs.HasResult())
+      {
         TheCurve = ApprCOffs.Curve();
+      }
       else
+      {
         throw Standard_ConstructionError();
+      }
     }
 
     else
@@ -396,21 +400,17 @@ occ::handle<Geom2d_BSplineCurve> Geom2dConvert::CurveToBSplineCurve(
     {
       occ::handle<Geom2d_BezierCurve> CBez = occ::down_cast<Geom2d_BezierCurve>(C);
 
-      int             NbPoles = CBez->NbPoles();
-      int             Degree  = CBez->Degree();
-      Array1OfPnt2d   Poles(1, NbPoles);
+      int             Degree = CBez->Degree();
       Array1OfReal    Knots(1, 2);
       Array1OfInteger Mults(1, 2);
-      Knots(1) = 0.0;
-      Knots(2) = 1.0;
-      Mults(1) = Degree + 1;
-      Mults(2) = Degree + 1;
-      CBez->Poles(Poles);
+      Knots(1)                   = 0.0;
+      Knots(2)                   = 1.0;
+      Mults(1)                   = Degree + 1;
+      Mults(2)                   = Degree + 1;
+      const Array1OfPnt2d& Poles = CBez->Poles();
       if (CBez->IsRational())
       {
-        Array1OfReal Weights(1, NbPoles);
-        CBez->Weights(Weights);
-        TheCurve = new BSplineCurve(Poles, Weights, Knots, Mults, Degree);
+        TheCurve = new BSplineCurve(Poles, CBez->WeightsArray(), Knots, Mults, Degree);
       }
       else
       {
@@ -430,9 +430,13 @@ occ::handle<Geom2d_BSplineCurve> Geom2dConvert::CurveToBSplineCurve(
       int                       MaxSegments = 16, MaxDegree = 14;
       Geom2dConvert_ApproxCurve ApprCOffs(C, Tol2d, Order, MaxSegments, MaxDegree);
       if (ApprCOffs.HasResult())
+      {
         TheCurve = ApprCOffs.Curve();
+      }
       else
+      {
         throw Standard_ConstructionError();
+      }
     }
 
     else
@@ -470,48 +474,39 @@ public:
       theResult = aPoint.Coord(2);
     }
     else
+    {
       theErrorCode = 1;
+    }
   }
 
 private:
   occ::handle<Geom2d_BSplineCurve> myAncore;
 };
 
-//=======================================================================
-// function : MultNumandDenom
-// purpose  : Multiply two BSpline curves to make one
-//=======================================================================
+//=================================================================================================
 
 static occ::handle<Geom2d_BSplineCurve> MultNumandDenom(const occ::handle<Geom2d_BSplineCurve>& a,
                                                         const occ::handle<Geom2d_BSplineCurve>& BS)
 
 {
-  NCollection_Array1<double>               aKnots(1, a->NbKnots());
-  NCollection_Array1<double>               BSKnots(1, BS->NbKnots());
-  NCollection_Array1<double>               BSFlatKnots(1, BS->NbPoles() + BS->Degree() + 1);
-  NCollection_Array1<double>               BSWeights(1, BS->NbPoles());
-  NCollection_Array1<int>                  aMults(1, a->NbKnots());
-  NCollection_Array1<int>                  BSMults(1, BS->NbKnots());
-  NCollection_Array1<gp_Pnt2d>             aPoles(1, a->NbPoles());
-  NCollection_Array1<gp_Pnt2d>             BSPoles(1, BS->NbPoles());
   occ::handle<Geom2d_BSplineCurve>         res;
   occ::handle<NCollection_HArray1<double>> resKnots;
   occ::handle<NCollection_HArray1<int>>    resMults;
   double                                   start_value, end_value;
   int                                      resNbPoles, degree, ii, jj, aStatus;
 
-  BS->Knots(BSKnots);
-  BS->Multiplicities(BSMults);
-  BS->Poles(BSPoles);
-  BS->Weights(BSWeights);
-  BS->KnotSequence(BSFlatKnots);
-  start_value      = BSKnots(1);
-  end_value        = BSKnots(BS->NbKnots());
-  double tolerance = 10. * Epsilon(std::abs(end_value));
+  const NCollection_Array1<double>& BSKnots = BS->Knots();
+  const NCollection_Array1<int>&    BSMults = BS->Multiplicities();
+  NCollection_Array1<gp_Pnt2d>      BSPoles(BS->Poles());
+  const NCollection_Array1<double>& BSWeights   = BS->WeightsArray();
+  const NCollection_Array1<double>& BSFlatKnots = BS->KnotSequence();
+  start_value                                   = BSKnots(1);
+  end_value                                     = BSKnots(BS->NbKnots());
+  double tolerance                              = 10. * Epsilon(std::abs(end_value));
 
-  a->Knots(aKnots);
-  a->Poles(aPoles);
-  a->Multiplicities(aMults);
+  NCollection_Array1<double>          aKnots(a->Knots());
+  const NCollection_Array1<gp_Pnt2d>& aPoles = a->Poles();
+  const NCollection_Array1<int>&      aMults = a->Multiplicities();
   BSplCLib::Reparametrize(BS->FirstParameter(), BS->LastParameter(), aKnots);
   occ::handle<Geom2d_BSplineCurve> anAncore =
     new Geom2d_BSplineCurve(aPoles, aKnots, aMults, a->Degree());
@@ -535,9 +530,13 @@ static occ::handle<Geom2d_BSplineCurve> MultNumandDenom(const occ::handle<Geom2d
   NCollection_Array1<double>   resFlatKnots(1, resNbPoles + degree + 1);
   BSplCLib::KnotSequence(resKnots->Array1(), resMults->Array1(), resFlatKnots);
   for (ii = 1; ii <= BS->NbPoles(); ii++)
+  {
     for (jj = 1; jj <= 2; jj++)
+    {
       BSPoles(ii).SetCoord(jj, BSPoles(ii).Coord(jj) * BSWeights(ii));
-  // POP pour NT
+    }
+  }
+  // POP for NT
   Geom2dConvert_law_evaluator ev(anAncore);
   BSplCLib::FunctionMultiply(ev,
                              BS->Degree(),
@@ -556,18 +555,18 @@ static occ::handle<Geom2d_BSplineCurve> MultNumandDenom(const occ::handle<Geom2d
                              resDenPoles,
                              aStatus);
   for (ii = 1; ii <= resNbPoles; ii++)
+  {
     for (jj = 1; jj <= 2; jj++)
+    {
       resPoles(ii).SetCoord(jj, resNumPoles(ii).Coord(jj) / resDenPoles(ii));
+    }
+  }
   res =
     new Geom2d_BSplineCurve(resPoles, resDenPoles, resKnots->Array1(), resMults->Array1(), degree);
   return res;
 }
 
-//=======================================================================
-// function : Pretreatment
-// purpose  : Put the two first and two last weights at one if they are
-//           equal
-//=======================================================================
+//=================================================================================================
 
 static void Pretreatment(NCollection_Array1<occ::handle<Geom2d_BSplineCurve>>& tab)
 
@@ -582,26 +581,25 @@ static void Pretreatment(NCollection_Array1<occ::handle<Geom2d_BSplineCurve>>& t
       a = tab(i)->Weight(1);
       if ((tab(i)->Weight(2) == a) && (tab(i)->Weight(tab(i)->NbPoles() - 1) == a)
           && (tab(i)->Weight(tab(i)->NbPoles()) == a))
+      {
 
         for (j = 1; j <= tab(i)->NbPoles(); j++)
+        {
           tab(i)->SetWeight(j, tab(i)->Weight(j) / a);
+        }
+      }
     }
   }
 }
 
-//=======================================================================
-// function : NeedToBeTreated
-// purpose  : Say if the BSpline is rational and if the two first and two
-//           last weights are different
-//=======================================================================
+//=================================================================================================
 
 static bool NeedToBeTreated(const occ::handle<Geom2d_BSplineCurve>& BS)
 
 {
-  NCollection_Array1<double> tabWeights(1, BS->NbPoles());
   if (BS->IsRational())
   {
-    BS->Weights(tabWeights);
+    const NCollection_Array1<double>& tabWeights = BS->WeightsArray();
     return (BSplCLib::IsRational(tabWeights, 1, BS->NbPoles()))
            && ((BS->Weight(1) < (1 - Precision::Confusion()))
                || (BS->Weight(1) > (1 + Precision::Confusion()))
@@ -613,14 +611,12 @@ static bool NeedToBeTreated(const occ::handle<Geom2d_BSplineCurve>& BS)
                || (BS->Weight(BS->NbPoles()) > (1 + Precision::Confusion())));
   }
   else
+  {
     return false;
+  }
 }
 
-//=======================================================================
-// function : Need2DegRepara
-// purpose  : in the case of wire closed G1 it says if you will to use a
-//           two degree reparametrisation to close it C1
-//=======================================================================
+//=================================================================================================
 
 static bool Need2DegRepara(const NCollection_Array1<occ::handle<Geom2d_BSplineCurve>>& tab)
 
@@ -640,10 +636,7 @@ static bool Need2DegRepara(const NCollection_Array1<occ::handle<Geom2d_BSplineCu
          || (Rapport < (1.0e0 - Precision::Confusion()));
 }
 
-//=======================================================================
-// function : Indexmin
-// purpose  : Give the index of the curve which has the lowest degree
-//=======================================================================
+//=================================================================================================
 
 static int Indexmin(const NCollection_Array1<occ::handle<Geom2d_BSplineCurve>>& tab)
 {
@@ -651,11 +644,13 @@ static int Indexmin(const NCollection_Array1<occ::handle<Geom2d_BSplineCurve>>& 
 
   degree = tab(0)->Degree();
   for (i = 0; i <= tab.Length() - 1; i++)
+  {
     if (tab(i)->Degree() <= degree)
     {
       degree = tab(i)->Degree();
       index  = i;
     }
+  }
   return index;
 }
 
@@ -683,7 +678,9 @@ static void ReorderArrayOfG1(NCollection_Array1<occ::handle<Geom2d_BSplineCurve>
       tabbisG1(i)         = tabG1(i);
     }
     else
+    {
       ArraybisOfCurves(i) = ArrayOfCurves(i);
+    }
   }
 
   for (i = 0; i <= (ArrayOfCurves.Length() - (StartIndex + 2)); i++)
@@ -708,7 +705,9 @@ static void ReorderArrayOfG1(NCollection_Array1<occ::handle<Geom2d_BSplineCurve>
       tabG1(i)         = tabbisG1(i - (ArrayOfCurves.Length() - (StartIndex + 1)));
     }
     else
+    {
       ArrayOfCurves(i) = ArraybisOfCurves(i - (ArrayOfCurves.Length() - (StartIndex + 1)));
+    }
   }
 }
 
@@ -846,7 +845,9 @@ static GeomAbs_Shape Continuity(const occ::handle<Geom2d_Curve>& C1,
     }
   }
   else
+  {
     throw Standard_Failure("Courbes non jointives");
+  }
   return cont;
 }
 
@@ -905,12 +906,12 @@ void Geom2dConvert::ConcatG1(
 {
   int nb_curve = ArrayOfCurves.Length(), nb_vertexG1, nb_group = 0, index = 0, i, ii, j, jj,
       indexmin, nb_vertex_group0 = 0;
-  double lambda, // coeff de raccord G1
+  double lambda, // G1 junction coefficient
     First, PreLast = 0;
-  gp_Vec2d                         Vec1, Vec2; // vecteurs tangents consecutifs
+  gp_Vec2d                         Vec1, Vec2; // consecutive tangent vectors
   gp_Pnt2d                         Pint;
   occ::handle<Geom2d_BSplineCurve> Curve1, Curve2;
-  NCollection_Array1<bool>         tabG1(0, nb_curve - 2); // tableau de continuite G1 aux raccords
+  NCollection_Array1<bool>         tabG1(0, nb_curve - 2); // G1 continuity table at junctions
   NCollection_Array1<double>       local_tolerance(0, ArrayOfToler.Length() - 1);
 
   for (i = 0; i < ArrayOfToler.Length(); i++)
@@ -924,29 +925,37 @@ void Geom2dConvert::ConcatG1(
       First = ArrayOfCurves(i)->FirstParameter();
       if (Continuity(ArrayOfCurves(i - 1), ArrayOfCurves(i), PreLast, First, true, true)
           < GeomAbs_C0)
-        // clang-format off
-       throw Standard_ConstructionError("Geom2dConvert curves not C0") ;                //renvoi d'une erreur
-      // clang-format on
+      {
+        throw Standard_ConstructionError("Geom2dConvert curves not C0"); // renvoi d'une erreur
+      }
       else
       {
         if (Continuity(ArrayOfCurves(i - 1), ArrayOfCurves(i), PreLast, First, true, true)
             >= GeomAbs_G1)
+        {
           tabG1(i - 1) = true; // True=Continuite G1
+        }
         else
+        {
           tabG1(i - 1) = false;
+        }
       }
     }
     PreLast = ArrayOfCurves(i)->LastParameter();
   }
 
   while (index <= nb_curve - 1)
-  { // determination des caracteristiques du Wire
+  { // Determination of Wire characteristics
     nb_vertexG1 = 0;
     while (((index + nb_vertexG1) <= nb_curve - 2) && (tabG1(index + nb_vertexG1)))
+    {
       nb_vertexG1++;
+    }
     nb_group++;
     if (index == 0)
+    {
       nb_vertex_group0 = nb_vertexG1;
+    }
     index = index + 1 + nb_vertexG1;
   }
 
@@ -970,14 +979,18 @@ void Geom2dConvert::ConcatG1(
   {
     Curve1 = ArrayOfCurves(nb_curve - 1);
     if (Curve1->Degree() > Geom2d_BSplineCurve::MaxDegree() / 2)
+    {
       ClosedFlag = false;
+    }
   }
 
   if ((nb_group == 1) && (ClosedFlag))
-  { // traitement d'un cas particulier
+  { // treatment of a particular case
     indexmin = Indexmin(ArrayOfCurves);
     if (indexmin != (ArrayOfCurves.Length() - 1))
+    {
       ReorderArrayOfG1(ArrayOfCurves, local_tolerance, tabG1, indexmin, ClosedTolerance);
+    }
     Curve2 = ArrayOfCurves(0);
     for (j = 1; j <= nb_curve - 1; j++)
     { // secondary loop inside each group
@@ -988,8 +1001,7 @@ void Geom2dConvert::ConcatG1(
         Curve2->D1(Curve2->LastParameter(), Pint, Vec1);
         Curve1->D1(Curve1->FirstParameter(), Pint, Vec2);
         lambda = Vec2.Magnitude() / Vec1.Magnitude();
-        NCollection_Array1<double> KnotC1(1, Curve1->NbKnots());
-        Curve1->Knots(KnotC1);
+        NCollection_Array1<double> KnotC1(Curve1->Knots());
         Curve1->D1(Curve1->LastParameter(), Pint, Vec2);
         ArrayOfCurves(0)->D1(ArrayOfCurves(0)->FirstParameter(), Pint, Vec1);
         double lambda2 = Vec1.Magnitude() / Vec2.Magnitude();
@@ -1002,8 +1014,7 @@ void Geom2dConvert::ConcatG1(
         c                         = umin;
         aPolynomialCoefficient[0] = c;
         NCollection_Array1<double> Curve1FlatKnots(1, Curve1->NbPoles() + Curve1->Degree() + 1);
-        NCollection_Array1<int>    KnotC1Mults(1, Curve1->NbKnots());
-        Curve1->Multiplicities(KnotC1Mults);
+        NCollection_Array1<int>    KnotC1Mults(Curve1->Multiplicities());
         BSplCLib::KnotSequence(KnotC1, KnotC1Mults, Curve1FlatKnots);
         KnotC1(1) = 0.0;
         for (ii = 2; ii <= KnotC1.Length(); ii++)
@@ -1011,11 +1022,12 @@ void Geom2dConvert::ConcatG1(
           KnotC1(ii) =
             (-b + std::sqrt(b * b - 4 * a * (c - KnotC1(ii)))) / (2 * a); // ifv 17.05.00 buc60667
         }
-        NCollection_Array1<gp_Pnt2d> Curve1Poles(1, Curve1->NbPoles());
-        Curve1->Poles(Curve1Poles);
+        NCollection_Array1<gp_Pnt2d> Curve1Poles(Curve1->Poles());
 
         for (ii = 1; ii <= Curve1->NbKnots(); ii++)
+        {
           KnotC1Mults(ii) = (Curve1->Degree() + KnotC1Mults(ii));
+        }
 
         NCollection_Array1<double> FlatKnots(1,
                                              Curve1FlatKnots.Length()
@@ -1024,12 +1036,15 @@ void Geom2dConvert::ConcatG1(
         BSplCLib::KnotSequence(KnotC1, KnotC1Mults, FlatKnots);
         NCollection_Array1<gp_Pnt2d> NewPoles(1, FlatKnots.Length() - (2 * Curve1->Degree() + 1));
         int                          aStatus;
-        NCollection_Array1<double>   Curve1Weights(1, Curve1->NbPoles());
-        Curve1->Weights(Curve1Weights);
+        const NCollection_Array1<double>& Curve1Weights = Curve1->WeightsArray();
         for (ii = 1; ii <= Curve1->NbPoles(); ii++)
+        {
           for (jj = 1; jj <= 2; jj++)
+          {
             Curve1Poles(ii).SetCoord(jj, Curve1Poles(ii).Coord(jj) * Curve1Weights(ii));
-        // POP pour NT
+          }
+        }
+        // POP for NT
         Geom2dConvert_reparameterise_evaluator ev(aPolynomialCoefficient);
         BSplCLib::FunctionReparameterise(ev,
                                          Curve1->Degree(),
@@ -1068,19 +1083,25 @@ void Geom2dConvert::ConcatG1(
         //					aStatus
         //					);
         for (ii = 1; ii <= NewPoles.Length(); ii++)
+        {
           for (jj = 1; jj <= 2; jj++)
+          {
             NewPoles(ii).SetCoord(jj, NewPoles(ii).Coord(jj) / NewWeights(ii));
+          }
+        }
         Curve1 =
           new Geom2d_BSplineCurve(NewPoles, NewWeights, KnotC1, KnotC1Mults, aNewCurveDegree);
       }
       Geom2dConvert_CompCurveToBSplineCurve C(Curve2);
       fusion = C.Add(Curve1,
-                     local_tolerance(j - 1)); // fusion de deux courbes adjacentes
+                     local_tolerance(j - 1)); // merge two adjacent curves
       if (!fusion)
+      {
         throw Standard_ConstructionError("Geom2dConvert Concatenation Error");
+      }
       Curve2 = C.BSplineCurve();
     }
-    Curve2->SetPeriodic(); // 1 seule courbe C1
+    Curve2->SetPeriodic(); // single C1 curve
     Curve2->RemoveKnot(Curve2->LastUKnotIndex(),
                        Curve2->Multiplicity(Curve2->LastUKnotIndex()) - 1,
                        Precision::Confusion());
@@ -1088,29 +1109,39 @@ void Geom2dConvert::ConcatG1(
   }
 
   else
-    // clang-format off
-   for (i=0;i<=nb_group-1;i++){                             //boucle principale sur chaque groupe de 
-     nb_vertexG1=0;                                         //continuite interne G1
-     
-     while (((index+nb_vertexG1)<=nb_curve-2)&&(tabG1(index+nb_vertexG1)))
-       nb_vertexG1++;
-      
-     for (j=index;j<=index+nb_vertexG1;j++){                //boucle secondaire a l'interieur de chaque groupe
-       Curve1=ArrayOfCurves(j);
-       
-       if (index==j)                                      //initialisation en debut de groupe
-	 ArrayOfConcatenated->SetValue(i,Curve1);
-       else{
-	 Geom2dConvert_CompCurveToBSplineCurve  C(ArrayOfConcatenated->Value(i));
-	 fusion=C.Add(Curve1,ArrayOfToler(j-1));          //fusion de deux courbes adjacentes
-          // clang-format on
+  {
+    for (i = 0; i <= nb_group - 1; i++)
+    {                  // main loop on each group of
+      nb_vertexG1 = 0; // internal G1 continuity
+
+      while (((index + nb_vertexG1) <= nb_curve - 2) && (tabG1(index + nb_vertexG1)))
+      {
+        nb_vertexG1++;
+      }
+
+      for (j = index; j <= index + nb_vertexG1; j++)
+      { // boucle secondaire a l'interieur de chaque groupe
+        Curve1 = ArrayOfCurves(j);
+
+        if (index == j)
+        { // initialisation en debut de groupe
+          ArrayOfConcatenated->SetValue(i, Curve1);
+        }
+        else
+        {
+          Geom2dConvert_CompCurveToBSplineCurve C(ArrayOfConcatenated->Value(i));
+          fusion = C.Add(Curve1, ArrayOfToler(j - 1)); // fusion de deux courbes adjacentes
+
           if (!fusion)
+          {
             throw Standard_ConstructionError("Geom2dConvert Concatenation Error");
+          }
           ArrayOfConcatenated->SetValue(i, C.BSplineCurve());
         }
       }
       index = index + 1 + nb_vertexG1;
     }
+  }
 }
 
 //=================================================================================================
@@ -1146,12 +1177,12 @@ void Geom2dConvert::ConcatC1(
 {
   int nb_curve = ArrayOfCurves.Length(), nb_vertexG1, nb_group = 0, index = 0, i, ii, j, jj,
       indexmin, nb_vertex_group0 = 0;
-  double lambda, // coeff de raccord G1
+  double lambda, // G1 junction coefficient
     First, PreLast = 0;
-  gp_Vec2d                         Vec1, Vec2; // vecteurs tangents consecutifs
+  gp_Vec2d                         Vec1, Vec2; // consecutive tangent vectors
   gp_Pnt2d                         Pint;
   occ::handle<Geom2d_BSplineCurve> Curve1, Curve2;
-  NCollection_Array1<bool>         tabG1(0, nb_curve - 2); // tableau de continuite G1 aux raccords
+  NCollection_Array1<bool>         tabG1(0, nb_curve - 2); // G1 continuity table at junctions
   NCollection_Array1<double>       local_tolerance(0, ArrayOfToler.Length() - 1);
 
   for (i = 0; i < ArrayOfToler.Length(); i++)
@@ -1172,9 +1203,9 @@ void Geom2dConvert::ConcatC1(
                      ArrayOfToler(i - 1),
                      AngularTolerance)
           < GeomAbs_C0)
-        // clang-format off
-       throw Standard_ConstructionError("Geom2dConvert curves not C0") ;                //renvoi d'une erreur
-      // clang-format on
+      {
+        throw Standard_ConstructionError("Geom2dConvert curves not C0"); // renvoi d'une erreur
+      }
       else
       {
         if (Continuity(ArrayOfCurves(i - 1),
@@ -1186,22 +1217,30 @@ void Geom2dConvert::ConcatC1(
                        ArrayOfToler(i - 1),
                        AngularTolerance)
             >= GeomAbs_G1)
+        {
           tabG1(i - 1) = true; // True=Continuite G1
+        }
         else
+        {
           tabG1(i - 1) = false;
+        }
       }
     }
     PreLast = ArrayOfCurves(i)->LastParameter();
   }
 
   while (index <= nb_curve - 1)
-  { // determination des caracteristiques du Wire
+  { // Determination of Wire characteristics
     nb_vertexG1 = 0;
     while (((index + nb_vertexG1) <= nb_curve - 2) && (tabG1(index + nb_vertexG1)))
+    {
       nb_vertexG1++;
+    }
     nb_group++;
     if (index == 0)
+    {
       nb_vertex_group0 = nb_vertexG1;
+    }
     index = index + 1 + nb_vertexG1;
   }
 
@@ -1225,16 +1264,20 @@ void Geom2dConvert::ConcatC1(
   {
     Curve1 = ArrayOfCurves(nb_curve - 1);
     if (Curve1->Degree() > Geom2d_BSplineCurve::MaxDegree() / 2)
+    {
       ClosedFlag = false;
+    }
   }
 
   if ((nb_group == 1) && (ClosedFlag))
-  { // traitement d'un cas particulier
+  { // treatment of a particular case
     ArrayOfIndices->SetValue(0, 0);
     ArrayOfIndices->SetValue(1, 0);
     indexmin = Indexmin(ArrayOfCurves);
     if (indexmin != (ArrayOfCurves.Length() - 1))
+    {
       ReorderArrayOfG1(ArrayOfCurves, local_tolerance, tabG1, indexmin, ClosedTolerance);
+    }
     for (j = 0; j <= nb_curve - 1; j++)
     { // secondary loop inside each group
       if (NeedToBeTreated(ArrayOfCurves(j)))
@@ -1242,12 +1285,16 @@ void Geom2dConvert::ConcatC1(
         Curve1 = MultNumandDenom(Hermit::Solution(ArrayOfCurves(j)), ArrayOfCurves(j));
       }
       else
+      {
         Curve1 = ArrayOfCurves(j);
+      }
 
       const int aNewCurveDegree = 2 * Curve1->Degree();
 
-      if (j == 0) // initialisation en debut de groupe
+      if (j == 0)
+      { // initialisation en debut de groupe
         Curve2 = Curve1;
+      }
       else
       {
         if ((j == (nb_curve - 1)) && (NeedDoubleDegRepara))
@@ -1255,8 +1302,7 @@ void Geom2dConvert::ConcatC1(
           Curve2->D1(Curve2->LastParameter(), Pint, Vec1);
           Curve1->D1(Curve1->FirstParameter(), Pint, Vec2);
           lambda = Vec2.Magnitude() / Vec1.Magnitude();
-          NCollection_Array1<double> KnotC1(1, Curve1->NbKnots());
-          Curve1->Knots(KnotC1);
+          NCollection_Array1<double> KnotC1(Curve1->Knots());
           Curve1->D1(Curve1->LastParameter(), Pint, Vec2);
           ArrayOfCurves(0)->D1(ArrayOfCurves(0)->FirstParameter(), Pint, Vec1);
           double lambda2 = Vec1.Magnitude() / Vec2.Magnitude();
@@ -1269,8 +1315,7 @@ void Geom2dConvert::ConcatC1(
           c                         = umin;
           aPolynomialCoefficient[0] = c;
           NCollection_Array1<double> Curve1FlatKnots(1, Curve1->NbPoles() + Curve1->Degree() + 1);
-          NCollection_Array1<int>    KnotC1Mults(1, Curve1->NbKnots());
-          Curve1->Multiplicities(KnotC1Mults);
+          NCollection_Array1<int>    KnotC1Mults(Curve1->Multiplicities());
           BSplCLib::KnotSequence(KnotC1, KnotC1Mults, Curve1FlatKnots);
           KnotC1(1) = 0.0;
           for (ii = 2; ii <= KnotC1.Length(); ii++)
@@ -1278,25 +1323,29 @@ void Geom2dConvert::ConcatC1(
             KnotC1(ii) =
               (-b + std::sqrt(b * b - 4 * a * (c - KnotC1(ii)))) / (2 * a); // ifv 17.05.00 buc60667
           }
-          NCollection_Array1<gp_Pnt2d> Curve1Poles(1, Curve1->NbPoles());
-          Curve1->Poles(Curve1Poles);
+          NCollection_Array1<gp_Pnt2d> Curve1Poles(Curve1->Poles());
 
           for (ii = 1; ii <= Curve1->NbKnots(); ii++)
+          {
             KnotC1Mults(ii) = (Curve1->Degree() + KnotC1Mults(ii));
+          }
 
           NCollection_Array1<double> FlatKnots(1,
                                                Curve1FlatKnots.Length()
                                                  + (Curve1->Degree() * Curve1->NbKnots()));
 
           BSplCLib::KnotSequence(KnotC1, KnotC1Mults, FlatKnots);
-          NCollection_Array1<gp_Pnt2d> NewPoles(1, FlatKnots.Length() - (aNewCurveDegree + 1));
-          int                          aStatus;
-          NCollection_Array1<double>   Curve1Weights(1, Curve1->NbPoles());
-          Curve1->Weights(Curve1Weights);
+          NCollection_Array1<gp_Pnt2d>      NewPoles(1, FlatKnots.Length() - (aNewCurveDegree + 1));
+          int                               aStatus;
+          const NCollection_Array1<double>& Curve1Weights = Curve1->WeightsArray();
           for (ii = 1; ii <= Curve1->NbPoles(); ii++)
+          {
             for (jj = 1; jj <= 2; jj++)
+            {
               Curve1Poles(ii).SetCoord(jj, Curve1Poles(ii).Coord(jj) * Curve1Weights(ii));
-          // POP pour NT
+            }
+          }
+          // POP for NT
           Geom2dConvert_reparameterise_evaluator ev(aPolynomialCoefficient);
           BSplCLib::FunctionReparameterise(ev,
                                            Curve1->Degree(),
@@ -1318,20 +1367,24 @@ void Geom2dConvert::ConcatC1(
           for (ii = 1; ii <= NewPoles.Length(); ii++)
           {
             for (jj = 1; jj <= 2; jj++)
+            {
               NewPoles(ii).SetCoord(jj, NewPoles(ii).Coord(jj) / NewWeights(ii));
+            }
           }
           Curve1 =
             new Geom2d_BSplineCurve(NewPoles, NewWeights, KnotC1, KnotC1Mults, aNewCurveDegree);
         }
         Geom2dConvert_CompCurveToBSplineCurve C(Curve2);
         fusion = C.Add(Curve1,
-                       local_tolerance(j - 1)); // fusion de deux courbes adjacentes
+                       local_tolerance(j - 1)); // merge two adjacent curves
         if (!fusion)
+        {
           throw Standard_ConstructionError("Geom2dConvert Concatenation Error");
+        }
         Curve2 = C.BSplineCurve();
       }
     }
-    Curve2->SetPeriodic(); // 1 seule courbe C1
+    Curve2->SetPeriodic(); // single C1 curve
     Curve2->RemoveKnot(Curve2->LastUKnotIndex(),
                        Curve2->Multiplicity(Curve2->LastUKnotIndex()) - 1,
                        Precision::Confusion());
@@ -1339,52 +1392,66 @@ void Geom2dConvert::ConcatC1(
   }
 
   else
+  {
     // clang-format off
    for (i=0;i<=nb_group-1;i++){                             //boucle principale sur chaque groupe de
       // clang-format on
       nb_vertexG1 = 0; // continuite interne G1
 
       while (((index + nb_vertexG1) <= nb_curve - 2) && (tabG1(index + nb_vertexG1)))
+      {
         nb_vertexG1++;
+      }
 
       if ((!ClosedFlag) || (nb_group == 1))
-      { // remplissage du tableau des indices conserves
+      { // Filling the array of preserved indices
         k++;
         ArrayOfIndices->SetValue(k - 1, index);
         if (k == nb_group)
+        {
           ArrayOfIndices->SetValue(k, 0);
+        }
       }
       else
       {
         k++;
         ArrayOfIndices->SetValue(k - 1, index + nb_vertex_group0 + 1);
         if (k == nb_group)
+        {
           ArrayOfIndices->SetValue(k, nb_vertex_group0 + 1);
+        }
       }
 
       // clang-format off
      for (j=index;j<=index+nb_vertexG1;j++){                //boucle secondaire a l'interieur de chaque groupe
         // clang-format on
         if (NeedToBeTreated(ArrayOfCurves(j)))
+        {
           Curve1 = MultNumandDenom(Hermit::Solution(ArrayOfCurves(j)), ArrayOfCurves(j));
+        }
         else
+        {
           Curve1 = ArrayOfCurves(j);
+        }
 
-        if (index == j) // initialisation en debut de groupe
+        if (index == j)
+        { // initialisation en debut de groupe
           ArrayOfConcatenated->SetValue(i, Curve1);
+        }
         else
         {
           Geom2dConvert_CompCurveToBSplineCurve C(ArrayOfConcatenated->Value(i));
-          // clang-format off
-	 fusion=C.Add(Curve1,ArrayOfToler(j-1));          //fusion de deux courbes adjacentes
-          // clang-format on
+          fusion = C.Add(Curve1, ArrayOfToler(j - 1)); // fusion de deux courbes adjacentes
           if (!fusion)
+          {
             throw Standard_ConstructionError("Geom2dConvert Concatenation Error");
+          }
           ArrayOfConcatenated->SetValue(i, C.BSplineCurve());
         }
       }
       index = index + 1 + nb_vertexG1;
     }
+  }
 }
 
 //=================================================================================================
@@ -1393,21 +1460,20 @@ void Geom2dConvert::C0BSplineToC1BSplineCurve(occ::handle<Geom2d_BSplineCurve>& 
                                               const double                      tolerance)
 
 {
-  NCollection_Array1<int>    BSMults(1, BS->NbKnots());
-  NCollection_Array1<double> BSKnots(1, BS->NbKnots());
-  int                        i, j, nbcurveC1 = 1;
-  double                     U1, U2;
-  bool                       closed_flag = false;
-  gp_Pnt2d                   point1, point2;
-  gp_Vec2d                   V1, V2;
-  bool                       fusion;
-
-  BS->Knots(BSKnots);
-  BS->Multiplicities(BSMults);
+  const NCollection_Array1<int>&    BSMults = BS->Multiplicities();
+  const NCollection_Array1<double>& BSKnots = BS->Knots();
+  int                               i, j, nbcurveC1 = 1;
+  double                            U1, U2;
+  bool                              closed_flag = false;
+  gp_Pnt2d                          point1, point2;
+  gp_Vec2d                          V1, V2;
+  bool                              fusion;
   for (i = BS->FirstUKnotIndex() + 1; i <= (BS->LastUKnotIndex() - 1); i++)
   {
     if (BSMults(i) == BS->Degree())
+    {
       nbcurveC1++;
+    }
   }
 
   nbcurveC1 = std::min(nbcurveC1, BS->NbKnots() - 1);
@@ -1418,7 +1484,9 @@ void Geom2dConvert::C0BSplineToC1BSplineCurve(occ::handle<Geom2d_BSplineCurve>& 
     NCollection_Array1<double>                           ArrayOfToler(0, nbcurveC1 - 2);
 
     for (i = 0; i <= nbcurveC1 - 2; i++)
+    {
       ArrayOfToler(i) = tolerance;
+    }
     U2 = BS->FirstParameter();
     j  = BS->FirstUKnotIndex() + 1;
     for (i = 0; i < nbcurveC1; i++)
@@ -1426,7 +1494,9 @@ void Geom2dConvert::C0BSplineToC1BSplineCurve(occ::handle<Geom2d_BSplineCurve>& 
       U1 = U2;
 
       while (j < BS->LastUKnotIndex() && BSMults(j) < BS->Degree())
+      {
         j++;
+      }
 
       U2 = BSKnots(j);
       j++;
@@ -1462,7 +1532,9 @@ void Geom2dConvert::C0BSplineToC1BSplineCurve(occ::handle<Geom2d_BSplineCurve>& 
       {
         fusion = C.Add(ArrayOfConcatenated->Value(i), tolerance, true);
         if (!fusion)
+        {
           throw Standard_ConstructionError("Geom2dConvert Concatenation Error");
+        }
       }
     }
     BS = C.BSplineCurve();
@@ -1488,21 +1560,20 @@ void Geom2dConvert::C0BSplineToArrayOfC1BSplineCurve(
   const double                                                        Tolerance)
 
 {
-  NCollection_Array1<int>    BSMults(1, BS->NbKnots());
-  NCollection_Array1<double> BSKnots(1, BS->NbKnots());
-  int                        i, j, nbcurveC1 = 1;
-  double                     U1, U2;
-  bool                       closed_flag = false;
-  gp_Pnt2d                   point1, point2;
-  gp_Vec2d                   V1, V2;
+  const NCollection_Array1<int>&    BSMults = BS->Multiplicities();
+  const NCollection_Array1<double>& BSKnots = BS->Knots();
+  int                               i, j, nbcurveC1 = 1;
+  double                            U1, U2;
+  bool                              closed_flag = false;
+  gp_Pnt2d                          point1, point2;
+  gp_Vec2d                          V1, V2;
   //  bool                 fusion;
-
-  BS->Knots(BSKnots);
-  BS->Multiplicities(BSMults);
   for (i = BS->FirstUKnotIndex(); i <= (BS->LastUKnotIndex() - 1); i++)
   {
     if (BSMults(i) == BS->Degree())
+    {
       nbcurveC1++;
+    }
   }
 
   nbcurveC1 = std::min(nbcurveC1, BS->NbKnots() - 1);
@@ -1513,14 +1584,18 @@ void Geom2dConvert::C0BSplineToArrayOfC1BSplineCurve(
     NCollection_Array1<double>                           ArrayOfToler(0, nbcurveC1 - 2);
 
     for (i = 0; i <= nbcurveC1 - 2; i++)
+    {
       ArrayOfToler(i) = Tolerance;
+    }
     U2 = BS->FirstParameter();
     j  = BS->FirstUKnotIndex() + 1;
     for (i = 0; i < nbcurveC1; i++)
     {
       U1 = U2;
       while (j < BS->LastUKnotIndex() && BSMults(j) < BS->Degree())
+      {
         j++;
+      }
       U2 = BSKnots(j);
       j++;
       occ::handle<Geom2d_BSplineCurve> BSbis = occ::down_cast<Geom2d_BSplineCurve>(BS->Copy());

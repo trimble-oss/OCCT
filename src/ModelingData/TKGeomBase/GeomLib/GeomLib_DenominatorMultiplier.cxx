@@ -34,45 +34,36 @@ GeomLib_DenominatorMultiplier::GeomLib_DenominatorMultiplier(
 {
   int i;
   for (i = 1; i <= KnotVector.Length(); i++)
+  {
     myKnotFlatVector.SetValue(i, KnotVector(i));
+  }
 }
 
-//=======================================================================
-// function : value
-// purpose  : give the value of a(UParameter,VParameter)
-//=======================================================================
+//=================================================================================================
 
 double GeomLib_DenominatorMultiplier::Value(const double UParameter, const double VParameter) const
 
 {
   double Dumaxv, Duminv, dDduumaxv, dDduuminv, Dv, Buv = 0.0;
   // gp_Pnt         HermPnt;
-  gp_Pnt                     N;
-  gp_Vec                     Nu, Nv;
-  NCollection_Array2<gp_Pnt> surface_poles(1, mySurface->NbUPoles(), 1, mySurface->NbVPoles());
-  NCollection_Array2<double> surface_weights(1, mySurface->NbUPoles(), 1, mySurface->NbVPoles());
-  NCollection_Array1<double> surface_u_knots(1, mySurface->NbUKnots());
-  NCollection_Array1<int>    surface_u_mults(1, mySurface->NbUKnots());
+  gp_Pnt N;
+  gp_Vec Nu, Nv;
 
-  NCollection_Array1<double> surface_v_knots(1, mySurface->NbVKnots());
-  NCollection_Array1<int>    surface_v_mults(1, mySurface->NbVKnots());
-  int                        udegree, vdegree;
-
-  mySurface->UKnots(surface_u_knots);
-  mySurface->UMultiplicities(surface_u_mults);
-  mySurface->Poles(surface_poles);
-  mySurface->Weights(surface_weights);
-  mySurface->VKnots(surface_v_knots);
-  mySurface->VMultiplicities(surface_v_mults);
-  udegree = mySurface->UDegree();
-  vdegree = mySurface->VDegree();
+  const NCollection_Array2<gp_Pnt>& surface_poles   = mySurface->Poles();
+  const NCollection_Array2<double>* surface_weights = mySurface->Weights();
+  const NCollection_Array1<double>& surface_u_knots = mySurface->UKnots();
+  const NCollection_Array1<int>&    surface_u_mults = mySurface->UMultiplicities();
+  const NCollection_Array1<double>& surface_v_knots = mySurface->VKnots();
+  const NCollection_Array1<int>&    surface_v_mults = mySurface->VMultiplicities();
+  int                               udegree         = mySurface->UDegree();
+  int                               vdegree         = mySurface->VDegree();
 
   BSplSLib::HomogeneousD1(mySurface->UKnot(mySurface->LastUKnotIndex()),
                           VParameter,
                           0,
                           0,
                           surface_poles,
-                          &surface_weights,
+                          surface_weights,
                           surface_u_knots,
                           surface_v_knots,
                           &surface_u_mults,
@@ -94,7 +85,7 @@ double GeomLib_DenominatorMultiplier::Value(const double UParameter, const doubl
                           0,
                           0,
                           surface_poles,
-                          &surface_weights,
+                          surface_weights,
                           surface_u_knots,
                           surface_v_knots,
                           &surface_u_mults,
@@ -130,7 +121,9 @@ double GeomLib_DenominatorMultiplier::Value(const double UParameter, const doubl
   NCollection_Array1<double> Polesenv(0, 5); // poles of a(u,v)
 
   for (i = 0; i <= 5; i++)
+  {
     Polesenv(i) = 0.0;
+  }
   Polesenv(0) = Duminv;
   Polesenv(1) = Duminv - dDduuminv / B1prim0;
   Polesenv(4) = lambda * lambda * (Dumaxv - dDduumaxv / Bprelastprim1);
@@ -200,6 +193,8 @@ double GeomLib_DenominatorMultiplier::Value(const double UParameter, const doubl
     Polesenv(3) = Polesenv(2);
   }
   for (i = 0; i <= 5; i++)
+  {
     Buv += Polesenv(i) * value(i);
+  }
   return Buv;
 }

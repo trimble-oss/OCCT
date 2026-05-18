@@ -19,10 +19,7 @@
 #include <LDOM_BasicElement.hxx>
 #include <LDOM_BasicText.hxx>
 
-//=======================================================================
-// function : operator =
-// purpose  : Assignment
-//=======================================================================
+//=================================================================================================
 
 LDOM_BasicNode& LDOM_BasicNode::operator=(const LDOM_BasicNode& anOther)
 {
@@ -31,18 +28,21 @@ LDOM_BasicNode& LDOM_BasicNode::operator=(const LDOM_BasicNode& anOther)
   return *this;
 }
 
-//=======================================================================
-// function : GetSibling
-// purpose  : also detaches NULL siblings
-//=======================================================================
+//=================================================================================================
 
 const LDOM_BasicNode* LDOM_BasicNode::GetSibling() const
 {
   while (mySibling)
+  {
     if (mySibling->isNull())
+    {
       (const LDOM_BasicNode*&)mySibling = mySibling->mySibling;
+    }
     else
+    {
       break;
+    }
+  }
   return mySibling;
 }
 

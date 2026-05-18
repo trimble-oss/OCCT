@@ -25,10 +25,7 @@ LDOM_CharacterData::LDOM_CharacterData(const LDOM_BasicText&               aText
 {
 }
 
-//=======================================================================
-// function : operator =
-// purpose  : Nullify
-//=======================================================================
+//=================================================================================================
 
 LDOM_CharacterData& LDOM_CharacterData::operator=(const LDOM_NullPtr* theNull)
 {
@@ -37,10 +34,7 @@ LDOM_CharacterData& LDOM_CharacterData::operator=(const LDOM_NullPtr* theNull)
   return *this;
 }
 
-//=======================================================================
-// function : operator =
-// purpose  : Assignment
-//=======================================================================
+//=================================================================================================
 
 LDOM_CharacterData& LDOM_CharacterData::operator=(const LDOM_CharacterData& theOther) = default;
 
@@ -58,6 +52,8 @@ void LDOM_CharacterData::setData(const LDOMString& theValue)
 int LDOM_CharacterData::getLength() const
 {
   if (myLength < 0)
+  {
     (int&)myLength = (int)strlen(getNodeValue().GetString());
+  }
   return myLength;
 }

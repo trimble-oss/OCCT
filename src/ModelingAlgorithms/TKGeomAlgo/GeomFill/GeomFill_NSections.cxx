@@ -153,13 +153,13 @@ static void ResultEval(const occ::handle<Geom_BSplineSurface>& surf,
   bool rational = surf->IsVRational();
   int  gap      = 3;
   if (rational)
+  {
     gap++;
+  }
   int Cdeg = surf->VDegree(), Cdim = surf->NbUPoles() * gap, NbP = surf->NbVPoles();
 
   //  les noeuds plats
-  int                        Ksize = NbP + Cdeg + 1;
-  NCollection_Array1<double> FKnots(1, Ksize);
-  surf->VKnotSequence(FKnots);
+  const NCollection_Array1<double>& FKnots = surf->VKnotSequence();
 
   //  les poles
   int                        Psize = Cdim * NbP;
@@ -298,11 +298,9 @@ bool GeomFill_NSections::D0(const double                V,
   {
     occ::handle<Geom_BSplineCurve> Curve =
       occ::down_cast<Geom_BSplineCurve>(mySurface->VIso(V, false));
-    NCollection_Array1<gp_Pnt> poles(1, mySurface->NbUPoles());
-    NCollection_Array1<double> weights(1, mySurface->NbUPoles());
-    Curve->Poles(poles);
-    Curve->Weights(weights);
-    int ii, L = Poles.Length();
+    const NCollection_Array1<gp_Pnt>& poles   = Curve->Poles();
+    const NCollection_Array1<double>& weights = Curve->WeightsArray();
+    int                               ii, L = Poles.Length();
     for (ii = 1; ii <= L; ii++)
     {
       Poles(ii).SetXYZ(poles(ii).XYZ());
@@ -322,17 +320,23 @@ bool GeomFill_NSections::D1(const double                V,
                             NCollection_Array1<double>& DWeights)
 {
   if (mySurface.IsNull())
+  {
     return false;
+  }
 
   bool ok = D0(V, Poles, Weights);
   if (!ok)
+  {
     return false;
+  }
 
   int  L = Poles.Length(), derivative_request = 1;
   bool rational = mySurface->IsVRational();
   int  gap      = 3;
   if (rational)
+  {
     gap++;
+  }
 
   int                              dimResult = mySurface->NbUPoles() * gap;
   occ::handle<Geom_BSplineSurface> surf_deper;
@@ -356,7 +360,9 @@ bool GeomFill_NSections::D1(const double                V,
   constexpr double EpsW       = 10 * Precision::PConfusion();
   bool             NullWeight = false;
   if (!rational)
+  {
     DWeights.Init(0.);
+  }
   int indice = 1, ii;
 
   //  recopie des poles du resultat sous forme de points 3D et de poids
@@ -395,22 +401,30 @@ bool GeomFill_NSections::D2(const double                V,
                             NCollection_Array1<double>& D2Weights)
 {
   if (mySurface.IsNull())
+  {
     return false;
+  }
 
   // pb dans BSplCLib::Eval() pour les surfaces rationnelles de degre 1
   // si l'ordre de derivation est egal a 2.
   if (mySurface->VDegree() < 2)
+  {
     return false;
+  }
 
   bool ok = D1(V, Poles, DPoles, Weights, DWeights);
   if (!ok)
+  {
     return false;
+  }
 
   int  L = Poles.Length(), derivative_request = 2;
   bool rational = mySurface->IsVRational();
   int  gap      = 3;
   if (rational)
+  {
     gap++;
+  }
 
   int                              dimResult = mySurface->NbUPoles() * gap;
   occ::handle<Geom_BSplineSurface> surf_deper;
@@ -434,7 +448,9 @@ bool GeomFill_NSections::D2(const double                V,
   constexpr double EpsW       = 10 * Precision::PConfusion();
   bool             NullWeight = false;
   if (!rational)
+  {
     D2Weights.Init(0.);
+  }
   int indice = 1, ii;
 
   //  recopie des poles du resultat sous forme de points 3D et de poids
@@ -514,8 +530,7 @@ void GeomFill_NSections::ComputeSurface()
         curvBS = GeomConvert::CurveToBSplineCurve(curv, Convert_QuasiAngular);
       }
 
-      NCollection_Array1<double> BSK(1, curvBS->NbKnots());
-      curvBS->Knots(BSK);
+      NCollection_Array1<double> BSK(curvBS->Knots());
       BSplCLib::Reparametrize(UFirst, ULast, BSK);
       curvBS->SetKnots(BSK);
 
@@ -585,14 +600,22 @@ void GeomFill_NSections::ComputeSurface()
     int i1, i2;
     myRefSurf->LocateU(Ui1, Precision::PConfusion(), i1, i2);
     if (std::abs(Ui1 - myRefSurf->UKnot(i1)) <= Precision::PConfusion())
+    {
       Ui1 = myRefSurf->UKnot(i1);
+    }
     if (std::abs(Ui1 - myRefSurf->UKnot(i2)) <= Precision::PConfusion())
+    {
       Ui1 = myRefSurf->UKnot(i2);
+    }
     myRefSurf->LocateU(Ui2, Precision::PConfusion(), i1, i2);
     if (std::abs(Ui2 - myRefSurf->UKnot(i1)) <= Precision::PConfusion())
+    {
       Ui2 = myRefSurf->UKnot(i1);
+    }
     if (std::abs(Ui2 - myRefSurf->UKnot(i2)) <= Precision::PConfusion())
+    {
       Ui2 = myRefSurf->UKnot(i2);
+    }
     V0 = myRefSurf->VKnot(myRefSurf->FirstVKnotIndex());
     V1 = myRefSurf->VKnot(myRefSurf->LastVKnotIndex());
     BS->CheckAndSegment(Ui1, Ui2, V0, V1);
@@ -617,7 +640,9 @@ void GeomFill_NSections::ComputeSurface()
 void GeomFill_NSections::SectionShape(int& NbPoles, int& NbKnots, int& Degree) const
 {
   if (mySurface.IsNull())
+  {
     return;
+  }
 
   NbPoles = mySurface->NbUPoles();
   NbKnots = mySurface->NbUKnots();
@@ -630,7 +655,9 @@ void GeomFill_NSections::SectionShape(int& NbPoles, int& NbKnots, int& Degree) c
 void GeomFill_NSections::Knots(NCollection_Array1<double>& TKnots) const
 {
   if (!mySurface.IsNull())
-    mySurface->UKnots(TKnots);
+  {
+    TKnots = mySurface->UKnots();
+  }
 }
 
 //=======================================================
@@ -639,7 +666,9 @@ void GeomFill_NSections::Knots(NCollection_Array1<double>& TKnots) const
 void GeomFill_NSections::Mults(NCollection_Array1<int>& TMults) const
 {
   if (!mySurface.IsNull())
-    mySurface->UMultiplicities(TMults);
+  {
+    TMults = mySurface->UMultiplicities();
+  }
 }
 
 //=======================================================
@@ -648,7 +677,9 @@ void GeomFill_NSections::Mults(NCollection_Array1<int>& TMults) const
 bool GeomFill_NSections::IsRational() const
 {
   if (!mySurface.IsNull())
+  {
     return mySurface->IsURational();
+  }
 
   return false;
 }
@@ -659,7 +690,9 @@ bool GeomFill_NSections::IsRational() const
 bool GeomFill_NSections::IsUPeriodic() const
 {
   if (!mySurface.IsNull())
+  {
     return mySurface->IsUPeriodic();
+  }
 
   return false;
 }
@@ -670,7 +703,9 @@ bool GeomFill_NSections::IsUPeriodic() const
 bool GeomFill_NSections::IsVPeriodic() const
 {
   if (!mySurface.IsNull())
+  {
     return mySurface->IsVPeriodic();
+  }
 
   return false;
 }
@@ -681,7 +716,9 @@ bool GeomFill_NSections::IsVPeriodic() const
 int GeomFill_NSections::NbIntervals(const GeomAbs_Shape S) const
 {
   if (mySurface.IsNull())
+  {
     return 0;
+  }
 
   GeomAdaptor_Surface AdS(mySurface);
   return AdS.NbVIntervals(S);
@@ -693,7 +730,9 @@ int GeomFill_NSections::NbIntervals(const GeomAbs_Shape S) const
 void GeomFill_NSections::Intervals(NCollection_Array1<double>& T, const GeomAbs_Shape S) const
 {
   if (mySurface.IsNull())
+  {
     return;
+  }
 
   GeomAdaptor_Surface AdS(mySurface);
   AdS.VIntervals(T, S);
@@ -755,7 +794,9 @@ gp_Pnt GeomFill_NSections::BarycentreOfSurf() const
   Bary.SetCoord(0., 0., 0.);
 
   if (mySurface.IsNull())
+  {
     return Bary;
+  }
 
   int    ii, jj;
   double U0, U1, V0, V1;
@@ -787,7 +828,9 @@ double GeomFill_NSections::MaximalSection() const
     GeomAdaptor_Curve AC(mySections(ii));
     L = GCPnts_AbscissaPoint::Length(AC);
     if (L > Lmax)
+    {
       Lmax = L;
+    }
   }
   return Lmax;
 }
@@ -798,21 +841,30 @@ double GeomFill_NSections::MaximalSection() const
 void GeomFill_NSections::GetMinimalWeight(NCollection_Array1<double>& Weights) const
 {
   if (mySurface.IsNull())
+  {
     return;
+  }
 
   if (mySurface->IsURational())
   {
-    int                        NbU = mySurface->NbUPoles(), NbV = mySurface->NbVPoles();
-    NCollection_Array2<double> WSurf(1, NbU, 1, NbV);
-    mySurface->Weights(WSurf);
-    int i, j;
+    int                               NbU = mySurface->NbUPoles(), NbV = mySurface->NbVPoles();
+    const NCollection_Array2<double>* aWSurfPtr = mySurface->Weights();
+    if (aWSurfPtr == nullptr)
+    {
+      Weights.Init(1);
+      return;
+    }
+    const NCollection_Array2<double>& WSurf = *aWSurfPtr;
+    int                               i, j;
     for (i = 1; i <= NbU; i++)
     {
       double min = WSurf(i, 1);
       for (j = 2; j <= NbV; j++)
       {
         if (min > WSurf(i, j))
+        {
           min = WSurf(i, j);
+        }
       }
       Weights.SetValue(i, min);
     }
@@ -913,10 +965,14 @@ bool GeomFill_NSections::IsConicalLaw(double& Error) const
     {
       gp_Circ C1 = AC1.Circle();
       if (!myTrsfs.IsEmpty())
+      {
         C1.Transform(myTrsfs(1).Inverted());
+      }
       gp_Circ C2 = AC2.Circle();
       if (!myTrsfs.IsEmpty())
+      {
         C2.Transform(myTrsfs(2).Inverted());
+      }
       double Tol = 1.e-7;
       // bool samedir, linearrad, sameaxis;
       isconic = (C1.Axis().IsParallel(C2.Axis(), 1.e-4));
@@ -963,7 +1019,9 @@ occ::handle<Geom_Curve> GeomFill_NSections::CirclSection(const double V) const
 {
   double Err;
   if (!IsConicalLaw(Err))
+  {
     throw StdFail_NotDone("The Law is not Conical!");
+  }
 
   GeomAdaptor_Curve AC1(mySections(1));
   GeomAdaptor_Curve AC2(mySections(mySections.Length()));

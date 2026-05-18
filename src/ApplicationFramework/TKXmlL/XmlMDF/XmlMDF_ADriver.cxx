@@ -26,25 +26,26 @@ IMPLEMENT_STANDARD_RTTIEXT(XmlMDF_ADriver, Standard_Transient)
 //=================================================================================================
 
 XmlMDF_ADriver::XmlMDF_ADriver(const occ::handle<Message_Messenger>& theMsgDriver,
-                               const char*                           theNS,
-                               const char*                           theName)
+                               const char* const                     theNS,
+                               const char* const                     theName)
     : myNamespace(theNS == nullptr ? "" : theNS),
       myMessageDriver(theMsgDriver)
 {
   if (theNS != nullptr)
+  {
     if (theNS[0] != '\0')
     {
       myTypeName = theNS;
       myTypeName += ':';
     }
+  }
   if (theName != nullptr)
+  {
     myTypeName += theName;
+  }
 }
 
-//=======================================================================
-// function : VersionNumber
-// purpose  : default version number from which the driver is available
-//=======================================================================
+//=================================================================================================
 
 int XmlMDF_ADriver::VersionNumber() const
 {
@@ -62,8 +63,10 @@ occ::handle<Standard_Type> XmlMDF_ADriver::SourceType() const
 
 const TCollection_AsciiString& XmlMDF_ADriver::TypeName() const
 {
-  const char* aString = myTypeName.ToCString();
+  const char* const aString = myTypeName.ToCString();
   if (myTypeName.Length() == 0 || aString[myTypeName.Length() - 1] == ':')
+  {
     (TCollection_AsciiString&)myTypeName += SourceType()->Name();
+  }
   return myTypeName;
 }

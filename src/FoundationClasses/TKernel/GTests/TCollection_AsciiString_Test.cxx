@@ -251,7 +251,7 @@ TEST(TCollection_AsciiStringTest, MemoryAllocation)
 TEST(TCollection_AsciiStringTest, LengthConstructor)
 {
   // Test constructor with string and maximum length
-  const char* aSourceString = "This is a very long string";
+  const char* const aSourceString = "This is a very long string";
 
   TCollection_AsciiString aString1(aSourceString, 4);
   EXPECT_EQ(4, aString1.Length());
@@ -285,7 +285,7 @@ TEST(TCollection_AsciiStringTest, NumericalConstructors)
 
   // Test real constructor
   TCollection_AsciiString aRealString(3.14);
-  const char*             aRealCStr = aRealString.ToCString();
+  const char* const       aRealCStr = aRealString.ToCString();
   EXPECT_TRUE(strstr(aRealCStr, "3.14") != nullptr);
 }
 
@@ -350,7 +350,7 @@ TEST(TCollection_AsciiStringTest, PaddingSafety)
     EXPECT_EQ(anIdx, aTestString.Length());
 
     // Verify null termination
-    const char* aCString = aTestString.ToCString();
+    const char* const aCString = aTestString.ToCString();
     EXPECT_EQ('\0', aCString[anIdx]);
 
     // Verify content
@@ -436,6 +436,26 @@ TEST(TCollection_AsciiStringTest, AssignCat_IntegerAndReal)
   TCollection_AsciiString aString2("Pi is approximately ");
   aString2.AssignCat(3.14159);
   EXPECT_TRUE(strstr(aString2.ToCString(), "3.14159") != nullptr);
+}
+
+TEST(TCollection_AsciiStringTest, AssignCat_ExtendedStringAndWideChar)
+{
+  TCollection_AsciiString    anExtendedTarget("Value:");
+  TCollection_ExtendedString anExtendedSource(" OK");
+  anExtendedTarget += anExtendedSource;
+  EXPECT_STREQ("Value: OK", anExtendedTarget.ToCString());
+
+  const char16_t             aNonAsciiChars[] = {' ', 0x20AC, 0};
+  TCollection_ExtendedString aNonAsciiSource(aNonAsciiChars);
+  TCollection_AsciiString    aReplacedTarget("Value");
+  aReplacedTarget.AssignCat(aNonAsciiSource, '?');
+  EXPECT_STREQ("Value ?", aReplacedTarget.ToCString());
+
+#if !defined(_MSC_VER) || defined(_NATIVE_WCHAR_T_DEFINED)
+  TCollection_AsciiString aWideTarget("Hello");
+  aWideTarget += L" World";
+  EXPECT_STREQ("Hello World", aWideTarget.ToCString());
+#endif
 }
 
 TEST(TCollection_AsciiStringTest, AssignCat_LargeStrings)
@@ -725,6 +745,29 @@ TEST(TCollection_AsciiStringTest, Cat_IntegerAndReal)
   // Cat with zero
   TCollection_AsciiString aResult4 = aString.Cat(0);
   EXPECT_STREQ("Count: 0", aResult4.ToCString());
+}
+
+TEST(TCollection_AsciiStringTest, Cat_ExtendedStringAndWideChar)
+{
+  TCollection_AsciiString    aString("Value:");
+  TCollection_ExtendedString anExtendedSource(" OK");
+  TCollection_AsciiString    anExtendedResult = aString + anExtendedSource;
+  EXPECT_STREQ("Value: OK", anExtendedResult.ToCString());
+
+  const char16_t             anAccentChars[] = {' ', 0x00E9, 0};
+  TCollection_ExtendedString anAccentSource(anAccentChars);
+  TCollection_AsciiString    anUtf8Result = TCollection_AsciiString("Cafe").Cat(anAccentSource);
+  EXPECT_EQ(7, anUtf8Result.Length());
+  EXPECT_EQ(' ', anUtf8Result.ToCString()[4]);
+  EXPECT_EQ(static_cast<char>(0xC3), anUtf8Result.ToCString()[5]);
+  EXPECT_EQ(static_cast<char>(0xA9), anUtf8Result.ToCString()[6]);
+
+#if !defined(_MSC_VER) || defined(_NATIVE_WCHAR_T_DEFINED)
+  TCollection_AsciiString aWideResult = aString.Cat(L" Wide");
+  EXPECT_STREQ("Value: Wide", aWideResult.ToCString());
+#endif
+
+  EXPECT_STREQ("Value:", aString.ToCString());
 }
 
 TEST(TCollection_AsciiStringTest, Cat_EmptyStrings)
@@ -1476,11 +1519,11 @@ TEST(TCollection_AsciiStringTest, OCC11758_ComprehensiveConstructorsAndMethods)
 
   for (int i = 0; i < 5; ++i)
   {
-    // TCollection_AsciiString(const char* astring)
+    // TCollection_AsciiString(const char* const astring)
     TCollection_AsciiString a(theStr + i);
     EXPECT_STREQ(theStr + i, a.ToCString());
 
-    // TCollection_AsciiString(const char* astring, const int aLen)
+    // TCollection_AsciiString(const char* const astring, const int aLen)
     TCollection_AsciiString b(theStr + i, 3);
     EXPECT_EQ(3, b.Length());
     EXPECT_EQ(0, strncmp(b.ToCString(), theStr + i, 3));
@@ -1569,4 +1612,120 @@ TEST(TCollection_AsciiStringTest, OCC11758_ComprehensiveConstructorsAndMethods)
     EXPECT_TRUE(d.IsDifferent(""));
     EXPECT_FALSE(d.IsDifferent(d.ToCString()));
   }
+}
+
+// Test: empty string has useful length 0.
+TEST(TCollection_AsciiStringTest, UsefullLength_EmptyString)
+{
+  TCollection_AsciiString aStr;
+  EXPECT_EQ(0, aStr.UsefullLength());
+}
+
+// Test: plain ASCII string with no trailing spaces.
+TEST(TCollection_AsciiStringTest, UsefullLength_AsciiNoTrailing)
+{
+  TCollection_AsciiString aStr("Hello");
+  EXPECT_EQ(5, aStr.UsefullLength());
+}
+
+// Test: ASCII string with trailing spaces.
+TEST(TCollection_AsciiStringTest, UsefullLength_TrailingSpaces)
+{
+  TCollection_AsciiString aStr("Hello   ");
+  EXPECT_EQ(5, aStr.UsefullLength());
+}
+
+// Test: ASCII string with trailing control characters.
+TEST(TCollection_AsciiStringTest, UsefullLength_TrailingControlChars)
+{
+  TCollection_AsciiString aStr("Hello");
+  // Append control characters (tab, newline, null-like)
+  aStr += '\t';
+  aStr += '\n';
+  aStr += '\r';
+  EXPECT_EQ(5, aStr.UsefullLength());
+}
+
+// Test: string consisting entirely of spaces.
+TEST(TCollection_AsciiStringTest, UsefullLength_AllSpaces)
+{
+  TCollection_AsciiString aStr("     ");
+  EXPECT_EQ(0, aStr.UsefullLength());
+}
+
+// Test: string consisting entirely of control characters.
+TEST(TCollection_AsciiStringTest, UsefullLength_AllControlChars)
+{
+  char                    aBuf[] = {'\t', '\n', '\r', '\0'};
+  TCollection_AsciiString aStr(aBuf);
+  EXPECT_EQ(0, aStr.UsefullLength());
+}
+
+// Test: single graphic character.
+TEST(TCollection_AsciiStringTest, UsefullLength_SingleChar)
+{
+  TCollection_AsciiString aStr("A");
+  EXPECT_EQ(1, aStr.UsefullLength());
+}
+
+// Test: single space character.
+TEST(TCollection_AsciiStringTest, UsefullLength_SingleSpace)
+{
+  TCollection_AsciiString aStr(" ");
+  EXPECT_EQ(0, aStr.UsefullLength());
+}
+
+// Test: mixed content with trailing whitespace.
+TEST(TCollection_AsciiStringTest, UsefullLength_MixedTrailing)
+{
+  TCollection_AsciiString aStr("Part Name  \t\n");
+  EXPECT_EQ(9, aStr.UsefullLength());
+}
+
+// Regression test: multibyte UTF-8 characters at the end of the string
+// must NOT be trimmed. The old byte-by-byte backward scan treated individual
+// UTF-8 bytes (>= 0x80) as non-graphic via std::isgraph().
+TEST(TCollection_AsciiStringTest, UsefullLength_Utf8AtEnd)
+{
+  // "Hello" followed by 2 CJK characters (U+4E16 U+754C):
+  // U+4E16 = 0xE4 0xB8 0x96
+  // U+754C = 0xE7 0x95 0x8C
+  TCollection_AsciiString aStr("Hello\xE4\xB8\x96\xE7\x95\x8C");
+  EXPECT_EQ(11, aStr.UsefullLength());
+}
+
+// Test: UTF-8 characters followed by trailing spaces are trimmed correctly.
+TEST(TCollection_AsciiStringTest, UsefullLength_Utf8ThenSpaces)
+{
+  // 6 Cyrillic characters (U+041F U+0440 U+0438 U+0432 U+0435 U+0442) in UTF-8 followed by spaces
+  // Each Cyrillic character is 2 bytes in UTF-8
+  TCollection_AsciiString aStr("\xD0\x9F\xD1\x80\xD0\xB8\xD0\xB2\xD0\xB5\xD1\x82   ");
+  // 12 bytes for Cyrillic text + 3 spaces = 15 total, useful = 12
+  EXPECT_EQ(12, aStr.UsefullLength());
+}
+
+// Test: string with only multibyte UTF-8 characters.
+TEST(TCollection_AsciiStringTest, UsefullLength_Utf8Only)
+{
+  // 2 CJK characters (U+65E5 U+672C) = 0xE6 0x97 0xA5 0xE6 0x9C 0xAC
+  TCollection_AsciiString aStr("\xE6\x97\xA5\xE6\x9C\xAC");
+  EXPECT_EQ(6, aStr.UsefullLength());
+}
+
+// Test: 4-byte UTF-8 character (emoji) at the end.
+TEST(TCollection_AsciiStringTest, UsefullLength_Utf8FourByteAtEnd)
+{
+  // U+1F600 (grinning face) = 0xF0 0x9F 0x98 0x80
+  TCollection_AsciiString aStr("Test\xF0\x9F\x98\x80");
+  EXPECT_EQ(8, aStr.UsefullLength());
+}
+
+// Test: UTF-8 content with trailing control characters.
+TEST(TCollection_AsciiStringTest, UsefullLength_Utf8ThenControlChars)
+{
+  // U+00C4 = 0xC3 0x84 (2-byte UTF-8) followed by control chars
+  TCollection_AsciiString aStr("\xC3\x84");
+  aStr += '\t';
+  aStr += '\n';
+  EXPECT_EQ(2, aStr.UsefullLength());
 }

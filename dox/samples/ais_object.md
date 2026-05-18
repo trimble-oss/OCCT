@@ -1,4 +1,4 @@
-﻿AIS: Custom Presentation {#tutorials__ais_object}
+AIS: Custom Presentation {#tutorials__ais_object}
 ========
 
 @tableofcontents
@@ -18,14 +18,14 @@ class MyAisObject : public AIS_InteractiveObject
 public:
   MyAisObject() {}
 public:
-  virtual void Compute (const Handle(PrsMgr_PresentationManager)& thePrsMgr,
-                        const Handle(Prs3d_Presentation)& thePrs,
-                        const Standard_Integer theMode) override {}
+  virtual void Compute (const occ::handle<PrsMgr_PresentationManager>& thePrsMgr,
+                        const occ::handle<Prs3d_Presentation>& thePrs,
+                        const int theMode) override {}
 
-  virtual void ComputeSelection (const Handle(SelectMgr_Selection)& theSel,
-                                 const Standard_Integer theMode) override {}
+  virtual void ComputeSelection (const occ::handle<SelectMgr_Selection>& theSel,
+                                 const int theMode) override {}
 
-  virtual bool AcceptDisplayMode (const Standard_Integer theMode) const override
+  virtual bool AcceptDisplayMode (const int theMode) const override
   { return true; }
 };
 ~~~~
@@ -56,20 +56,20 @@ Presentation builders are reusable bricks for constructing @c AIS objects.
 Standard OCCT interactive objects highly rely on them, so that you may easily replicate @c AIS_Shape presentation for displaying a shape with just a couple of lines calling @c StdPrs_ShadedShape:
 
 ~~~~{.cpp}
-void MyAisObject::Compute (const Handle(PrsMgr_PresentationManager)& thePrsMgr,
-                           const Handle(Prs3d_Presentation)& thePrs,
-                           const Standard_Integer theMode)
+void MyAisObject::Compute (const occ::handle<PrsMgr_PresentationManager>& thePrsMgr,
+                           const occ::handle<Prs3d_Presentation>& thePrs,
+                           const int theMode)
 {
   TopoDS_Shape aShape = BRepPrimAPI_MakeCylinder (100.0, 100.0);
   StdPrs_ShadedShape::Add (thePrs, aShape, myDrawer);
 }
 ...
-Handle(AIS_InteractiveContext) theCtx;
-Handle(MyAisObject) aPrs = new MyAisObject();
-theCtx->Display (aPrs, true);
+occ::handle<AIS_InteractiveContext> aCtx; // obtained from viewer setup
+occ::handle<MyAisObject> aPrs = new MyAisObject();
+aCtx->Display (aPrs, true);
 ~~~~
 
-@figure{ais_object_step1_shaded.png,"@c StdPrs_ShadedShape presentation builder.",409} height=409px
+@figure{images/ais_object_step1_shaded.png,"@c StdPrs_ShadedShape presentation builder.",409} height=409px
 
 @c PrsMgr_PresentableObject::Compute() method takes three arguments:
 - **Presentation Manager** (@c PrsMgr_PresentationManager).
@@ -84,9 +84,9 @@ For each supported display mode, the **Presentation Manager** creates a dedicate
 It is a good practice to reject unsupported display modes within @c @::Compute() method:
 
 ~~~~{.cpp}
-void MyAisObject::Compute (const Handle(PrsMgr_PresentationManager)& thePrsMgr,
-                           const Handle(Prs3d_Presentation)& thePrs,
-                           const Standard_Integer theMode)
+void MyAisObject::Compute (const occ::handle<PrsMgr_PresentationManager>& thePrsMgr,
+                           const occ::handle<Prs3d_Presentation>& thePrs,
+                           const int theMode)
 {
   if (theMode != 0) { return; } // reject non-zero display modes
 
@@ -98,16 +98,16 @@ void MyAisObject::Compute (const Handle(PrsMgr_PresentationManager)& thePrsMgr,
 This wouldn't, however, prevent application from displaying the object with another display mode like this:
 
 ~~~~{.cpp}
-Handle(AIS_InteractiveContext) theCtx;
-Handle(MyAisObject) aPrs = new MyAisObject();
-theCtx->Display (aPrs, 100, -1, true);
+occ::handle<AIS_InteractiveContext> aCtx;
+occ::handle<MyAisObject> aPrs = new MyAisObject();
+aCtx->Display (aPrs, 100, -1, true);
 ~~~~
 
 The code above will display @c MyAisObject with display mode equal to 100, and after @c @::Compute() modifications nothing will be displayed on the screen.
 @c AIS will still create a presentation with specified display mode, but it will be empty - method @c @::AcceptDisplayMode() could be overridden to disallow even creation of an empty presentation:
 
 ~~~~{.cpp}
-bool MyAisObject::AcceptDisplayMode (const Standard_Integer theMode) const
+bool MyAisObject::AcceptDisplayMode (const int theMode) const
 {
   return theMode == 0; // reject non-zero display modes
 }
@@ -117,9 +117,9 @@ bool MyAisObject::AcceptDisplayMode (const Standard_Integer theMode) const
 @c StdPrs_ShadedShape prepares a shaded (triangulated) presentation of a shape, while @c StdPrs_WFShape creates a wireframe presentation with B-Rep wire boundaries:
 
 ~~~~{.cpp}
-void MyAisObject::Compute (const Handle(PrsMgr_PresentationManager)& thePrsMgr,
-                           const Handle(Prs3d_Presentation)& thePrs,
-                           const Standard_Integer theMode)
+void MyAisObject::Compute (const occ::handle<PrsMgr_PresentationManager>& thePrsMgr,
+                           const occ::handle<Prs3d_Presentation>& thePrs,
+                           const int theMode)
 {
   if (!AcceptDisplayMode (theMode)) { return; }
 
@@ -129,7 +129,7 @@ void MyAisObject::Compute (const Handle(PrsMgr_PresentationManager)& thePrsMgr,
 }
 ~~~~
 
-@figure{ais_object_step1_shaded_wf.png,"Result of @c StdPrs_ShadedShape + @c StdPrs_WFShape presentation builders.",409} height=409px
+@figure{images/ais_object_step1_shaded_wf.png,"Result of @c StdPrs_ShadedShape + @c StdPrs_WFShape presentation builders.",409} height=409px
 
 Presentation builders take the @c Prs3d_Drawer object defining various attributes - material of shaded shape, number of isolines in wireframe mode, tessellation quality, line colors and many others.
 @c PrsMgr_PresentableObject defines @c myDrawer property with default attributes.
@@ -138,13 +138,13 @@ With the help of @c Prs3d tools we may display elements like arrows, boxes or te
 Let's extend our presentation with a second **display mode 1** showing a bounding box using @c Prs3d_BndBox builder:
 
 ~~~~{.cpp}
-bool MyAisObject::AcceptDisplayMode (const Standard_Integer theMode) const
+bool MyAisObject::AcceptDisplayMode (const int theMode) const
 {
   return theMode == 0 || theMode == 1;
 }
-void MyAisObject::Compute (const Handle(PrsMgr_PresentationManager)& thePrsMgr,
-                           const Handle(Prs3d_Presentation)& thePrs,
-                           const Standard_Integer theMode)
+void MyAisObject::Compute (const occ::handle<PrsMgr_PresentationManager>& thePrsMgr,
+                           const occ::handle<Prs3d_Presentation>& thePrs,
+                           const int theMode)
 {
   TopoDS_Shape aShape = BRepPrimAPI_MakeCylinder (100.0, 100.0);
   if (theMode == 0)
@@ -164,12 +164,12 @@ void MyAisObject::Compute (const Handle(PrsMgr_PresentationManager)& thePrsMgr,
 Now, displaying an object with **display mode 1** will show a box:
 
 ~~~~{.cpp}
-Handle(AIS_InteractiveContext) theCtx;
-Handle(MyAisObject) aPrs = new MyAisObject();
-theCtx->Display (aPrs, 1, 0, true);
+occ::handle<AIS_InteractiveContext> aCtx;
+occ::handle<MyAisObject> aPrs = new MyAisObject();
+aCtx->Display (aPrs, 1, 0, true);
 ~~~~
 
-@figure{ais_object_step1_bndbox.png,"@c Prs3d_BndBox presentation builder.",409} height=409px
+@figure{images/ais_object_step1_bndbox.png,"@c Prs3d_BndBox presentation builder.",409} height=409px
 
 @c AIS disallows activating multiple display modes at the same time, so that these presentation modes should be alternatives to each other.
 But @c AIS may use non-active display mode for highlighting purposes - like wireframe (@c AIS_Wireframe) presentation displayed on top of shaded (@c AIS_Shaded) presentation for selected @c AIS_Shape objects.
@@ -192,14 +192,14 @@ MyAisObject::MyAisObject()
 
 ...
 
-Handle(AIS_InteractiveContext) theCtx;
-Handle(MyAisObject) aPrs = new MyAisObject();
-theCtx->Display (aPrs, MyAisObject::MyDispMode_Main, 0, false);
-theCtx->HilightWithColor (aPrs, aPrs->HilightAttributes(), false);
-theCtx->CurrentViewer()->Redraw();
+occ::handle<AIS_InteractiveContext> aCtx;
+occ::handle<MyAisObject> aPrs = new MyAisObject();
+aCtx->Display (aPrs, MyAisObject::MyDispMode_Main, 0, false);
+aCtx->HilightWithColor (aPrs, aPrs->HilightAttributes(), false);
+aCtx->CurrentViewer()->Redraw();
 ~~~~
 
-@figure{ais_object_step1_highlight.png,"Highlighting by color (left) and highlighting by another display mode (right).",818} height=409px
+@figure{images/ais_object_step1_highlight.png,"Highlighting by color (left) and highlighting by another display mode (right).",818} height=409px
 
 In this particular use case we've used the method @c AIS_InteractiveContext::HilightWithColor() instead of @c @::SetSelected() - just because our object is not selectable yet and @c @::SetSelected() wouldn't work.
 Highlighted presentation appears on the screen with modulated color (see left screenshot above).
@@ -231,9 +231,9 @@ The latter one avoids duplicating vertices shared between connected elements (tr
 Let's extend our sample and display a cylinder section contour defined by array of indexed segments (e.g. a polyline of four vertices):
 
 ~~~~{.cpp}
-void MyAisObject::Compute (const Handle(PrsMgr_PresentationManager)& thePrsMgr,
-                           const Handle(Prs3d_Presentation)& thePrs,
-                           const Standard_Integer theMode)
+void MyAisObject::Compute (const occ::handle<PrsMgr_PresentationManager>& thePrsMgr,
+                           const occ::handle<Prs3d_Presentation>& thePrs,
+                           const int theMode)
 {
   const double aRadius = 100.0, aHeight = 100.0;
   TopoDS_Shape aShape = BRepPrimAPI_MakeCylinder (aRadius, aHeight);
@@ -241,7 +241,7 @@ void MyAisObject::Compute (const Handle(PrsMgr_PresentationManager)& thePrsMgr,
   {
     StdPrs_ShadedShape::Add (thePrs, aShape, myDrawer);
     //StdPrs_WFShape::Add (thePrs, aShape, myDrawer);
-    Handle(Graphic3d_ArrayOfSegments) aSegs = new Graphic3d_ArrayOfSegments (4, 4 * 2, Graphic3d_ArrayFlags_None);
+    occ::handle<Graphic3d_ArrayOfSegments> aSegs = new Graphic3d_ArrayOfSegments (4, 4 * 2, Graphic3d_ArrayFlags_None);
     aSegs->AddVertex (gp_Pnt (0.0, -aRadius, 0.0));
     aSegs->AddVertex (gp_Pnt (0.0, -aRadius, aHeight));
     aSegs->AddVertex (gp_Pnt (0.0,  aRadius, aHeight));
@@ -250,7 +250,7 @@ void MyAisObject::Compute (const Handle(PrsMgr_PresentationManager)& thePrsMgr,
     aSegs->AddEdges (2, 3);
     aSegs->AddEdges (3, 4);
     aSegs->AddEdges (4, 1);
-    Handle(Graphic3d_Group) aGroupSegs = thePrs->NewGroup();
+    occ::handle<Graphic3d_Group> aGroupSegs = thePrs->NewGroup();
     aGroupSegs->SetGroupPrimitivesAspect (myDrawer->WireAspect()->Aspect());
     aGroupSegs->AddPrimitiveArray (aSegs);
   }
@@ -258,7 +258,7 @@ void MyAisObject::Compute (const Handle(PrsMgr_PresentationManager)& thePrsMgr,
 }
 ~~~~
 
-@figure{ais_object_step2_segments.png,"Displaying @c Graphic3d_ArrayOfSegments.",409} height=409px
+@figure{images/ais_object_step2_segments.png,"Displaying @c Graphic3d_ArrayOfSegments.",409} height=409px
 
 The process is quite straightforward:
 - Create a new @c Graphic3d_Group using @c Prs3d_Presentation::NewGroup();
@@ -286,14 +286,14 @@ These subclasses exist for historical reasons and are treated by renderers in ex
 It is technically possible to create transient aspects directly within @c @::Compute() method like this:
 
 ~~~~{.cpp}
-void MyAisObject::Compute (const Handle(PrsMgr_PresentationManager)& thePrsMgr,
-                           const Handle(Prs3d_Presentation)& thePrs,
-                           const Standard_Integer theMode)
+void MyAisObject::Compute (const occ::handle<PrsMgr_PresentationManager>& thePrsMgr,
+                           const occ::handle<Prs3d_Presentation>& thePrs,
+                           const int theMode)
 {
-  Handle(Graphic3d_Aspects) anAspects = new Graphic3d_Aspects();
+  occ::handle<Graphic3d_Aspects> anAspects = new Graphic3d_Aspects();
   anAspects->SetShadingModel (Graphic3d_TypeOfShadingModel_Unlit);
   anAspects->SetColor (Quantity_NOC_RED);
-  Handle(Graphic3d_Group) aGroup = thePrs->NewGroup();
+  occ::handle<Graphic3d_Group> aGroup = thePrs->NewGroup();
   aGroup->SetGroupPrimitivesAspect (anAspects);
   ...
 }
@@ -333,9 +333,9 @@ This interface allows bypassing creation of a complex B-Rep (@c TopoDS_Shape) de
 Let's try using @c Prs3d_ToolCylinder in our sample:
 
 ~~~~{.cpp}
-void MyAisObject::Compute (const Handle(PrsMgr_PresentationManager)& thePrsMgr,
-                           const Handle(Prs3d_Presentation)& thePrs,
-                           const Standard_Integer theMode)
+void MyAisObject::Compute (const occ::handle<PrsMgr_PresentationManager>& thePrsMgr,
+                           const occ::handle<Prs3d_Presentation>& thePrs,
+                           const int theMode)
 {
   const double aRadius = 100.0, aHeight = 100.0;
   TopoDS_Shape aShape = BRepPrimAPI_MakeCylinder (aRadius, aHeight);
@@ -343,9 +343,9 @@ void MyAisObject::Compute (const Handle(PrsMgr_PresentationManager)& thePrsMgr,
   {
 	//StdPrs_ShadedShape::Add (thePrs, aShape, myDrawer); // add shading
 	//StdPrs_WFShape::Add (thePrs, aShape, myDrawer); // add wireframe
-	Handle(Graphic3d_ArrayOfTriangles) aTris =
+	occ::handle<Graphic3d_ArrayOfTriangles> aTris =
      Prs3d_ToolCylinder::Create (aRadius, aRadius, aHeight, 10, 10, gp_Trsf());
-	Handle(Graphic3d_Group) aGroupTris = thePrs->NewGroup();
+	occ::handle<Graphic3d_Group> aGroupTris = thePrs->NewGroup();
 	aGroupTris->SetGroupPrimitivesAspect (myDrawer->ShadingAspect()->Aspect());
 	aGroupTris->AddPrimitiveArray (aTris);
 	...
@@ -354,7 +354,7 @@ void MyAisObject::Compute (const Handle(PrsMgr_PresentationManager)& thePrsMgr,
 }
 ~~~~
 
-@figure{ais_object_step3_quadrics_10.png,"@c Prs3d_ToolCylinder (10 slices).",409} height=409px
+@figure{images/ais_object_step3_quadrics_10.png,"@c Prs3d_ToolCylinder (10 slices).",409} height=409px
 
 Well... that looks a little bit edgy.
 Quadric builder creates a triangulation taking the following parameters:
@@ -367,11 +367,11 @@ Quadric builder creates a triangulation taking the following parameters:
 
 Let's increase number of subdivisions from _10_ to _25_:
 ~~~~{.cpp}
-Handle(Graphic3d_ArrayOfTriangles) aTris =
+occ::handle<Graphic3d_ArrayOfTriangles> aTris =
   Prs3d_ToolCylinder::Create (aRadius, aRadius, aHeight, 25, 25, gp_Trsf());
 ~~~~
 
-@figure{ais_object_step3_quadrics_25.png,"@c Prs3d_ToolCylinder (25 slices).",409} height=409px
+@figure{images/ais_object_step3_quadrics_25.png,"@c Prs3d_ToolCylinder (25 slices).",409} height=409px
 
 It looks much better now! Note that @c Prs3d_ToolCylinder could be used for building both cones and cylinders depending on top/bottom radius definition.
 
@@ -379,9 +379,9 @@ There is one issue though - our cylinder doesn't have top and bottom anymore!
 To fix this problem we will use one more quadric builder @c Prs3d_ToolDisk:
 
 ~~~~{.cpp}
-void MyAisObject::Compute (const Handle(PrsMgr_PresentationManager)& thePrsMgr,
-                           const Handle(Prs3d_Presentation)& thePrs,
-                           const Standard_Integer theMode)
+void MyAisObject::Compute (const occ::handle<PrsMgr_PresentationManager>& thePrsMgr,
+                           const occ::handle<Prs3d_Presentation>& thePrs,
+                           const int theMode)
 {
   const double aRadius = 100.0, aHeight = 100.0;
   if (theMode == MyDispMode_Main)
@@ -389,7 +389,7 @@ void MyAisObject::Compute (const Handle(PrsMgr_PresentationManager)& thePrsMgr,
     Prs3d_ToolCylinder aCyl (aRadius, aRadius, aHeight, 25, 25);
     Prs3d_ToolDisk aDisk (0.0, aRadius, 25, 1);
 
-    Handle(Graphic3d_ArrayOfTriangles) aTris =
+    occ::handle<Graphic3d_ArrayOfTriangles> aTris =
       new Graphic3d_ArrayOfTriangles (aCyl.VerticesNb() + 2 * aDisk.VerticesNb(),
                                       3 * (aCyl.TrianglesNb() + 2 * aDisk.TrianglesNb()),
                                       Graphic3d_ArrayFlags_VertexNormal);
@@ -400,7 +400,7 @@ void MyAisObject::Compute (const Handle(PrsMgr_PresentationManager)& thePrsMgr,
     aDisk2Trsf.SetTransformation (gp_Ax3 (gp_Pnt (0.0, 0.0, aHeight), -gp::DZ(), gp::DX()), gp::XOY());
     aDisk.FillArray (aTris, aDisk2Trsf);
 
-    Handle(Graphic3d_Group) aGroupTris = thePrs->NewGroup();
+    occ::handle<Graphic3d_Group> aGroupTris = thePrs->NewGroup();
     aGroupTris->SetGroupPrimitivesAspect (myDrawer->ShadingAspect()->Aspect());
     aGroupTris->AddPrimitiveArray (aTris);
     aGroupTris->SetClosed (true);
@@ -414,40 +414,40 @@ Now our cylinder looks solid! The sample above merges two triangulations into a 
 This looks like a minor difference, but it might have a _dramatic impact on performance_ in case of a large scene,
 as each `Graphic3d_ArrayOfPrimitives` is mapped into a dedicated draw call at graphic driver (OpenGL) level.
 
-@figure{ais_object_step3_quadrics_fin.png,"@c Prs3d_ToolCylinder + @c Prs3d_ToolDisk.",409} height=409px
+@figure{images/ais_object_step3_quadrics_fin.png,"@c Prs3d_ToolCylinder + @c Prs3d_ToolDisk.",409} height=409px
 
 As an exercise, let's try computing a triangulation for cylinder disk without help of @c Prs3d_ToolDisk builder:
 
 ~~~~{.cpp}
-void MyAisObject::Compute (const Handle(PrsMgr_PresentationManager)& thePrsMgr,
-                           const Handle(Prs3d_Presentation)& thePrs,
-                           const Standard_Integer theMode)
+void MyAisObject::Compute (const occ::handle<PrsMgr_PresentationManager>& thePrsMgr,
+                           const occ::handle<Prs3d_Presentation>& thePrs,
+                           const int theMode)
 {
   const double aRadius = 100.0, aHeight = 100.0;
   if (theMode == MyDispMode_Main)
   {
     const int aNbSlices = 25;
     Prs3d_ToolCylinder aCyl (aRadius, aRadius, aHeight, aNbSlices, aNbSlices);
-    Handle(Graphic3d_ArrayOfTriangles) aTris =
+    occ::handle<Graphic3d_ArrayOfTriangles> aTris =
       new Graphic3d_ArrayOfTriangles (aCyl.VerticesNb(),
                                       3 * (aCyl.TrianglesNb()),
                                       Graphic3d_ArrayFlags_VertexNormal);
     aCyl.FillArray (aTris, gp_Trsf());
 
-    Handle(Graphic3d_ArrayOfTriangles) aTris2 =
+    occ::handle<Graphic3d_ArrayOfTriangles> aTris2 =
       new Graphic3d_ArrayOfTriangles (aNbSlices + 1, aNbSlices * 3, Graphic3d_ArrayFlags_VertexNormal);
     aTris2->AddVertex (gp_Pnt (0.0, 0.0, aHeight), -gp::DZ());
     for (int aSliceIter = 0; aSliceIter < aNbSlices; ++aSliceIter)
     {
       double anAngle = M_PI * 2.0 * double(aSliceIter) / double(aNbSlices);
-      aTris2->AddVertex (gp_Pnt (Cos (anAngle) * aRadius, Sin (anAngle) * aRadius, aHeight), -gp::DZ());
+      aTris2->AddVertex (gp_Pnt (std::cos (anAngle) * aRadius, std::sin (anAngle) * aRadius, aHeight), -gp::DZ());
     }
     for (int aSliceIter = 0; aSliceIter < aNbSlices; ++aSliceIter)
     {
       aTris2->AddEdges (1, aSliceIter + 2, aSliceIter + 1 < aNbSlices ? (aSliceIter + 3) : 2);
     }
 
-    Handle(Graphic3d_Group) aGroupTris = thePrs->NewGroup();
+    occ::handle<Graphic3d_Group> aGroupTris = thePrs->NewGroup();
     aGroupTris->SetGroupPrimitivesAspect (myDrawer->ShadingAspect()->Aspect());
     aGroupTris->AddPrimitiveArray (aTris);
     aGroupTris->AddPrimitiveArray (aTris2);
@@ -456,7 +456,7 @@ void MyAisObject::Compute (const Handle(PrsMgr_PresentationManager)& thePrsMgr,
 }
 ~~~~
 
-@figure{ais_object_step3_quadrics_disk.png,"Manually triangulated disk.",409} height=409px
+@figure{images/ais_object_step3_quadrics_disk.png,"Manually triangulated disk.",409} height=409px
 
 The disk is here, but it has a strange color - like it is not affected by lighting.
 This happens when vertex normals are defined incorrectly.
@@ -476,15 +476,15 @@ This method should fill in the @c SelectMgr_Selection argument with @c SelectMgr
 @c Select3D_SensitiveBox is probably the simplest way to define selectable volume - by it's bounding box:
 
 ~~~~{.cpp}
-void MyAisObject::ComputeSelection (const Handle(SelectMgr_Selection)& theSel,
-                                    const Standard_Integer theMode)
+void MyAisObject::ComputeSelection (const occ::handle<SelectMgr_Selection>& theSel,
+                                    const int theMode)
 {
   const double aRadius = 100.0, aHeight = 100.0;
   TopoDS_Shape aShape = BRepPrimAPI_MakeCylinder (aRadius, aHeight);
   Bnd_Box aBox;
   BRepBndLib::Add (aShape, aBox);
-  Handle(SelectMgr_EntityOwner) anOwner = new SelectMgr_EntityOwner (this);
-  Handle(Select3D_SensitiveBox) aSensBox = new Select3D_SensitiveBox (anOwner, aBox);
+  occ::handle<SelectMgr_EntityOwner> anOwner = new SelectMgr_EntityOwner (this);
+  occ::handle<Select3D_SensitiveBox> aSensBox = new Select3D_SensitiveBox (anOwner, aBox);
   theSel->Add (aSensBox);
 }
 ~~~~
@@ -505,12 +505,12 @@ Owner may store an additional identifier as a class field, like @c StdSelect_BRe
 In a similar way as @c StdPrs_ShadedShape is a **presentation builder** for @c TopoDS_Shape, the @c StdSelect_BRepSelectionTool can be seen as a standard **selection builder** for shapes:
 
 ~~~~{.cpp}
-void MyAisObject::ComputeSelection (const Handle(SelectMgr_Selection)& theSel,
-                                    const Standard_Integer theMode)
+void MyAisObject::ComputeSelection (const occ::handle<SelectMgr_Selection>& theSel,
+                                    const int theMode)
 {
   const double aRadius = 100.0, aHeight = 100.0;
   TopoDS_Shape aShape = BRepPrimAPI_MakeCylinder (aRadius, aHeight);
-  Standard_Real aDefl = StdPrs_ToolTriangulatedShape::GetDeflection (aShape, myDrawer);
+  double aDefl = StdPrs_ToolTriangulatedShape::GetDeflection (aShape, myDrawer);
   StdSelect_BRepSelectionTool::Load (theSel, this, aShape, TopAbs_SHAPE, aDefl,
                                      myDrawer->DeviationAngle(),
                                      myDrawer->IsAutoTriangulation());
@@ -522,14 +522,14 @@ Internally, @c StdSelect_BRepSelectionTool iterates over sub-shapes and appends 
 Previously, we have used @c Prs3d_ToolCylinder to triangulate a cylinder, so let's try to construct @c Select3D_SensitivePrimitiveArray from the same triangulation:
 
 ~~~~{.cpp}
-void MyAisObject::ComputeSelection (const Handle(SelectMgr_Selection)& theSel,
-                                    const Standard_Integer theMode)
+void MyAisObject::ComputeSelection (const occ::handle<SelectMgr_Selection>& theSel,
+                                    const int theMode)
 {
   const double aRadius = 100.0, aHeight = 100.0;
-  Handle(SelectMgr_EntityOwner) anOwner = new SelectMgr_EntityOwner (this);
-  Handle(Graphic3d_ArrayOfTriangles) aTris =
+  occ::handle<SelectMgr_EntityOwner> anOwner = new SelectMgr_EntityOwner (this);
+  occ::handle<Graphic3d_ArrayOfTriangles> aTris =
     Prs3d_ToolCylinder::Create (aRadius, aRadius, aHeight, 25, 25, gp_Trsf());
-  Handle(Select3D_SensitivePrimitiveArray) aSensTri =
+  occ::handle<Select3D_SensitivePrimitiveArray> aSensTri =
     new Select3D_SensitivePrimitiveArray (anOwner);
   aSensTri->InitTriangulation (aTris->Attributes(), aTris->Indices(),
                                TopLoc_Location());
@@ -544,8 +544,8 @@ These issues might happen, for example, when selection uses tessellated represen
 As in case of @c @::Compute(), it makes sense defining some enumeration of **selection modes** supported by specific object and reject unsupported ones to avoid unexpected behavior:
 
 ~~~~{.cpp}
-void MyAisObject::ComputeSelection (const Handle(SelectMgr_Selection)& theSel,
-                                    const Standard_Integer theMode)
+void MyAisObject::ComputeSelection (const occ::handle<SelectMgr_Selection>& theSel,
+                                    const int theMode)
 {
   if (theMode != 0) { return; }
   ...
@@ -558,9 +558,9 @@ A user should be careful to activate only the modes that actually make sense and
 Selection mode to activate could be specified while displaying the object (passing _**-1**_ instead of _**0**_ would display an object with deactivated selection):
 
 ~~~~{.cpp}
-Handle(AIS_InteractiveContext) theCtx;
-Handle(MyAisObject) aPrs = new MyAisObject();
-theCtx->Display (aPrs, MyAisObject::MyDispMode_Main, 0, false);
+occ::handle<AIS_InteractiveContext> aCtx;
+occ::handle<MyAisObject> aPrs = new MyAisObject();
+aCtx->Display (aPrs, MyAisObject::MyDispMode_Main, 0, false);
 ~~~~
 
 Later on @c AIS_InteractiveContext::SetSelectionModeActive(), or it's wrappers @c AIS_InteractiveContext::Activate() and @c AIS_InteractiveContext::Deactivate(),
@@ -579,19 +579,19 @@ class MyAisOwner : public SelectMgr_EntityOwner
 {
   DEFINE_STANDARD_RTTI_INLINE(MyAisOwner, SelectMgr_EntityOwner)
 public:
-  MyAisOwner (const Handle(MyAisObject)& theObj, int thePriority = 0)
+  MyAisOwner (const occ::handle<MyAisObject>& theObj, int thePriority = 0)
   : SelectMgr_EntityOwner (theObj, thePriority) {}
 
-  virtual void HilightWithColor (const Handle(PrsMgr_PresentationManager)& thePrsMgr,
-                                 const Handle(Prs3d_Drawer)& theStyle,
-                                 const Standard_Integer theMode) override
+  virtual void HilightWithColor (const occ::handle<PrsMgr_PresentationManager>& thePrsMgr,
+                                 const occ::handle<Prs3d_Drawer>& theStyle,
+                                 const int theMode) override
   { base_type::HilightWithColor (thePrsMgr, theStyle, theMode); }
 
-  virtual void Unhilight (const Handle(PrsMgr_PresentationManager)& thePrsMgr,
-                          const Standard_Integer theMode) override
+  virtual void Unhilight (const occ::handle<PrsMgr_PresentationManager>& thePrsMgr,
+                          const int theMode) override
   { base_type::Unhilight  (thePrsMgr, theMode); }
 protected:
-  Handle(Prs3d_Presentation) myPrs;
+  occ::handle<Prs3d_Presentation> myPrs;
 };
 ~~~~
 
@@ -606,11 +606,11 @@ MyAisObject::MyAisObject()
   ...
 }
 
-void MyAisObject::ComputeSelection (const Handle(SelectMgr_Selection)& theSel,
-                                    const Standard_Integer theMode)
+void MyAisObject::ComputeSelection (const occ::handle<SelectMgr_Selection>& theSel,
+                                    const int theMode)
 {
   const double aRadius = 100.0, aHeight = 100.0;
-  Handle(MyAisOwner) anOwner = new MyAisOwner (this);
+  occ::handle<MyAisOwner> anOwner = new MyAisOwner (this);
   ...
 }
 ~~~~
@@ -621,31 +621,32 @@ This is because default implementation of @c SelectMgr_EntityOwner for highlight
 
 ~~~~{.cpp}
 void SelectMgr_EntityOwner::HilightWithColor (
-  const Handle(PrsMgr_PresentationManager)& thePrsMgr,
-  const Handle(Prs3d_Drawer)& theStyle,
-  const Standard_Integer theMode)
+  const occ::handle<PrsMgr_PresentationManager>& thePrsMgr,
+  const occ::handle<Prs3d_Drawer>& theStyle,
+  const int theMode)
 {
   const Graphic3d_ZLayerId aHiLayer =
       theStyle->ZLayer() != Graphic3d_ZLayerId_UNKNOWN
     ? theStyle->ZLayer()
     : mySelectable->ZLayer();
-  thePrsMgr->Color (mySelectable, theStyle, theMode, NULL, aHiLayer);
+  thePrsMgr->Color (mySelectable, theStyle, theMode, nullptr, aHiLayer);
 }
 ~~~~
 
-@figure{ais_object_step4_highlight1.png,"Default behavior of @c SelectMgr_EntityOwner::HilightWithColor().",409} height=409px
+@figure{images/ais_object_step4_highlight1.png,"Default behavior of @c SelectMgr_EntityOwner::HilightWithColor().",409} height=409px
 
 Now, let's override the @c SelectMgr_EntityOwner::HilightWithColor() method and display a bounding box presentation:
 
 ~~~~{.cpp}
-void MyAisOwner::HilightWithColor (const Handle(PrsMgr_PresentationManager)& thePrsMgr,
-                                   const Handle(Prs3d_Drawer)& theStyle,
-                                   const Standard_Integer theMode)
+void MyAisOwner::HilightWithColor (const occ::handle<PrsMgr_PresentationManager>& thePrsMgr,
+                                   const occ::handle<Prs3d_Drawer>& theStyle,
+                                   const int theMode)
 {
   if (myPrs.IsNull())
   {
     myPrs = new Prs3d_Presentation (thePrsMgr->StructureManager());
     MyAisObject* anObj = dynamic_cast<MyAisObject*> (mySelectable);
+    if (anObj == nullptr) return;
     anObj->Compute (thePrsMgr, myPrs, MyAisObject::MyDispMode_Highlight);
   }
   if (!thePrsMgr->IsImmediateModeOn())
@@ -658,15 +659,15 @@ void MyAisOwner::HilightWithColor (const Handle(PrsMgr_PresentationManager)& the
 @c SelectMgr_EntityOwner::HilightWithColor() doesn't receive a presentation to fill in as an argument; highlight presentation should be manually created and even explicitly displayed on the screen.
 To avoid code duplication, the code above reuses @c MyAisObject::Compute() already implementing computation of highlight presentation.
 
-@figure{ais_object_step4_highlight2.png,"Result of custom implementation @c MyAisOwner::HilightWithColor().",409} height=409px
+@figure{images/ais_object_step4_highlight2.png,"Result of custom implementation @c MyAisOwner::HilightWithColor().",409} height=409px
 
 The visual result of the selected object looks exactly the same as when we've used a dedicated highlight mode.
 One thing became broken, though - highlighting remains displayed even after clearing selection.
 To fix this issue, we need implementing @c SelectMgr_EntityOwner::Unhilight() and hide our custom presentation explicitly:
 
 ~~~~{.cpp}
-void MyAisOwner::Unhilight (const Handle(PrsMgr_PresentationManager)& thePrsMgr,
-                            const Standard_Integer theMode)
+void MyAisOwner::Unhilight (const occ::handle<PrsMgr_PresentationManager>& thePrsMgr,
+                            const int theMode)
 {
   if (!myPrs.IsNull()) { myPrs->Erase(); }
 }
@@ -678,19 +679,20 @@ Within this mode turned ON, presentation should be displayed on the screen with 
 (it will be cleared from the screen automatically on the next mouse movement):
 
 ~~~~{.cpp}
-void MyAisOwner::HilightWithColor (const Handle(PrsMgr_PresentationManager)& thePrsMgr,
-                                   const Handle(Prs3d_Drawer)& theStyle,
-                                   const Standard_Integer theMode)
+void MyAisOwner::HilightWithColor (const occ::handle<PrsMgr_PresentationManager>& thePrsMgr,
+                                   const occ::handle<Prs3d_Drawer>& theStyle,
+                                   const int theMode)
 {
   if (myPrs.IsNull())
   {
     myPrs = new Prs3d_Presentation (thePrsMgr->StructureManager());
     MyAisObject* anObj = dynamic_cast<MyAisObject*> (mySelectable);
+    if (anObj == nullptr) return;
     anObj->Compute (thePrsMgr, myPrs, MyAisObject::MyDispMode_Highlight);
   }
   if (thePrsMgr->IsImmediateModeOn())
   {
-    Handle(Prs3d_PresentationShadow) aShadow =
+    occ::handle<Prs3d_PresentationShadow> aShadow =
       new Prs3d_PresentationShadow (thePrsMgr->StructureManager(), myPrs);
     aShadow->SetZLayer (Graphic3d_ZLayerId_Top);
     aShadow->Highlight (theStyle);
@@ -708,14 +710,15 @@ We may create two dedicated presentations for dynamic highlighting or reuse exis
 Let's go further and make dynamic highlighting a little bit more interesting - by drawing a surface normal at the point where mouse picked the object:
 
 ~~~~{.cpp}
-void MyAisOwner::HilightWithColor (const Handle(PrsMgr_PresentationManager)& thePrsMgr,
-                                   const Handle(Prs3d_Drawer)& theStyle,
-                                   const Standard_Integer theMode)
+void MyAisOwner::HilightWithColor (const occ::handle<PrsMgr_PresentationManager>& thePrsMgr,
+                                   const occ::handle<Prs3d_Drawer>& theStyle,
+                                   const int theMode)
 {
   MyAisObject* anObj = dynamic_cast<MyAisObject*> (mySelectable);
+  if (anObj == nullptr) return;
   if (thePrsMgr->IsImmediateModeOn())
   {
-    Handle(StdSelect_ViewerSelector) aSelector =
+    occ::handle<StdSelect_ViewerSelector3d> aSelector =
       anObj->InteractiveContext()->MainSelector();
     SelectMgr_SortCriterion aPickPnt;
     for (int aPickIter = 1; aPickIter <= aSelector->NbPicked(); ++aPickIter)
@@ -727,18 +730,18 @@ void MyAisOwner::HilightWithColor (const Handle(PrsMgr_PresentationManager)& the
       }
     }
 
-    Handle(Prs3d_Presentation) aPrs = mySelectable->GetHilightPresentation (thePrsMgr);
+    occ::handle<Prs3d_Presentation> aPrs = mySelectable->GetHilightPresentation (thePrsMgr);
     aPrs->SetZLayer (Graphic3d_ZLayerId_Top);
     aPrs->Clear();
-    Handle(Graphic3d_Group) aGroup = aPrs->NewGroup();
-    aGroupPnt->SetGroupPrimitivesAspect (theStyle->ArrowAspect()->Aspect());
+    occ::handle<Graphic3d_Group> aGroup = aPrs->NewGroup();
+    aGroup->SetGroupPrimitivesAspect (theStyle->ArrowAspect()->Aspect());
     gp_Trsf aTrsfInv = mySelectable->LocalTransformation().Inverted();
-    gp_Dir  aNorm (aPickPnt.Normal.x(), aPickPnt.Normal.y(), aPickPnt.Normal.z());
-    Handle(Graphic3d_ArrayOfTriangles) aTris =
+    gp_Dir  aNorm (aPickPnt.Normal.X(), aPickPnt.Normal.Y(), aPickPnt.Normal.Z());
+    occ::handle<Graphic3d_ArrayOfTriangles> aTris =
       Prs3d_Arrow::DrawShaded (gp_Ax1(aPickPnt.Point, aNorm).Transformed (aTrsfInv),
         1.0, 15.0,
         3.0, 4.0, 10);
-    aGroupPnt->AddPrimitiveArray (aTris);
+    aGroup->AddPrimitiveArray (aTris);
     thePrsMgr->AddToImmediateList (aPrs);
   }
 }
@@ -755,7 +758,7 @@ normally our Owner should be the very first one in this list when no selection f
 @c SelectMgr_SortCriterion provides us useful information like 3D point on detected object lying on the picking ray, and surface normal direction at this point (actually, it would be a normal to a picked triangle),
 which we display as an arrow with help of @c Prs3d_Arrow presentation builder.
 
-@figure{ais_object_step4_highlight3.png,"Surface normal on mouse over.",409} height=409px
+@figure{images/ais_object_step4_highlight3.png,"Surface normal on mouse over.",409} height=409px
 
 Result looks pretty nice on the screenshot, but has interaction problems - once displayed, an arrow is no longer updated with further mouse movements.
 But this behavior is not a bug - @c AIS calls @c MyAisOwner::HilightWithColor() only when picking Owner changes to avoid unnecessary Viewer updates.
@@ -825,13 +828,13 @@ But let's have some fun and make our object to change a color on each mouse clic
 class MyAisOwner : public SelectMgr_EntityOwner
 {
 ...
-  virtual bool HandleMouseClick (const Graphic3d_Vec2i& thePoint,
+  virtual bool HandleMouseClick (const NCollection_Vec2<int>& thePoint,
                                  Aspect_VKeyMouse theButton,
                                  Aspect_VKeyFlags theModifiers,
                                  bool theIsDoubleClick) override;
 };
 
-bool MyAisOwner::HandleMouseClick (const Graphic3d_Vec2i& thePoint,
+bool MyAisOwner::HandleMouseClick (const NCollection_Vec2<int>& thePoint,
                                    Aspect_VKeyMouse theButton,
                                    Aspect_VKeyFlags theModifiers,
                                    bool theIsDoubleClick)
@@ -854,13 +857,13 @@ We use a couple of global (@c static) variables in our sample for simplicity - d
 class MyAisOwner : public SelectMgr_EntityOwner
 {
 ...
-  void SetAnimation (const Handle(AIS_Animation)& theAnim)
+  void SetAnimation (const occ::handle<AIS_Animation>& theAnim)
   { myAnim = theAnim; }
 ...
-  Handle(AIS_Animation) myAnim;
+  occ::handle<AIS_Animation> myAnim;
 };
 
-bool MyAisOwner::HandleMouseClick (const Graphic3d_Vec2i& thePoint,
+bool MyAisOwner::HandleMouseClick (const NCollection_Vec2<int>& thePoint,
                                    Aspect_VKeyMouse theButton,
                                    Aspect_VKeyFlags theModifiers,
                                    bool theIsDoubleClick)
@@ -868,11 +871,12 @@ bool MyAisOwner::HandleMouseClick (const Graphic3d_Vec2i& thePoint,
   static bool isFirst = true;
   isFirst = !isFirst;
   MyAisObject* anObj = dynamic_cast<MyAisObject*> (mySelectable);
+  if (anObj == nullptr) return false;
   gp_Trsf aTrsfTo;
   aTrsfTo.SetRotation (gp_Ax1 (gp::Origin(), gp::DX()),
                        isFirst ? M_PI * 0.5 : -M_PI * 0.5);
   gp_Trsf aTrsfFrom = anObj->LocalTransformation();
-  Handle(AIS_AnimationObject) anAnim =
+  occ::handle<AIS_AnimationObject> anAnim =
     new AIS_AnimationObject ("MyAnim", anObj->InteractiveContext(),
                              anObj, aTrsfFrom, aTrsfTo);
   anAnim->SetOwnDuration (2.0);
@@ -890,11 +894,11 @@ To utilize it, you need adding a custom object animation to @c AIS_ViewControlle
 Somewhere in application this might look like this:
 
 ~~~~{.cpp}
-Handle(AIS_InteractiveContext) theCtx;
-Handle(AIS_ViewController) theViewCtrl;
-Handle(MyAisObject) aPrs = new MyAisObject();
-aPrs->SetAnimation (theViewCtrl->ObjectsAnimation());
-theCtx->Display (aPrs, MyAisObject::MyDispMode_Main, 0, false);
+occ::handle<AIS_InteractiveContext> aCtx;
+occ::handle<AIS_ViewController> aViewCtrl;
+occ::handle<MyAisObject> aPrs = new MyAisObject();
+aPrs->SetAnimation (aViewCtrl->ObjectsAnimation());
+aCtx->Display (aPrs, MyAisObject::MyDispMode_Main, 0, false);
 ~~~~
 
 @section final Final result
@@ -908,4 +912,4 @@ QATutorialAisObject p
 vfit
 ~~~~
 
-You may also take a look onto source code of this command at @c src/QADraw/QADraw_Tutorials.cxx if you have some problems following the tutorial.
+You may also take a look onto source code of this command at @c src/Draw/TKQADraw/QADraw/QADraw_Tutorials.cxx if you have some problems following the tutorial.

@@ -69,9 +69,9 @@
   #define M_PI 3.14159265358979323846
 #endif
 
-//==================================================================================================
+//=================================================================================================
 //! Base utility class for BOP testing with common helper functions
-//==================================================================================================
+//=================================================================================================
 class BOPTest_Utilities
 {
 public:
@@ -415,7 +415,7 @@ public:
           break;
 
         case ProfileCmd::X: // Translate along X
-          if (op.params.size() >= 1)
+          if (!op.params.empty())
           {
             // If first point not set, implicitly start at (0,0)
             if (!aFirstSet)
@@ -436,7 +436,7 @@ public:
           break;
 
         case ProfileCmd::Y: // Translate along Y
-          if (op.params.size() >= 1)
+          if (!op.params.empty())
           {
             // If first point not set, implicitly start at (0,0)
             if (!aFirstSet)
@@ -565,9 +565,9 @@ public:
   {
     std::vector<gp_Pnt> aPoints;
     aPoints.push_back(theCorner);
-    aPoints.push_back(gp_Pnt(theCorner.X() + theX, theCorner.Y(), theCorner.Z()));
-    aPoints.push_back(gp_Pnt(theCorner.X() + theX, theCorner.Y() + theY, theCorner.Z()));
-    aPoints.push_back(gp_Pnt(theCorner.X(), theCorner.Y() + theY, theCorner.Z()));
+    aPoints.emplace_back(theCorner.X() + theX, theCorner.Y(), theCorner.Z());
+    aPoints.emplace_back(theCorner.X() + theX, theCorner.Y() + theY, theCorner.Z());
+    aPoints.emplace_back(theCorner.X(), theCorner.Y() + theY, theCorner.Z());
     return CreatePolygonWire(aPoints, true);
   }
 
@@ -791,9 +791,9 @@ public:
   }
 };
 
-//==================================================================================================
+//=================================================================================================
 //! Base test class for BRepAlgoAPI operations
-//==================================================================================================
+//=================================================================================================
 class BRepAlgoAPI_TestBase : public ::testing::Test
 {
 protected:
@@ -854,9 +854,9 @@ protected:
   double myTolerance;
 };
 
-//==================================================================================================
+//=================================================================================================
 //! Base test class for BOPAlgo_BOP operations (direct and two-step)
-//==================================================================================================
+//=================================================================================================
 class BOPAlgo_TestBase : public ::testing::Test
 {
 protected:

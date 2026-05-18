@@ -16,28 +16,20 @@
 #include <ShapePersistent_Geom_Surface.hxx>
 #include <StdObject_gp_Vectors.hxx>
 
-//=======================================================================
-// function : Read
-// purpose  : Read persistent data from a file
-//=======================================================================
+//=================================================================================================
+
 void ShapePersistent_Geom::Geometry::Read(StdObjMgt_ReadData&) {}
 
-//=======================================================================
-// function : Write
-// purpose  : Write persistent data to a file
-//=======================================================================
+//=================================================================================================
+
 void ShapePersistent_Geom::Geometry::Write(StdObjMgt_WriteData&) const {}
 
-//=======================================================================
-// function : PChildren
-// purpose  : Gets persistent objects
-//=======================================================================
+//=================================================================================================
+
 void ShapePersistent_Geom::Geometry::PChildren(SequenceOfPersistent&) const {}
 
-//=======================================================================
-// function : Translate
-// purpose  : Create a persistent object for a curve
-//=======================================================================
+//=================================================================================================
+
 Handle(ShapePersistent_Geom::Curve) ShapePersistent_Geom::Translate(
   const occ::handle<Geom_Curve>&                                                           theCurve,
   NCollection_DataMap<occ::handle<Standard_Transient>, occ::handle<StdObjMgt_Persistent>>& theMap)
@@ -46,7 +38,9 @@ Handle(ShapePersistent_Geom::Curve) ShapePersistent_Geom::Translate(
   if (!theCurve.IsNull())
   {
     if (theMap.IsBound(theCurve))
+    {
       aPC = occ::down_cast<Curve>(theMap.Find(theCurve));
+    }
     else
     {
       occ::handle<Standard_Type> aCT = theCurve->DynamicType();
@@ -102,10 +96,8 @@ Handle(ShapePersistent_Geom::Curve) ShapePersistent_Geom::Translate(
   return aPC;
 }
 
-//=======================================================================
-// function : Translate
-// purpose  : Create a persistent object for a surface
-//=======================================================================
+//=================================================================================================
+
 Handle(ShapePersistent_Geom::Surface) ShapePersistent_Geom::Translate(
   const occ::handle<Geom_Surface>&                                                         theSurf,
   NCollection_DataMap<occ::handle<Standard_Transient>, occ::handle<StdObjMgt_Persistent>>& theMap)
@@ -114,7 +106,9 @@ Handle(ShapePersistent_Geom::Surface) ShapePersistent_Geom::Translate(
   if (!theSurf.IsNull())
   {
     if (theMap.IsBound(theSurf))
+    {
       aPS = occ::down_cast<Surface>(theMap.Find(theSurf));
+    }
     else
     {
       occ::handle<Standard_Type> aST = theSurf->DynamicType();

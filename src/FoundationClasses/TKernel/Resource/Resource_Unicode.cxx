@@ -21,6 +21,9 @@
 #include <TCollection_ExtendedString.hxx>
 #include <NCollection_UtfString.hxx>
 #include <Standard_NotImplemented.hxx>
+
+#include <atomic>
+#include <mutex>
 #include "Resource_CodePages.pxx"
 #include "Resource_GBK.pxx"
 #include "Resource_Big5.pxx"
@@ -43,7 +46,8 @@ static inline bool isshift(unsigned int c)
   return c >= 0x80 && c <= 0xff;
 }
 
-void Resource_Unicode::ConvertSJISToUnicode(const char* fromstr, TCollection_ExtendedString& tostr)
+void Resource_Unicode::ConvertSJISToUnicode(const char* const           fromstr,
+                                            TCollection_ExtendedString& tostr)
 {
   tostr.Clear();
 
@@ -77,7 +81,8 @@ void Resource_Unicode::ConvertSJISToUnicode(const char* fromstr, TCollection_Ext
   }
 }
 
-void Resource_Unicode::ConvertEUCToUnicode(const char* fromstr, TCollection_ExtendedString& tostr)
+void Resource_Unicode::ConvertEUCToUnicode(const char* const           fromstr,
+                                           TCollection_ExtendedString& tostr)
 {
   tostr.Clear();
 
@@ -111,7 +116,8 @@ void Resource_Unicode::ConvertEUCToUnicode(const char* fromstr, TCollection_Exte
   }
 }
 
-void Resource_Unicode::ConvertGBToUnicode(const char* fromstr, TCollection_ExtendedString& tostr)
+void Resource_Unicode::ConvertGBToUnicode(const char* const           fromstr,
+                                          TCollection_ExtendedString& tostr)
 {
   tostr.Clear();
 
@@ -145,7 +151,8 @@ void Resource_Unicode::ConvertGBToUnicode(const char* fromstr, TCollection_Exten
   }
 }
 
-bool Resource_Unicode::ConvertGBKToUnicode(const char* fromstr, TCollection_ExtendedString& tostr)
+bool Resource_Unicode::ConvertGBKToUnicode(const char* const           fromstr,
+                                           TCollection_ExtendedString& tostr)
 {
   tostr.Clear();
 
@@ -257,13 +264,16 @@ bool Resource_Unicode::ConvertGBKToUnicode(const char* fromstr, TCollection_Exte
         currentch++;
       }
       else
+      {
         return false;
+      }
     }
   }
   return true;
 }
 
-bool Resource_Unicode::ConvertBig5ToUnicode(const char* fromstr, TCollection_ExtendedString& tostr)
+bool Resource_Unicode::ConvertBig5ToUnicode(const char* const           fromstr,
+                                            TCollection_ExtendedString& tostr)
 {
   tostr.Clear();
 
@@ -326,7 +336,9 @@ bool Resource_Unicode::ConvertBig5ToUnicode(const char* fromstr, TCollection_Ext
                 NCollection_UtfString<char16_t> aStr16 = aStr32.ToUtf16();
 
                 if (aStr16.Size() != 4)
+                {
                   return false; // not a surrogate pair
+                }
                 const char16_t* aChar16 = aStr16.ToCString();
                 tostr.Insert(aLength + 1, (char16_t)(*aChar16));
                 aChar16++;
@@ -364,7 +376,9 @@ bool Resource_Unicode::ConvertBig5ToUnicode(const char* fromstr, TCollection_Ext
         currentch++;
       }
       else
+      {
         return false;
+      }
     }
   }
   return true;
@@ -578,62 +592,65 @@ bool Resource_Unicode::ConvertUnicodeToANSI(const TCollection_ExtendedString& fr
   return true;
 }
 
-static bool AlreadyRead = false;
+static std::atomic<bool>                AlreadyRead{false};
+static std::atomic<Resource_FormatType> TheFormat{Resource_ANSI};
+static std::mutex                       TheFormatMutex;
 
-static Resource_FormatType& Resource_Current_Format()
+static void readFormatFromConfig()
 {
-  static Resource_FormatType theformat = Resource_ANSI;
-  if (!AlreadyRead)
+  Resource_FormatType           aFormat = Resource_ANSI;
+  occ::handle<Resource_Manager> mgr     = new Resource_Manager("CharSet");
+  if (mgr->Find("FormatType"))
   {
-    AlreadyRead                       = true;
-    occ::handle<Resource_Manager> mgr = new Resource_Manager("CharSet");
-    if (mgr->Find("FormatType"))
+    TCollection_AsciiString form = mgr->Value("FormatType");
+    if (form.IsEqual("SJIS"))
     {
-      TCollection_AsciiString form = mgr->Value("FormatType");
-      if (form.IsEqual("SJIS"))
-      {
-        theformat = Resource_SJIS;
-      }
-      else if (form.IsEqual("EUC"))
-      {
-        theformat = Resource_EUC;
-      }
-      else if (form.IsEqual("GB"))
-      {
-        theformat = Resource_GB;
-      }
-      else
-      {
-        theformat = Resource_ANSI;
-      }
+      aFormat = Resource_SJIS;
     }
-    else
+    else if (form.IsEqual("EUC"))
     {
-      theformat = Resource_ANSI;
+      aFormat = Resource_EUC;
+    }
+    else if (form.IsEqual("GB"))
+    {
+      aFormat = Resource_GB;
     }
   }
-  return theformat;
+  TheFormat.store(aFormat, std::memory_order_relaxed);
 }
 
 void Resource_Unicode::SetFormat(const Resource_FormatType typecode)
 {
-  AlreadyRead               = true;
-  Resource_Current_Format() = typecode;
+  std::lock_guard<std::mutex> aLock(TheFormatMutex);
+  TheFormat.store(typecode, std::memory_order_relaxed);
+  AlreadyRead.store(true, std::memory_order_release);
 }
 
 Resource_FormatType Resource_Unicode::GetFormat()
 {
-  return Resource_Current_Format();
+  if (AlreadyRead.load(std::memory_order_acquire))
+  {
+    return TheFormat.load(std::memory_order_relaxed);
+  }
+  std::lock_guard<std::mutex> aLock(TheFormatMutex);
+  if (!AlreadyRead.load(std::memory_order_relaxed))
+  {
+    readFormatFromConfig();
+    AlreadyRead.store(true, std::memory_order_release);
+  }
+  return TheFormat.load(std::memory_order_relaxed);
 }
 
 void Resource_Unicode::ReadFormat()
 {
-  AlreadyRead = false;
-  Resource_Unicode::GetFormat();
+  std::lock_guard<std::mutex> aLock(TheFormatMutex);
+  AlreadyRead.store(false, std::memory_order_relaxed);
+  readFormatFromConfig();
+  AlreadyRead.store(true, std::memory_order_release);
 }
 
 void Resource_Unicode::ConvertFormatToUnicode(const Resource_FormatType   theFormat,
-                                              const char*                 theFromStr,
+                                              const char* const           theFromStr,
                                               TCollection_ExtendedString& theToStr)
 {
   switch (theFormat)
@@ -673,8 +690,8 @@ void Resource_Unicode::ConvertFormatToUnicode(const Resource_FormatType   theFor
     case Resource_FormatType_iso8859_8:
     case Resource_FormatType_iso8859_9:
     case Resource_FormatType_CP850: {
-      const int       aCodePageIndex = (int)theFormat - (int)Resource_FormatType_CP1250;
-      const char16_t* aCodePage      = THE_CODEPAGES_ANSI[aCodePageIndex];
+      const int             aCodePageIndex = (int)theFormat - (int)Resource_FormatType_CP1250;
+      const char16_t* const aCodePage      = THE_CODEPAGES_ANSI[aCodePageIndex];
       theToStr.Clear();
       for (const char* anInputPntr = theFromStr; *anInputPntr != '\0'; ++anInputPntr)
       {
@@ -751,8 +768,8 @@ bool Resource_Unicode::ConvertUnicodeToFormat(const Resource_FormatType         
       {
         return false;
       }
-      const int       aCodePageIndex = (int)theFormat - (int)Resource_FormatType_CP1250;
-      const char16_t* aCodePage      = THE_CODEPAGES_ANSI[aCodePageIndex];
+      const int             aCodePageIndex = (int)theFormat - (int)Resource_FormatType_CP1250;
+      const char16_t* const aCodePage      = THE_CODEPAGES_ANSI[aCodePageIndex];
       for (int aToCharInd = 0; aToCharInd < theMaxSize - 1; ++aToCharInd)
       {
         bool     isFind    = false;

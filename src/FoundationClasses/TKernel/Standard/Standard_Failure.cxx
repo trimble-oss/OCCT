@@ -17,12 +17,13 @@
 #include <Standard_ErrorHandler.hxx>
 
 #include <algorithm>
+#include <atomic>
 #include <cstring>
 
 namespace
 {
 //! Global parameter defining default length of stack trace.
-static int Standard_Failure_DefaultStackTraceLength = 0;
+static std::atomic<int> Standard_Failure_DefaultStackTraceLength{0};
 } // namespace
 
 //=================================================================================================
@@ -112,7 +113,7 @@ Standard_Failure::Standard_Failure(const char* theMessage)
 
 //=================================================================================================
 
-Standard_Failure::Standard_Failure(const char* theMessage, const char* theStackTrace)
+Standard_Failure::Standard_Failure(const char* const theMessage, const char* const theStackTrace)
     : myMessage(nullptr),
       myStackTrace(nullptr)
 {

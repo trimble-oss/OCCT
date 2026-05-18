@@ -17,7 +17,7 @@
 
 #include <cmath>
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array1<gp_Pnt> GeomGridEval_Hyperbola::EvaluateGrid(
   const NCollection_Array1<double>& theParams) const
@@ -27,7 +27,7 @@ NCollection_Array1<gp_Pnt> GeomGridEval_Hyperbola::EvaluateGrid(
     return NCollection_Array1<gp_Pnt>();
   }
 
-  const int                  aNb = theParams.Size();
+  const int                  aNb = theParams.Length();
   NCollection_Array1<gp_Pnt> aResult(1, aNb);
 
   const gp_Hypr& aHypr   = myGeom->Hypr();
@@ -62,7 +62,7 @@ NCollection_Array1<gp_Pnt> GeomGridEval_Hyperbola::EvaluateGrid(
   return aResult;
 }
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array1<GeomGridEval::CurveD1> GeomGridEval_Hyperbola::EvaluateGridD1(
   const NCollection_Array1<double>& theParams) const
@@ -72,7 +72,7 @@ NCollection_Array1<GeomGridEval::CurveD1> GeomGridEval_Hyperbola::EvaluateGridD1
     return NCollection_Array1<GeomGridEval::CurveD1>();
   }
 
-  const int                                 aNb = theParams.Size();
+  const int                                 aNb = theParams.Length();
   NCollection_Array1<GeomGridEval::CurveD1> aResult(1, aNb);
 
   const gp_Hypr& aHypr   = myGeom->Hypr();
@@ -112,7 +112,7 @@ NCollection_Array1<GeomGridEval::CurveD1> GeomGridEval_Hyperbola::EvaluateGridD1
   return aResult;
 }
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array1<GeomGridEval::CurveD2> GeomGridEval_Hyperbola::EvaluateGridD2(
   const NCollection_Array1<double>& theParams) const
@@ -122,7 +122,7 @@ NCollection_Array1<GeomGridEval::CurveD2> GeomGridEval_Hyperbola::EvaluateGridD2
     return NCollection_Array1<GeomGridEval::CurveD2>();
   }
 
-  const int                                 aNb = theParams.Size();
+  const int                                 aNb = theParams.Length();
   NCollection_Array1<GeomGridEval::CurveD2> aResult(1, aNb);
 
   const gp_Hypr& aHypr   = myGeom->Hypr();
@@ -166,7 +166,7 @@ NCollection_Array1<GeomGridEval::CurveD2> GeomGridEval_Hyperbola::EvaluateGridD2
   return aResult;
 }
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array1<GeomGridEval::CurveD3> GeomGridEval_Hyperbola::EvaluateGridD3(
   const NCollection_Array1<double>& theParams) const
@@ -176,7 +176,7 @@ NCollection_Array1<GeomGridEval::CurveD3> GeomGridEval_Hyperbola::EvaluateGridD3
     return NCollection_Array1<GeomGridEval::CurveD3>();
   }
 
-  const int                                 aNb = theParams.Size();
+  const int                                 aNb = theParams.Length();
   NCollection_Array1<GeomGridEval::CurveD3> aResult(1, aNb);
 
   const gp_Hypr& aHypr   = myGeom->Hypr();
@@ -224,7 +224,7 @@ NCollection_Array1<GeomGridEval::CurveD3> GeomGridEval_Hyperbola::EvaluateGridD3
   return aResult;
 }
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array1<gp_Vec> GeomGridEval_Hyperbola::EvaluateGridDN(
   const NCollection_Array1<double>& theParams,
@@ -235,7 +235,7 @@ NCollection_Array1<gp_Vec> GeomGridEval_Hyperbola::EvaluateGridDN(
     return NCollection_Array1<gp_Vec>();
   }
 
-  const int                  aNb = theParams.Size();
+  const int                  aNb = theParams.Length();
   NCollection_Array1<gp_Vec> aResult(1, aNb);
 
   const gp_Hypr& aHypr = myGeom->Hypr();

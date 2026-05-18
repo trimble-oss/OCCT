@@ -52,15 +52,14 @@ TDF_Transaction::TDF_Transaction(const occ::handle<TDF_Data>&   aDF,
 {
 }
 
-//=======================================================================
-// function : Initialize
-// purpose  : Initializes a transaction ready to be opened.
-//=======================================================================
+//=================================================================================================
 
 void TDF_Transaction::Initialize(const occ::handle<TDF_Data>& aDF)
 {
   if (IsOpen())
+  {
     myDF->AbortUntilTransaction(myUntilTransaction);
+  }
   myDF               = aDF;
   myUntilTransaction = 0;
 }
@@ -73,9 +72,13 @@ int TDF_Transaction::Open()
   std::cout << "Transaction " << myName << " opens #" << myDF->Transaction() + 1 << std::endl;
 #endif
   if (IsOpen())
+  {
     throw Standard_DomainError("This transaction is already open.");
+  }
   if (myDF.IsNull())
+  {
     throw Standard_NullObject("Null TDF_Data.");
+  }
   return myUntilTransaction = myDF->OpenTransaction();
 }
 

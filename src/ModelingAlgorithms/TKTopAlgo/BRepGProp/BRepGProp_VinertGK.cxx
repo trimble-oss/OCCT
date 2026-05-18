@@ -271,13 +271,17 @@ double BRepGProp_VinertGK::PrivatePerform(BRepGProp_Face& theSurface,
   // If the pointer to the domain is NULL, there is only one curve to treat:
   // U isoline with the UMax parameter.
   if (thePtrDomain == nullptr)
+  {
     aNbCurves = 1;
+  }
   else
   {
     aPDomain = (BRepGProp_Domain*)thePtrDomain;
 
     for (aPDomain->Init(); aPDomain->More(); aPDomain->Next())
+    {
       aNbCurves++;
+    }
   }
 
   if (aNbCurves == 0)
@@ -333,7 +337,9 @@ double BRepGProp_VinertGK::PrivatePerform(BRepGProp_Face& theSurface,
   theSurface.Bounds(aUMin, aUMax, aTMin, aTMax);
 
   if (thePtrDomain == nullptr)
+  {
     isMore = true;
+  }
   else
   {
     aPDomain->Init();
@@ -346,18 +352,21 @@ double BRepGProp_VinertGK::PrivatePerform(BRepGProp_Face& theSurface,
     // U isoline with the UMax parameter.
 
     if (thePtrDomain == nullptr)
+    {
       theSurface.Load(false, GeomAbs_IsoU);
+    }
     else
+    {
       theSurface.Load(aPDomain->Value());
+    }
 
     aTMin = theSurface.FirstParameter();
     aTMax = theSurface.LastParameter();
 
     // Get the spans on the curve.
-    occ::handle<NCollection_HArray1<double>> aTKnots;
     BRepGProp_TFunction aTFunc(theSurface, loc, IsByPoint, theCoeffs, aUMin, aCrvTol);
 
-    theSurface.GetTKnots(aTMin, aTMax, aTKnots);
+    occ::handle<NCollection_HArray1<double>> aTKnots = theSurface.GetTKnots(aTMin, aTMax);
 
     int iU            = aTKnots->Upper();
     int aNbTIntervals = aTKnots->Length() - 1;
@@ -378,7 +387,9 @@ double BRepGProp_VinertGK::PrivatePerform(BRepGProp_Face& theSurface,
     {
 
       if (!CFlags(k))
+      {
         continue;
+      }
 
       int i = aTKnots->Lower();
 
@@ -430,7 +441,9 @@ double BRepGProp_VinertGK::PrivatePerform(BRepGProp_Face& theSurface,
         double aT2 = aTKnots->Value(i);
 
         if (aT2 - aT1 < aTTol)
+        {
           continue;
+        }
 
         aTFunc.SetNbKronrodPoints(aNbPnts);
         aTFunc.Init();
@@ -460,7 +473,9 @@ double BRepGProp_VinertGK::PrivatePerform(BRepGProp_Face& theSurface,
     // If the pointer to the domain is NULL, there is only one curve to treat:
     // U isoline with the UMax parameter.
     if (thePtrDomain == nullptr)
+    {
       isMore = false;
+    }
     else
     {
       aPDomain->Next();
@@ -475,7 +490,9 @@ double BRepGProp_VinertGK::PrivatePerform(BRepGProp_Face& theSurface,
   double anAbsDim = std::abs(dim);
   double aVolTol  = Epsilon(myAbsolutError);
   if (anAbsDim >= aVolTol)
+  {
     myErrorReached /= anAbsDim;
+  }
 
   if (theCGFlag || theIFlag)
   {

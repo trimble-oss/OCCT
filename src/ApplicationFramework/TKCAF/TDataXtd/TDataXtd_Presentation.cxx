@@ -303,7 +303,9 @@ void TDataXtd_Presentation::Unset(const TDF_Label& theLabel)
 {
   occ::handle<TDataXtd_Presentation> aPresentation;
   if (theLabel.FindAttribute(TDataXtd_Presentation::GetID(), aPresentation))
+  {
     theLabel.ForgetAttribute(aPresentation);
+  }
 }
 
 //=================================================================================================
@@ -459,12 +461,9 @@ void TDataXtd_Presentation::SetMode(const int theMode)
   }
 }
 
-//=======================================================================
-// function : GetNbSelectionModes
-// purpose  : Returns the number of selection modes of the attribute.
-//         : It starts with 1 .. GetNbSelectionModes().
-//=======================================================================
-Standard_EXPORT int TDataXtd_Presentation::GetNbSelectionModes() const
+//=================================================================================================
+
+int TDataXtd_Presentation::GetNbSelectionModes() const
 {
   return mySelectionModes.Extent();
 }
@@ -477,7 +476,9 @@ void TDataXtd_Presentation::SetSelectionMode(const int theSelectionMode, const b
       || (GetNbSelectionModes() > 0 && mySelectionModes.First() != theSelectionMode))
   {
     if (theTransaction)
+    {
       Backup();
+    }
     mySelectionModes.Clear();
     mySelectionModes.Append(theSelectionMode);
     myHasOwnSelectionMode = true;
@@ -491,7 +492,9 @@ void TDataXtd_Presentation::AddSelectionMode(const int theSelectionMode, const b
   if (!myHasOwnSelectionMode || !HasSelectionMode(theSelectionMode))
   {
     if (theTransaction)
+    {
       Backup();
+    }
     mySelectionModes.Append(theSelectionMode);
     myHasOwnSelectionMode = true;
   }
@@ -541,7 +544,9 @@ int TDataXtd_Presentation::SelectionMode(const int index) const
   for (int i = 1; itr.More() && i <= index; itr.Next(), i++)
   {
     if (i == index)
+    {
       aSelectionMode = itr.Value();
+    }
   }
   return aSelectionMode;
 }
@@ -747,10 +752,8 @@ void TDataXtd_Presentation::Paste(const occ::handle<TDF_Attribute>& theInto,
   anInto->myDriverGUID  = myDriverGUID;
 }
 
-//=======================================================================
-// function : HasSelectionMode
-// purpose  : Checks a list of selection modes.
-//=======================================================================
+//=================================================================================================
+
 bool TDataXtd_Presentation::HasSelectionMode(const int theSelectionMode) const
 {
   bool                            ret(false);
@@ -758,7 +761,9 @@ bool TDataXtd_Presentation::HasSelectionMode(const int theSelectionMode) const
   for (; itr.More(); itr.Next())
   {
     if (theSelectionMode == itr.Value())
+    {
       ret = true;
+    }
   }
   return ret;
 }

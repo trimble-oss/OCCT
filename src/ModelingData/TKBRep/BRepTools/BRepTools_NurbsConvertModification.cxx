@@ -61,8 +61,7 @@ static void GeomLib_ChangeUBounds(occ::handle<Geom_BSplineSurface>& aSurface,
                                   const double                      newU1,
                                   const double                      newU2)
 {
-  NCollection_Array1<double> knots(1, aSurface->NbUKnots());
-  aSurface->UKnots(knots);
+  NCollection_Array1<double> knots(aSurface->UKnots());
   BSplCLib::Reparametrize(newU1, newU2, knots);
   aSurface->SetUKnots(knots);
 }
@@ -71,8 +70,7 @@ static void GeomLib_ChangeVBounds(occ::handle<Geom_BSplineSurface>& aSurface,
                                   const double                      newV1,
                                   const double                      newV2)
 {
-  NCollection_Array1<double> knots(1, aSurface->NbVKnots());
-  aSurface->VKnots(knots);
+  NCollection_Array1<double> knots(aSurface->VKnots());
   BSplCLib::Reparametrize(newV1, newV2, knots);
   aSurface->SetVKnots(knots);
 }
@@ -185,11 +183,13 @@ static bool newParameter(const gp_Pnt2d&                  theUV,
       int    aMinInd    = 0;
       double aMinSqDist = Precision::Infinite();
       for (int anIndex = 1; anIndex <= anExt.NbExt(); ++anIndex)
+      {
         if (anExt.SquareDistance(anIndex) < aMinSqDist)
         {
           aMinSqDist = anExt.SquareDistance(anIndex);
           aMinInd    = anIndex;
         }
+      }
       if (aMinSqDist < theTol * theTol)
       {
         theParam = anExt.Point(aMinInd).Parameter();
@@ -265,13 +265,21 @@ bool BRepTools_NurbsConvertModification::NewSurface(const TopoDS_Face&         F
   S->Bounds(surfU1, surfU2, surfV1, surfV2);
 
   if (std::abs(U1 - surfU1) <= TolPar)
+  {
     U1 = surfU1;
+  }
   if (std::abs(U2 - surfU2) <= TolPar)
+  {
     U2 = surfU2;
+  }
   if (std::abs(V1 - surfV1) <= TolPar)
+  {
     V1 = surfV1;
+  }
   if (std::abs(V2 - surfV2) <= TolPar)
+  {
     V2 = surfV2;
+  }
 
   if (!IsUp)
   {
@@ -289,18 +297,24 @@ bool BRepTools_NurbsConvertModification::NewSurface(const TopoDS_Face&         F
   {
     double Up = S->UPeriod();
     if (U2 - U1 > Up)
+    {
       U2 = U1 + Up;
+    }
   }
   if (IsVp)
   {
     double Vp = S->VPeriod();
     if (V2 - V1 > Vp)
+    {
       V2 = V1 + Vp;
+    }
   }
 
   if (std::abs(surfU1 - U1) > Tol || std::abs(surfU2 - U2) > Tol || std::abs(surfV1 - V1) > Tol
       || std::abs(surfV2 - V2) > Tol)
+  {
     S = new Geom_RectangularTrimmedSurface(S, U1, U2, V1, V2);
+  }
   S->Bounds(surfU1, surfU2, surfV1, surfV2);
 
   S                                   = GeomConvert::SurfaceToBSplineSurface(S);
@@ -308,7 +322,7 @@ bool BRepTools_NurbsConvertModification::NewSurface(const TopoDS_Face&         F
   BS->Resolution(Tol, UTol, VTol);
 
   //
-  // on recadre les bornes de S  sinon les anciennes PCurves sont aux fraises
+  // Readjust the bounds of S, otherwise the old PCurves become invalid
   //
 
   if (std::abs(curvU1 - surfU1) > UTol && !BS->IsUPeriodic())
@@ -337,7 +351,9 @@ static bool IsConvert(const TopoDS_Edge& E)
   {
     occ::handle<BRep_GCurve> GC = occ::down_cast<BRep_GCurve>(itcr.Value());
     if (GC.IsNull() || !GC->IsCurveOnSurface())
+    {
       continue;
+    }
     occ::handle<Geom_Surface> aSurface = GC->Surface();
     occ::handle<Geom2d_Curve> aCurve2d = GC->PCurve();
     isConvert                          = ((!aSurface->IsKind(STANDARD_TYPE(Geom_BSplineSurface))
@@ -372,7 +388,9 @@ bool BRepTools_NurbsConvertModification::NewTriangulation(const TopoDS_Face&    
         gp_Pnt2d aUV    = theTri->UVNode(anInd);
         gp_Pnt   aPoint = aSurf->Value(aUV.X(), aUV.Y());
         if (newUV(aPoint, aNewSurf, aTol, aUV))
+        {
           theTri->SetUVNode(anInd, aUV);
+        }
       }
     }
   }
@@ -427,12 +445,16 @@ bool BRepTools_NurbsConvertModification::NewCurve(const TopoDS_Edge&       E,
     {
     }
     else
+    {
       C = new Geom_TrimmedCurve(C, f, l);
+    }
   }
   else
+  {
     C = new Geom_TrimmedCurve(C, f, l);
+  }
 
-  // modif WOK++ portage hp (fbi du 14/03/97)
+  // modification for WOK++ HP porting (fbi 14/03/97)
   //   gp_Trsf trsf(L);
   //   gp_Trsf trsf = L.Transformation();
 
@@ -449,8 +471,7 @@ bool BRepTools_NurbsConvertModification::NewCurve(const TopoDS_Edge&       E,
     BC->Resolution(Tol, UTol);
     if (std::abs(f - fnew) > UTol || std::abs(l - lnew) > UTol)
     {
-      NCollection_Array1<double> knots(1, BC->NbKnots());
-      BC->Knots(knots);
+      NCollection_Array1<double> knots(BC->Knots());
       BSplCLib::Reparametrize(f, l, knots);
       BC->SetKnots(knots);
     }
@@ -551,9 +572,13 @@ bool BRepTools_NurbsConvertModification::NewCurve2d(const TopoDS_Edge&         E
     if (!C2d->IsPeriodic())
     {
       if (fc - f2d > Precision::PConfusion())
+      {
         f2d = fc;
+      }
       if (l2d - lc > Precision::PConfusion())
+      {
         l2d = lc;
+      }
     }
 
     C2d = new Geom2d_TrimmedCurve(C2d, f2d, l2d);
@@ -570,7 +595,9 @@ bool BRepTools_NurbsConvertModification::NewCurve2d(const TopoDS_Edge&         E
       C3d = BRep_Tool::Curve(E, f3d, l3d);
     }
     if (C3d.IsNull())
+    {
       return false;
+    }
     GeomAdaptor_Curve              G3dAC(C3d, f3d, l3d);
     occ::handle<GeomAdaptor_Curve> G3dAHC = new GeomAdaptor_Curve(G3dAC);
 
@@ -603,7 +630,9 @@ bool BRepTools_NurbsConvertModification::NewCurve2d(const TopoDS_Edge&         E
       {
         occ::handle<Geom_Surface> aNewS = BRep_Tool::Surface(newF);
         if (!aNewS.IsNull())
+        {
           S = aNewS;
+        }
       }
       S->Bounds(Uinf, Usup, Vinf, Vsup);
       // Uinf -= 1e-9; Usup += 1e-9; Vinf -= 1e-9; Vsup += 1e-9;
@@ -642,7 +671,7 @@ bool BRepTools_NurbsConvertModification::NewCurve2d(const TopoDS_Edge&         E
     }
     else
     {
-      S = BRep_Tool::Surface(F); // Si S est un plan, pas de changement de parametrisation
+      S = BRep_Tool::Surface(F); // If S is a plane, no change of parametrization
       GeomAdaptor_Surface              GAS(S);
       occ::handle<GeomAdaptor_Surface> GAHS = new GeomAdaptor_Surface(GAS);
       ProjLib_ComputeApprox            ProjOnCurve(G3dAHC, GAHS, Tol);
@@ -735,12 +764,12 @@ bool BRepTools_NurbsConvertModification::NewCurve2d(const TopoDS_Edge&         E
     {
       if (itled.Value().IsSame(E))
       {
-        // deja traitee
+        // already processed
         break;
       }
     }
     if (!itled.More())
-    { // on stocke l`edge et la curve2d
+    { // store the edge and the 2D curve
       occ::handle<Geom2d_Curve> C2dBis;
       double                    f2dBis, l2dBis;
       C2d = new Geom2d_TrimmedCurve(C2d, f2d, l2d);
@@ -762,9 +791,13 @@ bool BRepTools_NurbsConvertModification::NewCurve2d(const TopoDS_Edge&         E
 
           occ::handle<Geom_Surface> S;
           if (newF.IsNull())
+          {
             S = BRep_Tool::Surface(F);
+          }
           else
+          {
             S = BRep_Tool::Surface(newF);
+          }
           //
           double newTol = BRepTools::EvalAndUpdateTol(newE, C3d, Curve2d, S, f3d, l3d);
           if (newTol > Tol)
@@ -809,7 +842,7 @@ bool BRepTools_NurbsConvertModification::NewCurve2d(const TopoDS_Edge&         E
       }
       else
       {
-        S = BRep_Tool::Surface(newF); // S est une BSplineSurface : pas besoin de la trimmed
+        S = BRep_Tool::Surface(newF); // S is a BSplineSurface: no need for the trimmed one
       }
       double Uinf, Usup, Vinf, Vsup, u = 0, v = 0;
       S->Bounds(Uinf, Usup, Vinf, Vsup);
@@ -822,9 +855,13 @@ bool BRepTools_NurbsConvertModification::NewCurve2d(const TopoDS_Edge&         E
         if (uperiod < (Usup + 2 * u - Uinf))
         {
           if (uperiod <= (Usup - Uinf))
+          {
             u = 0;
+          }
           else
+          {
             u = (uperiod - (Usup - Uinf)) * 0.5;
+          }
         }
       }
       if (S->IsVPeriodic())
@@ -833,9 +870,13 @@ bool BRepTools_NurbsConvertModification::NewCurve2d(const TopoDS_Edge&         E
         if (vperiod < (Vsup + 2 * v - Vinf))
         {
           if (vperiod <= (Vsup - Vinf))
+          {
             v = 0;
+          }
           else
+          {
             v = (vperiod - (Vsup - Vinf)) * 0.5;
+          }
         }
       }
       GeomAdaptor_Surface              GAS(S, Uinf - u, Usup + u, Vinf - v, Vsup + v);
@@ -872,7 +913,7 @@ bool BRepTools_NurbsConvertModification::NewCurve2d(const TopoDS_Edge&         E
       }
     }
     else
-    { // on est au 2ieme tour
+    { // we are on the second pass
       C2d                           = occ::down_cast<Geom2d_Curve>(itlcu.Value());
       occ::handle<Standard_Type> st = C2d->DynamicType();
       if (!(st == STANDARD_TYPE(Geom2d_BSplineCurve)) && !(st == STANDARD_TYPE(Geom2d_BezierCurve)))
@@ -939,7 +980,9 @@ bool BRepTools_NurbsConvertModification::NewParameter(const TopoDS_Vertex& V,
 {
   Tol = BRep_Tool::Tolerance(V);
   if (BRep_Tool::Degenerated(E))
+  {
     return false;
+  }
 
   gp_Pnt pnt = BRep_Tool::Pnt(V);
   P          = BRep_Tool::Parameter(V, E);

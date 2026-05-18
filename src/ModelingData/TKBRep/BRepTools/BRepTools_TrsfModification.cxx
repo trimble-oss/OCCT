@@ -330,12 +330,16 @@ bool BRepTools_TrsfModification::NewCurve2d(const TopoDS_Edge& E,
   }
   GeomAdaptor_Surface GAsurf(S);
   if (GAsurf.GetType() == GeomAbs_Plane)
+  {
     return false;
+  }
 
   double                    f, l;
   occ::handle<Geom2d_Curve> NewC = BRep_Tool::CurveOnSurface(E, F, f, l);
   if (NewC.IsNull())
+  {
     return false;
+  }
 
   double newf, newl;
 
@@ -352,9 +356,13 @@ bool BRepTools_TrsfModification::NewCurve2d(const TopoDS_Edge& E,
   if (!NewC->IsPeriodic())
   {
     if (fc - f > Precision::PConfusion())
+    {
       f = fc;
+    }
     if (l - lc > Precision::PConfusion())
+    {
       l = lc;
+    }
     if (std::abs(l - f) < Precision::PConfusion())
     {
       if (std::abs(f - fc) < Precision::PConfusion() && !Precision::IsInfinite(lc))
@@ -387,7 +395,7 @@ bool BRepTools_TrsfModification::NewCurve2d(const TopoDS_Edge& E,
       newl = NewC->LastParameter();
     }
   }
-  // il faut parfois recadrer les ranges 3d / 2d
+  // sometimes need to readjust the 3D / 2D ranges
   TopoDS_Vertex V1, V2;
   TopExp::Vertices(E, V1, V2);
   TopoDS_Shape initEFOR = E.Oriented(TopAbs_FORWARD);                            // skl
@@ -408,7 +416,9 @@ bool BRepTools_TrsfModification::NewParameter(const TopoDS_Vertex& V,
                                               double&              Tol)
 {
   if (V.IsNull())
+  {
     return false; // infinite edge may have Null vertex
+  }
 
   TopLoc_Location loc;
   Tol = BRep_Tool::Tolerance(V);

@@ -264,8 +264,11 @@ void BRepCheck_Edge::InContext(const TopoDS_Shape& S)
 {
   occ::handle<NCollection_Shared<NCollection_List<BRepCheck_Status>>> aHList;
   {
-    std::unique_lock<std::mutex> aLock =
-      myMutex ? std::unique_lock<std::mutex>(*myMutex) : std::unique_lock<std::mutex>();
+    std::unique_lock<std::mutex> aLock(myMutex, std::defer_lock);
+    if (myIsParallel)
+    {
+      aLock.lock();
+    }
     if (myMap.IsBound(S))
     {
       return;
@@ -313,9 +316,13 @@ void BRepCheck_Edge::InContext(const TopoDS_Shape& S)
         if (!SameParameter || !SameRange)
         {
           if (!SameParameter)
+          {
             BRepCheck::Add(lst, BRepCheck_InvalidSameParameterFlag);
+          }
           if (!SameRange)
+          {
             BRepCheck::Add(lst, BRepCheck_InvalidSameRangeFlag);
+          }
 
           return;
         }
@@ -334,7 +341,7 @@ void BRepCheck_Edge::InContext(const TopoDS_Shape& S)
 
         NCollection_List<occ::handle<BRep_CurveRepresentation>>::Iterator itcr(TE->Curves());
         constexpr double eps           = Precision::PConfusion();
-        const bool       toRunParallel = myMutex != nullptr;
+        const bool       toRunParallel = myIsParallel;
         while (itcr.More())
         {
           const occ::handle<BRep_CurveRepresentation>& cr = itcr.Value();
@@ -578,8 +585,11 @@ bool BRepCheck_Edge::GeometricControls() const
 
 void BRepCheck_Edge::SetStatus(const BRepCheck_Status theStatus)
 {
-  std::unique_lock<std::mutex> aLock =
-    myMutex ? std::unique_lock<std::mutex>(*myMutex) : std::unique_lock<std::mutex>();
+  std::unique_lock<std::mutex> aLock(myMutex, std::defer_lock);
+  if (myIsParallel)
+  {
+    aLock.lock();
+  }
   BRepCheck::Add(*myMap(myShape), theStatus);
 }
 
@@ -683,7 +693,9 @@ double BRepCheck_Edge::Tolerance()
       }
       dist2 = center.SquareDistance(othP);
       if (dist2 > tolCal)
+      {
         tolCal = dist2;
+      }
     }
     if (tol2 > tolCal)
     {
@@ -700,13 +712,42 @@ BRepCheck_Status BRepCheck_Edge::CheckPolygonOnTriangulation(const TopoDS_Edge& 
 {
   NCollection_List<occ::handle<BRep_CurveRepresentation>>& aListOfCR =
     (*((occ::handle<BRep_TEdge>*)&theEdge.TShape()))->ChangeCurves();
-  NCollection_List<occ::handle<BRep_CurveRepresentation>>::Iterator anITCR(aListOfCR);
+  bool aHasPolygonOnTriangulation = false;
+  bool aHasCurve3D                = false;
+  for (NCollection_List<occ::handle<BRep_CurveRepresentation>>::Iterator anITCR(aListOfCR);
+       anITCR.More();
+       anITCR.Next())
+  {
+    const occ::handle<BRep_CurveRepresentation>& aCR = anITCR.Value();
+    if (aCR->IsPolygonOnTriangulation())
+    {
+      aHasPolygonOnTriangulation = true;
+    }
+    if (aCR->IsCurve3D() && !aCR->Curve3D().IsNull())
+    {
+      aHasCurve3D = true;
+    }
+
+    if (aHasPolygonOnTriangulation && aHasCurve3D)
+    {
+      break;
+    }
+  }
+
+  if (!aHasPolygonOnTriangulation || !aHasCurve3D)
+  {
+    return BRepCheck_NoError;
+  }
 
   BRepAdaptor_Curve aBC;
   aBC.Initialize(theEdge);
 
   if (!aBC.Is3DCurve())
+  {
     return BRepCheck_NoError;
+  }
+
+  NCollection_List<occ::handle<BRep_CurveRepresentation>>::Iterator anITCR(aListOfCR);
 
   while (anITCR.More())
   {

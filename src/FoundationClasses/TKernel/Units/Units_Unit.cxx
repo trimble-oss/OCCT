@@ -26,8 +26,8 @@ IMPLEMENT_STANDARD_RTTIEXT(Units_Unit, Standard_Transient)
 
 //=================================================================================================
 
-Units_Unit::Units_Unit(const char*                        aname,
-                       const char*                        asymbol,
+Units_Unit::Units_Unit(const char* const                  aname,
+                       const char* const                  asymbol,
                        const double                       avalue,
                        const occ::handle<Units_Quantity>& aquantity)
 {
@@ -41,7 +41,7 @@ Units_Unit::Units_Unit(const char*                        aname,
 
 //=================================================================================================
 
-Units_Unit::Units_Unit(const char* aname, const char* asymbol)
+Units_Unit::Units_Unit(const char* const aname, const char* const asymbol)
 {
   thename                                      = new TCollection_HAsciiString(aname);
   thevalue                                     = 0.;
@@ -52,7 +52,7 @@ Units_Unit::Units_Unit(const char* aname, const char* asymbol)
 
 //=================================================================================================
 
-Units_Unit::Units_Unit(const char* aname)
+Units_Unit::Units_Unit(const char* const aname)
 {
   thename            = new TCollection_HAsciiString(aname);
   thevalue           = 0.;
@@ -61,7 +61,7 @@ Units_Unit::Units_Unit(const char* aname)
 
 //=================================================================================================
 
-void Units_Unit::Symbol(const char* asymbol)
+void Units_Unit::Symbol(const char* const asymbol)
 {
   occ::handle<TCollection_HAsciiString> symbol = new TCollection_HAsciiString(asymbol);
   thesymbolssequence->Append(symbol);
@@ -77,7 +77,7 @@ occ::handle<Units_Token> Units_Unit::Token() const
 
 //=================================================================================================
 
-bool Units_Unit::IsEqual(const char* astring) const
+bool Units_Unit::IsEqual(const char* const astring) const
 {
   int                     index;
   TCollection_AsciiString symbol;
@@ -86,7 +86,9 @@ bool Units_Unit::IsEqual(const char* astring) const
   {
     symbol = thesymbolssequence->Value(index)->String();
     if (symbol == astring)
+    {
       return true;
+    }
   }
 
   return false;
@@ -105,19 +107,17 @@ void Units_Unit::Dump(const int /*ashift*/, const int) const
   {
     string = thesymbolssequence->Value(index)->String();
     if (index != 1)
+    {
       std::cout << " or ";
+    }
     std::cout << "\"" << string.ToCString() << "\"";
   }
-  std::cout << "		Name:  " << Name().ToCString() << "		(= " << thevalue << " SI)"
-            << std::endl;
+  std::cout << "		Name:  " << Name().ToCString() << "		(= " << thevalue << " SI)" << '\n';
 }
 
-//=======================================================================
-// function : operator ==
-// purpose  :
-//=======================================================================
+//=================================================================================================
 
-bool operator==(const occ::handle<Units_Unit>& aunit, const char* astring)
+bool operator==(const occ::handle<Units_Unit>& aunit, const char* const astring)
 {
   return aunit->IsEqual(astring);
 }

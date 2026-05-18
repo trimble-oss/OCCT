@@ -59,13 +59,13 @@ bool GeomFill_EvolvedSection::D0(const double                U,
 {
   double val;
   int    ii, L = Poles.Length();
-  val = TLaw->Value(U);
-  myCurve->Poles(Poles);
+  val   = TLaw->Value(U);
+  Poles = myCurve->Poles();
   for (ii = 1; ii <= L; ii++)
   {
     Poles(ii).ChangeCoord() *= val;
   }
-  myCurve->Weights(Weights);
+  Weights = myCurve->WeightsArray();
 
   return true;
 }
@@ -83,8 +83,8 @@ bool GeomFill_EvolvedSection::D1(const double                U,
   int    ii, L = Poles.Length();
   TLaw->D1(U, val, dval);
 
-  myCurve->Poles(Poles);
-  myCurve->Weights(Weights);
+  Poles   = myCurve->Poles();
+  Weights = myCurve->WeightsArray();
   for (ii = 1; ii <= L; ii++)
   {
     DPoles(ii).SetXYZ(Poles(ii).XYZ());
@@ -110,8 +110,8 @@ bool GeomFill_EvolvedSection::D2(const double                U,
   double val, dval, d2val;
   int    ii, L = Poles.Length();
   TLaw->D2(U, val, dval, d2val);
-  myCurve->Poles(Poles);
-  myCurve->Weights(Weights);
+  Poles   = myCurve->Poles();
+  Weights = myCurve->WeightsArray();
 
   for (ii = 1; ii <= L; ii++)
   {
@@ -172,7 +172,7 @@ void GeomFill_EvolvedSection::SectionShape(int& NbPoles, int& NbKnots, int& Degr
 
 void GeomFill_EvolvedSection::Knots(NCollection_Array1<double>& TKnots) const
 {
-  myCurve->Knots(TKnots);
+  TKnots = myCurve->Knots();
 }
 
 //=======================================================
@@ -180,7 +180,7 @@ void GeomFill_EvolvedSection::Knots(NCollection_Array1<double>& TKnots) const
 //=======================================================
 void GeomFill_EvolvedSection::Mults(NCollection_Array1<int>& TMults) const
 {
-  myCurve->Multiplicities(TMults);
+  TMults = myCurve->Multiplicities();
 }
 
 //=======================================================
@@ -304,21 +304,16 @@ double GeomFill_EvolvedSection::MaximalSection() const
   {
     val = myLaw->Value(U);
     if (val > max)
+    {
       max = val;
+    }
   }
   return L * max;
 }
 
 void GeomFill_EvolvedSection::GetMinimalWeight(NCollection_Array1<double>& Weights) const
 {
-  if (myCurve->IsRational())
-  {
-    myCurve->Weights(Weights);
-  }
-  else
-  {
-    Weights.Init(1);
-  }
+  Weights = myCurve->WeightsArray();
 }
 
 bool GeomFill_EvolvedSection::IsConstant(double& Error) const
@@ -333,7 +328,9 @@ occ::handle<Geom_Curve> GeomFill_EvolvedSection::ConstantSection() const
 {
   double Err, scale;
   if (!IsConstant(Err))
+  {
     throw StdFail_NotDone("The Law is not Constant!");
+  }
   gp_Trsf T;
   gp_Pnt  P(0, 0, 0);
   scale = myLaw->Value(First) + myLaw->Value((First + Last) / 2) + myLaw->Value(Last);

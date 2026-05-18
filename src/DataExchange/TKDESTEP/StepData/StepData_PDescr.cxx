@@ -37,7 +37,7 @@ StepData_PDescr::StepData_PDescr()
 {
 }
 
-void StepData_PDescr::SetName(const char* name)
+void StepData_PDescr::SetName(const char* const name)
 {
   thename.Clear();
   thename.AssignCat(name);
@@ -61,22 +61,36 @@ void StepData_PDescr::SetSelect()
 void StepData_PDescr::AddMember(const occ::handle<StepData_PDescr>& member)
 {
   if (member.IsNull())
+  {
     return;
+  }
   if (thenext.IsNull())
+  {
     thenext = member;
+  }
   else
+  {
     thenext->AddMember(member);
+  }
   if (thesel == 3)
+  {
     return;
+  }
   if (thekind < KindEntity && thenext->Kind() >= KindEntity)
+  {
     thesel = 3;
+  }
   else if (thekind < KindEntity && (thesel == 2 || thesel == 4))
+  {
     thesel = 3;
+  }
   else if (thekind >= KindEntity && (thesel == 1 || thesel == 4))
+  {
     thesel = 2;
+  }
 }
 
-void StepData_PDescr::SetMemberName(const char* memname)
+void StepData_PDescr::SetMemberName(const char* const memname)
 {
   thesnam.Clear();
   thesnam.AssignCat(memname);
@@ -112,7 +126,7 @@ void StepData_PDescr::SetEnum()
   thekind = KindEnum;
 }
 
-void StepData_PDescr::AddEnumDef(const char* enumdef)
+void StepData_PDescr::AddEnumDef(const char* const enumdef)
 {
   theenum.AddDefinition(enumdef);
 }
@@ -124,7 +138,7 @@ void StepData_PDescr::SetType(const occ::handle<Standard_Type>& atype)
   thednam.Clear();
 }
 
-void StepData_PDescr::SetDescr(const char* dscnam)
+void StepData_PDescr::SetDescr(const char* const dscnam)
 {
   thekind = KindEntity;
   thetype.Nullify();
@@ -145,11 +159,15 @@ void StepData_PDescr::SetArity(const int arity)
 void StepData_PDescr::SetFrom(const occ::handle<StepData_PDescr>& other)
 {
   if (other.IsNull())
+  {
     return;
+  }
   thekind = other->Kind();
   int i, maxenum = other->EnumMax();
   for (i = 0; i <= maxenum; i++)
+  {
     AddEnumDef(other->EnumText(i));
+  }
   //  SELECT types are not copied
   thetype = other->Type();
   thearit = other->Arity();
@@ -171,7 +189,7 @@ void StepData_PDescr::SetDerived(const bool der)
   theder = der;
 }
 
-void StepData_PDescr::SetField(const char* name, const int rank)
+void StepData_PDescr::SetField(const char* const name, const int rank)
 {
   thefnam.Clear();
   thefnam.AssignCat(name);
@@ -183,19 +201,27 @@ void StepData_PDescr::SetField(const char* name, const int rank)
 bool StepData_PDescr::IsSelect() const
 {
   if (!thefrom.IsNull())
+  {
     return thefrom->IsSelect();
+  }
   return (thesel > 0);
 }
 
-occ::handle<StepData_PDescr> StepData_PDescr::Member(const char* name) const
+occ::handle<StepData_PDescr> StepData_PDescr::Member(const char* const name) const
 {
   if (!thefrom.IsNull())
+  {
     return thefrom->Member(name);
+  }
   occ::handle<StepData_PDescr> descr;
   if (thesnam.IsEqual(name))
+  {
     return this;
+  }
   if (thenext.IsNull())
+  {
     return descr; // null
+  }
   return thenext->Member(name);
 }
 
@@ -234,7 +260,7 @@ int StepData_PDescr::EnumMax() const
   return theenum.MaxValue();
 }
 
-int StepData_PDescr::EnumValue(const char* name) const
+int StepData_PDescr::EnumValue(const char* const name) const
 {
   return theenum.Value(name);
 }
@@ -252,16 +278,24 @@ bool StepData_PDescr::IsEntity() const
 bool StepData_PDescr::IsType(const occ::handle<Standard_Type>& atype) const
 {
   if (atype.IsNull())
+  {
     return false;
+  }
   if (!thetype.IsNull())
   {
     if (atype->SubType(thetype))
+    {
       return true;
+    }
   }
   if (!thenext.IsNull())
+  {
     return thenext->IsType(atype);
+  }
   if (!thefrom.IsNull())
+  {
     return thefrom->IsType(atype);
+  }
   return false;
 }
 
@@ -273,16 +307,24 @@ occ::handle<Standard_Type> StepData_PDescr::Type() const
 bool StepData_PDescr::IsDescr(const occ::handle<StepData_EDescr>& descr) const
 {
   if (descr.IsNull())
+  {
     return false;
+  }
   if (thednam.Length() > 0)
   {
     if (descr->Matches(thednam.ToCString()))
+    {
       return true;
+    }
   }
   if (!thenext.IsNull())
+  {
     return thenext->IsDescr(descr);
+  }
   if (!thefrom.IsNull())
+  {
     return thefrom->IsDescr(descr);
+  }
   return false;
 }
 
@@ -299,9 +341,13 @@ int StepData_PDescr::Arity() const
 occ::handle<StepData_PDescr> StepData_PDescr::Simple() const
 {
   if (thearit == 0)
+  {
     return this;
+  }
   if (thefrom.IsNull())
+  {
     return this;
+  }
   return thefrom;
 }
 

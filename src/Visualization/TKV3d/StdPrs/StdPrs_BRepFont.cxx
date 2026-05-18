@@ -21,7 +21,7 @@
 #include <BRepLib_MakeEdge.hxx>
 #include <Font_FTLibrary.hxx>
 #include <Font_FontMgr.hxx>
-#include <GCE2d_MakeSegment.hxx>
+#include <GC_MakeSegment2d.hxx>
 #include <Geom_BezierCurve.hxx>
 #include <Geom_BSplineCurve.hxx>
 #include <Geom2d_TrimmedCurve.hxx>
@@ -204,7 +204,9 @@ occ::handle<StdPrs_BRepFont> StdPrs_BRepFont::FindAndCreate(
   occ::handle<StdPrs_BRepFont> aFont = new StdPrs_BRepFont();
 
   if (aFont->FindAndInit(theFontName, theFontAspect, theSize, theStrictLevel))
+  {
     return aFont;
+  }
 
   return occ::handle<StdPrs_BRepFont>();
 }
@@ -440,7 +442,9 @@ bool StdPrs_BRepFont::renderGlyph(const char32_t theChar, TopoDS_Shape& theShape
   }
 
   if (!anOutline->n_contours)
+  {
     return false;
+  }
 
   TopLoc_Location                   aLoc;
   NCollection_Sequence<TopoDS_Wire> aWires;
@@ -503,7 +507,7 @@ bool StdPrs_BRepFont::renderGlyph(const char32_t theChar, TopoDS_Shape& theShape
         if (myIsCompositeCurve)
         {
           occ::handle<Geom2d_TrimmedCurve> aLine =
-            GCE2d_MakeSegment(gp_Pnt2d(aPntLine1), gp_Pnt2d(aPntCurr));
+            GC_MakeSegment2d(gp_Pnt2d(aPntLine1), gp_Pnt2d(aPntCurr));
           myConcatMaker.Add(aLine, myPrecision);
         }
         else
@@ -599,7 +603,7 @@ bool StdPrs_BRepFont::renderGlyph(const char32_t theChar, TopoDS_Shape& theShape
       const gp_Pnt2d aLastPnt  = aDraft2d->EndPoint();
       if (!myFTFont->IsSingleStrokeFont() && !aFirstPnt.IsEqual(aLastPnt, myPrecision))
       {
-        occ::handle<Geom2d_TrimmedCurve> aLine = GCE2d_MakeSegment(aLastPnt, aFirstPnt);
+        occ::handle<Geom2d_TrimmedCurve> aLine = GC_MakeSegment2d(aLastPnt, aFirstPnt);
         myConcatMaker.Add(aLine, myPrecision);
       }
 

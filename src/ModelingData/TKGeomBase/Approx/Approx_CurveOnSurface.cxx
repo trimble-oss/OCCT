@@ -366,15 +366,23 @@ void Approx_CurveOnSurface::Perform(const int           theMaxSegments,
   myError3d   = 0.0;
 
   if (theOnly3d && theOnly2d)
+  {
     throw Standard_ConstructionError();
+  }
 
   GeomAbs_Shape aContinuity = theContinuity;
   if (aContinuity == GeomAbs_G1)
+  {
     aContinuity = GeomAbs_C1;
+  }
   else if (aContinuity == GeomAbs_G2)
+  {
     aContinuity = GeomAbs_C2;
+  }
   else if (aContinuity > GeomAbs_C2)
+  {
     aContinuity = GeomAbs_C2; // Restriction of AdvApprox_ApproxAFunction
+  }
 
   occ::handle<Adaptor2d_Curve2d> TrimmedC2D = myC2D->Trim(myFirst, myLast, Precision::PConfusion());
 
@@ -403,11 +411,17 @@ void Approx_CurveOnSurface::Perform(const int           theMaxSegments,
   Approx_CurveOnSurface_Eval   EvalCvOnSurf(HCOnS, TrimmedC2D, myFirst, myLast);
   AdvApprox_EvaluatorFunction* EvalPtr;
   if (theOnly3d)
+  {
     EvalPtr = &Eval3dCvOnSurf;
+  }
   else if (theOnly2d)
+  {
     EvalPtr = &Eval2dCvOnSurf;
+  }
   else
+  {
     EvalPtr = &EvalCvOnSurf;
+  }
 
   // Initialization for 2d approximation
   if (!theOnly3d)
@@ -423,17 +437,25 @@ void Approx_CurveOnSurface::Perform(const int           theMaxSegments,
     if (mySurf->UContinuity() == GeomAbs_C0)
     {
       if (!Adaptor3d_HSurfaceTool::IsSurfG1(mySurf, true, Precision::Angular()))
+      {
         TolU = std::min(1.e-3, 1.e3 * TolU);
+      }
       if (!Adaptor3d_HSurfaceTool::IsSurfG1(mySurf, true, Precision::Confusion()))
+      {
         TolU = std::min(1.e-3, 1.e2 * TolU);
+      }
     }
 
     if (mySurf->VContinuity() == GeomAbs_C0)
     {
       if (!Adaptor3d_HSurfaceTool::IsSurfG1(mySurf, false, Precision::Angular()))
+      {
         TolV = std::min(1.e-3, 1.e3 * TolV);
+      }
       if (!Adaptor3d_HSurfaceTool::IsSurfG1(mySurf, false, Precision::Confusion()))
+      {
         TolV = std::min(1.e-3, 1.e2 * TolV);
+      }
     }
 
     OneDTol->SetValue(1, TolU);
@@ -502,22 +524,25 @@ void Approx_CurveOnSurface::Perform(const int           theMaxSegments,
     occ::handle<NCollection_HArray1<int>>    Mults  = aApprox.Multiplicities();
     int                                      Degree = aApprox.Degree();
 
+    const int aNbPoles = aApprox.NbPoles();
     if (!theOnly2d)
     {
-      NCollection_Array1<gp_Pnt> Poles(1, aApprox.NbPoles());
+      NCollection_Array1<gp_Pnt> Poles(1, aNbPoles);
       aApprox.Poles(1, Poles);
       myCurve3d = new Geom_BSplineCurve(Poles, Knots->Array1(), Mults->Array1(), Degree);
       myError3d = aApprox.MaxError(3, 1);
     }
     if (!theOnly3d)
     {
-      NCollection_Array1<gp_Pnt2d> Poles2d(1, aApprox.NbPoles());
-      NCollection_Array1<double>   Poles1dU(1, aApprox.NbPoles());
+      NCollection_Array1<gp_Pnt2d> Poles2d(1, aNbPoles);
+      NCollection_Array1<double>   Poles1dU(1, aNbPoles);
       aApprox.Poles1d(1, Poles1dU);
-      NCollection_Array1<double> Poles1dV(1, aApprox.NbPoles());
+      NCollection_Array1<double> Poles1dV(1, aNbPoles);
       aApprox.Poles1d(2, Poles1dV);
-      for (int i = 1; i <= aApprox.NbPoles(); i++)
+      for (int i = 1; i <= aNbPoles; i++)
+      {
         Poles2d.SetValue(i, gp_Pnt2d(Poles1dU.Value(i), Poles1dV.Value(i)));
+      }
       myCurve2d = new Geom2d_BSplineCurve(Poles2d, Knots->Array1(), Mults->Array1(), Degree);
 
       myError2dU = aApprox.MaxError(1, 1);
@@ -586,14 +611,18 @@ bool Approx_CurveOnSurface::isIsoLine(const occ::handle<Adaptor2d_Curve2d>& theC
   {
     occ::handle<Geom2d_BSplineCurve> aBSpline2d = theC2D->BSpline();
     if (aBSpline2d->Degree() != 1 || aBSpline2d->NbPoles() != 2)
+    {
       return false; // Not a line or uneven parameterization.
+    }
 
     aLoc2d = aBSpline2d->Pole(1);
 
     // Vector should be non-degenerated.
     gp_Vec2d aVec2d(aBSpline2d->Pole(1), aBSpline2d->Pole(2));
     if (aVec2d.SquareMagnitude() < Precision::Confusion())
+    {
       return false; // Degenerated spline.
+    }
     aDir2d = aVec2d;
 
     isAppropriateType = true;
@@ -602,21 +631,27 @@ bool Approx_CurveOnSurface::isIsoLine(const occ::handle<Adaptor2d_Curve2d>& theC
   {
     occ::handle<Geom2d_BezierCurve> aBezier2d = theC2D->Bezier();
     if (aBezier2d->Degree() != 1 || aBezier2d->NbPoles() != 2)
+    {
       return false; // Not a line or uneven parameterization.
+    }
 
     aLoc2d = aBezier2d->Pole(1);
 
     // Vector should be non-degenerated.
     gp_Vec2d aVec2d(aBezier2d->Pole(1), aBezier2d->Pole(2));
     if (aVec2d.SquareMagnitude() < Precision::Confusion())
+    {
       return false; // Degenerated spline.
+    }
     aDir2d = aVec2d;
 
     isAppropriateType = true;
   }
 
   if (!isAppropriateType)
+  {
     return false;
+  }
 
   // Check line to be vertical or horizontal.
   if (aDir2d.IsParallel(gp::DX2d(), Precision::Angular()))
@@ -651,10 +686,14 @@ bool Approx_CurveOnSurface::buildC3dOnIsoLine(const occ::handle<Adaptor2d_Curve2
   // Convert adapter to the appropriate type.
   occ::handle<GeomAdaptor_Surface> aGeomAdapter = occ::down_cast<GeomAdaptor_Surface>(mySurf);
   if (aGeomAdapter.IsNull())
+  {
     return false;
+  }
 
   if (mySurf->GetType() == GeomAbs_Sphere)
+  {
     return false;
+  }
 
   // Extract isoline
   occ::handle<Geom_Surface> aSurf = aGeomAdapter->Surface();
@@ -695,7 +734,9 @@ bool Approx_CurveOnSurface::buildC3dOnIsoLine(const occ::handle<Adaptor2d_Curve2
     }
     aC3d = aSurf->UIso(theParam);
     if (isToTrim)
+    {
       aC3d = new Geom_TrimmedCurve(aC3d, aV1Param, aV2Param);
+    }
   }
   else
   {
@@ -725,13 +766,17 @@ bool Approx_CurveOnSurface::buildC3dOnIsoLine(const occ::handle<Adaptor2d_Curve2
     }
     aC3d = aSurf->VIso(theParam);
     if (isToTrim)
+    {
       aC3d = new Geom_TrimmedCurve(aC3d, aU1Param, aU2Param);
+    }
   }
 
   // Convert arbitrary curve type to the b-spline.
   myCurve3d = GeomConvert::CurveToBSplineCurve(aC3d, Convert_QuasiAngular);
   if (!theIsForward)
+  {
     myCurve3d->Reverse();
+  }
 
   // Rebuild parameterization for the 3d curve to have the same parameterization with
   // a two-dimensional curve.

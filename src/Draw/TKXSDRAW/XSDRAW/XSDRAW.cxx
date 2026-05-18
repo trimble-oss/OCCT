@@ -105,18 +105,24 @@ static int XSTEPDRAWRUN(Draw_Interpretor& di, int argc, const char** argv)
   aMsgMgr->ChangePrinters().Append(aPrinters);
 
   if (stat == IFSelect_RetError || stat == IFSelect_RetFail)
+  {
     return 1;
+  }
   else
+  {
     return 0;
+  }
 }
 
-void XSDRAW::ChangeCommand(const char* oldname, const char* newname)
+void XSDRAW::ChangeCommand(const char* const oldname, const char* const newname)
 {
   int num = 0;
   if (newname[0] != '\0')
   {
     if (thenews.IsNull())
+    {
       thenews = new NCollection_HSequence<TCollection_AsciiString>();
+    }
     TCollection_AsciiString newstr(newname);
     thenews->Append(newstr);
     num = thenews->Length();
@@ -124,7 +130,7 @@ void XSDRAW::ChangeCommand(const char* oldname, const char* newname)
   theolds.Bind(oldname, num);
 }
 
-void XSDRAW::RemoveCommand(const char* oldname)
+void XSDRAW::RemoveCommand(const char* const oldname)
 {
   ChangeCommand(oldname, "");
 }
@@ -132,7 +138,9 @@ void XSDRAW::RemoveCommand(const char* oldname)
 bool XSDRAW::LoadSession()
 {
   if (deja)
+  {
     return false;
+  }
   deja                                  = 1;
   thepilot                              = new IFSelect_SessionPilot("XSTEP-DRAW>");
   occ::handle<XSControl_WorkSession> WS = new XSControl_WorkSession;
@@ -196,7 +204,7 @@ void XSDRAW::LoadDraw(Draw_Interpretor& theCommands)
   }
 }
 
-int XSDRAW::Execute(const char* command, const char* varname)
+int XSDRAW::Execute(const char* const command, const char* const varname)
 {
   char mess[100];
   Sprintf(mess, command, varname);
@@ -222,13 +230,21 @@ const occ::handle<XSControl_WorkSession> XSDRAW::Session()
 void XSDRAW::SetController(const occ::handle<XSControl_Controller>& control)
 {
   if (thepilot.IsNull())
+  {
     XSDRAW::LoadSession();
+  }
   if (control.IsNull())
-    std::cout << "XSTEP Controller not defined" << std::endl;
+  {
+    std::cout << "XSTEP Controller not defined" << '\n';
+  }
   else if (!Session().IsNull())
+  {
     Session()->SetController(control);
+  }
   else
-    std::cout << "XSTEP Session badly or not defined" << std::endl;
+  {
+    std::cout << "XSTEP Session badly or not defined" << '\n';
+  }
 }
 
 occ::handle<XSControl_Controller> XSDRAW::Controller()
@@ -236,7 +252,7 @@ occ::handle<XSControl_Controller> XSDRAW::Controller()
   return Session()->NormAdaptor();
 }
 
-bool XSDRAW::SetNorm(const char* norm)
+bool XSDRAW::SetNorm(const char* const norm)
 {
   return Session()->SelectNorm(norm);
 }
@@ -251,11 +267,13 @@ occ::handle<Interface_InterfaceModel> XSDRAW::Model()
   return thepilot->Session()->Model();
 }
 
-void XSDRAW::SetModel(const occ::handle<Interface_InterfaceModel>& model, const char* file)
+void XSDRAW::SetModel(const occ::handle<Interface_InterfaceModel>& model, const char* const file)
 {
   thepilot->Session()->SetModel(model);
   if (file && file[0] != '\0')
+  {
     thepilot->Session()->SetLoadedFile(file);
+  }
 }
 
 occ::handle<Interface_InterfaceModel> XSDRAW::NewModel()
@@ -280,13 +298,17 @@ void XSDRAW::SetTransferProcess(const occ::handle<Standard_Transient>& ATP)
 
   //   Cas FinderProcess    ==> TransferWriter
   if (!FP.IsNull())
+  {
     Session()->SetMapWriter(FP);
+  }
 
   //   Cas TransientProcess ==> TransferReader
   if (!TP.IsNull())
   {
     if (!TP->Model().IsNull() && TP->Model() != Session()->Model())
+    {
       Session()->SetModel(TP->Model());
+    }
     Session()->SetMapReader(TP);
   }
 }
@@ -316,19 +338,19 @@ occ::handle<XSControl_TransferReader> XSDRAW::TransferReader()
 
 //  ############  AUXILIAIRES  #############
 
-occ::handle<Standard_Transient> XSDRAW::GetEntity(const char* name)
+occ::handle<Standard_Transient> XSDRAW::GetEntity(const char* const name)
 {
   return IFSelect_Functions::GiveEntity(Session(), name);
 }
 
-int XSDRAW::GetEntityNumber(const char* name)
+int XSDRAW::GetEntityNumber(const char* const name)
 {
   return IFSelect_Functions::GiveEntityNumber(Session(), name);
 }
 
 occ::handle<NCollection_HSequence<occ::handle<Standard_Transient>>> XSDRAW::GetList(
-  const char* first,
-  const char* second)
+  const char* const first,
+  const char* const second)
 {
   if (!first || first[0] == '\0')
   {
@@ -339,7 +361,9 @@ occ::handle<NCollection_HSequence<occ::handle<Standard_Transient>>> XSDRAW::GetL
     std::cin.get(terminateSymbol);
 
     if (terminateSymbol == '\n')
+    {
       return XSDRAW::GetList(aLineFirst.c_str(), nullptr);
+    }
     else
     {
       std::string aLineSecond;
@@ -350,16 +374,17 @@ occ::handle<NCollection_HSequence<occ::handle<Standard_Transient>>> XSDRAW::GetL
   return IFSelect_Functions::GiveList(Session(), first, second);
 }
 
-bool XSDRAW::FileAndVar(const char*              file,
-                        const char*              var,
-                        const char*              def,
+bool XSDRAW::FileAndVar(const char* const        file,
+                        const char* const        var,
+                        const char* const        def,
                         TCollection_AsciiString& resfile,
                         TCollection_AsciiString& resvar)
 {
   return XSControl_FuncShape::FileAndVar(XSDRAW::Session(), file, var, def, resfile, resvar);
 }
 
-int XSDRAW::MoreShapes(occ::handle<NCollection_HSequence<TopoDS_Shape>>& list, const char* name)
+int XSDRAW::MoreShapes(occ::handle<NCollection_HSequence<TopoDS_Shape>>& list,
+                       const char* const                                 name)
 {
   return XSControl_FuncShape::MoreShapes(XSDRAW::Session(), list, name);
 }

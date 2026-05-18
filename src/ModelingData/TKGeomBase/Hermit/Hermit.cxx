@@ -36,9 +36,9 @@
 static void HermiteCoeff(const occ::handle<Geom_BSplineCurve>& BS, NCollection_Array1<double>& TAB)
 
 {
-  NCollection_Array1<double> Knots(1, BS->NbKnots());
-  NCollection_Array1<double> Weights(1, BS->NbPoles());
-  NCollection_Array1<int>    Mults(1, BS->NbKnots());
+  NCollection_Array1<double>        Knots(BS->Knots());
+  const NCollection_Array1<double>& Weights = BS->WeightsArray();
+  const NCollection_Array1<int>&    Mults   = BS->Multiplicities();
   // clang-format off
   int        Degree,Index0,Index1;                     // denominateur value for u=0 & u=1
   double           Denom0,Denom1,                            // denominator value for u=0 & u=1
@@ -46,15 +46,16 @@ static void HermiteCoeff(const occ::handle<Geom_BSplineCurve>& BS, NCollection_A
   // clang-format on
   bool Periodic;
 
-  BS->Knots(Knots);
   BSplCLib::Reparametrize(0.0, 1.0, Knots); // affinity on the nodal vector
-  BS->Weights(Weights);
-  BS->Multiplicities(Mults);
   Degree   = BS->Degree();
   Periodic = BS->IsPeriodic();
   Index0   = BS->FirstUKnotIndex();
   Index1   = BS->LastUKnotIndex() - 1;
 
+  // Evaluate the weight function w(u) = sum_i N_i,p(u) * w_i and its derivative
+  // at u=0 and u=1. The weight function of a rational BSpline is itself a polynomial
+  // BSpline of the same degree, with weight values as scalar "poles" and no rational
+  // denominator -- hence Weights is passed as Poles, with NoWeights() for unweighted evaluation.
   BSplCLib::D1(0.0,
                Index0,
                Degree,
@@ -91,25 +92,26 @@ static void HermiteCoeff(const occ::handle<Geom2d_BSplineCurve>& BS,
                          NCollection_Array1<double>&             TAB)
 
 {
-  NCollection_Array1<double> Knots(1, BS->NbKnots());
-  NCollection_Array1<double> Weights(1, BS->NbPoles());
-  NCollection_Array1<int>    Mults(1, BS->NbKnots());
-  int                        Degree, Index0, Index1;
-  double                     Denom0, Denom1, // denominateur value for u=0 & u=1
-                                             // clang-format off
+  NCollection_Array1<double>        Knots(BS->Knots());
+  const NCollection_Array1<double>& Weights = BS->WeightsArray();
+  const NCollection_Array1<int>&    Mults   = BS->Multiplicities();
+  int                               Degree, Index0, Index1;
+  double                            Denom0, Denom1, // denominateur value for u=0 & u=1
+                                                    // clang-format off
                           Deriv0,Deriv1 ; // denominator value for u=0 & u=1
   bool        Periodic;       // derivative denominatur value for u=0 & 1
-                                             // clang-format on
+                                                    // clang-format on
 
-  BS->Knots(Knots);
   BSplCLib::Reparametrize(0.0, 1.0, Knots); // affinity on the nodal vector
-  BS->Weights(Weights);
-  BS->Multiplicities(Mults);
   Degree   = BS->Degree();
   Periodic = BS->IsPeriodic();
   Index0   = BS->FirstUKnotIndex();
   Index1   = BS->LastUKnotIndex() - 1;
 
+  // Evaluate the weight function w(u) = sum_i N_i,p(u) * w_i and its derivative
+  // at u=0 and u=1. The weight function of a rational BSpline is itself a polynomial
+  // BSpline of the same degree, with weight values as scalar "poles" and no rational
+  // denominator -- hence Weights is passed as Poles, with NoWeights() for unweighted evaluation.
   BSplCLib::D1(0.0,
                Index0,
                Degree,
@@ -214,37 +216,49 @@ static void PolyTest(const NCollection_Array1<double>&     Herm,
   {
     BS->LocateU(Ux, 0.0, I1, I2); // localization of the inserted knots
     if (Uy != 0.0)
+    {
       BS->LocateU(Uy, 0.0, I3, I4);
+    }
   }
 
-  if (I1 == I2) // definition and filling of the
+  if (I1 == I2)
+  { // definition and filling of the
     if ((I3 == I4) || (I3 == 0))
     { // array of knots
       Knots = new NCollection_HArray1<double>(1, BS->NbKnots());
       for (i = 1; i <= BS->NbKnots(); i++)
+      {
         Knots->SetValue(i, BS->Knot(i));
+      }
     }
     else
     {
       Knots = new NCollection_HArray1<double>(1, BS->NbKnots() + 1);
       for (i = 1; i <= BS->NbKnots(); i++)
+      {
         Knots->SetValue(i, BS->Knot(i));
+      }
       Knots->SetValue(BS->NbKnots() + 1, Uy);
     }
+  }
   else
   {
     if ((I3 == I4) || (I3 == 0))
     {
       Knots = new NCollection_HArray1<double>(1, BS->NbKnots() + 1);
       for (i = 1; i <= BS->NbKnots(); i++)
+      {
         Knots->SetValue(i, BS->Knot(i));
+      }
       Knots->SetValue(BS->NbKnots() + 1, Ux);
     }
     else
     {
       Knots = new NCollection_HArray1<double>(1, BS->NbKnots() + 2);
       for (i = 1; i <= BS->NbKnots(); i++)
+      {
         Knots->SetValue(i, BS->Knot(i));
+      }
       Knots->SetValue(BS->NbKnots() + 1, Ux);
       Knots->SetValue(BS->NbKnots() + 2, Uy);
     }
@@ -274,32 +288,42 @@ static void PolyTest(const NCollection_Array1<double>&     Herm,
     {
       if (Polesinit(0).Y() >= (1 / TolPoles) * Polesinit(3).Y()
           || Polesinit(0).Y() <= TolPoles * Polesinit(3).Y())
+      {
         throw Standard_DimensionError("Hermit Impossible Tolerance");
+      }
       if ((max == 0) || (max == 3))
       {
         for (i = 0; i <= 3; i++)
+        {
           Polesinit(i).SetCoord(0.0, (Polesinit(i).Y() - TolPoles * Polemax));
+        }
       }
       else if ((max == 1) || (max == 2))
       {
         if ((min == 0) || (min == 3))
         {
           for (i = 0; i <= 3; i++)
+          {
             Polesinit(i).SetCoord(0.0, (Polesinit(i).Y() - (1 / TolPoles) * Polemin));
+          }
         }
         else
         {
           if ((TolPoles * Polemax < Polesinit(0).Y()) && (TolPoles * Polemax < Polesinit(3).Y()))
           {
             for (i = 0; i <= 3; i++)
+            {
               Polesinit(i).SetCoord(0.0, (Polesinit(i).Y() - TolPoles * Polemax));
+            }
             mark = 1;
           }
           if ((1 / TolPoles * Polemin > Polesinit(0).Y())
               && (1 / TolPoles * Polemin > Polesinit(3).Y()) && (mark == 0))
           {
             for (i = 0; i <= 3; i++)
+            {
               Polesinit(i).SetCoord(0.0, (Polesinit(i).Y() - 1 / TolPoles * Polemin));
+            }
             mark = 1;
           }
           if (mark == 0)
@@ -307,24 +331,28 @@ static void PolyTest(const NCollection_Array1<double>&     Herm,
             double Pole0, Pole3;
             Pole0 = Polesinit(0).Y();
             Pole3 = Polesinit(3).Y();
-            if (Pole0 < 3)
+            if (Pole0 < Pole3)
             {
               a = std::log10(Pole3 / Pole0);
               if (boucle == 2)
               {
                 for (i = 0; i <= 3; i++)
+                {
                   Polesinit(i).SetCoord(
                     0.0,
                     Polesinit(i).Y()
                       - (Pole3 * (std::pow(10.0, (-0.5 * std::log10(TolPoles) - a / 2.0)))));
+                }
               }
-              if (boucle == 1)
+              else if (boucle == 1)
               {
                 for (i = 0; i <= 3; i++)
+                {
                   Polesinit(i).SetCoord(
                     0.0,
                     Polesinit(i).Y()
                       - (Pole0 * (std::pow(10.0, (a / 2.0 + 0.5 * std::log10(TolPoles))))));
+                }
                 dercas = 1;
               }
             }
@@ -334,18 +362,22 @@ static void PolyTest(const NCollection_Array1<double>&     Herm,
               if (boucle == 2)
               {
                 for (i = 0; i <= 3; i++)
+                {
                   Polesinit(i).SetCoord(
                     0.0,
                     Polesinit(i).Y()
                       - (Pole0 * (std::pow(10.0, (-0.5 * std::log10(TolPoles) - a / 2.0)))));
+                }
               }
-              if (boucle == 1)
+              else if (boucle == 1)
               {
                 for (i = 0; i <= 3; i++)
+                {
                   Polesinit(i).SetCoord(
                     0.0,
                     Polesinit(i).Y()
                       - (Pole3 * (std::pow(10.0, (a / 2.0 + 0.5 * std::log10(TolPoles))))));
+                }
                 dercas = 1;
               }
             }
@@ -358,7 +390,9 @@ static void PolyTest(const NCollection_Array1<double>&     Herm,
   if (!SignDenom(Polesinit)) // inversion of the polynome sign
   {
     for (index = 0; index <= 3; index++)
+    {
       Polesinit(index).SetCoord(0.0, -Polesinit(index).Y());
+    }
   }
 
   // loop of positivity
@@ -366,50 +400,76 @@ static void PolyTest(const NCollection_Array1<double>&     Herm,
   {
     Us1 = Polesinit(0).Y() / (Polesinit(0).Y() - Polesinit(1).Y());
     if (boucle == 2)
+    {
       Us1 = Us1 * knots(2);
+    }
     if (boucle == 1)
+    {
       if (Ux != 0.0)
+      {
         Us1 = Us1 * Ux;
+      }
+    }
     BSplCLib::LocateParameter(3, knots, Us1, false, 1, knots.Length(), I1, Us1);
     if (I1 < 2)
+    {
       U4 = Us1;
+    }
     else
+    {
       U4 = knots(I1);
+    }
   }
 
   if ((Polesinit(1).Y() >= 0.0) && (Polesinit(2).Y() < 0.0))
   {
     Us2 = Polesinit(2).Y() / (Polesinit(2).Y() - Polesinit(3).Y());
     if (boucle == 2)
+    {
       Us2 = knots(knots.Length() - 1) + Us2 * (1 - knots(knots.Length() - 1));
+    }
     if (boucle == 1)
+    {
       if (Ux != 0.0)
+      {
         Us2 = Uy + Us2 * (1 - Uy);
+      }
+    }
     BSplCLib::LocateParameter(3, knots, Us2, false, 1, knots.Length(), I1, Us2);
     if (I1 >= (knots.Length() - 1))
+    {
       U5 = Us2;
+    }
     else
+    {
       U5 = knots(I1 + 1);
+    }
   }
 
   if (dercas == 1)
+  {
     boucle++;
+  }
 
   if ((Polesinit(1).Y() < 0.0) && (Polesinit(2).Y() < 0.0))
   {
     Us1 = Polesinit(0).Y() / (Polesinit(0).Y() - Polesinit(1).Y());
     Us2 = Polesinit(2).Y() / (Polesinit(2).Y() - Polesinit(3).Y());
     if (boucle != 0)
+    {
       if (Ux != 0.0)
       {
         Us1 = Us1 * Ux;
         Us2 = Uy + Us2 * (1 - Uy);
       }
+    }
     if (Us2 <= Us1)
     {
       BSplCLib::LocateParameter(3, knots, Us1, false, 1, knots.Length(), I1, Us1);
-      if (knots(I1) >= Us2) // insertion of one knot for the two poles
+      if (knots(I1) >= Us2)
+      { // insertion of one knot for the two poles
         U4 = knots(I1);
+      }
       else
       {
         if (I1 >= 2)
@@ -422,22 +482,32 @@ static void PolyTest(const NCollection_Array1<double>&     Herm,
             cas = 1;
           }
         }
-        if (cas == 0) // insertion of only one new knot
+        if (cas == 0)
+        { // insertion of only one new knot
           U4 = (Us1 + Us2) / 2;
+        }
       }
     }
     else
     { // insertion of two knots
       BSplCLib::LocateParameter(3, knots, Us1, false, 1, knots.Length(), I1, Us1);
       if (I1 >= 2)
+      {
         U4 = knots(I1);
+      }
       else
+      {
         U4 = Us1;
+      }
       BSplCLib::LocateParameter(3, knots, Us2, false, 1, knots.Length(), I3, Us2);
       if (I3 < (BS->NbKnots() - 1))
+      {
         U5 = knots(I3 + 1);
+      }
       else
+      {
         U5 = Us2;
+      }
     }
   }
 }
@@ -474,7 +544,9 @@ static void PolyTest(const NCollection_Array1<double>&       Herm,
   {
     BS->LocateU(Ux, 0.0, I1, I2); // localization of the inserted knots
     if (Uy != 0.0)
+    {
       BS->LocateU(Uy, 0.0, I3, I4);
+    }
   }
 
   if (I1 == I2) // definition and filling of the
@@ -483,13 +555,17 @@ static void PolyTest(const NCollection_Array1<double>&       Herm,
     { // array of knots
       Knots = new NCollection_HArray1<double>(1, BS->NbKnots());
       for (i = 1; i <= BS->NbKnots(); i++)
+      {
         Knots->SetValue(i, BS->Knot(i));
+      }
     }
     else
     {
       Knots = new NCollection_HArray1<double>(1, BS->NbKnots() + 1);
       for (i = 1; i <= BS->NbKnots(); i++)
+      {
         Knots->SetValue(i, BS->Knot(i));
+      }
       Knots->SetValue(BS->NbKnots() + 1, Uy);
     }
   }
@@ -499,14 +575,18 @@ static void PolyTest(const NCollection_Array1<double>&       Herm,
     {
       Knots = new NCollection_HArray1<double>(1, BS->NbKnots() + 1);
       for (i = 1; i <= BS->NbKnots(); i++)
+      {
         Knots->SetValue(i, BS->Knot(i));
+      }
       Knots->SetValue(BS->NbKnots() + 1, Ux);
     }
     else
     {
       Knots = new NCollection_HArray1<double>(1, BS->NbKnots() + 2);
       for (i = 1; i <= BS->NbKnots(); i++)
+      {
         Knots->SetValue(i, BS->Knot(i));
+      }
       Knots->SetValue(BS->NbKnots() + 1, Ux);
       Knots->SetValue(BS->NbKnots() + 2, Uy);
     }
@@ -536,25 +616,33 @@ static void PolyTest(const NCollection_Array1<double>&       Herm,
     {
       if (Polesinit(0).Y() >= (1 / TolPoles) * Polesinit(3).Y()
           || Polesinit(0).Y() <= TolPoles * Polesinit(3).Y())
+      {
         throw Standard_DimensionError("Hermit Impossible Tolerance");
+      }
       if ((max == 0) || (max == 3))
       {
         for (i = 0; i <= 3; i++)
+        {
           Polesinit(i).SetCoord(0.0, (Polesinit(i).Y() - TolPoles * Polemax));
+        }
       }
       else if ((max == 1) || (max == 2))
       {
         if ((min == 0) || (min == 3))
         {
           for (i = 0; i <= 3; i++)
+          {
             Polesinit(i).SetCoord(0.0, (Polesinit(i).Y() - (1 / TolPoles) * Polemin));
+          }
         }
         else
         {
           if ((TolPoles * Polemax < Polesinit(0).Y()) && (TolPoles * Polemax < Polesinit(3).Y()))
           {
             for (i = 0; i <= 3; i++)
+            {
               Polesinit(i).SetCoord(0.0, (Polesinit(i).Y() - TolPoles * Polemax));
+            }
             mark = 1;
           }
 
@@ -562,7 +650,9 @@ static void PolyTest(const NCollection_Array1<double>&       Herm,
               && (1 / TolPoles * Polemin > Polesinit(3).Y()) && (mark == 0))
           {
             for (i = 0; i <= 3; i++)
+            {
               Polesinit(i).SetCoord(0.0, (Polesinit(i).Y() - 1 / TolPoles * Polemin));
+            }
             mark = 1;
           }
           if (mark == 0)
@@ -570,24 +660,28 @@ static void PolyTest(const NCollection_Array1<double>&       Herm,
             double Pole0, Pole3;
             Pole0 = Polesinit(0).Y();
             Pole3 = Polesinit(3).Y();
-            if (Pole0 < 3)
+            if (Pole0 < Pole3)
             {
               a = std::log10(Pole3 / Pole0);
               if (boucle == 2)
               {
                 for (i = 0; i <= 3; i++)
+                {
                   Polesinit(i).SetCoord(
                     0.0,
                     Polesinit(i).Y()
                       - (Pole3 * (std::pow(10.0, (-0.5 * std::log10(TolPoles) - a / 2.0)))));
+                }
               }
-              if (boucle == 1)
+              else if (boucle == 1)
               {
                 for (i = 0; i <= 3; i++)
+                {
                   Polesinit(i).SetCoord(
                     0.0,
                     Polesinit(i).Y()
                       - (Pole0 * (std::pow(10.0, (a / 2.0 + 0.5 * std::log10(TolPoles))))));
+                }
                 dercas = 1;
               }
             }
@@ -597,18 +691,22 @@ static void PolyTest(const NCollection_Array1<double>&       Herm,
               if (boucle == 2)
               {
                 for (i = 0; i <= 3; i++)
+                {
                   Polesinit(i).SetCoord(
                     0.0,
                     Polesinit(i).Y()
                       - (Pole0 * (std::pow(10.0, (-0.5 * std::log10(TolPoles) - a / 2.0)))));
+                }
               }
               else if (boucle == 1)
               {
                 for (i = 0; i <= 3; i++)
+                {
                   Polesinit(i).SetCoord(
                     0.0,
                     Polesinit(i).Y()
                       - (Pole3 * (std::pow(10.0, (a / 2.0 + 0.5 * std::log10(TolPoles))))));
+                }
                 dercas = 1;
               }
             }
@@ -621,7 +719,9 @@ static void PolyTest(const NCollection_Array1<double>&       Herm,
   if (!SignDenom(Polesinit)) // inversion of the polynome sign
   {
     for (index = 0; index <= 3; index++)
+    {
       Polesinit(index).SetCoord(0.0, -Polesinit(index).Y());
+    }
   }
 
   // positivity loop
@@ -629,50 +729,76 @@ static void PolyTest(const NCollection_Array1<double>&       Herm,
   {
     Us1 = Polesinit(0).Y() / (Polesinit(0).Y() - Polesinit(1).Y());
     if (boucle == 2)
+    {
       Us1 = Us1 * knots(2);
+    }
     if (boucle == 1)
+    {
       if (Ux != 0.0)
+      {
         Us1 = Us1 * Ux;
+      }
+    }
     BSplCLib::LocateParameter(3, knots, Us1, false, 1, knots.Length(), I1, Us1);
     if (I1 < 2)
+    {
       U4 = Us1;
+    }
     else
+    {
       U4 = knots(I1);
+    }
   }
 
   if ((Polesinit(1).Y() >= 0.0) && (Polesinit(2).Y() < 0.0))
   {
     Us2 = Polesinit(2).Y() / (Polesinit(2).Y() - Polesinit(3).Y());
     if (boucle == 2)
+    {
       Us2 = knots(knots.Length() - 1) + Us2 * (1 - knots(knots.Length() - 1));
+    }
     if (boucle == 1)
+    {
       if (Ux != 0.0)
+      {
         Us2 = Uy + Us2 * (1 - Uy);
+      }
+    }
     BSplCLib::LocateParameter(3, knots, Us2, false, 1, knots.Length(), I1, Us2);
     if (I1 >= (knots.Length() - 1))
+    {
       U5 = Us2;
+    }
     else
+    {
       U5 = knots(I1 + 1);
+    }
   }
 
   if (dercas == 1)
+  {
     boucle++;
+  }
 
   if ((Polesinit(1).Y() < 0.0) && (Polesinit(2).Y() < 0.0))
   {
     Us1 = Polesinit(0).Y() / (Polesinit(0).Y() - Polesinit(1).Y());
     Us2 = Polesinit(2).Y() / (Polesinit(2).Y() - Polesinit(3).Y());
     if (boucle != 0)
+    {
       if (Ux != 0.0)
       {
         Us1 = Us1 * Ux;
         Us2 = Uy + Us2 * (1 - Uy);
       }
+    }
     if (Us2 <= Us1)
     {
       BSplCLib::LocateParameter(3, knots, Us1, false, 1, knots.Length(), I1, Us1);
-      if (knots(I1) >= Us2) // insertion of one knot for the two poles
+      if (knots(I1) >= Us2)
+      { // insertion of one knot for the two poles
         U4 = knots(I1);
+      }
       else
       {
         if (I1 >= 2)
@@ -685,22 +811,32 @@ static void PolyTest(const NCollection_Array1<double>&       Herm,
             cas = 1;
           }
         }
-        if (cas == 0) // insertion of only one new knot
+        if (cas == 0)
+        { // insertion of only one new knot
           U4 = (Us1 + Us2) / 2;
+        }
       }
     }
     else
     { // insertion of two knots
       BSplCLib::LocateParameter(3, knots, Us1, false, 1, knots.Length(), I1, Us1);
       if (I1 >= 2)
+      {
         U4 = knots(I1);
+      }
       else
+      {
         U4 = Us1;
+      }
       BSplCLib::LocateParameter(3, knots, Us2, false, 1, knots.Length(), I3, Us2);
       if (I3 < (BS->NbKnots() - 1))
+      {
         U5 = knots(I3 + 1);
+      }
       else
+      {
         U5 = Us2;
+      }
     }
   }
 }
@@ -713,10 +849,14 @@ static void PolyTest(const NCollection_Array1<double>&       Herm,
 static void InsertKnots(occ::handle<Geom2d_BSplineCurve>& BS, const double U4, const double U5)
 
 {
-  if (U4 != 0.0)                 // insertion of :0 knot if U4=0
-    BS->InsertKnot(U4);          //              1 knot if U4=U5
-  if ((U5 != 1.0) && (U5 != U4)) //              2 knots otherwise
+  if (U4 != 0.0)
+  {                     // insertion of :0 knot if U4=0
+    BS->InsertKnot(U4); //              1 knot if U4=U5
+  }
+  if ((U5 != 1.0) && (U5 != U4))
+  { //              2 knots otherwise
     BS->InsertKnot(U5);
+  }
 }
 
 //=======================================================================
@@ -775,6 +915,7 @@ occ::handle<Geom2d_BSplineCurve> Hermit::Solution(const occ::handle<Geom_BSpline
   InsertKnots(BS2, Upos1, Upos2); // and insertion
 
   if (Upos1 != 0.0)
+  {
     if (Upos2 != 1.0)
     {
       Ux = std::min(Upos1, Upos2);
@@ -785,6 +926,7 @@ occ::handle<Geom2d_BSplineCurve> Hermit::Solution(const occ::handle<Geom_BSpline
       Ux = Upos1;
       Uy = Upos1;
     }
+  }
   else
   {
     Ux = Upos2;
@@ -819,19 +961,26 @@ occ::handle<Geom2d_BSplineCurve> Hermit::Solution(const occ::handle<Geom_BSpline
     }
     InsertKnots(BS2, Utol1, Utol2);
   }
-  if ((BS2->Knot(2) < TolKnots)
-      || (BS2->Knot(BS2->NbKnots() - 1) > (1 - TolKnots))) // checking of the knots tolerance
+  if ((BS2->Knot(2) < TolKnots) || (BS2->Knot(BS2->NbKnots() - 1) > (1 - TolKnots)))
+  { // checking of the knots tolerance
     throw Standard_DimensionError("Hermit Impossible Tolerance");
+  }
   else
   {
-    if ((Upos2 == 1.0) && (Utol2 == 1.0) && (Uint2 == 1.0)) // test on the final inserted knots
+    if ((Upos2 == 1.0) && (Utol2 == 1.0) && (Uint2 == 1.0))
+    { // test on the final inserted knots
       InsertKnots(BS1, BS2->Knot(2), 1.0);
+    }
     else
     {
       if ((Upos1 == 0.0) && (Utol1 == 0.0) && (Uint1 == 0.0))
+      {
         InsertKnots(BS1, BS2->Knot(BS2->NbKnots() - 1), 1.0);
+      }
       else
+      {
         InsertKnots(BS1, BS2->Knot(BS2->NbKnots() - 1), BS2->Knot(2));
+      }
     }
     MovePoles(BS1); // relocation of the no-contrained knots
   }
@@ -876,6 +1025,7 @@ occ::handle<Geom2d_BSplineCurve> Hermit::Solution(const occ::handle<Geom2d_BSpli
   InsertKnots(BS2, Upos1, Upos2); // and insertion
 
   if (Upos1 != 0.0)
+  {
     if (Upos2 != 1.0)
     {
       Ux = std::min(Upos1, Upos2);
@@ -886,6 +1036,7 @@ occ::handle<Geom2d_BSplineCurve> Hermit::Solution(const occ::handle<Geom2d_BSpli
       Ux = Upos1;
       Uy = Upos1;
     }
+  }
   else
   {
     Ux = Upos2;
@@ -920,19 +1071,26 @@ occ::handle<Geom2d_BSplineCurve> Hermit::Solution(const occ::handle<Geom2d_BSpli
     }
     InsertKnots(BS2, Utol1, Utol2);
   }
-  if ((BS2->Knot(2) < TolKnots)
-      || (BS2->Knot(BS2->NbKnots() - 1) > (1 - TolKnots))) // checking of the knots tolerance
+  if ((BS2->Knot(2) < TolKnots) || (BS2->Knot(BS2->NbKnots() - 1) > (1 - TolKnots)))
+  { // checking of the knots tolerance
     throw Standard_DimensionError("Hermit Impossible Tolerance");
+  }
   else
   {
-    if ((Upos2 == 1.0) && (Utol2 == 1.0) && (Uint2 == 1.0)) // test on the final inserted knots
+    if ((Upos2 == 1.0) && (Utol2 == 1.0) && (Uint2 == 1.0))
+    { // test on the final inserted knots
       InsertKnots(BS1, BS2->Knot(2), 1.0);
+    }
     else
     {
       if ((Upos1 == 0.0) && (Utol1 == 0.0) && (Uint1 == 0.0))
+      {
         InsertKnots(BS1, BS2->Knot(BS2->NbKnots() - 1), 1.0);
+      }
       else
+      {
         InsertKnots(BS1, BS2->Knot(BS2->NbKnots() - 1), BS2->Knot(2));
+      }
     }
     MovePoles(BS1); // relocation of the no-contrained knots
   }
@@ -977,6 +1135,7 @@ void Hermit::Solutionbis(const occ::handle<Geom_BSplineCurve>& BS,
   InsertKnots(BS2, Upos1, Upos2); // and insertion
 
   if (Upos1 != 0.0)
+  {
     if (Upos2 != 1.0)
     {
       Ux = std::min(Upos1, Upos2);
@@ -987,6 +1146,7 @@ void Hermit::Solutionbis(const occ::handle<Geom_BSplineCurve>& BS,
       Ux = Upos1;
       Uy = Upos1;
     }
+  }
   else
   {
     Ux = Upos2;
@@ -1021,17 +1181,22 @@ void Hermit::Solutionbis(const occ::handle<Geom_BSplineCurve>& BS,
     }
     InsertKnots(BS2, Utol1, Utol2);
   }
-  if ((BS2->Knot(2) < TolKnots)
-      || (BS2->Knot(BS2->NbKnots() - 1) > (1 - TolKnots))) // checking of the knots tolerance
+  if ((BS2->Knot(2) < TolKnots) || (BS2->Knot(BS2->NbKnots() - 1) > (1 - TolKnots)))
+  { // checking of the knots tolerance
     throw Standard_DimensionError("Hermit Impossible Tolerance");
+  }
   else
   {
-    if ((Upos2 == 1.0) && (Utol2 == 1.0) && (Uint2 == 1.0)) // test on the final inserted knots
+    if ((Upos2 == 1.0) && (Utol2 == 1.0) && (Uint2 == 1.0))
+    { // test on the final inserted knots
       Knotmin = BS2->Knot(2);
+    }
     else
     {
       if ((Upos1 == 0.0) && (Utol1 == 0.0) && (Uint1 == 0.0))
+      {
         Knotmax = BS2->Knot(BS2->NbKnots() - 1);
+      }
       else
       {
         Knotmin = BS2->Knot(2);

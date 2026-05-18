@@ -33,7 +33,7 @@
 
 #include <cstring>
 
-const char* TopTools_ShapeSet::THE_ASCII_VERSIONS[TopTools_FormatVersion_UPPER + 1] = {
+const char* const TopTools_ShapeSet::THE_ASCII_VERSIONS[TopTools_FormatVersion_UPPER + 1] = {
   "",
   "CASCADE Topology V1, (c) Matra-Datavision",
   "CASCADE Topology V2, (c) Matra-Datavision",
@@ -80,7 +80,9 @@ void TopTools_ShapeSet::Clear()
 int TopTools_ShapeSet::Add(const TopoDS_Shape& S)
 {
   if (S.IsNull())
+  {
     return 0;
+  }
   myLocations.Add(S.Location());
   TopoDS_Shape S2 = S;
   S2.Location(TopLoc_Location());
@@ -90,7 +92,9 @@ int TopTools_ShapeSet::Add(const TopoDS_Shape& S)
     AddGeometry(S2);
 
     for (TopoDS_Iterator its(S2, false, false); its.More(); its.Next())
+    {
       Add(its.Value());
+    }
     index = myShapes.Add(S2);
   }
   return index;
@@ -133,65 +137,101 @@ static void PrintShapeEnum(const TopAbs_ShapeEnum T, Standard_OStream& S, bool C
 
     case TopAbs_VERTEX:
       if (C)
+      {
         S << "Ve";
+      }
       else
+      {
         S << "VERTEX   ";
+      }
       break;
 
     case TopAbs_EDGE:
       if (C)
+      {
         S << "Ed";
+      }
       else
+      {
         S << "EDGE     ";
+      }
       break;
 
     case TopAbs_WIRE:
       if (C)
+      {
         S << "Wi";
+      }
       else
+      {
         S << "WIRE     ";
+      }
       break;
 
     case TopAbs_FACE:
       if (C)
+      {
         S << "Fa";
+      }
       else
+      {
         S << "FACE     ";
+      }
       break;
 
     case TopAbs_SHELL:
       if (C)
+      {
         S << "Sh";
+      }
       else
+      {
         S << "SHELL    ";
+      }
       break;
 
     case TopAbs_SOLID:
       if (C)
+      {
         S << "So";
+      }
       else
+      {
         S << "SOLID    ";
+      }
       break;
 
     case TopAbs_COMPSOLID:
       if (C)
+      {
         S << "CS";
+      }
       else
+      {
         S << "COMPSOLID";
+      }
       break;
 
     case TopAbs_COMPOUND:
       if (C)
+      {
         S << "Co";
+      }
       else
+      {
         S << "COMPOUND ";
+      }
       break;
 
     case TopAbs_SHAPE:
       if (C)
+      {
         S << "Sp";
+      }
       else
+      {
         S << "SHAPE";
+      }
       break;
   }
 }
@@ -205,38 +245,51 @@ static void PrintOrientation(const TopAbs_Orientation O, Standard_OStream& S, bo
 
     case TopAbs_FORWARD:
       if (C)
+      {
         S << "+";
+      }
       else
+      {
         S << "FORWARD";
+      }
       break;
 
     case TopAbs_REVERSED:
       if (C)
+      {
         S << "-";
+      }
       else
+      {
         S << "REVERSED";
+      }
       break;
 
     case TopAbs_INTERNAL:
       if (C)
+      {
         S << "i";
+      }
       else
+      {
         S << "INTERNAL";
+      }
       break;
 
     case TopAbs_EXTERNAL:
       if (C)
+      {
         S << "e";
+      }
       else
+      {
         S << "EXTERNAL";
+      }
       break;
   }
 }
 
-//=======================================================================
-// function : DumpExtent
-// purpose  : Dump number of shapes.
-//=======================================================================
+//=================================================================================================
 
 Standard_OStream& TopTools_ShapeSet::DumpExtent(Standard_OStream& OS) const
 {
@@ -307,10 +360,7 @@ Standard_OStream& TopTools_ShapeSet::DumpExtent(Standard_OStream& OS) const
   return OS;
 }
 
-//=======================================================================
-// function : DumpExtent
-// purpose  : Dump number of shapes.
-//=======================================================================
+//=================================================================================================
 
 void TopTools_ShapeSet::DumpExtent(TCollection_AsciiString& S) const
 {
@@ -424,7 +474,9 @@ void TopTools_ShapeSet::Dump(Standard_OStream& OS) const
       PrintOrientation(sub.Orientation(), OS, true);
       OS << nbShapes - myShapes.FindIndex(sub.Located(TopLoc_Location())) + 1;
       if (!sub.Location().IsIdentity())
+      {
         OS << "(L" << myLocations.Index(sub.Location()) << ")";
+      }
       OS << " ";
       its.Next();
     }
@@ -547,7 +599,9 @@ void TopTools_ShapeSet::Write(Standard_OStream& OS, const Message_ProgressRange&
   OS.imbue(anOldLocale);
 
   if (aPS.UserBreak())
+  {
     OS << "Interrupted by the user\n";
+  }
 }
 
 //=================================================================================================
@@ -574,15 +628,23 @@ static TopAbs_ShapeEnum ReadShapeEnum(Standard_IStream& IS)
 
     case 'S':
       if (buffer[1] == 'h')
+      {
         return TopAbs_SHELL;
+      }
       else
+      {
         return TopAbs_SOLID;
+      }
 
     case 'C':
       if (buffer[1] == 'S')
+      {
         return TopAbs_COMPSOLID;
+      }
       else
+      {
         return TopAbs_COMPOUND;
+      }
   }
   return TopAbs_COMPOUND;
 }
@@ -612,7 +674,9 @@ void TopTools_ShapeSet::Read(Standard_IStream& IS, const Message_ProgressRange& 
     if (lv > 0)
     {
       for (lv--; lv > 0 && (vers[lv] == '\r' || vers[lv] == '\n'); lv--)
+      {
         vers[lv] = '\0';
+      }
     }
     for (int i = TopTools_FormatVersion_LOWER; i <= TopTools_FormatVersion_UPPER; ++i)
     {
@@ -631,7 +695,7 @@ void TopTools_ShapeSet::Read(Standard_IStream& IS, const Message_ProgressRange& 
   } while (!IS.fail());
   if (IS.fail())
   {
-    std::cout << "File was not written with this version of the topology" << std::endl;
+    std::cout << "File was not written with this version of the topology" << '\n';
     IS.imbue(anOldLocale);
     return;
   }
@@ -646,8 +710,8 @@ void TopTools_ShapeSet::Read(Standard_IStream& IS, const Message_ProgressRange& 
 
   if (aPS.UserBreak())
   {
-    std::cout << "Interrupted by the user" << std::endl;
-    // on remet le LC_NUMERIC a la precedente valeur
+    std::cout << "Interrupted by the user" << '\n';
+    // restore LC_NUMERIC to the previous value
     IS.imbue(anOldLocale);
     return;
   }
@@ -659,7 +723,7 @@ void TopTools_ShapeSet::Read(Standard_IStream& IS, const Message_ProgressRange& 
 
   if (aPS.UserBreak())
   {
-    std::cout << "Interrupted by the user" << std::endl;
+    std::cout << "Interrupted by the user" << '\n';
     IS.imbue(anOldLocale);
     return;
   }
@@ -672,8 +736,8 @@ void TopTools_ShapeSet::Read(Standard_IStream& IS, const Message_ProgressRange& 
   IS >> buffer;
   if (strcmp(buffer, "TShapes"))
   {
-    std::cout << "Not a TShape table" << std::endl;
-    // on remet le LC_NUMERIC a la precedente valeur
+    std::cout << "Not a TShape table" << '\n';
+    // restore LC_NUMERIC to the previous value
     IS.imbue(anOldLocale);
     return;
   }
@@ -701,7 +765,9 @@ void TopTools_ShapeSet::Read(Standard_IStream& IS, const Message_ProgressRange& 
     {
       Read(SS, IS, nbShapes);
       if (!SS.IsNull())
+      {
         AddShapes(S, SS);
+      }
     } while (!SS.IsNull());
 
     S.Free(buffer[0] == '1');
@@ -718,16 +784,20 @@ void TopTools_ShapeSet::Read(Standard_IStream& IS, const Message_ProgressRange& 
     // check
 
     if (myFormatNb == TopTools_FormatVersion_VERSION_1)
+    {
       Check(T, S);
+    }
 
     myShapes.Add(S);
   }
 
-  // on remet le LC_NUMERIC a la precedente valeur
+  // restore LC_NUMERIC to the previous value
   IS.imbue(anOldLocale);
 
   if (aPS.UserBreak())
-    std::cout << "Interrupted by the user" << std::endl;
+  {
+    std::cout << "Interrupted by the user" << '\n';
+  }
 }
 
 //=================================================================================================
@@ -735,12 +805,16 @@ void TopTools_ShapeSet::Read(Standard_IStream& IS, const Message_ProgressRange& 
 void TopTools_ShapeSet::Dump(const TopoDS_Shape& S, Standard_OStream& OS) const
 {
   if (S.IsNull())
+  {
     OS << "Null shape\n";
+  }
   OS << "Shape : " << myShapes.FindIndex(S.Located(TopLoc_Location()));
   OS << ", ";
   PrintOrientation(S.Orientation(), OS, false);
   if (!S.Location().IsIdentity())
+  {
     OS << ", location : " << myLocations.Index(S.Location());
+  }
   OS << "\n";
 }
 
@@ -749,7 +823,9 @@ void TopTools_ShapeSet::Dump(const TopoDS_Shape& S, Standard_OStream& OS) const
 void TopTools_ShapeSet::Write(const TopoDS_Shape& S, Standard_OStream& OS) const
 {
   if (S.IsNull())
+  {
     OS << "*";
+  }
   else
   {
     PrintOrientation(S.Orientation(), OS, true);
@@ -777,7 +853,9 @@ void TopTools_ShapeSet::Read(TopoDS_Shape& S, Standard_IStream& IS, const int nb
   char buffer[255];
   IS >> buffer;
   if (buffer[0] == '*')
+  {
     S = TopoDS_Shape();
+  }
   else
   {
     S = myShapes(nbshapes - atoi(buffer + 1) + 1);

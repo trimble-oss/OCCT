@@ -58,13 +58,15 @@ void StepSelect_FloatFormat::SetZeroSuppress(const bool mode)
   thezerosup = mode;
 }
 
-void StepSelect_FloatFormat::SetFormat(const char* format)
+void StepSelect_FloatFormat::SetFormat(const char* const format)
 {
   themainform.Clear();
   themainform.AssignCat(format);
 }
 
-void StepSelect_FloatFormat::SetFormatForRange(const char* form, const double R1, const double R2)
+void StepSelect_FloatFormat::SetFormatForRange(const char* const form,
+                                               const double      R1,
+                                               const double      R2)
 {
   theformrange.Clear();
   theformrange.AssignCat(form);
@@ -93,14 +95,18 @@ void StepSelect_FloatFormat::Perform(IFSelect_ContextWrite& /*ctx*/,
   writer.FloatWriter().SetFormat(themainform.ToCString());
   writer.FloatWriter().SetZeroSuppress(thezerosup);
   if (theformrange.Length() > 0)
+  {
     writer.FloatWriter().SetFormatForRange(theformrange.ToCString(), therangemin, therangemax);
+  }
 }
 
 TCollection_AsciiString StepSelect_FloatFormat::Label() const
 {
   TCollection_AsciiString lab("Float Format ");
   if (thezerosup)
+  {
     lab.AssignCat(" ZeroSuppress");
+  }
   lab.AssignCat(themainform);
   if (theformrange.Length() > 0)
   {

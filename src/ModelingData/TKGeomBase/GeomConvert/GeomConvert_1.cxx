@@ -48,15 +48,9 @@
 #include <gp_Pnt.hxx>
 #include <NCollection_Array1.hxx>
 #include <NCollection_Array2.hxx>
-#include <Standard_Integer.hxx>
 
-typedef Geom_Surface               Surface;
-typedef Geom_BSplineSurface        BSplineSurface;
-typedef NCollection_Array1<double> Array1OfReal;
-typedef NCollection_Array2<double> Array2OfReal;
-typedef NCollection_Array1<int>    Array1OfInteger;
-typedef NCollection_Array2<gp_Pnt> Array2OfPnt;
-typedef gp_Pnt                     Pnt;
+typedef Geom_Surface        Surface;
+typedef Geom_BSplineSurface BSplineSurface;
 
 //=================================================================================================
 
@@ -64,45 +58,14 @@ static occ::handle<Geom_BSplineSurface> BSplineSurfaceBuilder(
   const Convert_ElementarySurfaceToBSplineSurface& Convert)
 {
   occ::handle<Geom_BSplineSurface> TheSurface;
-  int                              UDegree  = Convert.UDegree();
-  int                              VDegree  = Convert.VDegree();
-  int                              NbUPoles = Convert.NbUPoles();
-  int                              NbVPoles = Convert.NbVPoles();
-  int                              NbUKnots = Convert.NbUKnots();
-  int                              NbVKnots = Convert.NbVKnots();
-  Array2OfPnt                      Poles(1, NbUPoles, 1, NbVPoles);
-  Array2OfReal                     Weights(1, NbUPoles, 1, NbVPoles);
-  Array1OfReal                     UKnots(1, NbUKnots);
-  Array1OfReal                     VKnots(1, NbVKnots);
-  Array1OfInteger                  UMults(1, NbUKnots);
-  Array1OfInteger                  VMults(1, NbVKnots);
-  int                              i, j;
-  for (j = 1; j <= NbVPoles; j++)
-  {
-    for (i = 1; i <= NbUPoles; i++)
-    {
-      Poles(i, j)   = Convert.Pole(i, j);
-      Weights(i, j) = Convert.Weight(i, j);
-    }
-  }
-  for (i = 1; i <= NbUKnots; i++)
-  {
-    UKnots(i) = Convert.UKnot(i);
-    UMults(i) = Convert.UMultiplicity(i);
-  }
-  for (i = 1; i <= NbVKnots; i++)
-  {
-    VKnots(i) = Convert.VKnot(i);
-    VMults(i) = Convert.VMultiplicity(i);
-  }
-  TheSurface = new BSplineSurface(Poles,
-                                  Weights,
-                                  UKnots,
-                                  VKnots,
-                                  UMults,
-                                  VMults,
-                                  UDegree,
-                                  VDegree,
+  TheSurface = new BSplineSurface(Convert.Poles(),
+                                  Convert.Weights(),
+                                  Convert.UKnots(),
+                                  Convert.VKnots(),
+                                  Convert.UMultiplicities(),
+                                  Convert.VMultiplicities(),
+                                  Convert.UDegree(),
+                                  Convert.VDegree(),
                                   Convert.IsUPeriodic(),
                                   Convert.IsVPeriodic());
   return TheSurface;
@@ -124,7 +87,9 @@ occ::handle<Geom_BSplineSurface> GeomConvert::SplitBSplineSurface(
   int LastU  = S->LastUKnotIndex();
   int LastV  = S->LastVKnotIndex();
   if (FromUK1 == ToUK2 || FromVK1 == ToVK2)
+  {
     throw Standard_DomainError();
+  }
   int FirstUK = std::min(FromUK1, ToUK2);
   int LastUK  = std::max(FromUK1, ToUK2);
   int FirstVK = std::min(FromVK1, ToVK2);
@@ -141,22 +106,30 @@ occ::handle<Geom_BSplineSurface> GeomConvert::SplitBSplineSurface(
   if (S->IsUPeriodic())
   {
     if (!SameUOrientation)
+    {
       S1->UReverse();
+    }
   }
   else
   {
     if (FromUK1 > ToUK2)
+    {
       S1->UReverse();
+    }
   }
   if (S->IsVPeriodic())
   {
     if (!SameVOrientation)
+    {
       S1->VReverse();
+    }
   }
   else
   {
     if (FromVK1 > ToVK2)
+    {
       S1->VReverse();
+    }
   }
   return S1;
 }
@@ -171,7 +144,9 @@ occ::handle<Geom_BSplineSurface> GeomConvert::SplitBSplineSurface(
   const bool                              SameOrientation)
 {
   if (FromK1 == ToK2)
+  {
     throw Standard_DomainError();
+  }
 
   occ::handle<Geom_BSplineSurface> S1 = occ::down_cast<Geom_BSplineSurface>(S->Copy());
 
@@ -183,7 +158,9 @@ occ::handle<Geom_BSplineSurface> GeomConvert::SplitBSplineSurface(
     int FirstUK = std::min(FromK1, ToK2);
     int LastUK  = std::max(FromK1, ToK2);
     if (FirstUK < FirstU || LastUK > LastU)
+    {
       throw Standard_DomainError();
+    }
 
     S1->Segment(S1->UKnot(FirstUK),
                 S1->UKnot(LastUK),
@@ -193,12 +170,16 @@ occ::handle<Geom_BSplineSurface> GeomConvert::SplitBSplineSurface(
     if (S->IsUPeriodic())
     {
       if (!SameOrientation)
+      {
         S1->UReverse();
+      }
     }
     else
     {
       if (FromK1 > ToK2)
+      {
         S1->UReverse();
+      }
     }
   }
   else
@@ -209,7 +190,9 @@ occ::handle<Geom_BSplineSurface> GeomConvert::SplitBSplineSurface(
     int FirstVK = std::min(FromK1, ToK2);
     int LastVK  = std::max(FromK1, ToK2);
     if (FirstVK < FirstV || LastVK > LastV)
+    {
       throw Standard_DomainError();
+    }
 
     S1->Segment(S1->UKnot(S1->FirstUKnotIndex()),
                 S1->UKnot(S1->LastUKnotIndex()),
@@ -219,12 +202,16 @@ occ::handle<Geom_BSplineSurface> GeomConvert::SplitBSplineSurface(
     if (S->IsVPeriodic())
     {
       if (!SameOrientation)
+      {
         S1->VReverse();
+      }
     }
     else
     {
       if (FromK1 > ToK2)
+      {
         S1->VReverse();
+      }
     }
   }
   return S1;
@@ -255,22 +242,30 @@ occ::handle<Geom_BSplineSurface> GeomConvert::SplitBSplineSurface(
   if (S->IsUPeriodic())
   {
     if (!SameUOrientation)
+    {
       NewSurface->UReverse();
+    }
   }
   else
   {
     if (FromU1 > ToU2)
+    {
       NewSurface->UReverse();
+    }
   }
   if (S->IsVPeriodic())
   {
     if (!SameVOrientation)
+    {
       NewSurface->VReverse();
+    }
   }
   else
   {
     if (FromV1 > ToV2)
+    {
       NewSurface->VReverse();
+    }
   }
   return NewSurface;
 }
@@ -303,12 +298,16 @@ occ::handle<Geom_BSplineSurface> GeomConvert::SplitBSplineSurface(
     if (S->IsUPeriodic())
     {
       if (!SameOrientation)
+      {
         NewSurface->UReverse();
+      }
     }
     else
     {
       if (FromParam1 > ToParam2)
+      {
         NewSurface->UReverse();
+      }
     }
   }
   else
@@ -323,12 +322,16 @@ occ::handle<Geom_BSplineSurface> GeomConvert::SplitBSplineSurface(
     if (S->IsUPeriodic())
     {
       if (!SameOrientation)
+      {
         NewSurface->UReverse();
+      }
     }
     else
     {
       if (FromParam1 > ToParam2)
+      {
         NewSurface->UReverse();
+      }
     }
   }
   return NewSurface;
@@ -388,7 +391,9 @@ occ::handle<Geom_BSplineSurface> GeomConvert::SurfaceToBSplineSurface(
         Surf = S;
       }
       else
+      {
         S = Surf;
+      }
     }
 
     if (Surf->IsKind(STANDARD_TYPE(Geom_RectangularTrimmedSurface)))
@@ -552,17 +557,13 @@ occ::handle<Geom_BSplineSurface> GeomConvert::SurfaceToBSplineSurface(
         C                                 = GeomConvert::CurveToBSplineCurve(CT);
       }
       int  NbUPoles, NbUKnots;
-      int  NbVPoles, NbVKnots;
+      int  NbVPoles;
       bool periodic = false;
 
       // Poles of meridian = Vpoles
       NbVPoles = C->NbPoles();
-      NCollection_Array1<gp_Pnt> Poles(1, NbVPoles);
-      C->Poles(Poles);
-      NCollection_Array1<double> Weights(1, NbVPoles);
-      Weights.Init(1.);
-      if (C->IsRational())
-        C->Weights(Weights);
+      NCollection_Array1<gp_Pnt>        Poles(C->Poles());
+      const NCollection_Array1<double>& Weights = C->WeightsArray();
 
       double AlfaU;
       if (Strim->IsUPeriodic())
@@ -574,7 +575,7 @@ occ::handle<Geom_BSplineSurface> GeomConvert::SurfaceToBSplineSurface(
       }
       else
       {
-        // Nombre de spans : ouverture maximale = 150 degres ( = PI / 1.2 rds)
+        // Number of spans: maximum opening = 150 degrees ( = PI / 1.2 rad)
         const int nbUSpans = (int)std::trunc(1.2 * (ULast - UFirst) / M_PI) + 1;
         AlfaU              = (ULast - UFirst) / (nbUSpans * 2);
         NbUPoles           = 2 * nbUSpans + 1;
@@ -594,11 +595,8 @@ occ::handle<Geom_BSplineSurface> GeomConvert::SurfaceToBSplineSurface(
         UMults(1)++;
         UMults(NbUKnots)++;
       }
-      NbVKnots = C->NbKnots();
-      NCollection_Array1<double> VKnots(1, NbVKnots);
-      NCollection_Array1<int>    VMults(1, NbVKnots);
-      C->Knots(VKnots);
-      C->Multiplicities(VMults);
+      const NCollection_Array1<double>& VKnots = C->Knots();
+      const NCollection_Array1<int>&    VMults = C->Multiplicities();
 
       // Compute the poles.
       NCollection_Array2<gp_Pnt> NewPoles(1, NbUPoles, 1, NbVPoles);
@@ -661,13 +659,11 @@ occ::handle<Geom_BSplineSurface> GeomConvert::SurfaceToBSplineSurface(
         occ::handle<Geom_TrimmedCurve> CT = new Geom_TrimmedCurve(Meridian, UFirst, ULast);
         C                                 = GeomConvert::CurveToBSplineCurve(CT);
       }
-      NCollection_Array2<gp_Pnt> Poles(1, C->NbPoles(), 1, 2);
-      NCollection_Array2<double> Weights(1, C->NbPoles(), 1, 2);
-      NCollection_Array1<double> UKnots(1, C->NbKnots());
-      C->Knots(UKnots);
-      NCollection_Array1<int> UMults(1, C->NbKnots());
-      C->Multiplicities(UMults);
-      NCollection_Array1<double> VKnots(1, 2);
+      NCollection_Array2<gp_Pnt>        Poles(1, C->NbPoles(), 1, 2);
+      NCollection_Array2<double>        Weights(1, C->NbPoles(), 1, 2);
+      const NCollection_Array1<double>& UKnots = C->Knots();
+      const NCollection_Array1<int>&    UMults = C->Multiplicities();
+      NCollection_Array1<double>        VKnots(1, 2);
       VKnots(1) = VFirst;
       VKnots(2) = VLast;
       NCollection_Array1<int> VMults(1, 2);
@@ -700,35 +696,36 @@ occ::handle<Geom_BSplineSurface> GeomConvert::SurfaceToBSplineSurface(
       occ::handle<Geom_BezierSurface> SBez = occ::down_cast<Geom_BezierSurface>(Surf->Copy());
 
       SBez->Segment(U1, U2, V1, V2);
-      int                        NbUPoles = SBez->NbUPoles();
-      int                        NbVPoles = SBez->NbVPoles();
-      int                        UDegree  = SBez->UDegree();
-      int                        VDegree  = SBez->VDegree();
-      NCollection_Array2<gp_Pnt> Poles(1, NbUPoles, 1, NbVPoles);
+      int                        UDegree = SBez->UDegree();
+      int                        VDegree = SBez->VDegree();
       NCollection_Array1<double> UKnots(1, 2);
       NCollection_Array1<int>    UMults(1, 2);
       NCollection_Array1<double> VKnots(1, 2);
       NCollection_Array1<int>    VMults(1, 2);
-      UKnots(1) = 0.0;
-      UKnots(2) = 1.0;
-      UMults(1) = UDegree + 1;
-      UMults(2) = UDegree + 1;
-      VKnots(1) = 0.0;
-      VKnots(2) = 1.0;
-      VMults(1) = VDegree + 1;
-      VMults(2) = VDegree + 1;
-      SBez->Poles(Poles);
+      UKnots(1)                                = 0.0;
+      UKnots(2)                                = 1.0;
+      UMults(1)                                = UDegree + 1;
+      UMults(2)                                = UDegree + 1;
+      VKnots(1)                                = 0.0;
+      VKnots(2)                                = 1.0;
+      VMults(1)                                = VDegree + 1;
+      VMults(2)                                = VDegree + 1;
+      const NCollection_Array2<gp_Pnt>& aPoles = SBez->Poles();
       if (SBez->IsURational() || SBez->IsVRational())
       {
-        NCollection_Array2<double> Weights(1, NbUPoles, 1, NbVPoles);
-        SBez->Weights(Weights);
-        TheSurface =
-          new Geom_BSplineSurface(Poles, Weights, UKnots, VKnots, UMults, VMults, UDegree, VDegree);
+        TheSurface = new Geom_BSplineSurface(aPoles,
+                                             SBez->WeightsArray(),
+                                             UKnots,
+                                             VKnots,
+                                             UMults,
+                                             VMults,
+                                             UDegree,
+                                             VDegree);
       }
       else
       {
         TheSurface =
-          new Geom_BSplineSurface(Poles, UKnots, VKnots, UMults, VMults, UDegree, VDegree);
+          new Geom_BSplineSurface(aPoles, UKnots, VKnots, UMults, VMults, UDegree, VDegree);
       }
     }
 
@@ -740,22 +737,34 @@ occ::handle<Geom_BSplineSurface> GeomConvert::SurfaceToBSplineSurface(
       if (!BS->IsUPeriodic())
       {
         if (U1 < umin)
+        {
           U1 = umin;
+        }
         if (U2 > umax)
+        {
           U2 = umax;
+        }
       }
 
       if (!BS->IsVPeriodic())
       {
         if (V1 < vmin)
+        {
           V1 = vmin;
+        }
         if (V2 > vmax)
+        {
           V2 = vmax;
+        }
       }
       if (BS->IsUPeriodic() || BS->IsVPeriodic())
+      {
         BS->CheckAndSegment(U1, U2, V1, V2);
+      }
       else
+      {
         BS->Segment(U1, U2, V1, V2);
+      }
       TheSurface = BS;
     }
 
@@ -766,14 +775,18 @@ occ::handle<Geom_BSplineSurface> GeomConvert::SurfaceToBSplineSurface(
       GeomAbs_Shape       cont;
       GeomAdaptor_Surface AS(Sr);
       if (AS.NbUIntervals(GeomAbs_C2) > 1 || AS.NbVIntervals(GeomAbs_C2) > 1)
+      {
         cont = GeomAbs_C1;
+      }
       else
+      {
         cont = GeomAbs_C2;
+      }
       MaxSeg = 4 * (AS.NbUIntervals(GeomAbs_CN) + 1) * (AS.NbVIntervals(GeomAbs_CN) + 1);
       GeomConvert_ApproxSurface BSpS(Sr, Tol3d, cont, cont, MaxDegree, MaxDegree, MaxSeg, 1);
       TheSurface = BSpS.Surface();
     }
-  } // Fin du cas Rectangular::TrimmedSurface
+  } // End of Rectangular::TrimmedSurface case
 
   else
   {
@@ -805,17 +818,13 @@ occ::handle<Geom_BSplineSurface> GeomConvert::SurfaceToBSplineSurface(
       occ::handle<Geom_BSplineCurve> C        = GeomConvert::CurveToBSplineCurve(Meridian);
 
       int  NbUPoles, NbUKnots;
-      int  NbVPoles, NbVKnots;
+      int  NbVPoles;
       bool periodic = true;
 
       // Poles of meridian = Vpoles
       NbVPoles = C->NbPoles();
-      NCollection_Array1<gp_Pnt> Poles(1, NbVPoles);
-      C->Poles(Poles);
-      NCollection_Array1<double> Weights(1, NbVPoles);
-      Weights.Init(1.);
-      if (C->IsRational())
-        C->Weights(Weights);
+      NCollection_Array1<gp_Pnt>        Poles(C->Poles());
+      const NCollection_Array1<double>& Weights = C->WeightsArray();
 
       double AlfaU;
       NbUKnots = 4;
@@ -831,11 +840,8 @@ occ::handle<Geom_BSplineSurface> GeomConvert::SurfaceToBSplineSurface(
         UKnots(i) = UFirst + (i - 1) * 2 * AlfaU;
         UMults(i) = 2;
       }
-      NbVKnots = C->NbKnots();
-      NCollection_Array1<double> VKnots(1, NbVKnots);
-      NCollection_Array1<int>    VMults(1, NbVKnots);
-      C->Knots(VKnots);
-      C->Multiplicities(VMults);
+      const NCollection_Array1<double>& VKnots = C->Knots();
+      const NCollection_Array1<int>&    VMults = C->Multiplicities();
 
       // Compute the poles.
       NCollection_Array2<gp_Pnt> NewPoles(1, NbUPoles, 1, NbVPoles);
@@ -887,35 +893,36 @@ occ::handle<Geom_BSplineSurface> GeomConvert::SurfaceToBSplineSurface(
 
       occ::handle<Geom_BezierSurface> SBez = occ::down_cast<Geom_BezierSurface>(S);
 
-      int                        NbUPoles = SBez->NbUPoles();
-      int                        NbVPoles = SBez->NbVPoles();
-      int                        UDegree  = SBez->UDegree();
-      int                        VDegree  = SBez->VDegree();
-      NCollection_Array2<gp_Pnt> Poles(1, NbUPoles, 1, NbVPoles);
+      int                        UDegree = SBez->UDegree();
+      int                        VDegree = SBez->VDegree();
       NCollection_Array1<double> UKnots(1, 2);
       NCollection_Array1<int>    UMults(1, 2);
       NCollection_Array1<double> VKnots(1, 2);
       NCollection_Array1<int>    VMults(1, 2);
-      UKnots(1) = 0.0;
-      UKnots(2) = 1.0;
-      UMults(1) = UDegree + 1;
-      UMults(2) = UDegree + 1;
-      VKnots(1) = 0.0;
-      VKnots(2) = 1.0;
-      VMults(1) = VDegree + 1;
-      VMults(2) = VDegree + 1;
-      SBez->Poles(Poles);
+      UKnots(1)                                = 0.0;
+      UKnots(2)                                = 1.0;
+      UMults(1)                                = UDegree + 1;
+      UMults(2)                                = UDegree + 1;
+      VKnots(1)                                = 0.0;
+      VKnots(2)                                = 1.0;
+      VMults(1)                                = VDegree + 1;
+      VMults(2)                                = VDegree + 1;
+      const NCollection_Array2<gp_Pnt>& aPoles = SBez->Poles();
       if (SBez->IsURational() || SBez->IsVRational())
       {
-        NCollection_Array2<double> Weights(1, NbUPoles, 1, NbVPoles);
-        SBez->Weights(Weights);
-        TheSurface =
-          new Geom_BSplineSurface(Poles, Weights, UKnots, VKnots, UMults, VMults, UDegree, VDegree);
+        TheSurface = new Geom_BSplineSurface(aPoles,
+                                             SBez->WeightsArray(),
+                                             UKnots,
+                                             VKnots,
+                                             UMults,
+                                             VMults,
+                                             UDegree,
+                                             VDegree);
       }
       else
       {
         TheSurface =
-          new Geom_BSplineSurface(Poles, UKnots, VKnots, UMults, VMults, UDegree, VDegree);
+          new Geom_BSplineSurface(aPoles, UKnots, VKnots, UMults, VMults, UDegree, VDegree);
       }
     }
 
@@ -953,6 +960,6 @@ occ::handle<Geom_BSplineSurface> GeomConvert::SurfaceToBSplineSurface(
       GeomConvert_ApproxSurface BSpS(Sr, Tol3d, ucont, vcont, MaxDegree, MaxDegree, MaxSeg, 1);
       TheSurface = BSpS.Surface();
     }
-  } // Fin du cas direct
+  } // End of direct case
   return TheSurface;
 }

@@ -62,9 +62,13 @@ Geom_TrimmedCurve::Geom_TrimmedCurve(const occ::handle<Geom_Curve>& C,
   // kill trimmed basis curves
   occ::handle<Geom_TrimmedCurve> T = occ::down_cast<Geom_TrimmedCurve>(C);
   if (!T.IsNull())
+  {
     basisCurve = occ::down_cast<Geom_Curve>(T->BasisCurve()->Copy());
+  }
   else
+  {
     basisCurve = occ::down_cast<Geom_Curve>(C->Copy());
+  }
 
   SetTrim(U1, U2, Sense, theAdjustPeriodic);
 }
@@ -95,7 +99,9 @@ void Geom_TrimmedCurve::SetTrim(const double U1,
 {
   bool sameSense = true;
   if (U1 == U2)
+  {
     throw Standard_ConstructionError("Geom_TrimmedCurve::U1 == U2");
+  }
 
   double Udeb = basisCurve->FirstParameter();
   double Ufin = basisCurve->LastParameter();
@@ -109,11 +115,13 @@ void Geom_TrimmedCurve::SetTrim(const double U1,
     uTrim1 = U1;
     uTrim2 = U2;
     if (theAdjustPeriodic)
+    {
       ElCLib::AdjustPeriodic(Udeb,
                              Ufin,
                              std::min(std::abs(uTrim2 - uTrim1) / 2, Precision::PConfusion()),
                              uTrim1,
                              uTrim2);
+    }
   }
 
   else
@@ -132,7 +140,9 @@ void Geom_TrimmedCurve::SetTrim(const double U1,
     }
 
     if ((Udeb - uTrim1 > Precision::PConfusion()) || (uTrim2 - Ufin > Precision::PConfusion()))
+    {
       throw Standard_ConstructionError("Geom_TrimmedCurve::parameters out of range");
+    }
   }
   if (!sameSense)
   {
@@ -144,14 +154,33 @@ void Geom_TrimmedCurve::SetTrim(const double U1,
 
 bool Geom_TrimmedCurve::IsClosed() const
 {
-  return (StartPoint().Distance(EndPoint()) <= gp::Resolution());
+  if (basisCurve->IsPeriodic())
+  {
+    const double aPeriod = basisCurve->Period();
+    const double aLength = LastParameter() - FirstParameter();
+    if (aLength > Precision::PConfusion()
+        && std::abs(std::remainder(aLength, aPeriod)) <= Precision::PConfusion())
+    {
+      return true;
+    }
+  }
+  return StartPoint().SquareDistance(EndPoint()) <= Precision::Computational();
 }
 
 //=================================================================================================
 
 bool Geom_TrimmedCurve::IsPeriodic() const
 {
-  // return basisCurve->IsPeriodic();
+  if (basisCurve->IsPeriodic())
+  {
+    const double aPeriod = basisCurve->Period();
+    const double aLength = LastParameter() - FirstParameter();
+    if (aLength > Precision::PConfusion()
+        && std::abs(std::remainder(aLength, aPeriod)) <= Precision::PConfusion())
+    {
+      return true;
+    }
+  }
   return false;
 }
 
@@ -180,41 +209,37 @@ occ::handle<Geom_Curve> Geom_TrimmedCurve::BasisCurve() const
 
 //=================================================================================================
 
-void Geom_TrimmedCurve::D0(const double U, Pnt& P) const
+gp_Pnt Geom_TrimmedCurve::EvalD0(const double U) const
 {
-
-  basisCurve->D0(U, P);
+  return basisCurve->EvalD0(U);
 }
 
 //=================================================================================================
 
-void Geom_TrimmedCurve::D1(const double U, Pnt& P, Vec& V1) const
+Geom_Curve::ResD1 Geom_TrimmedCurve::EvalD1(const double U) const
 {
-
-  basisCurve->D1(U, P, V1);
+  return basisCurve->EvalD1(U);
 }
 
 //=================================================================================================
 
-void Geom_TrimmedCurve::D2(const double U, Pnt& P, Vec& V1, Vec& V2) const
+Geom_Curve::ResD2 Geom_TrimmedCurve::EvalD2(const double U) const
 {
-
-  basisCurve->D2(U, P, V1, V2);
+  return basisCurve->EvalD2(U);
 }
 
 //=================================================================================================
 
-void Geom_TrimmedCurve::D3(const double U, Pnt& P, Vec& V1, Vec& V2, Vec& V3) const
+Geom_Curve::ResD3 Geom_TrimmedCurve::EvalD3(const double U) const
 {
-
-  basisCurve->D3(U, P, V1, V2, V3);
+  return basisCurve->EvalD3(U);
 }
 
 //=================================================================================================
 
-Vec Geom_TrimmedCurve::DN(const double U, const int N) const
+gp_Vec Geom_TrimmedCurve::EvalDN(const double U, const int N) const
 {
-  return basisCurve->DN(U, N);
+  return basisCurve->EvalDN(U, N);
 }
 
 //=================================================================================================

@@ -237,21 +237,21 @@ void GeomFill::GetMinimalWeights(const Convert_ParameterisationType TConv,
 
 {
   if (TConv == Convert_Polynomial)
+  {
     Weights.Init(1);
+  }
   else
   {
     gp_Ax2                         popAx2(gp_Pnt(0, 0, 0), gp_Dir(gp_Dir::D::Z));
     gp_Circ                        C(popAx2, 1);
     occ::handle<Geom_TrimmedCurve> Sect1   = new Geom_TrimmedCurve(new Geom_Circle(C), 0., MaxAng);
     occ::handle<Geom_BSplineCurve> CtoBspl = GeomConvert::CurveToBSplineCurve(Sect1, TConv);
-    CtoBspl->Weights(Weights);
+    Weights.Assign(CtoBspl->WeightsArray());
 
-    NCollection_Array1<double> poids(Weights.Lower(), Weights.Upper());
-    double                     angle_min = std::max(Precision::PConfusion(), MinAng);
-
+    double                         angle_min = std::max(Precision::PConfusion(), MinAng);
     occ::handle<Geom_TrimmedCurve> Sect2 = new Geom_TrimmedCurve(new Geom_Circle(C), 0., angle_min);
     CtoBspl                              = GeomConvert::CurveToBSplineCurve(Sect2, TConv);
-    CtoBspl->Weights(poids);
+    const NCollection_Array1<double>& poids = CtoBspl->WeightsArray();
 
     for (int ii = Weights.Lower(); ii <= Weights.Upper(); ii++)
     {
@@ -384,9 +384,13 @@ void GeomFill::GetCircle(const Convert_ParameterisationType TConv,
   if (Sina < 0.)
   {
     if (Cosa > 0.)
+    {
       Angle = -Angle;
+    }
     else
+    {
       Angle = 2. * M_PI - Angle;
+    }
   }
 
   switch (TConv)
@@ -485,9 +489,13 @@ bool GeomFill::GetCircle(const Convert_ParameterisationType TConv,
   if (Sina < 0.)
   {
     if (Cosa > 0.)
+    {
       Angle = -Angle;
+    }
     else
+    {
       Angle = 2. * M_PI - Angle;
+    }
   }
 
   if (std::abs(Sina) > std::abs(Cosa))
@@ -650,9 +658,13 @@ bool GeomFill::GetCircle(const Convert_ParameterisationType TConv,
   if (Sina < 0.)
   {
     if (Cosa > 0.)
+    {
       Angle = -Angle;
+    }
     else
+    {
       Angle = 2. * M_PI - Angle;
+    }
   }
 
   if (std::abs(Sina) > std::abs(Cosa))

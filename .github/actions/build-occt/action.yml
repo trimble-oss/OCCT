@@ -8,6 +8,10 @@ inputs:
   compiler:
     description: 'Compiler (msvc, clang, gcc)'
     required: true
+  target-arch:
+    description: 'Target architecture (x64, arm64)'
+    required: false
+    default: 'x64'
   artifact-name:
     description: 'Name of the artifact to store build results'
     required: true
@@ -31,6 +35,10 @@ inputs:
     description: 'CMake build type (Release, Debug, etc)'
     required: false
     default: 'Release'
+  build-parallel-jobs:
+    description: 'Number of parallel build jobs (empty for auto)'
+    required: false
+    default: ''
   github-token:
     description: 'GitHub token for vcpkg NuGet package access'
     required: true
@@ -43,6 +51,7 @@ runs:
       with:
         platform: ${{ inputs.platform }}
         compiler: ${{ inputs.compiler }}
+        target-arch: ${{ inputs.target-arch }}
         additional-cmake-flags: ${{ inputs.additional-cmake-flags }}
         use-vtk: ${{ inputs.use-vtk }}
         build-use-pch: ${{ inputs.build-use-pch }}
@@ -75,7 +84,11 @@ runs:
       if: ${{ inputs.platform == 'linux' }}
       run: |
         cd build
-        cmake --build . --target install --config Release -- -j
+        if [ -n "${{ inputs.build-parallel-jobs }}" ]; then
+          cmake --build . --target install --config Release -- -j${{ inputs.build-parallel-jobs }}
+        else
+          cmake --build . --target install --config Release -- -j
+        fi
       shell: bash
 
     - name: Upload install directory

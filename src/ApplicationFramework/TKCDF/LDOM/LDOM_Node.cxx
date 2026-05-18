@@ -36,17 +36,11 @@ const LDOM_MemManager& LDOM_Node::getOwnerDocument() const
   return myDocument->Self();
 }
 
-//=======================================================================
-// function : operator =
-// purpose  : Assignment
-//=======================================================================
+//=================================================================================================
 
 LDOM_Node& LDOM_Node::operator=(const LDOM_Node& theOther) = default;
 
-//=======================================================================
-// function : operator =
-// purpose  : Nullify
-//=======================================================================
+//=================================================================================================
 
 LDOM_Node& LDOM_Node::operator=(const LDOM_NullPtr* /*aNull*/)
 {
@@ -63,15 +57,14 @@ bool LDOM_Node::isNull() const
   return myOrigin == nullptr || myOrigin->isNull();
 }
 
-//=======================================================================
-// function : operator ==
-// purpose  : Compare two Nodes
-//=======================================================================
+//=================================================================================================
 
 bool LDOM_Node::operator==(const LDOM_Node& anOther) const
 {
   if (isNull())
+  {
     return anOther.isNull();
+  }
   return myOrigin == anOther.myOrigin;
 }
 
@@ -83,7 +76,9 @@ bool LDOM_Node::operator==(const LDOM_Node& anOther) const
 bool LDOM_Node::operator!=(const LDOM_Node& anOther) const
 {
   if (isNull())
+  {
     return !anOther.isNull();
+  }
   return myOrigin != anOther.myOrigin;
 }
 
@@ -144,8 +139,12 @@ LDOM_Node LDOM_Node::getFirstChild() const
     const LDOM_BasicElement& anElement = *(const LDOM_BasicElement*)myOrigin;
     const LDOM_BasicNode*    aChild    = anElement.GetFirstChild();
     if (aChild)
+    {
       if (aChild->getNodeType() != LDOM_Node::ATTRIBUTE_NODE)
+      {
         return LDOM_Node(*aChild, myDocument);
+      }
+    }
   }
   return LDOM_Node();
 }
@@ -173,8 +172,12 @@ LDOM_Node LDOM_Node::getNextSibling() const
 {
   const LDOM_BasicNode* aSibling = myOrigin->mySibling;
   if (aSibling)
+  {
     if (aSibling->getNodeType() != ATTRIBUTE_NODE)
+    {
       return LDOM_Node(*aSibling, myDocument);
+    }
+  }
   return LDOM_Node();
 }
 
@@ -187,10 +190,14 @@ void LDOM_Node::removeChild(const LDOM_Node& aChild)
   {
     const LDOM_BasicElement& anElement = *(LDOM_BasicElement*)myOrigin;
     if (aChild != nullptr)
+    {
       anElement.RemoveChild(aChild.myOrigin);
+    }
     if (aChild.myOrigin == myLastChild)
+    {
       //      myLastChild = anElement.GetLastChild();
       myLastChild = nullptr;
+    }
   }
 }
 
@@ -225,7 +232,9 @@ bool LDOM_Node::hasChildNodes() const
     const LDOM_BasicElement& anElement = *(const LDOM_BasicElement*)myOrigin;
     const LDOM_BasicNode*    aChild    = anElement.GetFirstChild();
     if (aChild)
+    {
       return !aChild->isNull();
+    }
   }
   return false;
 }
@@ -253,5 +262,7 @@ void LDOM_Node::SetValueClear() const
       return;
   }
   if (aValue->Type() == LDOMBasicString::LDOM_AsciiDoc)
+  {
     aValue->myType = LDOMBasicString::LDOM_AsciiDocClear;
+  }
 }

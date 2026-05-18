@@ -66,10 +66,12 @@ TDataStd_IntPackedMap::TDataStd_IntPackedMap()
 bool TDataStd_IntPackedMap::ChangeMap(const occ::handle<TColStd_HPackedMapOfInteger>& theMap)
 {
   if (theMap.IsNull())
+  {
     return false;
+  }
   if (myMap != theMap)
   {
-    if (!myMap->Map().IsEqual(theMap->Map()))
+    if (!NCollection_PackedMapAlgo::IsEqual(myMap->Map(), theMap->Map()))
     {
       Backup();
       myMap->ChangeMap().Assign(theMap->Map());
@@ -83,7 +85,7 @@ bool TDataStd_IntPackedMap::ChangeMap(const occ::handle<TColStd_HPackedMapOfInte
 
 bool TDataStd_IntPackedMap::ChangeMap(const TColStd_PackedMapOfInteger& theMap)
 {
-  if (!myMap->Map().IsEqual(theMap))
+  if (!NCollection_PackedMapAlgo::IsEqual(myMap->Map(), theMap))
   {
     Backup();
     myMap->ChangeMap().Assign(theMap);
@@ -151,7 +153,9 @@ void TDataStd_IntPackedMap::Restore(const occ::handle<TDF_Attribute>& theWith)
 {
   occ::handle<TDataStd_IntPackedMap> aWith = occ::down_cast<TDataStd_IntPackedMap>(theWith);
   if (aWith->myMap.IsNull())
+  {
     myMap.Nullify();
+  }
   else
   {
     myMap = new TColStd_HPackedMapOfInteger;
@@ -187,7 +191,7 @@ Standard_OStream& TDataStd_IntPackedMap::Dump(Standard_OStream& theOS) const
   Standard_OStream& anOS = TDF_Attribute::Dump(theOS);
   anOS << "IntPackedMap size = " << Extent();
   anOS << " Delta is " << (myIsDelta ? "ON" : "OFF");
-  anOS << std::endl;
+  anOS << '\n';
   return anOS;
 }
 
@@ -197,10 +201,14 @@ occ::handle<TDF_DeltaOnModification> TDataStd_IntPackedMap::DeltaOnModification(
   const occ::handle<TDF_Attribute>& OldAttribute) const
 {
   if (myIsDelta)
+  {
     return new TDataStd_DeltaOnModificationOfIntPackedMap(
       occ::down_cast<TDataStd_IntPackedMap>(OldAttribute));
+  }
   else
+  {
     return new TDF_DefaultDeltaOnModification(OldAttribute);
+  }
 }
 
 //=================================================================================================

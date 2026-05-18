@@ -34,7 +34,7 @@
 
 // unreferenced function, commented
 /*static void ModDbgTools_Write(const TopoDS_Shape& shape,
-              const char* filename)
+              const char* const filename)
 {
   std::ofstream save;
   save.open(filename);
@@ -183,9 +183,13 @@ bool TNaming_Identifier::ArgIsFeature() const
 void TNaming_Identifier::NextArg()
 {
   if (!myPrimitiveArgs.IsEmpty())
+  {
     myPrimitiveArgs.RemoveFirst();
+  }
   else if (!myShapeArgs.IsEmpty())
+  {
     myShapeArgs.RemoveFirst();
+  }
 }
 
 //=================================================================================================
@@ -242,7 +246,9 @@ void TNaming_Identifier::AncestorIdentification(TNaming_Localizer&  Localizer,
   myType = TNaming_INTERSECTION;
   NCollection_Map<TopoDS_Shape, TopTools_ShapeMapHasher>::Iterator itS(AncInFeature);
   for (; itS.More(); itS.Next())
+  {
     myShapeArgs.Append(itS.Key());
+  }
   myDone = true;
 }
 
@@ -255,12 +261,16 @@ bool IsImported(const occ::handle<TNaming_NamedShape>& NS)
   for (TDF_ChildIterator cit(Father); cit.More(); cit.Next())
   {
     if (cit.Value() != Lab)
+    {
       return false;
+    }
   }
 
   TNaming_Iterator it(NS);
   if (!it.More())
+  {
     return false;
+  }
   it.Next();
   return it.More();
 }
@@ -282,11 +292,7 @@ void TNaming_Identifier::PrimitiveIdentification(TNaming_Localizer& /*L*/,
   myDone = true;
 }
 
-//=======================================================================
-// function : GeneratedIdentification
-// purpose  : Finds generators of identifying shape <myShape> and keeps
-//         : them in <myShapeArgs>
-//=======================================================================
+//=================================================================================================
 
 void TNaming_Identifier::GeneratedIdentification(TNaming_Localizer& /*Localizer*/,
                                                  const occ::handle<TNaming_NamedShape>& NS)
@@ -319,10 +325,14 @@ void TNaming_Identifier::Identification(TNaming_Localizer&                     L
   myType = TNaming_INTERSECTION;
   NCollection_Map<occ::handle<TNaming_NamedShape>>::Iterator itP(Primitives);
   for (; itP.More(); itP.Next())
+  {
     myPrimitiveArgs.Append(itP.Key());
+  }
   NCollection_Map<TopoDS_Shape, TopTools_ShapeMapHasher>::Iterator itS(Shapes);
   for (; itS.More(); itS.Next())
+  {
     myShapeArgs.Append(itS.Key());
+  }
 
   if (myPrimitiveArgs.Extent() == 1 && myShapeArgs.IsEmpty())
   {

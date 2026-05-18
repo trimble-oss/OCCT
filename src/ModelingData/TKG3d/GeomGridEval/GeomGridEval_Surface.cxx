@@ -113,9 +113,27 @@ occ::handle<Geom_Surface> CreateExtrusionSurface(
 
 } // namespace
 
-//==================================================================================================
+//=================================================================================================
 
-void GeomGridEval_Surface::Initialize(const Adaptor3d_Surface& theSurface)
+GeomGridEval_Surface::GeomGridEval_Surface(const Adaptor3d_Surface& theSurface)
+    : myEvaluator(std::monostate{}),
+      mySurfaceType(GeomAbs_OtherSurface)
+{
+  initialization(theSurface);
+}
+
+//=================================================================================================
+
+GeomGridEval_Surface::GeomGridEval_Surface(const occ::handle<Geom_Surface>& theSurface)
+    : myEvaluator(std::monostate{}),
+      mySurfaceType(GeomAbs_OtherSurface)
+{
+  initialization(theSurface);
+}
+
+//=================================================================================================
+
+void GeomGridEval_Surface::initialization(const Adaptor3d_Surface& theSurface)
 {
   // Reset transformation
   myTrsf.reset();
@@ -134,7 +152,7 @@ void GeomGridEval_Surface::Initialize(const Adaptor3d_Surface& theSurface)
     }
 
     // Initialize with the underlying Geom_Surface
-    Initialize(aTransformed.GeomSurface());
+    initialization(aTransformed.GeomSurfaceOriginal());
     return;
   }
 
@@ -147,7 +165,7 @@ void GeomGridEval_Surface::Initialize(const Adaptor3d_Surface& theSurface)
     occ::handle<Geom_Surface> aGeomSurf = CreateGeomSurfaceFromAdaptor(aRevAdaptor);
     if (!aGeomSurf.IsNull())
     {
-      Initialize(aGeomSurf);
+      initialization(aGeomSurf);
       return;
     }
 
@@ -155,7 +173,7 @@ void GeomGridEval_Surface::Initialize(const Adaptor3d_Surface& theSurface)
     aGeomSurf = aRevAdaptor.Surface();
     if (!aGeomSurf.IsNull())
     {
-      Initialize(aGeomSurf);
+      initialization(aGeomSurf);
       return;
     }
 
@@ -163,7 +181,7 @@ void GeomGridEval_Surface::Initialize(const Adaptor3d_Surface& theSurface)
     aGeomSurf = CreateRevolutionSurface(aRevAdaptor);
     if (!aGeomSurf.IsNull())
     {
-      Initialize(aGeomSurf);
+      initialization(aGeomSurf);
       return;
     }
 
@@ -182,7 +200,7 @@ void GeomGridEval_Surface::Initialize(const Adaptor3d_Surface& theSurface)
     occ::handle<Geom_Surface> aGeomSurf = CreateGeomSurfaceFromAdaptor(aExtAdaptor);
     if (!aGeomSurf.IsNull())
     {
-      Initialize(aGeomSurf);
+      initialization(aGeomSurf);
       return;
     }
 
@@ -190,7 +208,7 @@ void GeomGridEval_Surface::Initialize(const Adaptor3d_Surface& theSurface)
     aGeomSurf = aExtAdaptor.Surface();
     if (!aGeomSurf.IsNull())
     {
-      Initialize(aGeomSurf);
+      initialization(aGeomSurf);
       return;
     }
 
@@ -198,7 +216,7 @@ void GeomGridEval_Surface::Initialize(const Adaptor3d_Surface& theSurface)
     aGeomSurf = CreateExtrusionSurface(aExtAdaptor);
     if (!aGeomSurf.IsNull())
     {
-      Initialize(aGeomSurf);
+      initialization(aGeomSurf);
       return;
     }
 
@@ -222,7 +240,7 @@ void GeomGridEval_Surface::Initialize(const Adaptor3d_Surface& theSurface)
 
     if (!aGeomSurf.IsNull())
     {
-      Initialize(aGeomSurf);
+      initialization(aGeomSurf);
       return;
     }
 
@@ -236,7 +254,7 @@ void GeomGridEval_Surface::Initialize(const Adaptor3d_Surface& theSurface)
   occ::handle<Geom_Surface> aGeomSurf = CreateGeomSurfaceFromAdaptor(theSurface);
   if (!aGeomSurf.IsNull())
   {
-    Initialize(aGeomSurf);
+    initialization(aGeomSurf);
     return;
   }
 
@@ -245,9 +263,9 @@ void GeomGridEval_Surface::Initialize(const Adaptor3d_Surface& theSurface)
   myEvaluator.emplace<GeomGridEval_OtherSurface>(&theSurface);
 }
 
-//==================================================================================================
+//=================================================================================================
 
-void GeomGridEval_Surface::Initialize(const occ::handle<Geom_Surface>& theSurface)
+void GeomGridEval_Surface::initialization(const occ::handle<Geom_Surface>& theSurface)
 {
   if (theSurface.IsNull())
   {
@@ -317,14 +335,7 @@ void GeomGridEval_Surface::Initialize(const occ::handle<Geom_Surface>& theSurfac
   }
 }
 
-//==================================================================================================
-
-bool GeomGridEval_Surface::IsInitialized() const
-{
-  return !std::holds_alternative<std::monostate>(myEvaluator);
-}
-
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array2<gp_Pnt> GeomGridEval_Surface::EvaluateGrid(
   const NCollection_Array1<double>& theUParams,
@@ -352,7 +363,7 @@ NCollection_Array2<gp_Pnt> GeomGridEval_Surface::EvaluateGrid(
   return aResult;
 }
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array2<GeomGridEval::SurfD1> GeomGridEval_Surface::EvaluateGridD1(
   const NCollection_Array1<double>& theUParams,
@@ -380,7 +391,7 @@ NCollection_Array2<GeomGridEval::SurfD1> GeomGridEval_Surface::EvaluateGridD1(
   return aResult;
 }
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array2<GeomGridEval::SurfD2> GeomGridEval_Surface::EvaluateGridD2(
   const NCollection_Array1<double>& theUParams,
@@ -408,7 +419,7 @@ NCollection_Array2<GeomGridEval::SurfD2> GeomGridEval_Surface::EvaluateGridD2(
   return aResult;
 }
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array2<GeomGridEval::SurfD3> GeomGridEval_Surface::EvaluateGridD3(
   const NCollection_Array1<double>& theUParams,
@@ -436,7 +447,7 @@ NCollection_Array2<GeomGridEval::SurfD3> GeomGridEval_Surface::EvaluateGridD3(
   return aResult;
 }
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array2<gp_Vec> GeomGridEval_Surface::EvaluateGridDN(
   const NCollection_Array1<double>& theUParams,
@@ -466,144 +477,7 @@ NCollection_Array2<gp_Vec> GeomGridEval_Surface::EvaluateGridDN(
   return aResult;
 }
 
-//==================================================================================================
-
-NCollection_Array1<gp_Pnt> GeomGridEval_Surface::EvaluatePoints(
-  const NCollection_Array1<gp_Pnt2d>& theUVPairs) const
-{
-  NCollection_Array1<gp_Pnt> aResult = std::visit(
-    [&theUVPairs](const auto& theEval) -> NCollection_Array1<gp_Pnt> {
-      using T = std::decay_t<decltype(theEval)>;
-      if constexpr (std::is_same_v<T, std::monostate>)
-      {
-        return NCollection_Array1<gp_Pnt>();
-      }
-      else
-      {
-        return theEval.EvaluatePoints(theUVPairs);
-      }
-    },
-    myEvaluator);
-
-  if (myTrsf.has_value())
-  {
-    applyTransformation(aResult);
-  }
-
-  return aResult;
-}
-
-//==================================================================================================
-
-NCollection_Array1<GeomGridEval::SurfD1> GeomGridEval_Surface::EvaluatePointsD1(
-  const NCollection_Array1<gp_Pnt2d>& theUVPairs) const
-{
-  NCollection_Array1<GeomGridEval::SurfD1> aResult = std::visit(
-    [&theUVPairs](const auto& theEval) -> NCollection_Array1<GeomGridEval::SurfD1> {
-      using T = std::decay_t<decltype(theEval)>;
-      if constexpr (std::is_same_v<T, std::monostate>)
-      {
-        return NCollection_Array1<GeomGridEval::SurfD1>();
-      }
-      else
-      {
-        return theEval.EvaluatePointsD1(theUVPairs);
-      }
-    },
-    myEvaluator);
-
-  if (myTrsf.has_value())
-  {
-    applyTransformation(aResult);
-  }
-
-  return aResult;
-}
-
-//==================================================================================================
-
-NCollection_Array1<GeomGridEval::SurfD2> GeomGridEval_Surface::EvaluatePointsD2(
-  const NCollection_Array1<gp_Pnt2d>& theUVPairs) const
-{
-  NCollection_Array1<GeomGridEval::SurfD2> aResult = std::visit(
-    [&theUVPairs](const auto& theEval) -> NCollection_Array1<GeomGridEval::SurfD2> {
-      using T = std::decay_t<decltype(theEval)>;
-      if constexpr (std::is_same_v<T, std::monostate>)
-      {
-        return NCollection_Array1<GeomGridEval::SurfD2>();
-      }
-      else
-      {
-        return theEval.EvaluatePointsD2(theUVPairs);
-      }
-    },
-    myEvaluator);
-
-  if (myTrsf.has_value())
-  {
-    applyTransformation(aResult);
-  }
-
-  return aResult;
-}
-
-//==================================================================================================
-
-NCollection_Array1<GeomGridEval::SurfD3> GeomGridEval_Surface::EvaluatePointsD3(
-  const NCollection_Array1<gp_Pnt2d>& theUVPairs) const
-{
-  NCollection_Array1<GeomGridEval::SurfD3> aResult = std::visit(
-    [&theUVPairs](const auto& theEval) -> NCollection_Array1<GeomGridEval::SurfD3> {
-      using T = std::decay_t<decltype(theEval)>;
-      if constexpr (std::is_same_v<T, std::monostate>)
-      {
-        return NCollection_Array1<GeomGridEval::SurfD3>();
-      }
-      else
-      {
-        return theEval.EvaluatePointsD3(theUVPairs);
-      }
-    },
-    myEvaluator);
-
-  if (myTrsf.has_value())
-  {
-    applyTransformation(aResult);
-  }
-
-  return aResult;
-}
-
-//==================================================================================================
-
-NCollection_Array1<gp_Vec> GeomGridEval_Surface::EvaluatePointsDN(
-  const NCollection_Array1<gp_Pnt2d>& theUVPairs,
-  int                                 theNU,
-  int                                 theNV) const
-{
-  NCollection_Array1<gp_Vec> aResult = std::visit(
-    [&theUVPairs, theNU, theNV](const auto& theEval) -> NCollection_Array1<gp_Vec> {
-      using T = std::decay_t<decltype(theEval)>;
-      if constexpr (std::is_same_v<T, std::monostate>)
-      {
-        return NCollection_Array1<gp_Vec>();
-      }
-      else
-      {
-        return theEval.EvaluatePointsDN(theUVPairs, theNU, theNV);
-      }
-    },
-    myEvaluator);
-
-  if (myTrsf.has_value())
-  {
-    applyTransformation(aResult);
-  }
-
-  return aResult;
-}
-
-//==================================================================================================
+//=================================================================================================
 
 void GeomGridEval_Surface::applyTransformation(NCollection_Array2<gp_Pnt>& theGrid) const
 {
@@ -622,7 +496,7 @@ void GeomGridEval_Surface::applyTransformation(NCollection_Array2<gp_Pnt>& theGr
   }
 }
 
-//==================================================================================================
+//=================================================================================================
 
 void GeomGridEval_Surface::applyTransformation(
   NCollection_Array2<GeomGridEval::SurfD1>& theGrid) const
@@ -645,7 +519,7 @@ void GeomGridEval_Surface::applyTransformation(
   }
 }
 
-//==================================================================================================
+//=================================================================================================
 
 void GeomGridEval_Surface::applyTransformation(
   NCollection_Array2<GeomGridEval::SurfD2>& theGrid) const
@@ -671,7 +545,7 @@ void GeomGridEval_Surface::applyTransformation(
   }
 }
 
-//==================================================================================================
+//=================================================================================================
 
 void GeomGridEval_Surface::applyTransformation(
   NCollection_Array2<GeomGridEval::SurfD3>& theGrid) const
@@ -701,7 +575,7 @@ void GeomGridEval_Surface::applyTransformation(
   }
 }
 
-//==================================================================================================
+//=================================================================================================
 
 void GeomGridEval_Surface::applyTransformation(NCollection_Array2<gp_Vec>& theGrid) const
 {
@@ -717,107 +591,5 @@ void GeomGridEval_Surface::applyTransformation(NCollection_Array2<gp_Vec>& theGr
     {
       theGrid.ChangeValue(aUIdx, aVIdx).Transform(aTrsf);
     }
-  }
-}
-
-//==================================================================================================
-
-void GeomGridEval_Surface::applyTransformation(NCollection_Array1<gp_Pnt>& thePoints) const
-{
-  if (!myTrsf.has_value() || thePoints.IsEmpty())
-  {
-    return;
-  }
-
-  const gp_Trsf& aTrsf = myTrsf.value();
-  for (int i = thePoints.Lower(); i <= thePoints.Upper(); ++i)
-  {
-    thePoints.ChangeValue(i).Transform(aTrsf);
-  }
-}
-
-//==================================================================================================
-
-void GeomGridEval_Surface::applyTransformation(
-  NCollection_Array1<GeomGridEval::SurfD1>& thePoints) const
-{
-  if (!myTrsf.has_value() || thePoints.IsEmpty())
-  {
-    return;
-  }
-
-  const gp_Trsf& aTrsf = myTrsf.value();
-  for (int i = thePoints.Lower(); i <= thePoints.Upper(); ++i)
-  {
-    GeomGridEval::SurfD1& aVal = thePoints.ChangeValue(i);
-    aVal.Point.Transform(aTrsf);
-    aVal.D1U.Transform(aTrsf);
-    aVal.D1V.Transform(aTrsf);
-  }
-}
-
-//==================================================================================================
-
-void GeomGridEval_Surface::applyTransformation(
-  NCollection_Array1<GeomGridEval::SurfD2>& thePoints) const
-{
-  if (!myTrsf.has_value() || thePoints.IsEmpty())
-  {
-    return;
-  }
-
-  const gp_Trsf& aTrsf = myTrsf.value();
-  for (int i = thePoints.Lower(); i <= thePoints.Upper(); ++i)
-  {
-    GeomGridEval::SurfD2& aVal = thePoints.ChangeValue(i);
-    aVal.Point.Transform(aTrsf);
-    aVal.D1U.Transform(aTrsf);
-    aVal.D1V.Transform(aTrsf);
-    aVal.D2U.Transform(aTrsf);
-    aVal.D2V.Transform(aTrsf);
-    aVal.D2UV.Transform(aTrsf);
-  }
-}
-
-//==================================================================================================
-
-void GeomGridEval_Surface::applyTransformation(
-  NCollection_Array1<GeomGridEval::SurfD3>& thePoints) const
-{
-  if (!myTrsf.has_value() || thePoints.IsEmpty())
-  {
-    return;
-  }
-
-  const gp_Trsf& aTrsf = myTrsf.value();
-  for (int i = thePoints.Lower(); i <= thePoints.Upper(); ++i)
-  {
-    GeomGridEval::SurfD3& aVal = thePoints.ChangeValue(i);
-    aVal.Point.Transform(aTrsf);
-    aVal.D1U.Transform(aTrsf);
-    aVal.D1V.Transform(aTrsf);
-    aVal.D2U.Transform(aTrsf);
-    aVal.D2V.Transform(aTrsf);
-    aVal.D2UV.Transform(aTrsf);
-    aVal.D3U.Transform(aTrsf);
-    aVal.D3V.Transform(aTrsf);
-    aVal.D3UUV.Transform(aTrsf);
-    aVal.D3UVV.Transform(aTrsf);
-  }
-}
-
-//==================================================================================================
-
-void GeomGridEval_Surface::applyTransformation(NCollection_Array1<gp_Vec>& thePoints) const
-{
-  if (!myTrsf.has_value() || thePoints.IsEmpty())
-  {
-    return;
-  }
-
-  const gp_Trsf& aTrsf = myTrsf.value();
-  for (int i = thePoints.Lower(); i <= thePoints.Upper(); ++i)
-  {
-    thePoints.ChangeValue(i).Transform(aTrsf);
   }
 }

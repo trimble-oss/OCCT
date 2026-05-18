@@ -60,10 +60,7 @@ LDOM_NodeList::~LDOM_NodeList()
   delete mySeq;
 }
 
-//=======================================================================
-// function : operator =
-// purpose  : Assignment
-//=======================================================================
+//=================================================================================================
 
 LDOM_NodeList& LDOM_NodeList::operator=(const LDOM_NodeList& theOther)
 {
@@ -72,10 +69,7 @@ LDOM_NodeList& LDOM_NodeList::operator=(const LDOM_NodeList& theOther)
   return *this;
 }
 
-//=======================================================================
-// function : operator =
-// purpose  : Nullify
-//=======================================================================
+//=================================================================================================
 
 LDOM_NodeList& LDOM_NodeList::operator=(const LDOM_NullPtr*)
 {
@@ -84,10 +78,7 @@ LDOM_NodeList& LDOM_NodeList::operator=(const LDOM_NullPtr*)
   return *this;
 }
 
-//=======================================================================
-// function : operator ==
-// purpose  :
-//=======================================================================
+//=================================================================================================
 
 bool LDOM_NodeList::operator==(const LDOM_NullPtr*) const
 {
@@ -109,7 +100,9 @@ bool LDOM_NodeList::operator!=(const LDOM_NullPtr*) const
 LDOM_Node LDOM_NodeList::item(const int anIndex) const
 {
   if (myDoc.IsNull() || anIndex < 0 || anIndex >= mySeq->Length())
+  {
     return LDOM_Node();
+  }
   return LDOM_Node(*mySeq->Value(anIndex + 1), myDoc);
 }
 

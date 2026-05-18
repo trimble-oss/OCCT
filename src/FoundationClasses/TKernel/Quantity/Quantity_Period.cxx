@@ -43,12 +43,8 @@ bool Quantity_Period::IsValid(const int dd,
   return (dd >= 0 && hh >= 0 && mn >= 0 && ss >= 0 && mis >= 0 && mics >= 0);
 }
 
-// -------------------------------------------------------------
-// IsValid : Checks the validity of a date
-// With:
-// 0 <= ss
-// 0 <= mics
-// -------------------------------------------------------------
+//=================================================================================================
+
 bool Quantity_Period::IsValid(const int ss, const int mics)
 {
   return (ss >= 0 && mics >= 0);
@@ -132,7 +128,9 @@ void Quantity_Period::SetValues(const int ss, const int mics)
 {
 
   if (!Quantity_Period::IsValid(ss, mics))
+  {
     throw Quantity_PeriodDefinitionError("Quantity_Period::SetValues invalid parameters");
+  }
 
   mySec  = ss;
   myUSec = mics;

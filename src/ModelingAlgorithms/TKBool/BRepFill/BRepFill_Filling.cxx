@@ -110,9 +110,13 @@ static TopoDS_Wire WireFromList(NCollection_List<TopoDS_Shape>& Edges)
           V1 = V4;
         }
         else if (V1.IsSame(V4))
+        {
           V1 = V3;
+        }
         else if (V2.IsSame(V3))
+        {
           V2 = V4;
+        }
         else
         {
           anEdge.Reverse();
@@ -208,10 +212,8 @@ void BRepFill_Filling::LoadInitSurface(const TopoDS_Face& aFace)
   myIsInitFaceGiven = true;
 }
 
-//=======================================================================
-// function : Add
-// purpose  : adds an edge as a constraint
-//======================================================================
+//=================================================================================================
+
 int BRepFill_Filling::Add(const TopoDS_Edge& anEdge, const GeomAbs_Shape Order, const bool IsBound)
 {
   TopoDS_Face               NullFace;
@@ -261,10 +263,8 @@ int BRepFill_Filling::Add(const TopoDS_Face& Support, const GeomAbs_Shape Order)
   return (myBoundary.Length() + myFreeConstraints.Length());
 }
 
-//=======================================================================
-// function : Add
-// purpose  : adds a point constraint
-//======================================================================
+//=================================================================================================
+
 int BRepFill_Filling::Add(const gp_Pnt& Point)
 {
   occ::handle<GeomPlate_PointConstraint> aPC =
@@ -416,6 +416,7 @@ void BRepFill_Filling::BuildWires(NCollection_List<TopoDS_Shape>& EdgeList,
         for (i = 0; i < 2; i++)
         {
           for (j = 0; j < 2; j++)
+          {
             if (V_wire[i].IsSame(V_edge[j]))
             {
               MW.Add(CurEdge);
@@ -423,11 +424,16 @@ void BRepFill_Filling::BuildWires(NCollection_List<TopoDS_Shape>& EdgeList,
               found = true;
               break;
             }
+          }
           if (found)
+          {
             break;
+          }
         }
         if (found)
+        {
           break;
+        }
       }
       if (!found) // try to find geometric coincidence
       {
@@ -456,10 +462,14 @@ void BRepFill_Filling::BuildWires(NCollection_List<TopoDS_Shape>& EdgeList,
               }
             }
             if (found)
+            {
               break;
+            }
           }
           if (found)
+          {
             break;
+          }
         }
       }
       if (!found) // end of current wire, begin next wire
@@ -479,14 +489,18 @@ void BRepFill_Filling::FindExtremitiesOfHoles(const NCollection_List<TopoDS_Shap
   NCollection_Sequence<TopoDS_Shape>       WireSeq;
   NCollection_List<TopoDS_Shape>::Iterator Itl(WireList);
   for (; Itl.More(); Itl.Next())
+  {
     WireSeq.Append(Itl.Value());
+  }
 
   TopoDS_Wire theWire;
   theWire = TopoDS::Wire(WireSeq(1));
   WireSeq.Remove(1);
 
   if (BRep_Tool::IsClosed(theWire))
+  {
     return;
+  }
 
   TopoDS_Vertex Vfirst, Vlast;
   TopExp::Vertices(theWire, Vfirst, Vlast);
@@ -552,10 +566,8 @@ void BRepFill_Filling::FindExtremitiesOfHoles(const NCollection_List<TopoDS_Shap
   VerSeq.Append(Vfirst);
 }
 
-//=======================================================================
-// function : Build
-// purpose  : builds the resulting face
-//======================================================================
+//=================================================================================================
+
 void BRepFill_Filling::Build()
 {
   myBuilder.reset(new GeomPlate_BuildPlateSurface(myDegree,
@@ -583,7 +595,9 @@ void BRepFill_Filling::Build()
   // Building missing bounds
   NCollection_List<TopoDS_Shape> EdgeList, WireList;
   for (i = 1; i <= myBoundary.Length(); i++)
+  {
     EdgeList.Append(myBoundary(i).myEdge);
+  }
 
   BuildWires(EdgeList, WireList);
   FindExtremitiesOfHoles(WireList, VerSeq);
@@ -608,7 +622,9 @@ void BRepFill_Filling::Build()
       gp_Pnt FirstPnt = BRep_Tool::Pnt(FirstVtx);
       Projector.Init(FirstPnt, CurSurface);
       if (Projector.LowerDistance() > Precision::Confusion())
+      {
         continue;
+      }
       Projector.LowerDistanceParameters(U1, V1);
 
       /*
@@ -620,7 +636,9 @@ void BRepFill_Filling::Build()
       gp_Pnt LastPnt = BRep_Tool::Pnt(LastVtx);
       Projector.Init(LastPnt, CurSurface);
       if (Projector.LowerDistance() > Precision::Confusion())
+      {
         continue;
+      }
       Projector.LowerDistanceParameters(U2, V2);
 
       /*
@@ -707,7 +725,9 @@ void BRepFill_Filling::Build()
     TopoDS_Edge        anEdge   = InitEdge;
     anEdge.Orientation(TopAbs_FORWARD);
     if (myOldNewMap.IsBound(anEdge))
+    {
       anEdge = TopoDS::Edge(myOldNewMap(anEdge));
+    }
 
     occ::handle<Geom2d_Curve> aCurveOnPlate = CurvesOnPlate->Value(i);
 
@@ -717,7 +737,9 @@ void BRepFill_Filling::Build()
     TopExp::Vertices(anEdge, V1, V2);
 
     if (myOldNewMap.IsBound(V1))
+    {
       NewV1 = TopoDS::Vertex(myOldNewMap(V1));
+    }
     else
     {
       gp_Pnt aPnt = BRep_Tool::Pnt(V1);
@@ -727,7 +749,9 @@ void BRepFill_Filling::Build()
     }
 
     if (myOldNewMap.IsBound(V2))
+    {
       NewV2 = TopoDS::Vertex(myOldNewMap(V2));
+    }
     else
     {
       gp_Pnt aPnt = BRep_Tool::Pnt(V2);
@@ -776,7 +800,9 @@ const NCollection_List<TopoDS_Shape>& BRepFill_Filling::Generated(const TopoDS_S
   myGenerated.Clear();
 
   if (myOldNewMap.IsBound(S))
+  {
     myGenerated.Append(myOldNewMap(S));
+  }
 
   return myGenerated;
 }

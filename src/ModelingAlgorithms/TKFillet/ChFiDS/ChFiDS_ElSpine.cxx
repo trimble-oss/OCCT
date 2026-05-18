@@ -163,43 +163,38 @@ void ChFiDS_ElSpine::SetPeriodic(const bool I)
 double ChFiDS_ElSpine::Period() const
 {
   if (!periodic)
+  {
     throw Standard_Failure("ElSpine non periodique");
+  }
   return period;
 }
 
 //=================================================================================================
 
-gp_Pnt ChFiDS_ElSpine::Value(const double AbsC) const
+gp_Pnt ChFiDS_ElSpine::EvalD0(const double theAbsC) const
 {
-  return curve.Value(AbsC);
+  return curve.EvalD0(theAbsC);
 }
 
 //=================================================================================================
 
-void ChFiDS_ElSpine::D0(const double AbsC, gp_Pnt& P) const
+Geom_Curve::ResD1 ChFiDS_ElSpine::EvalD1(const double theAbsC) const
 {
-  curve.D0(AbsC, P);
+  return curve.EvalD1(theAbsC);
 }
 
 //=================================================================================================
 
-void ChFiDS_ElSpine::D1(const double AbsC, gp_Pnt& P, gp_Vec& V1) const
+Geom_Curve::ResD2 ChFiDS_ElSpine::EvalD2(const double theAbsC) const
 {
-  curve.D1(AbsC, P, V1);
+  return curve.EvalD2(theAbsC);
 }
 
 //=================================================================================================
 
-void ChFiDS_ElSpine::D2(const double AbsC, gp_Pnt& P, gp_Vec& V1, gp_Vec& V2) const
+Geom_Curve::ResD3 ChFiDS_ElSpine::EvalD3(const double theAbsC) const
 {
-  curve.D2(AbsC, P, V1, V2);
-}
-
-//=================================================================================================
-
-void ChFiDS_ElSpine::D3(const double AbsC, gp_Pnt& P, gp_Vec& V1, gp_Vec& V2, gp_Vec& V3) const
-{
-  curve.D3(AbsC, P, V1, V2, V3);
+  return curve.EvalD3(theAbsC);
 }
 
 //=================================================================================================
@@ -235,7 +230,9 @@ void ChFiDS_ElSpine::SaveLastParameter()
 void ChFiDS_ElSpine::SetOrigin(const double O)
 {
   if (!periodic)
+  {
     throw Standard_Failure("Elspine non periodique");
+  }
   occ::handle<Geom_BSplineCurve> bs = occ::down_cast<Geom_BSplineCurve>(curve.Curve());
   if (!bs.IsNull())
   {

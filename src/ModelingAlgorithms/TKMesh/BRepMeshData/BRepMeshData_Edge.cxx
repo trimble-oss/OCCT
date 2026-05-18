@@ -39,7 +39,7 @@ BRepMeshData_Edge::~BRepMeshData_Edge() = default;
 
 int BRepMeshData_Edge::PCurvesNb() const
 {
-  return myPCurves.Size();
+  return myPCurves.Length();
 }
 
 //=================================================================================================
@@ -85,7 +85,7 @@ const IMeshData::IPCurveHandle& BRepMeshData_Edge::GetPCurve(const int theIndex)
   return myPCurves(theIndex);
 }
 
-//==================================================================================================
+//=================================================================================================
 
 const IMeshData::ListOfInteger& BRepMeshData_Edge::GetPCurves(
   const IMeshData::IFacePtr& theDFace) const

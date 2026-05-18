@@ -42,7 +42,7 @@ Units_Token::Units_Token()
 
 //=================================================================================================
 
-Units_Token::Units_Token(const char* aword)
+Units_Token::Units_Token(const char* const aword)
 {
   theword       = aword;
   themean       = " ";
@@ -52,7 +52,7 @@ Units_Token::Units_Token(const char* aword)
 
 //=================================================================================================
 
-Units_Token::Units_Token(const char* aword, const char* amean)
+Units_Token::Units_Token(const char* const aword, const char* const amean)
 {
   theword       = aword;
   themean       = amean;
@@ -62,7 +62,7 @@ Units_Token::Units_Token(const char* aword, const char* amean)
 
 //=================================================================================================
 
-Units_Token::Units_Token(const char* aword, const char* amean, const double avalue)
+Units_Token::Units_Token(const char* const aword, const char* const amean, const double avalue)
 {
   theword       = aword;
   themean       = amean;
@@ -72,8 +72,8 @@ Units_Token::Units_Token(const char* aword, const char* amean, const double aval
 
 //=================================================================================================
 
-Units_Token::Units_Token(const char*                          aword,
-                         const char*                          amean,
+Units_Token::Units_Token(const char* const                    aword,
+                         const char* const                    amean,
                          const double                         avalue,
                          const occ::handle<Units_Dimensions>& adimensions)
 {
@@ -81,8 +81,11 @@ Units_Token::Units_Token(const char*                          aword,
   themean  = amean;
   thevalue = avalue;
   if (adimensions.IsNull())
+  {
     thedimensions = new Units_Dimensions(0., 0., 0., 0., 0., 0., 0., 0., 0.);
+  }
   else
+  {
     thedimensions = new Units_Dimensions(adimensions->Mass(),
                                          adimensions->Length(),
                                          adimensions->Time(),
@@ -92,6 +95,7 @@ Units_Token::Units_Token(const char*                          aword,
                                          adimensions->LuminousIntensity(),
                                          adimensions->PlaneAngle(),
                                          adimensions->SolidAngle());
+  }
 }
 
 //=================================================================================================
@@ -115,8 +119,11 @@ int Units_Token::Length() const
 void Units_Token::Dimensions(const occ::handle<Units_Dimensions>& adimensions)
 {
   if (adimensions.IsNull())
+  {
     thedimensions = new Units_Dimensions(0., 0., 0., 0., 0., 0., 0., 0., 0.);
+  }
   else
+  {
     thedimensions = new Units_Dimensions(adimensions->Mass(),
                                          adimensions->Length(),
                                          adimensions->Time(),
@@ -126,6 +133,7 @@ void Units_Token::Dimensions(const occ::handle<Units_Dimensions>& adimensions)
                                          adimensions->LuminousIntensity(),
                                          adimensions->PlaneAngle(),
                                          adimensions->SolidAngle());
+  }
 }
 
 //=================================================================================================
@@ -140,12 +148,13 @@ Units_Token::Units_Token(const occ::handle<Units_Token>& atoken)
 
 //=================================================================================================
 
-void Units_Token::Update(const char* amean)
+void Units_Token::Update(const char* const amean)
 {
   TCollection_AsciiString string = Mean();
   if (string.Search(amean) != -1)
-    std::cout << Word() << " encountered twice with the same signification : " << amean
-              << std::endl;
+  {
+    std::cout << Word() << " encountered twice with the same signification : " << amean << '\n';
+  }
   string  = string + amean;
   themean = string;
 }
@@ -166,9 +175,13 @@ occ::handle<Units_Token> Units_Token::Add(const occ::handle<Units_Token>& atoken
 {
   TCollection_AsciiString word = Word();
   if (thedimensions->IsEqual(atoken->Dimensions()))
+  {
     return new Units_Token(word.ToCString(), " ", thevalue + atoken->Value(), thedimensions);
+  }
   else
+  {
     return new Units_Token(" ");
+  }
 }
 
 //=================================================================================================
@@ -177,9 +190,13 @@ occ::handle<Units_Token> Units_Token::Subtract(const occ::handle<Units_Token>& a
 {
   TCollection_AsciiString word = Word();
   if (thedimensions->IsEqual(atoken->Dimensions()))
+  {
     return new Units_Token(word.ToCString(), " ", thevalue - atoken->Value(), thedimensions);
+  }
   else
+  {
     return new Units_Token(" ");
+  }
 }
 
 //=================================================================================================
@@ -266,7 +283,7 @@ occ::handle<Units_Token> Units_Token::Power(const double anexponent) const
 
 //=================================================================================================
 
-bool Units_Token::IsEqual(const char* astring) const
+bool Units_Token::IsEqual(const char* const astring) const
 {
   TCollection_AsciiString string = Word();
 #ifdef UNX
@@ -275,9 +292,13 @@ bool Units_Token::IsEqual(const char* astring) const
   unsigned int length = string.Length();
 #endif
   if (strlen(astring) == length)
+  {
     return strncmp(string.ToCString(), astring, unsigned(length)) == 0;
+  }
   else
+  {
     return false;
+  }
 }
 
 //=================================================================================================
@@ -288,9 +309,13 @@ bool Units_Token::IsEqual(const occ::handle<Units_Token>& atoken) const
   TCollection_AsciiString string2 = atoken->Word();
   int                     length  = string1.Length();
   if (length == atoken->Length())
+  {
     return strcmp(string1.ToCString(), string2.ToCString()) == 0;
+  }
   else
+  {
     return false;
+  }
 }
 
 //=================================================================================================
@@ -302,19 +327,29 @@ void Units_Token::Dump(const int ashift, const int alevel) const
   TCollection_AsciiString mean = Mean();
 
   for (i = 0; i < ashift; i++)
+  {
     std::cout << "  ";
-  std::cout << "Units_Token::Dump of " << this << std::endl;
+  }
+  std::cout << "Units_Token::Dump of " << this << '\n';
   for (i = 0; i < ashift; i++)
+  {
     std::cout << "  ";
-  std::cout << word.ToCString() << std::endl;
+  }
+  std::cout << word.ToCString() << '\n';
   for (i = 0; i < ashift; i++)
+  {
     std::cout << "  ";
-  std::cout << "  value : " << thevalue << std::endl;
+  }
+  std::cout << "  value : " << thevalue << '\n';
   for (i = 0; i < ashift; i++)
+  {
     std::cout << "  ";
-  std::cout << "  mean  : " << mean.ToCString() << std::endl;
+  }
+  std::cout << "  mean  : " << mean.ToCString() << '\n';
   if (alevel)
+  {
     thedimensions->Dump(ashift);
+  }
 }
 
 //=======================================================================
@@ -338,10 +373,7 @@ occ::handle<Units_Token> operator+(const occ::handle<Units_Token>& atoken1,
   return atoken1->Add(atoken2);
 }
 
-//=======================================================================
-// function : operator -
-// purpose  :
-//=======================================================================
+//=================================================================================================
 
 occ::handle<Units_Token> operator-(const occ::handle<Units_Token>& atoken1,
                                    const occ::handle<Units_Token>& atoken2)
@@ -360,10 +392,7 @@ occ::handle<Units_Token> operator*(const occ::handle<Units_Token>& atoken1,
   return atoken1->Multiply(atoken2);
 }
 
-//=======================================================================
-// function : operator /
-// purpose  :
-//=======================================================================
+//=================================================================================================
 
 occ::handle<Units_Token> operator/(const occ::handle<Units_Token>& atoken1,
                                    const occ::handle<Units_Token>& atoken2)
@@ -386,20 +415,14 @@ occ::handle<Units_Token> pow(const occ::handle<Units_Token>& atoken, const doubl
   return atoken->Power(areal);
 }
 
-//=======================================================================
-// function : operator ==
-// purpose  :
-//=======================================================================
+//=================================================================================================
 
-bool operator==(const occ::handle<Units_Token>& atoken, const char* astring)
+bool operator==(const occ::handle<Units_Token>& atoken, const char* const astring)
 {
   return atoken->IsEqual(astring);
 }
 
-//=======================================================================
-// function : operator ==
-// purpose  :
-//=======================================================================
+//=================================================================================================
 
 // bool operator ==(const occ::handle<Units_Token>& atoken1,const occ::handle<Units_Token>&
 // atoken2)
@@ -412,7 +435,7 @@ bool operator==(const occ::handle<Units_Token>& atoken, const char* astring)
 // purpose  :
 //=======================================================================
 
-bool operator!=(const occ::handle<Units_Token>& atoken, const char* astring)
+bool operator!=(const occ::handle<Units_Token>& atoken, const char* const astring)
 {
   return atoken->IsNotEqual(astring);
 }
@@ -428,40 +451,28 @@ bool operator!=(const occ::handle<Units_Token>& atoken, const char* astring)
 //   return atoken1->IsNotEqual(atoken2);
 // }
 
-//=======================================================================
-// function : operator <=
-// purpose  :
-//=======================================================================
+//=================================================================================================
 
-bool operator<=(const occ::handle<Units_Token>& atoken, const char* astring)
+bool operator<=(const occ::handle<Units_Token>& atoken, const char* const astring)
 {
   return atoken->IsLessOrEqual(astring);
 }
 
-//=======================================================================
-// function : operator >
-// purpose  :
-//=======================================================================
+//=================================================================================================
 
-bool operator>(const occ::handle<Units_Token>& atoken, const char* astring)
+bool operator>(const occ::handle<Units_Token>& atoken, const char* const astring)
 {
   return atoken->IsGreater(astring);
 }
 
-//=======================================================================
-// function : operator >
-// purpose  :
-//=======================================================================
+//=================================================================================================
 
 bool operator>(const occ::handle<Units_Token>& atoken1, const occ::handle<Units_Token>& atoken2)
 {
   return atoken1->IsGreater(atoken2);
 }
 
-//=======================================================================
-// function : operator >=
-// purpose  :
-//=======================================================================
+//=================================================================================================
 
 bool operator>=(const occ::handle<Units_Token>& atoken1, const occ::handle<Units_Token>& atoken2)
 {

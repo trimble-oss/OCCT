@@ -42,13 +42,31 @@ occ::handle<Geom_Curve> ExtractBasisCurve(const occ::handle<Geom_Curve>& theCurv
 
 } // namespace
 
-//==================================================================================================
+//=================================================================================================
 
-void GeomGridEval_Curve::Initialize(const Adaptor3d_Curve& theCurve)
+GeomGridEval_Curve::GeomGridEval_Curve(const Adaptor3d_Curve& theCurve)
+    : myEvaluator(std::monostate{}),
+      myCurveType(GeomAbs_OtherCurve)
+{
+  initialization(theCurve);
+}
+
+//=================================================================================================
+
+GeomGridEval_Curve::GeomGridEval_Curve(const occ::handle<Geom_Curve>& theCurve)
+    : myEvaluator(std::monostate{}),
+      myCurveType(GeomAbs_OtherCurve)
+{
+  initialization(theCurve);
+}
+
+//=================================================================================================
+
+void GeomGridEval_Curve::initialization(const Adaptor3d_Curve& theCurve)
 {
   if (theCurve.IsKind(STANDARD_TYPE(GeomAdaptor_Curve)))
   {
-    Initialize(static_cast<const GeomAdaptor_Curve&>(theCurve).Curve());
+    initialization(static_cast<const GeomAdaptor_Curve&>(theCurve).Curve());
     return;
   }
 
@@ -58,9 +76,9 @@ void GeomGridEval_Curve::Initialize(const Adaptor3d_Curve& theCurve)
   myEvaluator.emplace<GeomGridEval_OtherCurve>(theCurve);
 }
 
-//==================================================================================================
+//=================================================================================================
 
-void GeomGridEval_Curve::Initialize(const occ::handle<Geom_Curve>& theCurve)
+void GeomGridEval_Curve::initialization(const occ::handle<Geom_Curve>& theCurve)
 {
   if (theCurve.IsNull())
   {
@@ -121,14 +139,7 @@ void GeomGridEval_Curve::Initialize(const occ::handle<Geom_Curve>& theCurve)
   }
 }
 
-//==================================================================================================
-
-bool GeomGridEval_Curve::IsInitialized() const
-{
-  return !std::holds_alternative<std::monostate>(myEvaluator);
-}
-
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array1<gp_Pnt> GeomGridEval_Curve::EvaluateGrid(
   const NCollection_Array1<double>& theParams) const
@@ -148,7 +159,7 @@ NCollection_Array1<gp_Pnt> GeomGridEval_Curve::EvaluateGrid(
     myEvaluator);
 }
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array1<GeomGridEval::CurveD1> GeomGridEval_Curve::EvaluateGridD1(
   const NCollection_Array1<double>& theParams) const
@@ -168,7 +179,7 @@ NCollection_Array1<GeomGridEval::CurveD1> GeomGridEval_Curve::EvaluateGridD1(
     myEvaluator);
 }
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array1<GeomGridEval::CurveD2> GeomGridEval_Curve::EvaluateGridD2(
   const NCollection_Array1<double>& theParams) const
@@ -188,7 +199,7 @@ NCollection_Array1<GeomGridEval::CurveD2> GeomGridEval_Curve::EvaluateGridD2(
     myEvaluator);
 }
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array1<GeomGridEval::CurveD3> GeomGridEval_Curve::EvaluateGridD3(
   const NCollection_Array1<double>& theParams) const
@@ -208,7 +219,7 @@ NCollection_Array1<GeomGridEval::CurveD3> GeomGridEval_Curve::EvaluateGridD3(
     myEvaluator);
 }
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array1<gp_Vec> GeomGridEval_Curve::EvaluateGridDN(
   const NCollection_Array1<double>& theParams,

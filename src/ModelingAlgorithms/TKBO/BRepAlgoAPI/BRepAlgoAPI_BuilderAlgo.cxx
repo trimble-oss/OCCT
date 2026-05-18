@@ -58,21 +58,22 @@ BRepAlgoAPI_BuilderAlgo::~BRepAlgoAPI_BuilderAlgo()
 void BRepAlgoAPI_BuilderAlgo::Clear()
 {
   BRepAlgoAPI_Algo::Clear();
-  if (myDSFiller && myIsIntersectionNeeded)
+  if (myIsIntersectionNeeded)
   {
     delete myDSFiller;
     myDSFiller = nullptr;
   }
-  if (myBuilder)
-  {
-    delete myBuilder;
-    myBuilder = nullptr;
-  }
+  delete myBuilder;
+  myBuilder = nullptr;
   if (myHistory)
+  {
     myHistory.Nullify();
+  }
 
   if (mySimplifierHistory)
+  {
     mySimplifierHistory.Nullify();
+  }
 }
 
 //=================================================================================================
@@ -87,7 +88,9 @@ void BRepAlgoAPI_BuilderAlgo::Build(const Message_ProgressRange& theRange)
   // If necessary perform intersection of the argument shapes
   IntersectShapes(myArguments, aPS.Next(70));
   if (HasErrors())
+  {
     return;
+  }
 
   // Initialization of the Building tool
   myBuilder = new BOPAlgo_Builder(myAllocator);
@@ -105,10 +108,11 @@ void BRepAlgoAPI_BuilderAlgo::IntersectShapes(const NCollection_List<TopoDS_Shap
                                               const Message_ProgressRange&          theRange)
 {
   if (!myIsIntersectionNeeded)
+  {
     return;
+  }
 
-  if (myDSFiller)
-    delete myDSFiller;
+  delete myDSFiller;
 
   // Create new Filler
   myDSFiller = new BOPAlgo_PaveFiller(myAllocator);
@@ -129,10 +133,8 @@ void BRepAlgoAPI_BuilderAlgo::IntersectShapes(const NCollection_List<TopoDS_Shap
   GetReport()->Merge(myDSFiller->GetReport());
 }
 
-//=======================================================================
-// function : BuildResult
-// purpose  : Builds the result shape
-//=======================================================================
+//=================================================================================================
+
 void BRepAlgoAPI_BuilderAlgo::BuildResult(const Message_ProgressRange& theRange)
 {
   // Set options to the builder
@@ -146,7 +148,9 @@ void BRepAlgoAPI_BuilderAlgo::BuildResult(const Message_ProgressRange& theRange)
   GetReport()->Merge(myBuilder->GetReport());
   // Check for the errors
   if (myBuilder->HasErrors())
+  {
     return;
+  }
   // Set done status
   Done();
   // Get the result shape
@@ -166,10 +170,14 @@ void BRepAlgoAPI_BuilderAlgo::SimplifyResult(const bool   theUnifyEdges,
                                              const double theAngularTol)
 {
   if (HasErrors())
+  {
     return;
+  }
 
   if (!theUnifyEdges && !theUnifyFaces)
+  {
     return;
+  }
 
   // Simplification tool
   ShapeUpgrade_UnifySameDomain anUnifier(myShape, theUnifyEdges, theUnifyFaces, true);
@@ -185,8 +193,10 @@ void BRepAlgoAPI_BuilderAlgo::SimplifyResult(const bool   theUnifyEdges,
   // Keep simplification history
   mySimplifierHistory = anUnifier.History();
   if (myFillHistory)
+  {
     // Merge simplification history into result history
     myHistory->Merge(mySimplifierHistory);
+  }
 }
 
 //=================================================================================================
@@ -194,7 +204,9 @@ void BRepAlgoAPI_BuilderAlgo::SimplifyResult(const bool   theUnifyEdges,
 const NCollection_List<TopoDS_Shape>& BRepAlgoAPI_BuilderAlgo::Modified(const TopoDS_Shape& theS)
 {
   if (myFillHistory && myHistory)
+  {
     return myHistory->Modified(theS);
+  }
   myGenerated.Clear();
   return myGenerated;
 }
@@ -204,7 +216,9 @@ const NCollection_List<TopoDS_Shape>& BRepAlgoAPI_BuilderAlgo::Modified(const To
 const NCollection_List<TopoDS_Shape>& BRepAlgoAPI_BuilderAlgo::Generated(const TopoDS_Shape& theS)
 {
   if (myFillHistory && myHistory)
+  {
     return myHistory->Generated(theS);
+  }
   myGenerated.Clear();
   return myGenerated;
 }
@@ -243,21 +257,23 @@ const NCollection_List<TopoDS_Shape>& BRepAlgoAPI_BuilderAlgo::SectionEdges()
 {
   myGenerated.Clear();
   if (myBuilder == nullptr)
+  {
     return myGenerated;
+  }
 
   // Fence map to avoid duplicated section edges in the result list
   NCollection_Map<TopoDS_Shape, TopTools_ShapeMapHasher> aMFence;
   // Intersection results
   const BOPDS_PDS& pDS = myDSFiller->PDS();
   // Iterate on all Face/Face interferences and take section edges
-  NCollection_Vector<BOPDS_InterfFF>& aFFs  = pDS->InterfFF();
-  const int                           aNbFF = aFFs.Length();
+  NCollection_DynamicArray<BOPDS_InterfFF>& aFFs  = pDS->InterfFF();
+  const int                                 aNbFF = aFFs.Length();
   for (int i = 0; i < aNbFF; ++i)
   {
     BOPDS_InterfFF& aFFi = aFFs(i);
     // Section curves between pair of faces
-    const NCollection_Vector<BOPDS_Curve>& aSectionCurves = aFFi.Curves();
-    const int                              aNbC           = aSectionCurves.Length();
+    const NCollection_DynamicArray<BOPDS_Curve>& aSectionCurves = aFFi.Curves();
+    const int                                    aNbC           = aSectionCurves.Length();
     for (int j = 0; j < aNbC; ++j)
     {
       const BOPDS_Curve& aCurve = aSectionCurves(j);
@@ -269,12 +285,16 @@ const NCollection_List<TopoDS_Shape>& BRepAlgoAPI_BuilderAlgo::SectionEdges()
         const occ::handle<BOPDS_PaveBlock>& aPB = aItPB.Value();
         const TopoDS_Shape&                 aSE = pDS->Shape(aPB->Edge());
         if (!aMFence.Add(aSE))
+        {
           continue;
+        }
         // Take into account simplification of the result shape
         if (mySimplifierHistory)
         {
           if (mySimplifierHistory->IsRemoved(aSE))
+          {
             continue;
+          }
 
           const NCollection_List<TopoDS_Shape>& aLSEIm = mySimplifierHistory->Modified(aSE);
           if (!aLSEIm.IsEmpty())
@@ -283,14 +303,20 @@ const NCollection_List<TopoDS_Shape>& BRepAlgoAPI_BuilderAlgo::SectionEdges()
             for (; aItLEIm.More(); aItLEIm.Next())
             {
               if (aMFence.Add(aItLEIm.Value()))
+              {
                 myGenerated.Append(aItLEIm.Value());
+              }
             }
           }
           else
+          {
             myGenerated.Append(aSE);
+          }
         }
         else
+        {
           myGenerated.Append(aSE);
+        }
       }
     }
   }

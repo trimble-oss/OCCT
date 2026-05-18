@@ -28,7 +28,7 @@
   #include <TDF_Tool.hxx>
   #include <BRepTools.hxx>
 
-static void WriteS(const TopoDS_Shape& shape, const char* filename)
+static void WriteS(const TopoDS_Shape& shape, const char* const filename)
 {
   char buf[256];
   if (strlen(filename) > 255)
@@ -55,10 +55,7 @@ static void WriteS(const TopoDS_Shape& shape, const char* filename)
 }
 #endif
 
-//=======================================================================
-// function : IsForbiden
-// purpose  : ANaming voir NamingTool
-//=======================================================================
+//=================================================================================================
 
 static bool IsForbiden(const NCollection_Map<TDF_Label>& Forbiden, const TDF_Label& Lab)
 {
@@ -67,7 +64,9 @@ static bool IsForbiden(const NCollection_Map<TDF_Label>& Forbiden, const TDF_Lab
     return false;
   }
   if (Forbiden.Contains(Lab))
+  {
     return true;
+  }
   else
   {
     return IsForbiden(Forbiden, Lab.Father());
@@ -92,9 +91,13 @@ static void LastModif(TNaming_NewShapeIterator&                                 
     std::cout << "NamingTool:: LastModif LabelEntry = " << entry << std::endl;
 #endif
     if (!Updated.IsEmpty() && !Updated.Contains(Lab))
+    {
       continue;
+    }
     if (IsForbiden(Forbiden, Lab))
+    {
       continue;
+    }
     if (it.IsModification())
     {
       YaModif = true;
@@ -105,11 +108,15 @@ static void LastModif(TNaming_NewShapeIterator&                                 
         MS.Add(aS); // Modified
       }
       else
+      {
         LastModif(it2, it.Shape(), MS, Updated, Forbiden);
+      }
     }
   }
   if (!YaModif)
+  {
     MS.Add(S);
+  }
 }
 
 //=======================================================================
@@ -162,7 +169,9 @@ void TNaming_NamingTool::CurrentShape(
   {
     const TopoDS_Shape& S = itL.NewShape();
     if (S.IsNull())
+    {
       continue;
+    }
 #ifdef OCCT_DEBUG_DESC
     WriteS(S, "CS_NewShape.brep");
     if (itL.OldShape().IsNull())
@@ -203,7 +212,9 @@ void TNaming_NamingTool::CurrentShape(
             }
           }
           if (OrientationToApply == TopAbs_FORWARD || OrientationToApply == TopAbs_REVERSED)
+          {
             YaOrientationToApply = true;
+          }
         }
       } //
     }
@@ -211,9 +222,13 @@ void TNaming_NamingTool::CurrentShape(
     if (!it.More())
     {
       if (YaOrientationToApply)
+      {
         MS.Add(S.Oriented(OrientationToApply));
+      }
       else
+      {
         MS.Add(S);
+      }
     }
     else
     {
@@ -221,10 +236,13 @@ void TNaming_NamingTool::CurrentShape(
       NCollection_IndexedMap<TopoDS_Shape, TopTools_ShapeMapHasher> MS2;
       LastModif(it, S, MS2, Valid, Forbiden);
       // clang-format off
-      if (YaOrientationToApply) ApplyOrientation (MS2, OrientationToApply);//the solution to be refined
+      if (YaOrientationToApply) { ApplyOrientation (MS2, OrientationToApply);//the solution to be refined
+}
       // clang-format on
       for (int anItMS2 = 1; anItMS2 <= MS2.Extent(); ++anItMS2)
+      {
         MS.Add(MS2(anItMS2));
+      }
     }
   }
 }
@@ -242,13 +260,19 @@ void TNaming_NamingTool::CurrentShapeFromShape(
 
   occ::handle<TNaming_NamedShape> NS = it.NamedShape();
   if (!NS.IsNull() && NS->Evolution() == TNaming_SELECTED)
+  {
     MS.Add(TNaming_Tool::GetShape(NS));
+  }
   else
   {
     if (!it.More())
+    {
       MS.Add(S);
+    }
     else
+    {
       LastModif(it, S, MS, Valid, Forbiden);
+    }
   }
 }
 
@@ -278,7 +302,9 @@ void BuildDescendants2(const occ::handle<TNaming_NamedShape>& NS,
                        NCollection_Map<TDF_Label>&            Descendants)
 {
   if (NS.IsNull())
+  {
     return;
+  }
   TNaming_NewShapeIterator it(NS);
   for (; it.More(); it.Next())
   {
@@ -290,7 +316,9 @@ void BuildDescendants2(const occ::handle<TNaming_NamedShape>& NS,
       std::cout << "MakeDescendants2: Label = " << entry << std::endl;
 #endif
       if (ForbLab == it.Label())
+      {
         continue;
+      }
       Descendants.Add(it.Label());
       TNaming_NewShapeIterator it2(it);
       MakeDescendants(it2, Descendants);
@@ -304,7 +332,9 @@ void TNaming_NamingTool::BuildDescendants(const occ::handle<TNaming_NamedShape>&
                                           NCollection_Map<TDF_Label>&            Descendants)
 {
   if (NS.IsNull())
+  {
     return;
+  }
   Descendants.Add(NS->Label());
   TNaming_NewShapeIterator it(NS);
 #ifdef OCCT_DEBUG_DESC

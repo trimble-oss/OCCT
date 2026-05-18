@@ -180,8 +180,7 @@ void IntPolyh_Intersection::Perform(const NCollection_Array1<double>& theUPars1,
   {
     // Intersection not done
     myIsDone = false;
-    if (pMaillageStd)
-      delete pMaillageStd;
+    delete pMaillageStd;
     return;
   }
 
@@ -224,23 +223,20 @@ void IntPolyh_Intersection::Perform(const NCollection_Array1<double>& theUPars1,
     {
       // Advanced intersection not done or no intersection is found -> use standard intersection
       if (nbCouplesStd > 0)
+      {
         pMaillageStd->StartPointsChain(mySectionLines, myTangentZones);
+      }
     }
 
     // Clean up
-    if (pMaillageFF)
-      delete pMaillageFF;
-    if (pMaillageFR)
-      delete pMaillageFR;
-    if (pMaillageRF)
-      delete pMaillageRF;
-    if (pMaillageRR)
-      delete pMaillageRR;
+    delete pMaillageFF;
+    delete pMaillageFR;
+    delete pMaillageRF;
+    delete pMaillageRR;
   }
 
   // clean up
-  if (pMaillageStd)
-    delete pMaillageStd;
+  delete pMaillageStd;
 }
 
 //=================================================================================================
@@ -337,10 +333,12 @@ bool IntPolyh_Intersection::PerformAdv(const NCollection_Array1<double>& theUPar
 
     // Merge couples
     if (theNbCouples > 0)
+    {
       MergeCouples(theMaillageFF->GetCouples(),
                    theMaillageFR->GetCouples(),
                    theMaillageRF->GetCouples(),
                    theMaillageRR->GetCouples());
+    }
   }
 
   return isDone;
@@ -395,10 +393,8 @@ bool IntPolyh_Intersection::PerformMaillage(const NCollection_Array1<double>& th
   return AnalyzeIntersection(theMaillage);
 }
 
-//=======================================================================
-// function : PerformMaillage
-// purpose  : Computes MaillageAffinage
-//=======================================================================
+//=================================================================================================
+
 bool IntPolyh_Intersection::PerformMaillage(const NCollection_Array1<double>&  theUPars1,
                                             const NCollection_Array1<double>&  theVPars1,
                                             const NCollection_Array1<double>&  theUPars2,
@@ -467,7 +463,9 @@ void IntPolyh_Intersection::MergeCouples(NCollection_List<IntPolyh_Couple>& anAr
 bool IntPolyh_Intersection::IsAdvRequired(IntPolyh_PMaillageAffinage& theMaillage)
 {
   if (!theMaillage)
+  {
     return true;
+  }
 
   // Interfering triangles
   NCollection_List<IntPolyh_Couple>& Couples = theMaillage->GetCouples();
@@ -476,12 +474,16 @@ bool IntPolyh_Intersection::IsAdvRequired(IntPolyh_PMaillageAffinage& theMaillag
   // Flag to define whether advanced intersection is required or not
   bool isAdvReq = (aNbCouples == 0) && !IsParallel();
   if (isAdvReq)
+  {
     // No interfering triangles are found -> perform advanced intersection
     return isAdvReq;
+  }
 
   if (aNbCouples > 10)
+  {
     // Enough interfering triangles are found -> no need to perform advanced intersection
     return isAdvReq;
+  }
 
   const double                                anEps = .996; //~ cos of 5 deg
   NCollection_List<IntPolyh_Couple>::Iterator aIt(Couples);
@@ -506,7 +508,9 @@ bool IntPolyh_Intersection::IsAdvRequired(IntPolyh_PMaillageAffinage& theMaillag
 int ComputeIntersection(IntPolyh_PMaillageAffinage& theMaillage)
 {
   if (!theMaillage)
+  {
     return 0;
+  }
 
   // Compute common box and mark the points inside that box
   theMaillage->CommonBox();
@@ -532,7 +536,9 @@ int ComputeIntersection(IntPolyh_PMaillageAffinage& theMaillage)
 bool IntPolyh_Intersection::AnalyzeIntersection(IntPolyh_PMaillageAffinage& theMaillage)
 {
   if (!theMaillage)
+  {
     return false;
+  }
 
   NCollection_List<IntPolyh_Couple>& Couples = theMaillage->GetCouples();
   int                                FinTTC  = Couples.Extent();
@@ -545,7 +551,9 @@ bool IntPolyh_Intersection::AnalyzeIntersection(IntPolyh_PMaillageAffinage& theM
     {
       double cosa = std::abs(aIt.Value().Angle());
       if (cosa > eps)
+      {
         ++npara;
+      }
     }
 
     if (npara >= theMaillage->GetArrayOfTriangles(1).NbItems()

@@ -13,7 +13,6 @@
 
 #include <GeomGridEval_BezierCurve.hxx>
 
-#include <BSplCLib.hxx>
 #include <BSplCLib_Cache.hxx>
 #include <gp_Pnt.hxx>
 
@@ -24,20 +23,18 @@ namespace
 //! @return initialized cache ready for evaluation
 occ::handle<BSplCLib_Cache> CreateBezierCache(const occ::handle<Geom_BezierCurve>& theCurve)
 {
-  const int                  aDegree = theCurve->Degree();
-  NCollection_Array1<double> aFlatKnots(BSplCLib::FlatBezierKnots(aDegree), 1, 2 * (aDegree + 1));
+  const NCollection_Array1<double>& aKnotSequence = theCurve->KnotSequence();
+  const NCollection_Array1<gp_Pnt>& aPoles        = theCurve->Poles();
+  const NCollection_Array1<double>* aWeights      = theCurve->Weights();
 
-  occ::handle<BSplCLib_Cache> aCache = new BSplCLib_Cache(aDegree,
-                                                          theCurve->IsPeriodic(),
-                                                          aFlatKnots,
-                                                          theCurve->Poles(),
-                                                          theCurve->Weights());
-  aCache->BuildCache(0.5, aFlatKnots, theCurve->Poles(), theCurve->Weights());
+  occ::handle<BSplCLib_Cache> aCache =
+    new BSplCLib_Cache(theCurve->Degree(), false, aKnotSequence, aPoles, aWeights);
+  aCache->BuildCache(0.5, aKnotSequence, aPoles, aWeights);
   return aCache;
 }
 } // namespace
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array1<gp_Pnt> GeomGridEval_BezierCurve::EvaluateGrid(
   const NCollection_Array1<double>& theParams) const
@@ -47,7 +44,7 @@ NCollection_Array1<gp_Pnt> GeomGridEval_BezierCurve::EvaluateGrid(
     return NCollection_Array1<gp_Pnt>();
   }
 
-  const int                  aNb = theParams.Size();
+  const int                  aNb = theParams.Length();
   NCollection_Array1<gp_Pnt> aResult(1, aNb);
 
   occ::handle<BSplCLib_Cache> aCache = CreateBezierCache(myGeom);
@@ -61,7 +58,7 @@ NCollection_Array1<gp_Pnt> GeomGridEval_BezierCurve::EvaluateGrid(
   return aResult;
 }
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array1<GeomGridEval::CurveD1> GeomGridEval_BezierCurve::EvaluateGridD1(
   const NCollection_Array1<double>& theParams) const
@@ -71,7 +68,7 @@ NCollection_Array1<GeomGridEval::CurveD1> GeomGridEval_BezierCurve::EvaluateGrid
     return NCollection_Array1<GeomGridEval::CurveD1>();
   }
 
-  const int                                 aNb = theParams.Size();
+  const int                                 aNb = theParams.Length();
   NCollection_Array1<GeomGridEval::CurveD1> aResult(1, aNb);
 
   occ::handle<BSplCLib_Cache> aCache = CreateBezierCache(myGeom);
@@ -86,7 +83,7 @@ NCollection_Array1<GeomGridEval::CurveD1> GeomGridEval_BezierCurve::EvaluateGrid
   return aResult;
 }
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array1<GeomGridEval::CurveD2> GeomGridEval_BezierCurve::EvaluateGridD2(
   const NCollection_Array1<double>& theParams) const
@@ -96,7 +93,7 @@ NCollection_Array1<GeomGridEval::CurveD2> GeomGridEval_BezierCurve::EvaluateGrid
     return NCollection_Array1<GeomGridEval::CurveD2>();
   }
 
-  const int                                 aNb = theParams.Size();
+  const int                                 aNb = theParams.Length();
   NCollection_Array1<GeomGridEval::CurveD2> aResult(1, aNb);
 
   occ::handle<BSplCLib_Cache> aCache = CreateBezierCache(myGeom);
@@ -111,7 +108,7 @@ NCollection_Array1<GeomGridEval::CurveD2> GeomGridEval_BezierCurve::EvaluateGrid
   return aResult;
 }
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array1<GeomGridEval::CurveD3> GeomGridEval_BezierCurve::EvaluateGridD3(
   const NCollection_Array1<double>& theParams) const
@@ -121,7 +118,7 @@ NCollection_Array1<GeomGridEval::CurveD3> GeomGridEval_BezierCurve::EvaluateGrid
     return NCollection_Array1<GeomGridEval::CurveD3>();
   }
 
-  const int                                 aNb = theParams.Size();
+  const int                                 aNb = theParams.Length();
   NCollection_Array1<GeomGridEval::CurveD3> aResult(1, aNb);
 
   occ::handle<BSplCLib_Cache> aCache = CreateBezierCache(myGeom);
@@ -136,7 +133,7 @@ NCollection_Array1<GeomGridEval::CurveD3> GeomGridEval_BezierCurve::EvaluateGrid
   return aResult;
 }
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array1<gp_Vec> GeomGridEval_BezierCurve::EvaluateGridDN(
   const NCollection_Array1<double>& theParams,
@@ -147,7 +144,7 @@ NCollection_Array1<gp_Vec> GeomGridEval_BezierCurve::EvaluateGridDN(
     return NCollection_Array1<gp_Vec>();
   }
 
-  const int                  aNb = theParams.Size();
+  const int                  aNb = theParams.Length();
   NCollection_Array1<gp_Vec> aResult(1, aNb);
 
   // For Bezier curves, derivatives become zero when order exceeds degree
@@ -162,12 +159,10 @@ NCollection_Array1<gp_Vec> GeomGridEval_BezierCurve::EvaluateGridDN(
     return aResult;
   }
 
-  // Get poles and weights from geometry
-  const NCollection_Array1<gp_Pnt>& aPoles   = myGeom->Poles();
-  const NCollection_Array1<double>* aWeights = myGeom->Weights();
-
-  // Use pre-defined flat knots from BSplCLib
-  NCollection_Array1<double> aFlatKnots(BSplCLib::FlatBezierKnots(aDegree), 1, 2 * (aDegree + 1));
+  // Get poles, weights, and flat knots from geometry
+  const NCollection_Array1<gp_Pnt>& aPoles        = myGeom->Poles();
+  const NCollection_Array1<double>* aWeights      = myGeom->Weights();
+  const NCollection_Array1<double>& aKnotSequence = myGeom->KnotSequence();
 
   // Bezier has a single span (index 0 with flat knots), non-periodic
   for (int i = theParams.Lower(); i <= theParams.Upper(); ++i)
@@ -180,7 +175,7 @@ NCollection_Array1<gp_Vec> GeomGridEval_BezierCurve::EvaluateGridDN(
                  false, // not periodic
                  aPoles,
                  aWeights,
-                 aFlatKnots,
+                 aKnotSequence,
                  nullptr, // no multiplicities with flat knots
                  aDN);
     aResult.SetValue(i - theParams.Lower() + 1, aDN);

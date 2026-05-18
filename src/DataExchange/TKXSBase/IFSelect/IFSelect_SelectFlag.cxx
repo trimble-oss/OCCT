@@ -21,7 +21,7 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(IFSelect_SelectFlag, IFSelect_SelectExtract)
 
-IFSelect_SelectFlag::IFSelect_SelectFlag(const char* flagname)
+IFSelect_SelectFlag::IFSelect_SelectFlag(const char* const flagname)
     : thename(flagname)
 {
 }
@@ -38,16 +38,22 @@ Interface_EntityIterator IFSelect_SelectFlag::RootResult(const Interface_Graph& 
   const Interface_BitMap&  bm   = G.BitMap();
   int                      flag = bm.FlagNumber(thename.ToCString());
   if (flag == 0)
+  {
     return res;
+  }
   Interface_EntityIterator inp = InputResult(G);
 
   for (inp.Start(); inp.More(); inp.Next())
   {
     int num = G.EntityNumber(inp.Value());
     if (num == 0)
+    {
       continue;
+    }
     if (direct == bm.Value(num, flag))
+    {
       res.AddItem(G.Entity(num));
+    }
   }
   return res;
 }

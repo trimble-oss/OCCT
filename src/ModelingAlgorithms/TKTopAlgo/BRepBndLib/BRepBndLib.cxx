@@ -76,10 +76,8 @@ static bool IsModifySize(const BRepAdaptor_Surface&     theBS,
                          const double                   theTolV);
 
 //
-//=======================================================================
-// function : Add
-// purpose  : Add a shape bounding to a box
-//=======================================================================
+//=================================================================================================
+
 void BRepBndLib::Add(const TopoDS_Shape& S, Bnd_Box& B, bool useTriangulation)
 {
   TopExp_Explorer ex;
@@ -160,9 +158,13 @@ void BRepBndLib::Add(const TopoDS_Shape& S, Bnd_Box& B, bool useTriangulation)
       for (i = 1; i <= nbNodes; i++)
       {
         if (l.IsIdentity())
+        {
           B.Add(Nodes[i]);
+        }
         else
+        {
           B.Add(Nodes[i].Transformed(l));
+        }
       }
       //       B.Enlarge(P3d->Deflection());
       B.Enlarge(P3d->Deflection() + BRep_Tool::Tolerance(E));
@@ -244,10 +246,8 @@ void BRepBndLib::AddClose(const TopoDS_Shape& S, Bnd_Box& B)
   }
 }
 
-//=======================================================================
-// function : AddOptimal
-// purpose  : Add a shape bounding to a box
-//=======================================================================
+//=================================================================================================
+
 void BRepBndLib::AddOptimal(const TopoDS_Shape& S,
                             Bnd_Box&            B,
                             const bool          useTriangulation,
@@ -364,9 +364,13 @@ void BRepBndLib::AddOptimal(const TopoDS_Shape& S,
       for (i = 1; i <= nbNodes; i++)
       {
         if (l.IsIdentity())
+        {
           aLocBox.Add(Nodes[i]);
+        }
         else
+        {
           aLocBox.Add(Nodes[i].Transformed(l));
+        }
       }
       double Tol = useShapeTolerance ? BRep_Tool::Tolerance(E) : 0.;
       aLocBox.Enlarge(P3d->Deflection() + Tol);

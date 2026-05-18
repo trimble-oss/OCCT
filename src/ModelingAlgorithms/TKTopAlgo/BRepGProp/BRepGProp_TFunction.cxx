@@ -20,10 +20,8 @@
 #include <NCollection_Array1.hxx>
 #include <NCollection_HArray1.hxx>
 
-//=======================================================================
-// function : Constructor.
-// purpose  :
-//=======================================================================
+//=================================================================================================
+
 BRepGProp_TFunction::BRepGProp_TFunction(const BRepGProp_Face& theSurface,
                                          const gp_Pnt&         theVertex,
                                          const bool            IsByPoint,
@@ -58,10 +56,9 @@ bool BRepGProp_TFunction::Value(const double X, double& F)
 {
   const double tolU = 1.e-9;
 
-  gp_Pnt2d                                 aP2d;
-  gp_Vec2d                                 aV2d;
-  double                                   aUMax;
-  occ::handle<NCollection_HArray1<double>> anUKnots;
+  gp_Pnt2d aP2d;
+  gp_Vec2d aV2d;
+  double   aUMax;
 
   mySurface.D12d(X, aP2d, aV2d);
   aUMax = aP2d.X();
@@ -72,13 +69,13 @@ bool BRepGProp_TFunction::Value(const double X, double& F)
     return true;
   }
 
-  mySurface.GetUKnots(myUMin, aUMax, anUKnots);
+  occ::handle<NCollection_HArray1<double>> aUKnots = mySurface.GetUKnots(myUMin, aUMax);
   myUFunction.SetVParam(aP2d.Y());
 
   // Compute the integral from myUMin to aUMax of myUFunction.
   int    i;
   double aCoeff = aV2d.Y();
-  // int aNbUIntervals = anUKnots->Length() - 1;
+  // int aNbUIntervals = aUKnots->Length() - 1;
   // double    aTol          = myTolerance/aNbUIntervals;
   double aTol = myTolerance;
 
@@ -87,23 +84,31 @@ bool BRepGProp_TFunction::Value(const double X, double& F)
   if (myValueType == GProp_Mass)
   {
     if (myIsByPoint)
+    {
       aCoeff /= 3.;
+    }
   }
   else if (myValueType == GProp_CenterMassX || myValueType == GProp_CenterMassY
            || myValueType == GProp_CenterMassZ)
   {
     if (myIsByPoint)
+    {
       aCoeff *= 0.25;
+    }
   }
   else if (myValueType == GProp_InertiaXX || myValueType == GProp_InertiaYY
            || myValueType == GProp_InertiaZZ || myValueType == GProp_InertiaXY
            || myValueType == GProp_InertiaXZ || myValueType == GProp_InertiaYZ)
   {
     if (myIsByPoint)
+    {
       aCoeff *= 0.2;
+    }
   }
   else
+  {
     return false;
+  }
 
   double aAbsCoeff = std::abs(aCoeff);
 
@@ -118,31 +123,35 @@ bool BRepGProp_TFunction::Value(const double X, double& F)
   // else
   //   aTol = 0.1;
 
-  int                           iU = anUKnots->Upper();
+  int                           iU = aUKnots->Upper();
   int                           aNbPntsStart;
   int                           aNbMaxIter = 1000;
   math_KronrodSingleIntegration anIntegral;
   double                        aLocalErr = 0.;
 
-  i = anUKnots->Lower();
+  i = aUKnots->Lower();
   F = 0.;
 
   // Epmirical criterion
-  aNbPntsStart = std::min(15, mySurface.UIntegrationOrder() / (anUKnots->Length() - 1) + 1);
+  aNbPntsStart = std::min(15, mySurface.UIntegrationOrder() / (aUKnots->Length() - 1) + 1);
   aNbPntsStart = std::max(5, aNbPntsStart);
 
   while (i < iU)
   {
-    double aU1 = anUKnots->Value(i++);
-    double aU2 = anUKnots->Value(i);
+    double aU1 = aUKnots->Value(i++);
+    double aU2 = aUKnots->Value(i);
 
     if (aU2 - aU1 < tolU)
+    {
       continue;
+    }
 
     anIntegral.Perform(myUFunction, aU1, aU2, aNbPntsStart, aTol, aNbMaxIter);
 
     if (!anIntegral.IsDone())
+    {
       return false;
+    }
 
     F += anIntegral.Value();
     aLocalErr += anIntegral.AbsolutError();
@@ -157,7 +166,9 @@ bool BRepGProp_TFunction::Value(const double X, double& F)
   myTolReached += aLocalErr;
 
   if (std::abs(F) > Epsilon(1.))
+  {
     aLocalErr /= std::abs(F);
+  }
 
   myErrReached = std::max(myErrReached, aLocalErr);
 

@@ -15,16 +15,18 @@
 #include <Standard_CString.hxx>
 #include <OSD_Exception_CTRL_BREAK.hxx>
 #include <Standard_DivideByZero.hxx>
+#include <Standard_ErrorHandler.hxx>
 #include <Standard_Overflow.hxx>
 #include <Standard_Assert.hxx>
 
+#include <atomic>
 #include <mutex>
 #include <csignal>
 
 #include <Standard_WarningDisableFunctionCast.hxx>
 
-static OSD_SignalMode OSD_WasSetSignal           = OSD_SignalMode_AsIs;
-static int            OSD_SignalStackTraceLength = 0;
+static std::atomic<OSD_SignalMode> OSD_WasSetSignal{OSD_SignalMode_AsIs};
+static std::atomic<int>            OSD_SignalStackTraceLength{0};
 
 //=================================================================================================
 
@@ -738,8 +740,6 @@ LONG _osd_debug(void)
   #include <OSD_SIGSYS.hxx>
   #include <Standard_NumericError.hxx>
 
-  #include <Standard_ErrorHandler.hxx>
-
   // POSIX threads
   #include <pthread.h>
 
@@ -754,7 +754,7 @@ static bool fCtrlBrk;
 // const OSD_WhoAmI Iam = OSD_WPackage;
 
 typedef void(ACT_SIGIO_HANDLER)();
-ACT_SIGIO_HANDLER* ADR_ACT_SIGIO_HANDLER = nullptr;
+std::atomic<ACT_SIGIO_HANDLER*> ADR_ACT_SIGIO_HANDLER{nullptr};
 
   #ifdef __GNUC__
     #include <cstdlib>
@@ -802,7 +802,9 @@ static void Handler(const int theSignal)
   {
     // std::cout << " signal is " << theSignal << " handler is " <<  oldact.sa_handler << std::endl;
     if (sigaction(theSignal, &oldact, &act))
+    {
       perror("sigaction");
+    }
   }
   else
   {
@@ -811,8 +813,11 @@ static void Handler(const int theSignal)
 
   // std::cout << "OSD::Handler: signal " << (int) theSignal << " occurred inside a try block " <<
   // std::endl ;
-  if (ADR_ACT_SIGIO_HANDLER != nullptr)
-    (*ADR_ACT_SIGIO_HANDLER)();
+  ACT_SIGIO_HANDLER* aSigHandler = ADR_ACT_SIGIO_HANDLER.load(std::memory_order_acquire);
+  if (aSigHandler != nullptr)
+  {
+    (*aSigHandler)();
+  }
 
   sigset_t set;
   sigemptyset(&set);
@@ -1098,7 +1103,7 @@ void OSD::SetSignal(OSD_SignalMode theSignalMode, bool theFloatingSignal)
     Standard_ASSERT(retcode == 0,
                     "sigaction() failed",
                     std::cout << "OSD::SetSignal(): sigaction() failed for " << aSignalTypes[i]
-                              << std::endl);
+                              << '\n');
   }
 }
 

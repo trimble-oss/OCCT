@@ -110,7 +110,9 @@ Standard_IStream& BinTools::GetShortReal(Standard_IStream& theIS, float& theValu
 Standard_IStream& BinTools::GetInteger(Standard_IStream& IS, int& aValue)
 {
   if (!IS.read((char*)&aValue, sizeof(int)))
+  {
     throw Storage_StreamTypeMismatchError();
+  }
 #ifdef DO_INVERSE
   aValue = InverseInt(aValue);
 #endif
@@ -122,7 +124,9 @@ Standard_IStream& BinTools::GetInteger(Standard_IStream& IS, int& aValue)
 Standard_IStream& BinTools::GetExtChar(Standard_IStream& IS, char16_t& theValue)
 {
   if (!IS.read((char*)&theValue, sizeof(char16_t)))
+  {
     throw Storage_StreamTypeMismatchError();
+  }
 #ifdef DO_INVERSE
   theValue = InverseExtChar(theValue);
 #endif
@@ -170,7 +174,7 @@ void BinTools::Read(TopoDS_Shape&                theShape,
 //=================================================================================================
 
 bool BinTools::Write(const TopoDS_Shape&          theShape,
-                     const char*                  theFile,
+                     const char* const            theFile,
                      const bool                   theWithTriangles,
                      const bool                   theWithNormals,
                      const BinTools_FormatVersion theVersion,
@@ -181,7 +185,9 @@ bool BinTools::Write(const TopoDS_Shape&          theShape,
     aFileSystem->OpenOStream(theFile, std::ios::out | std::ios::binary);
   aStream->precision(15);
   if (aStream.get() == nullptr || !aStream->good())
+  {
     return false;
+  }
 
   Write(theShape, *aStream, theWithTriangles, theWithNormals, theVersion, theRange);
   aStream->flush();
@@ -191,7 +197,7 @@ bool BinTools::Write(const TopoDS_Shape&          theShape,
 //=================================================================================================
 
 bool BinTools::Read(TopoDS_Shape&                theShape,
-                    const char*                  theFile,
+                    const char* const            theFile,
                     const Message_ProgressRange& theRange)
 {
   const occ::handle<OSD_FileSystem>& aFileSystem = OSD_FileSystem::DefaultFileSystem();

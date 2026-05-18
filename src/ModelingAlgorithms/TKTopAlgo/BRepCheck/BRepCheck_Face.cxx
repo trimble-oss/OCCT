@@ -117,8 +117,11 @@ void BRepCheck_Face::InContext(const TopoDS_Shape& S)
 {
   occ::handle<NCollection_Shared<NCollection_List<BRepCheck_Status>>> aHList;
   {
-    std::unique_lock<std::mutex> aLock =
-      myMutex ? std::unique_lock<std::mutex>(*myMutex) : std::unique_lock<std::mutex>();
+    std::unique_lock<std::mutex> aLock(myMutex, std::defer_lock);
+    if (myIsParallel)
+    {
+      aLock.lock();
+    }
     if (myMap.IsBound(S))
     {
       return;
@@ -167,8 +170,11 @@ BRepCheck_Status BRepCheck_Face::IntersectWires(const bool Update)
 {
   occ::handle<NCollection_Shared<NCollection_List<BRepCheck_Status>>> aHList;
   {
-    std::unique_lock<std::mutex> aLock =
-      myMutex ? std::unique_lock<std::mutex>(*myMutex) : std::unique_lock<std::mutex>();
+    std::unique_lock<std::mutex> aLock(myMutex, std::defer_lock);
+    if (myIsParallel)
+    {
+      aLock.lock();
+    }
     aHList = myMap(myShape);
   }
 
@@ -297,8 +303,11 @@ BRepCheck_Status BRepCheck_Face::ClassifyWires(const bool Update)
 {
   occ::handle<NCollection_Shared<NCollection_List<BRepCheck_Status>>> aHList;
   {
-    std::unique_lock<std::mutex> aLock =
-      myMutex ? std::unique_lock<std::mutex>(*myMutex) : std::unique_lock<std::mutex>();
+    std::unique_lock<std::mutex> aLock(myMutex, std::defer_lock);
+    if (myIsParallel)
+    {
+      aLock.lock();
+    }
     aHList = myMap(myShape);
   }
 
@@ -429,8 +438,11 @@ BRepCheck_Status BRepCheck_Face::OrientationOfWires(const bool Update)
 {
   occ::handle<NCollection_Shared<NCollection_List<BRepCheck_Status>>> aHList;
   {
-    std::unique_lock<std::mutex> aLock =
-      myMutex ? std::unique_lock<std::mutex>(*myMutex) : std::unique_lock<std::mutex>();
+    std::unique_lock<std::mutex> aLock(myMutex, std::defer_lock);
+    if (myIsParallel)
+    {
+      aLock.lock();
+    }
     aHList = myMap(myShape);
   }
 
@@ -482,7 +494,9 @@ BRepCheck_Status BRepCheck_Face::OrientationOfWires(const bool Update)
   if (Wext.IsNull() && !Infinite)
   {
     if (Nbwire > 0)
+    {
       myOrires = BRepCheck_InvalidImbricationOfWires;
+    }
     if (Update)
     {
       BRepCheck::Add(aStatusList, myOrires);
@@ -546,8 +560,11 @@ BRepCheck_Status BRepCheck_Face::OrientationOfWires(const bool Update)
 
 void BRepCheck_Face::SetUnorientable()
 {
-  std::unique_lock<std::mutex> aLock =
-    myMutex ? std::unique_lock<std::mutex>(*myMutex) : std::unique_lock<std::mutex>();
+  std::unique_lock<std::mutex> aLock(myMutex, std::defer_lock);
+  if (myIsParallel)
+  {
+    aLock.lock();
+  }
   BRepCheck::Add(*myMap(myShape), BRepCheck_UnorientableShape);
 }
 
@@ -555,8 +572,11 @@ void BRepCheck_Face::SetUnorientable()
 
 void BRepCheck_Face::SetStatus(const BRepCheck_Status theStatus)
 {
-  std::unique_lock<std::mutex> aLock =
-    myMutex ? std::unique_lock<std::mutex>(*myMutex) : std::unique_lock<std::mutex>();
+  std::unique_lock<std::mutex> aLock(myMutex, std::defer_lock);
+  if (myIsParallel)
+  {
+    aLock.lock();
+  }
   BRepCheck::Add(*myMap(myShape), theStatus);
 }
 
@@ -616,12 +636,16 @@ static bool Intersect(const TopoDS_Wire&         wir1,
   NCollection_Map<TopoDS_Shape, TopTools_ShapeMapHasher> MapW1;
   NCollection_Sequence<TopoDS_Shape>                     CommonVertices;
   for (exp1.Init(wir1, TopAbs_VERTEX); exp1.More(); exp1.Next())
+  {
     MapW1.Add(exp1.Current());
+  }
   for (exp2.Init(wir2, TopAbs_VERTEX); exp2.More(); exp2.Next())
   {
     const TopoDS_Shape& V = exp2.Current();
     if (MapW1.Contains(V))
+    {
       CommonVertices.Append(V);
+    }
   }
 
   // MSV 03.04.2002: create pure surface adaptor to avoid UVBounds computation
@@ -652,9 +676,13 @@ static bool Intersect(const TopoDS_Wire&         wir1,
     C1.Load(BRep_Tool::CurveOnSurface(edg1, F, first1, last1));
     // To avoid exception in Segment if C1 is BSpline - IFV
     if (C1.FirstParameter() > first1)
+    {
       first1 = C1.FirstParameter();
+    }
     if (C1.LastParameter() < last1)
+    {
       last1 = C1.LastParameter();
+    }
 
     Box1.SetVoid();
     if (theMapEdgeBox.IsBound(edg1))
@@ -674,9 +702,13 @@ static bool Intersect(const TopoDS_Wire&         wir1,
         C2.Load(BRep_Tool::CurveOnSurface(edg2, F, first2, last2));
         // To avoid exception in Segment if C2 is BSpline - IFV
         if (C2.FirstParameter() > first2)
+        {
           first2 = C2.FirstParameter();
+        }
         if (C2.LastParameter() < last2)
+        {
           last2 = C2.LastParameter();
+        }
 
         Box2.SetVoid();
         if (theMapEdgeBox.IsBound(edg2))
@@ -695,18 +727,24 @@ static bool Intersect(const TopoDS_Wire&         wir1,
           myDomain2.SetValues(pfirst2, first2, Inter2dTol, plast2, last2, Inter2dTol);
           Inter.Perform(C1, myDomain1, C2, myDomain2, Inter2dTol, Inter2dTol);
           if (!Inter.IsDone())
+          {
             return true;
+          }
           if (Inter.NbSegments() > 0)
           {
             if (PntSeq.IsEmpty())
+            {
               return true;
+            }
             else
             {
               int NbCoinc = 0;
               for (i = 1; i <= Inter.NbSegments(); i++)
               {
                 if (!Inter.Segment(i).HasFirstPoint() || !Inter.Segment(i).HasLastPoint())
+                {
                   return true;
+                }
                 gp_Pnt2d FirstP2d = Inter.Segment(i).FirstPoint().Value();
                 gp_Pnt2d LastP2d  = Inter.Segment(i).LastPoint().Value();
                 gp_Pnt   FirstP   = Surf.Value(FirstP2d.X(), FirstP2d.Y());
@@ -727,7 +765,9 @@ static bool Intersect(const TopoDS_Wire&         wir1,
           if (Inter.NbPoints() > 0)
           {
             if (PntSeq.IsEmpty())
+            {
               return true;
+            }
             else
             {
               int NbCoinc = 0;
@@ -850,7 +890,9 @@ bool CheckThin(const TopoDS_Shape& w, const TopoDS_Shape& f)
   }
 
   if (nbE != 2)
+  {
     return false;
+  }
   TopoDS_Edge e1 = TopoDS::Edge(lE.First());
   TopoDS_Edge e2 = TopoDS::Edge(lE.Last());
 
@@ -859,19 +901,29 @@ bool CheckThin(const TopoDS_Shape& w, const TopoDS_Shape& f)
   TopExp::Vertices(e2, v3, v4);
 
   if (v1.IsNull() || v2.IsNull() || v3.IsNull() || v4.IsNull())
+  {
     return false;
+  }
 
   if (v1.IsSame(v2) || v3.IsSame(v4))
+  {
     return false;
+  }
 
   bool sF = false, sL = false;
   if (v1.IsSame(v3) || v1.IsSame(v4))
+  {
     sF = true;
+  }
   if (v2.IsSame(v3) || v2.IsSame(v4))
+  {
     sL = true;
+  }
 
   if (!sF || !sL)
+  {
     return false;
+  }
 
   TopAbs_Orientation e1or = e1.Orientation();
   TopAbs_Orientation e2or = e2.Orientation();
@@ -881,7 +933,9 @@ bool CheckThin(const TopoDS_Shape& w, const TopoDS_Shape& f)
   occ::handle<Geom2d_Curve> pc2 = BRep_Tool::CurveOnSurface(e2, aF, f2, l2);
 
   if (pc1.IsNull() || pc2.IsNull())
+  {
     return false;
+  }
 
   double d1 = std::abs(l1 - f1) / 100.;
   double d2 = std::abs(l2 - f2) / 100.;

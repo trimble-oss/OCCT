@@ -23,7 +23,6 @@
 #include <StdFail_NotDone.hxx>
 #include <NCollection_Array1.hxx>
 #include <NCollection_Array2.hxx>
-#include <NCollection_HArray2.hxx>
 
 #define NullAngle 1.e-6
 
@@ -72,43 +71,55 @@ bool GeomFill_QuasiAngularConvertor::Initialized() const
 void GeomFill_QuasiAngularConvertor::Init()
 {
   if (myinit)
-    return; // On n'initialise qu'une fois
-  int                                      ii, jj, Ordre = 7;
-  double                                   terme;
-  NCollection_Array1<double>               Coeffs(1, Ordre * Ordre), TrueInter(1, 2), Inter(1, 2);
-  occ::handle<NCollection_HArray2<double>> Poles1d =
-    new (NCollection_HArray2<double>)(1, Ordre, 1, Ordre);
-
-  // Calcul de B
-  Inter.SetValue(1, -1);
-  Inter.SetValue(2, 1);
-  TrueInter.SetValue(1, -1);
-  TrueInter.SetValue(2, 1);
-
-  Coeffs.Init(0);
-  for (ii = 1; ii <= Ordre; ii++)
   {
-    Coeffs.SetValue(ii + (ii - 1) * Ordre, 1);
+    return;
   }
 
-  // Convertion
-  Convert_CompPolynomialToPoles AConverter(Ordre, Ordre - 1, Ordre - 1, Coeffs, Inter, TrueInter);
-  AConverter.Poles(Poles1d);
-
-  for (jj = 1; jj <= Ordre; jj++)
-  {
-    for (ii = 1; ii <= Ordre; ii++)
+  // B is the monomial-to-BSpline conversion matrix on [-1,1], degree 6.
+  // It is a mathematical constant computed once.
+  static const math_Matrix THE_BASIS = []() {
+    constexpr int              anOrdre = 7;
+    NCollection_Array1<double> aCoeffs(1, anOrdre * anOrdre);
+    NCollection_Array1<double> anInter(1, 2), aTrueInter(1, 2);
+    anInter.SetValue(1, -1);
+    anInter.SetValue(2, 1);
+    aTrueInter.SetValue(1, -1);
+    aTrueInter.SetValue(2, 1);
+    aCoeffs.Init(0);
+    for (int ii = 1; ii <= anOrdre; ii++)
     {
-      terme = Poles1d->Value(ii, jj);
-      if (std::abs(terme - 1) < 1.e-9)
-        terme = 1; // petite retouche
-      if (std::abs(terme + 1) < 1.e-9)
-        terme = -1;
-      B(ii, jj) = terme;
+      aCoeffs.SetValue(ii + (ii - 1) * anOrdre, 1);
     }
-  }
 
-  // Init des polynomes
+    Convert_CompPolynomialToPoles     aConverter(anOrdre,
+                                             anOrdre - 1,
+                                             anOrdre - 1,
+                                             aCoeffs,
+                                             anInter,
+                                             aTrueInter);
+    const NCollection_Array2<double>& aPoles = aConverter.Poles();
+    math_Matrix                       aResult(1, anOrdre, 1, anOrdre);
+    for (int jj = 1; jj <= anOrdre; jj++)
+    {
+      for (int ii = 1; ii <= anOrdre; ii++)
+      {
+        double aTerm = aPoles.Value(ii, jj);
+        if (std::abs(aTerm - 1) < 1.e-9)
+        {
+          aTerm = 1;
+        }
+        if (std::abs(aTerm + 1) < 1.e-9)
+        {
+          aTerm = -1;
+        }
+        aResult(ii, jj) = aTerm;
+      }
+    }
+    return aResult;
+  }();
+
+  B = THE_BASIS;
+
   Vx.Init(0);
   Vx(1) = 1;
   Vy.Init(0);
@@ -164,7 +175,9 @@ void GeomFill_QuasiAngularConvertor::Section(const gp_Pnt&               FirstPn
     }
   }
   else
+  {
     b = ((double)-1) / beta2;
+  }
   c  = ((double)1) / 3 + b;
   b2 = b * b;
   c2 = c * c;

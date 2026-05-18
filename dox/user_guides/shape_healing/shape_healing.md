@@ -8,7 +8,7 @@ Shape Healing  {#occt_user_guides__shape_healing}
 @subsection occt_shg_1_1 Introduction
 
 This manual explains how to use Shape Healing. It provides basic documentation on its operation.
-For advanced information on Shape Healing and its applications, see our <a href="https://www.opencascade.com/content/tutorial-learning">E-learning & Training</a> offerings.
+For advanced information on Shape Healing and its applications, see our <a href="https://www.opencascade.com/content/tutorial-learning">E-learning & Training</a> offerings (commercial page, URL may change).
 
 The **Shape Healing** toolkit provides a set of tools to work on the geometry and topology of Open CASCADE Technology (**OCCT**) shapes.
 Shape Healing adapts shapes so as to make them as appropriate for use by Open CASCADE Technology as possible.
@@ -125,25 +125,25 @@ The sequence of actions is as follows:
 
 1. Create tool *ShapeFix_Shape* and initialize it by shape:
 ~~~~{.cpp}
-  Handle(ShapeFix_Shape) aFixShape = new ShapeFix_Shape();
-  aFixShape->Init (theShape);
+  occ::handle<ShapeFix_Shape> aFixShape = new ShapeFix_Shape();
+  aFixShape->Init (aShape);
 ~~~~
 
 2. Set the basic precision, the maximum allowed tolerance, the minimal allowed tolerance:
 ~~~~{.cpp}
-  aFixShape->SetPrecision (thePrec);
-  aFixShape->SetMaxTolerance (theMaxTol);
-  aFixShape->SetMinTolerance (theMintol);
+  aFixShape->SetPrecision (aPrec);
+  aFixShape->SetMaxTolerance (aMaxTol);
+  aFixShape->SetMinTolerance (aMinTol);
 ~~~~
    where:
-   * *thePrec* -- basic precision.
-   * *theMaxTol* -- maximum allowed tolerance.
+   * *aPrec* -- basic precision.
+   * *aMaxTol* -- maximum allowed tolerance.
      All problems will be detected for cases when a dimension of invalidity is larger than the basic precision or a tolerance of sub-shape on that problem is detected.
      The maximum tolerance value limits the increasing tolerance for fixing a problem such as fix of not connected and self-intersected wires.
      If a value larger than the maximum allowed tolerance is necessary for correcting a detected problem the problem can not be fixed.
      The maximal tolerance is not taking into account during computation of tolerance of edges in *ShapeFix_SameParameter()* method and *ShapeFix_Edge::FixVertexTolerance()* method.
      See @ref occt_shg_2_3_8 for details.
-   * *theMintol* --  minimal allowed tolerance.
+   * *aMinTol* --  minimal allowed tolerance.
      It defines the minimal allowed length of edges. Detected edges having length less than the specified minimal tolerance will be removed if *ModifyTopologyMode* in Repairing tool for wires is set to true.
      See @ref occt_shg_2_3_7 for details.
 
@@ -161,22 +161,22 @@ The sequence of actions is as follows:
 
 5. Create *ShapeFix_Wireframe* tool and initialize it by shape:
 ~~~~{.cpp}
-  Handle(ShapeFix_Wireframe) aFixWire = new ShapeFix_Wireframe (theShape);
+  occ::handle<ShapeFix_Wireframe> aFixWire = new ShapeFix_Wireframe (aShape);
 ~~~~
    or:
 ~~~~{.cpp}
-  Handle(ShapeFix_Wireframe) aFixWire = new ShapeFix_Wireframe();
-  aFixWire->Load (theShape);
+  occ::handle<ShapeFix_Wireframe> aFixWire = new ShapeFix_Wireframe();
+  aFixWire->Load (aShape);
 ~~~~
 6. Set the basic precision and the maximum allowed tolerance:
 ~~~~{.cpp}
-  aFixWire->SetPrecision (thePrec);
-  aFixWire->SetMaxTolerance (theMaxTol);
+  aFixWire->SetPrecision (aPrec);
+  aFixWire->SetMaxTolerance (aMaxTol);
 ~~~~
-See the description for *thePrec* and *theMaxTol* above.
+See the description for *aPrec* and *aMaxTol* above.
 7. Merge and remove small edges:
 ~~~~{.cpp}
-  aFixWire->DropSmallEdgesMode() = true;
+  aFixWire->ModeDropSmallEdges() = true;
   aFixWire->FixSmallEdges();
 ~~~~
 **Note:** Small edges are not removed with the default mode, but in many cases removing small edges is very useful for fixing a shape.
@@ -204,15 +204,15 @@ If you want to make a fix on one sub-shape of a certain shape it is possible to 
   * fix the sub-shape;
   * get the resulting whole shape containing a new corrected sub-shape.
 
-For example, in the following way it is possible to fix face *theFace1* of shape *theShape1*:
+For example, in the following way it is possible to fix face *theFace1* of shape *aShape1*:
 
 ~~~~{.cpp}
 // create tools for fixing a face
-Handle(ShapeFix_Face) aFixFace = new ShapeFix_Face();
+occ::handle<ShapeFix_Face> aFixFace = new ShapeFix_Face();
 
 // create tool for rebuilding a shape and initialize it by shape
-Handle(ShapeBuild_ReShape) aReshapeContext = new ShapeBuild_ReShape();
-aReshapeContext->Apply (theShape1);
+occ::handle<ShapeBuild_ReShape> aReshapeContext = new ShapeBuild_ReShape();
+aReshapeContext->Apply (aShape1);
 
 // set a tool for rebuilding a shape in the tool for fixing
 aFixFace->SetContext (aReshapeContext);
@@ -224,7 +224,7 @@ aFixFace->Init (theFace1);
 aFixFace->Perform();
 
 // get the result; resulting shape contains the fixed face
-TopoDS_Shape aNewShape = aReshapeContext->Apply (theShape1);
+TopoDS_Shape aNewShape = aReshapeContext->Apply (aShape1);
 ~~~~
 
 A set of required fixes and invalid sub-shapes can be obtained with the help of tools responsible for the analysis of shape validity (section 3.2).
@@ -248,13 +248,13 @@ The following sequence of actions should be applied to perform fixes:
 	+ to force or forbid some of fixes, set the corresponding flag to 0 or 1.
 3. Initialize the tool by the shape with the help of methods `Init()` or `Load()`.
 4. Use method *Perform()* or create a custom set of fixes.
-5. Check the statuses of fixes by the general method *Status* or specialized methods *Status_* (for example *StatusSelfIntersection* (*ShapeExtentd_DONE*)).
+5. Check the statuses of fixes by the general method *Status* or specialized methods *Status_* (for example *StatusSelfIntersection* (*ShapeExtend_DONE*)).
    See the description of statuses below.
 6. Get the result in two ways:
 	- with help of a special method *Shape(), Face(), Wire(), Edge()*.
 	- from the rebuilding tool by method *Apply()* (for access to rebuilding tool use method *Context()*):
 ~~~~{.cpp}
-	TopoDS_Shape aResultShape = aFixTool->Context()->Apply (theInitialShape);
+	TopoDS_Shape aResultShape = aFixTool->Context()->Apply (anInitialShape);
 ~~~~
 
 Modification history for the shape and its sub-shapes can be obtained from the tool for shape re-building (*ShapeBuild_ReShape*).
@@ -272,7 +272,7 @@ To set a flag to the desired value, get a tool containing this flag and set the 
 
 For example, it is possible to forbid performing fixes to remove small edges - *FixSmall*:
 ~~~~{.cpp}
-Handle(ShapeFix_Shape) aFixShape = new ShapeFix_Shape (theShape);
+occ::handle<ShapeFix_Shape> aFixShape = new ShapeFix_Shape (aShape);
 aFixShape->FixWireTool()->FixSmallMode() = 0;
 if (aFixShape->Perform())
 {
@@ -289,10 +289,10 @@ For example, it is possible to force the removal of invalid 2D curves from a fac
 ~~~~{.cpp}
 TopoDS_Face theFace = ...; // face with invalid 2D curves.
 // creation of tool and its initialization by shape
-Handle(ShapeFix_Shape) aFixShape = new ShapeFix_Shape (theFace);
+occ::handle<ShapeFix_Shape> aFixShape = new ShapeFix_Shape (theFace);
 // set work precision and max allowed tolerance
-aFixShape->SetPrecision (thePrec);
-aFixShape->SetMaxTolerance (theMaxTol);
+aFixShape->SetPrecision (aPrec);
+aFixShape->SetMaxTolerance (aMaxTol);
 //set the value of flag for forcing the removal of 2D curves
 aFixShape->FixWireTool()->FixRemovePCurveMode() = 1;
 // reform fixes
@@ -307,9 +307,9 @@ else if (aFixShape->Status (ShapeExtend_FAIL))
 {
   std::cout << "Shape could not be fixed\n";
 }
-else if (aFixShape->Status (ShapeExtent_OK))
+else if (aFixShape->Status (ShapeExtend_OK))
 {
-  std::cout << "Initial face is valid with specified precision =" << thePrec << std::endl;
+  std::cout << "Initial face is valid with specified precision =" << aPrec << std::endl;
 }
 ~~~~
 
@@ -492,7 +492,7 @@ Let us create a custom set of fixes as an example:
 ~~~~{.cpp}
 TopoDS_Face theFace = ...;
 TopoDS_Wire theWire = ...;
-Standard_Real aPrecision = 1e-04;
+double aPrecision = 1e-04;
 ShapeFix_Wire aFixWire (theWire, theFace, aPrecision);
 // create a tool and loads objects into it
 aFixWire.FixReorder();
@@ -532,7 +532,7 @@ and then immediately apply fixing tools.
 ~~~~{.cpp}
 TopoDS_Face theFace = ...;
 TopoDS_Wire theWire = ...;
-Standard_Real aPrecision = 1e-04;
+double aPrecision = 1e-04;
 ShapeAnalysis_Wire aCheckWire (theWire, theFace, aPrecision);
 ShapeFix_Wire aFixWire (theWire, theFace, aPrecision);
 if (aCheckWire.CheckOrder())
@@ -547,7 +547,7 @@ if (aCheckWire.CheckSmall (aPrecision))
 {
   std::cout << "Wire contains edge(s) shorter than " << aPrecision << std::endl;
   // an edge that is shorter than the given tolerance is found
-  Standard_Boolean LockVertex = Standard_True;
+  bool LockVertex = true;
   if (aFixWire.FixSmall (LockVertex, aPrecision))
   {
     std::cout << "Edges shorter than " << aPrecision << " have been removed\n";
@@ -592,13 +592,13 @@ Then we can use the repairing tool to increase the tolerance and make the deviat
 ~~~~{.cpp}
 TopoDS_Edge theEdge = ...;
 ShapeAnalysis_Edge aCheckEdge;
-Standard_Real aMaxDev = 0.0;
+double aMaxDev = 0.0;
 if (aCheckEdge.CheckSameParameter (theEdge, aMaxDev))
 {
   std::cout << "Incorrect SameParameter flag\n"
             << "Maximum deviation " << aMaxDev << ", tolerance " << BRep_Tool::Tolerance (theEdge) << std::endl;
   ShapeFix_Edge aFixEdge;
-  aFixEdge.FixSameParameter();
+  aFixEdge.FixSameParameter(theEdge);
   std::cout << "New tolerance " << BRep_Tool::Tolerance (theEdge) << std::endl;
 }
 ~~~~
@@ -615,7 +615,7 @@ This class performs the following operations:
   * merges and removes small edges.
 
 Fixing of small edges can be managed with the help of two flags:
-  * *ModeDropSmallEdges()* -- mode for removing small edges that can not be merged, by default it is equal to Standard_False.
+  * *ModeDropSmallEdges()* -- mode for removing small edges that can not be merged, by default it is equal to false.
   * *LimitAngle* -- maximum possible angle for merging two adjacent edges, by default no limit angle is applied (-1).
 
 To perform fixes it is necessary to:
@@ -625,16 +625,16 @@ To perform fixes it is necessary to:
 
 ~~~~{.cpp}
 // creation of a tool
-Handle(ShapeFix_Wireframe) aFixWireframe = new ShapeFix_Wireframe (theShape);
+occ::handle<ShapeFix_Wireframe> aFixWireframe = new ShapeFix_Wireframe (aShape);
 // set the working precision problems will be detected with and the maximum allowed tolerance
-aFixWireframe->SetPrecision (thePrec);
-aFixWireframe->SetMaxTolerance (theMaxTol);
+aFixWireframe->SetPrecision (aPrec);
+aFixWireframe->SetMaxTolerance (aMaxTol);
 // fixing of gaps
 aFixWireframe->FixWireGaps();
 // fixing of small edges
 // setting of the drop mode for the fixing of small edges and max possible angle between merged edges
-aFixWireframe->ModeDropSmallEdges = true;
-aFixWireframe->SetLimliteAngle (theAngle);
+aFixWireframe->ModeDropSmallEdges() = true;
+aFixWireframe->SetLimitAngle (theAngle);
 // performing the fix
 aFixWireframe->FixSmallEdges();
 // getting the result
@@ -645,21 +645,21 @@ It is desirable that a shape is topologically correct before applying the method
 
 @subsubsection occt_shg_2_3_10 Tool for removing small faces from a shape
 
-Class ShapeFix_FixSmallFaceThis tool is intended for dropping small faces from the shape. The following cases are processed:
+Class *ShapeFix_FixSmallFace*. This tool is intended for dropping small faces from the shape. The following cases are processed:
 * Spot face: if the size of the face is less than the given precision;
 * Strip face: if the size of the face in one dimension is less then the given precision.
 
 The sequence of actions for performing the fix is the same as for the fixes described above:
 ~~~~{.cpp}
 // creation of a tool
-Handle(ShapeFix_FixSmallFace) aFixSmallFace = new ShapeFix_FixSmallFace (theShape);
+occ::handle<ShapeFix_FixSmallFace> aFixSmallFace = new ShapeFix_FixSmallFace (aShape);
 // setting of tolerances
-aFixSmallFace->SetPrecision (thePrec);
-aFixSmallFace->SetMaxTolerance (theMaxTol);
+aFixSmallFace->SetPrecision (aPrec);
+aFixSmallFace->SetMaxTolerance (aMaxTol);
 // performing fixes
-aFixSmallFace.Perform();
+aFixSmallFace->Perform();
 // getting the result
-TopoDS_Shape aResShape = aFixSmallFace.FixShape();
+TopoDS_Shape aResShape = aFixSmallFace->FixShape();
 ~~~~
 
 @subsubsection occt_shg_2_3_11 Tool to modify tolerances of shapes (Class ShapeFix_ShapeTolerance)
@@ -676,11 +676,11 @@ You set the tolerance functionality as follows:
 // creation of a tool
 ShapeFix_ShapeTolerance aFixToler;
 // setting a specified tolerance on shape and all of its sub-shapes
-aFixToler.SetTolerance (theShape, theToler);
+aFixToler.SetTolerance (aShape, theToler);
 // setting a specified tolerance for vertices only
-aFixToler.SetTolerance (theShape, theToler, TopAbs_VERTEX);
+aFixToler.SetTolerance (aShape, theToler, TopAbs_VERTEX);
 // limiting the tolerance on the shape and its sub-shapes between minimum and maximum tolerances
-aFixToler.LimitTolerance (theShape, theTolerMin, theTolerMax);
+aFixToler.LimitTolerance (aShape, theTolerMin, theTolerMax);
 ~~~~
 
 @section occt_shg_3 Analysis
@@ -761,7 +761,7 @@ In addition, each API method returns a Boolean value, which is True when a case 
 ~~~~{.cpp}
 TopoDS_Face theFace = ...;
 TopoDS_Wire theWire = ...;
-Standard_Real aPrecision = 1e-04;
+double aPrecision = 1e-04;
 ShapeAnalysis_Wire aCheckWire (theWire, theFace, aPrecision);
 // create a tool and load objects into it
 if (aCheckWire.CheckOrder())
@@ -807,14 +807,14 @@ for (TopExp_Explorer anExp (theFace, TopAbs_EDGE); anExp.More(); anExp.Next())
   {
     std::cout << "Edge has no 3D curve\n";
   }
-  Handle(Geom2d_Curve) aPCurve;
-  Standard_Real aPFirst = 0.0, aPLast = 0.0;
-  if (aCheckEdge.PCurve (anEdge, theFace, aPCurve, aPFirst, aPLast, Standard_False))
+  occ::handle<Geom2d_Curve> aPCurve;
+  double aPFirst = 0.0, aPLast = 0.0;
+  if (aCheckEdge.PCurve (anEdge, theFace, aPCurve, aPFirst, aPLast, false))
   {
     // print the pcurve and its range on the given face
     std::cout << "Pcurve range [" << aPFirst << ", " << aPLast << "]\n";
   }
-  Standard_Real aMaxDev = 0.0;
+  double aMaxDev = 0.0;
   if (aCheckEdge.CheckSameParameter (anEdge, aMaxDev))
   {
     // check the consistency of all the curves in the edge
@@ -829,10 +829,10 @@ for (TopExp_Explorer anExp (theFace, TopAbs_EDGE); anExp.More(); anExp.Next())
 // check the overlapping of two edges
 TopoDS_Edge theEdge1 = ...;
 TopoDS_Edge theEdge2 = ...;
-Standard_Real theDomainDist = 0.0;
+double theDomainDist = 0.0;
 
 ShapeAnalysis_Edge aCheckEdge;
-Standard_Real aTolOverlap = 0.0;
+double aTolOverlap = 0.0;
 if (aCheckEdge.CheckOverlapping (theEdge1, theEdge2, aTolOverlap, theDomainDist))
 {
   std::cout << "Edges are overlapped with tolerance = " << aTolOverlap << std::endl;
@@ -847,17 +847,17 @@ Class *ShapeAnalysis_CheckSmallFace* class is intended for analyzing small faces
 * *CheckStripFace* checks if the size of the face in one dimension is less than the given precision.
 
 ~~~~{.cpp}
-TopoDS_Shape theShape = ...; // checked shape
+TopoDS_Shape aShape = ...; // checked shape
 // creation of a tool
 ShapeAnalysis_CheckSmallFace aCheckSmallFace;
 // exploring the shape on faces and checking each face
-Standard_Integer aNbSmallfaces = 0;
-for (TopExp_Explorer anExp (theShape, TopAbs_FACE); anExp.More(); anExp.Next())
+int aNbSmallfaces = 0;
+for (TopExp_Explorer anExp (aShape, TopAbs_FACE); anExp.More(); anExp.Next())
 {
   TopoDS_Face aFace = TopoDS::Face (anExp.Current());
   TopoDS_Edge anEdge1, anEdge2;
-  if (aCheckSmallFace.CheckSpotFace  (aFace, thePrec)
-   || aCheckSmallFace.CheckStripFace (aFace, anEdge1, anEdge2, thePrec))
+  if (aCheckSmallFace.CheckSpotFace  (aFace, aPrec)
+   || aCheckSmallFace.CheckStripFace (aFace, anEdge1, anEdge2, aPrec))
   {
     ++aNbSmallfaces;
   }
@@ -905,16 +905,16 @@ The analysis of tolerance functionality is the following:
   * finding sub-shapes with tolerances in the given range.
 
 ~~~~{.cpp}
-TopoDS_Shape theShape = ...;
+TopoDS_Shape aShape = ...;
 ShapeAnalysis_ShapeTolerance aCheckToler;
-Standard_Real anAverageOnShape = aCheckToler.Tolerance (theShape, 0);
+double anAverageOnShape = aCheckToler.Tolerance (aShape, 0);
 std::cout << "Average tolerance of the shape is " << anAverageOnShape << std::endl;
-Standard_Real aMinOnEdge = aCheckToler.Tolerance (theShape, -1, TopAbs_EDGE);
+double aMinOnEdge = aCheckToler.Tolerance (aShape, -1, TopAbs_EDGE);
 std::cout << "Minimum tolerance of the edges is " << aMinOnEdge << std::endl;
-Standard_Real aMaxOnVertex = aCheckToler.Tolerance (theShape, 1, TopAbs_VERTEX);
+double aMaxOnVertex = aCheckToler.Tolerance (aShape, 1, TopAbs_VERTEX);
 std::cout << "Maximum tolerance of the vertices is " << aMaxOnVertex << std::endl;
-Standard_Real theMaxAllowed = 0.1;
-if (aMaxOnVertex > theMaxAllowed)
+double aMaxAllowed = 0.1;
+if (aMaxOnVertex > aMaxAllowed)
 {
   std::cout << "Maximum tolerance of the vertices exceeds maximum allowed\n";
 } 
@@ -930,13 +930,13 @@ This class works on two distinct types of shapes when analyzing their free bound
   The analyzer of the sewing algorithm is used to forecast what free bounds would be obtained after the sewing of these faces is performed.
   The following method should be used for this analysis:
 ~~~~{.cpp}
-  ShapeAnalysis_FreeBounds aCheckFreeBnd (theShape, theToler);
+  ShapeAnalysis_FreeBounds aCheckFreeBnd (aShape, theToler);
 ~~~~
 * Analysis of already existing free bounds.
   Actual free bounds (edges shared by the only face in the shell) are output in this case.
   *ShapeAnalysis_Shell* is used for that.
 ~~~~{.cpp}
-  ShapeAnalysis_FreeBounds aCheckFreeBnd (theShape);
+  ShapeAnalysis_FreeBounds aCheckFreeBnd (aShape);
 ~~~~
 
 When connecting edges into wires this algorithm tries to build wires of maximum length.
@@ -950,19 +950,19 @@ TopoDS_Compound anOpenWires  = aCheckFreeBnd.GetOpenWires();
 
 This class also provides some static methods for advanced use: connecting edges/wires to wires, extracting closed sub-wires from wires, distributing wires into compounds for closed and open wires.
 ~~~~{.cpp}
-TopoDS_Shape theShape = ...;
+TopoDS_Shape aShape = ...;
 // tolerance for sewing
-Standard_Real theSewTolerance = 1.e-03;
-bool theToSplitClosed = false;
-bool theToSplitOpen   = true;
+double aSewTolerance = 1.e-03;
+bool toSplitClosed = false;
+bool toSplitOpen   = true;
 // in case of analysis of possible free boundaries
-ShapeAnalysis_FreeBounds aCheckFreeBnd (theShape, theSewTolerance, theToSplitClosed, theToSplitOpen);
+ShapeAnalysis_FreeBounds aCheckFreeBnd (aShape, aSewTolerance, toSplitClosed, toSplitOpen);
 // in case of analysis of existing free bounds
-ShapeAnalysis_FreeBounds aCheckFreeBnd (theShape, theToSplitClosed, theToSplitOpen);
+ShapeAnalysis_FreeBounds aCheckFreeBnd (aShape, toSplitClosed, toSplitOpen);
 // getting the results
 TopoDS_Compound aClosedWires = aCheckFreeBnd.GetClosedWires();
 // return a compound of closed free bounds
-TopoDS_Compound anOpenWires  = aCheckFreeBnd.GetClosedWires();
+TopoDS_Compound anOpenWires  = aCheckFreeBnd.GetOpenWires();
 // return a compound of open free bounds
 ~~~~
 
@@ -987,12 +987,12 @@ Methods for calculating the number of geometric objects or sub-shapes with a spe
 
 and selecting sub-shapes by various criteria.
 
-The corresponding flags should be set to True for storing a shape by a specified criteria:
-  * faces based on indirect surfaces -- *aCheckContents.MofifyIndirectMode() = Standard_True*;
-  * faces based on offset surfaces -- *aCheckContents.ModifyOffsetSurfaceMode() = Standard_True*;
-  * edges if their 3D curves are trimmed -- *aCheckContents.ModifyTrimmed3dMode() = Standard_True*;
-  * edges if their 3D curves and 2D curves are offset curves -- *aCheckContents.ModifyOffsetCurveMode() = Standard_True*;
-  * edges if their 2D curves are trimmed -- *aCheckContents.ModifyTrimmed2dMode() = Standard_True*;
+The corresponding flags should be set to true for storing a shape by a specified criteria:
+  * faces based on indirect surfaces -- *aCheckContents.ModifyIndirectMode() = true*;
+  * faces based on offset surfaces -- *aCheckContents.ModifyOffsetSurfaceMode() = true*;
+  * edges if their 3D curves are trimmed -- *aCheckContents.ModifyTrimmed3dMode() = true*;
+  * edges if their 3D curves and 2D curves are offset curves -- *aCheckContents.ModifyOffsetCurveMode() = true*;
+  * edges if their 2D curves are trimmed -- *aCheckContents.ModifyTrimmed2dMode() = true*;
 
 Let us, for example, select faces based on offset surfaces.
 
@@ -1000,11 +1000,11 @@ Let us, for example, select faces based on offset surfaces.
 ShapeAnalysis_ShapeContents aCheckContents;
 // set a corresponding flag for storing faces based on the offset surfaces
 aCheckContents.ModifyOffsetSurfaceMode() = true;
-aCheckContents.Perform (theShape);
+aCheckContents.Perform (aShape);
 // getting the number of offset surfaces in the shape
-Standard_Integer aNbOffsetSurfaces = aCheckContents.NbOffsetSurf();
+int aNbOffsetSurfaces = aCheckContents.NbOffsetSurf();
 // getting the sequence of faces based on offset surfaces
-Handle(TopTools_HSequenceOfShape) aSeqFaces = aCheckContents.OffsetSurfaceSec();
+occ::handle<NCollection_HSequence<TopoDS_Shape>> aSeqFaces = aCheckContents.OffsetSurfaceSec();
 ~~~~
 
 @subsubsection occt_shg_3_2_4 Analysis of shape underlined geometry
@@ -1074,12 +1074,12 @@ The usual way to use these tools exception for the tool of converting a C0 BSpli
 Let us, for example, split all surfaces and all 3D and 2D curves having a continuity of less the C2:
 ~~~~{.cpp}
 // create a tool and initializes it by shape
-ShapeUpgrade_ShapeDivideContinuity aShDivCont (theInitShape);
+ShapeUpgrade_ShapeDivideContinuity aShDivCont (anInitShape);
 
 // set the working 3D and 2D precision and the maximum allowed tolerance
-aShDivCont.SetTolerance (thePrec);
+aShDivCont.SetTolerance (aPrec);
 aShDivCont.SetTolerance2D (thePrec2d);
-aShDivCont.SetMaxTolerance (theMaxTol);
+aShDivCont.SetMaxTolerance (aMaxTol);
 
 //set the values of criteria for surfaces, 3D curves and 2D curves
 aShDivCont.SetBoundaryCriterion(GeomAbs_C2);
@@ -1095,7 +1095,7 @@ if (aShDivCont.Status (ShapeExtend_DONE)
   TopoDS_Shape aResult = aShDivCont.GetResult();
 }
 // get the history of modifications made to faces
-for (TopExp_Explorer anExp (theInitShape, TopAbs_FACE); anExp.More(); anExp.Next())
+for (TopExp_Explorer anExp (anInitShape, TopAbs_FACE); anExp.More(); anExp.Next())
 {
   TopoDS_Shape aModifShape = aShDivCont.GetContext()->Apply (anExp.Current());
 }
@@ -1115,36 +1115,36 @@ Let us split a shape according to a specified criterion.
 
 ~~~~{.cpp}
 // creation of new tools for geometry splitting by a specified criterion
-Handle(MyTools_SplitSurfaceTool) MySplitSurfaceTool = new MyTools_SplitSurfaceTool();
-Handle(MyTools_SplitCurve3DTool) MySplitCurve3Dtool = new MyTools_SplitCurve3DTool();
-Handle(MyTools_SplitCurve2DTool) MySplitCurve2Dtool = new MyTools_SplitCurve2DTool();
+occ::handle<MyTools_SplitSurfaceTool> aSplitSurfaceTool = new MyTools_SplitSurfaceTool();
+occ::handle<MyTools_SplitCurve3DTool> aSplitCurve3DTool = new MyTools_SplitCurve3DTool();
+occ::handle<MyTools_SplitCurve2DTool> aSplitCurve2DTool = new MyTools_SplitCurve2DTool();
 
 // creation of a tool for splitting the shape and initialization of that tool by shape
-TopoDS_Shape theInitShape = ...;
-MyTools_ShapeDivideTool aShapeDivide (theInitShape);
+TopoDS_Shape anInitShape = ...;
+MyTools_ShapeDivideTool aShapeDivide (anInitShape);
 
 // setting of work precision for splitting and maximum allowed tolerance
 aShapeDivide.SetPrecision (prec);
 aShapeDivide.SetMaxTolerance (MaxTol);
 
 // setting of new splitting geometry tools in the shape splitting tools
-Handle(ShapeUpgrade_FaceDivide) aFaceDivide = aShapeDivide->GetSplitFaceTool();
-Handle(ShapeUpgrade_WireDivide) aWireDivide = aFaceDivide->GetWireDivideTool();
-aFaceDivide->SetSplitSurfaceTool (MySplitSurfaceTool);
-aWireDivide->SetSplitCurve3dTool (MySplitCurve3DTool);
-aWireDivide->SetSplitCurve2dTool (MySplitCurve2DTool);
+occ::handle<ShapeUpgrade_FaceDivide> aFaceDivide = aShapeDivide.GetSplitFaceTool();
+occ::handle<ShapeUpgrade_WireDivide> aWireDivide = aFaceDivide->GetWireDivideTool();
+aFaceDivide->SetSplitSurfaceTool (aSplitSurfaceTool);
+aWireDivide->SetSplitCurve3dTool (aSplitCurve3DTool);
+aWireDivide->SetSplitCurve2dTool (aSplitCurve2DTool);
 
 // setting of the value criterion
-aShapeDivide.SetValCriterion (val);
+aShapeDivide.SetValCriterion (aVal);
             
 // shape splitting
 aShapeDivide.Perform();
 
 // getting the result
-TopoDS_Shape aSplitShape = aShapeDivide.GetResult();
+TopoDS_Shape aSplitShape = aShapeDivide.Result();
 
 // getting the history of modifications of faces
-for (TopExp_Explorer anExp (theInitShape, TopAbs_FACE); anExp.More(0; anExp.Next())
+for (TopExp_Explorer anExp (anInitShape, TopAbs_FACE); anExp.More(); anExp.Next())
 {
   TopoDS_Shape aModifShape = aShapeDivide.GetContext()->Apply (anExp.Current());
 } 
@@ -1236,15 +1236,15 @@ class ShapeUpgrade_SplitSurfaceContinuity : public ShapeUpgrade_SplitSurface
 
   // methods to set the criterion and the tolerance into the splitting tool
   void SetCriterion (GeomAbs_Shape theCriterion);
-  void SetTolerance (Standard_Real theTol);
+  void SetTolerance (double theTol);
 
   // redefinition of method Compute
   virtual void Compute (const bool theSegment) override;
 
 private:
   GeomAbs_Shape myCriterion;
-  Standard_Real myTolerance;
-  Standard_Integer myCont;
+  double myTolerance;
+  int myCont;
 }; 
 ~~~~
 
@@ -1257,7 +1257,7 @@ If converting is not possible than geometric object is split into several ones, 
 A topological object based on this geometry is replaced by several objects based on the new geometry.
 
 ~~~~{.cpp}
-ShapeUpgrade_ShapeDivideContinuity aShapeDivide (theShape);
+ShapeUpgrade_ShapeDivideContinuity aShapeDivide (aShape);
 aShapeDivide.SetTolerance (theTol3d);
 aShapeDivide.SetTolerance3d (theTol2d); // if known, else 1.e-09 is taken
 aShapeDivide.SetBoundaryCriterion(GeomAbs_C2); // for Curves 3D
@@ -1266,7 +1266,7 @@ aShapeDivide.SetSurfaceCriterion (GeomAbs_C2); // for Surfaces
 aShapeDivide.Perform();
 TopoDS_Shape aResShape = aShapeDivide.Result();
 //.. to also get the correspondences before/after
-Handle(ShapeBuild_ReShape) aCtx = aShapeDivide.Context();
+occ::handle<ShapeBuild_ReShape> aCtx = aShapeDivide.Context();
 //.. on a given shape
 if (aCtx.IsRecorded (theSh))
 {
@@ -1313,16 +1313,16 @@ This tool provides access to various flags for conversion of different types of 
 Let us attempt to produce a conversion of planes to Bezier surfaces.
 ~~~~{.cpp}
 // creation and initialization of a tool
-ShapeUpgrade_ShapeConvertToBezier aConvToBez (theShape);
+ShapeUpgrade_ShapeConvertToBezier aConvToBez (aShape);
 // setting tolerances
 ...
 //setting mode for conversion of planes
 aConvToBez.SetSurfaceConversion (true);
 aConvToBez.SetPlaneMode (true);
 aConvToBez.Perform();
-if (aConvToBez.Status(ShapeExtend_DONE)
+if (aConvToBez.Status(ShapeExtend_DONE))
 {
-  TopoDS_Shape aResult = aConvToBez.GetResult();
+  TopoDS_Shape aResult = aConvToBez.Result();
 }
 ~~~~
 
@@ -1332,14 +1332,14 @@ Class *ShapeUpgrade_ShapeDivideClosed* provides splitting of closed faces in the
 It topologically and (partially) geometrically processes closed faces and performs splitting with the help of class *ShapeUpgrade_ClosedFaceDivide*.
 
 ~~~~{.cpp}
-TopoDS_Shape theShape = ...;
-ShapeUpgrade_ShapeDivideClosed aTool (theShape);
-Standard_Real theCloseTol = ...;
-aTool.SetPrecision (theCloseTol);
-Standard_Real theMaxTol = ...;
-aTool.SetMaxTolerance (theMaxTol);
-Standard_Integer theNbSplitPoints = ...;
-aTool.SetNbSplitPoints (theNbSplitPoints);
+TopoDS_Shape aShape = ...;
+ShapeUpgrade_ShapeDivideClosed aTool (aShape);
+double aCloseTol = ...;
+aTool.SetPrecision (aCloseTol);
+double aMaxTol = ...;
+aTool.SetMaxTolerance (aMaxTol);
+int aNbSplitPoints = ...;
+aTool.SetNbSplitPoints (aNbSplitPoints);
 if (!aTool.Perform() && aTool.Status (ShapeExtend_FAIL))
 {
   std::cout << "Splitting of closed faces failed\n";
@@ -1405,8 +1405,8 @@ To implement the necessary shape modification it is enough to initialize the app
 For example for conversion of indirect surfaces in the shape do the following:
 
 ~~~~{.cpp}
-TopoDS_Shape theInitialShape = ...;
-TopoDS_Shape aResultShape = ShapeCustom::DirectFaces (theInitialShape);
+TopoDS_Shape anInitialShape = ...;
+TopoDS_Shape aResultShape = ShapeCustom::DirectFaces (anInitialShape);
 ~~~~
 
 @subsubsection occt_shg_4_4_1 Conversion of indirect surfaces
@@ -1423,7 +1423,7 @@ New 2d curves (recomputed for converted surfaces) are added to the same edges be
 
 ~~~~{.cpp}
 ShapeCustom::ScaleShape()
-  TopoDS_Shape ShapeCustom::ScaleShape (const TopoDS_Shape& theShape, const Standard_Real theScale);
+  TopoDS_Shape ShapeCustom::ScaleShape (const TopoDS_Shape& theShape, const double theScale);
 ~~~~
 
 This method returns a new shape, which is a scaled original shape with a coefficient equal to the specified value of scale.
@@ -1438,14 +1438,14 @@ The method with all parameters looks as follows:
 ~~~~{.cpp}
 ShapeCustom::BsplineRestriction()
   TopoDS_Shape ShapeCustom::BSplineRestriction (const TopoDS_Shape& theShape,
-                                                const Standard_Real theTol3d, const Standard_Real theTol2d,
-                                                const Standard_Integer theMaxDegree,
-                                                const Standard_Integer theMaxNbSegment,
+                                                const double theTol3d, const double theTol2d,
+                                                const int theMaxDegree,
+                                                const int theMaxNbSegment,
                                                 const GeomAbs_Shape theContinuity3d,
                                                 const GeomAbs_Shape theContinuity2d,
-                                                const Standard_Boolean theDegree,
-                                                const Standard_Boolean theRational,
-                                                const Handle(ShapeCustom_RestrictionParameters)& theParameters);
+                                                const bool theDegree,
+                                                const bool theRational,
+                                                const occ::handle<ShapeCustom_RestrictionParameters>& theParameters);
 ~~~~
 
 It returns a new shape with all surfaces, curves and 2D curves of BSpline/Bezier type or based on them,
@@ -1488,9 +1488,9 @@ This method returns a new shape with all elementary periodic surfaces converted 
 ~~~~{.cpp}
 ShapeCustom::ConvertToBSpline()
   TopoDS_Shape ShapeCustom::ConvertToBSpline (const TopoDS_Shape& theShape,
-                                              const Standard_Boolean theExtrMode,
-                                              const Standard_Boolean theRevolMode,
-                                              const Standard_Boolean theOffsetMode);
+                                              const bool theExtrMode,
+                                              const bool theRevolMode,
+                                              const bool theOffsetMode);
 ~~~~
 
 This method returns a new shape with all surfaces of linear extrusion, revolution and offset surfaces converted according to flags to *Geom_BSplineSurface* (with the same parameterization).
@@ -1504,7 +1504,7 @@ If, in addition to the resulting shape, you want to get the history of modificat
 
 The general calling syntax for scaling is
 ~~~~{.cpp}
-TopoDS_Shape aScaledShape = ShapeCustom::ScaleShape (theShape, theScale);
+TopoDS_Shape aScaledShape = ShapeCustom::ScaleShape (aShape, theScale);
 ~~~~
 
 Note that scale is a real value.
@@ -1512,13 +1512,13 @@ You can refine your mapping process by using additional calls to follow shape ma
 The following code along with pertinent includes can be used:
 
 ~~~~{.cpp}
-Standard_Real theScale = 100; // for example!
+double theScale = 100; // for example!
 gp_Trsf aTrsf;
 aTrsf.SetScale (gp_Pnt (0, 0, 0), theScale);
-Handle(ShapeCustom_TrsfModification) aTrsfModif = new ShapeCustom_TrsfModification (aTrsf);
-TopTools_DataMapOfShapeShape aContext;
+occ::handle<ShapeCustom_TrsfModification> aTrsfModif = new ShapeCustom_TrsfModification (aTrsf);
+NCollection_DataMap<TopoDS_Shape, TopoDS_Shape, TopTools_ShapeMapHasher> aContext;
 BRepTools_Modifier aBRepModif;
-TopoDS_Shape aRes = ShapeCustom::ApplyModifier (theShape, aTrsfModif, aContext, aBRepModif);
+TopoDS_Shape aRes = ShapeCustom::ApplyModifier (aShape, aTrsfModif, aContext, aBRepModif);
 ~~~~
 
 The map, called context in our example, contains the history.
@@ -1533,7 +1533,7 @@ if (aContext.IsBound (theOneShape))
   aOneRes = aContext.Find (theOneShape);
 }
 // you can also sweep the entire data map:
-for (TopTools_DataMapOfShapeShape::Iterator anIter (aContext); anIter.More(); anIter.Next())
+for (NCollection_DataMap<TopoDS_Shape, TopoDS_Shape, TopTools_ShapeMapHasher>::Iterator anIter (aContext); anIter.More(); anIter.Next())
 {
   TopoDS_Shape aOneShape = anIter.Key();
   TopoDS_Shape aOneRes = anIter.Value();
@@ -1559,7 +1559,7 @@ If the sequence of shapes contains wires, only the internal wires are removed.
 
 If the sequence of shapes contains faces, only the internal wires from these faces are removed.
 * The status of the performed operation can be obtained using  method *Status()*;
-* The resulting shape can be obtained using  method *GetResult()*.
+* The resulting shape can be obtained using  method *Result()*.
 
 An example of using this tool is presented in the figures below:
 
@@ -1583,7 +1583,7 @@ The example of method application is also given below:
 
 ~~~~{.cpp}
 // initialization of the class by shape
-Handle(ShapeUpgrade_RemoveInternalWires) aTool = new ShapeUpgrade_RemoveInternalWires (theInputShape);
+occ::handle<ShapeUpgrade_RemoveInternalWires> aTool = new ShapeUpgrade_RemoveInternalWires (theInputShape);
 // setting parameters
 aTool->MinArea() = theMinArea;
 aTool->RemoveFaceMode() = theModeRemoveFaces;
@@ -1602,16 +1602,16 @@ if (aTool->Status (ShapeExtend_FAIL)
 
 if (aTool->Status (ShapeExtend_DONE1))
 {
-  const TopTools_SequenceOfShape& aRemovedWires = aTool->RemovedWires();
+  const NCollection_Sequence<TopoDS_Shape>& aRemovedWires = aTool->RemovedWires();
   std::cout << aRemovedWires.Length() << " internal wires were removed\n";
 }
 if (aTool->Status (ShapeExtend_DONE2))
 {
-  const TopTools_SequenceOfShape& aRemovedFaces =aTool->RemovedFaces();
+  const NCollection_Sequence<TopoDS_Shape>& aRemovedFaces =aTool->RemovedFaces();
   std::cout << aRemovedFaces.Length() << " small faces were removed\n";
 }
 // getting result shape
-TopoDS_Shape aRes = aTool->GetResult();
+TopoDS_Shape aRes = aTool->Result();
 ~~~~
 
 @subsubsection occt_shg_4_4_8 Conversion of surfaces
@@ -1630,14 +1630,14 @@ To convert surfaces to analytical form this class analyzes the form and the clos
 The conversion is done only if the new (analytical) surface does not deviate from the source one more than by the given precision.
 
 ~~~~{.cpp}
-Handle(Geom_Surface) theInitSurf;
-ShapeCustom_Surface aConvSurf (theInitSurf);
+occ::handle<Geom_Surface> anInitSurf;
+ShapeCustom_Surface aConvSurf (anInitSurf);
 // conversion to analytical form
-Handle(Geom_Surface) aNewSurf = aConvSurf.ConvertToAnalytical (theAllowedTol, false);
+occ::handle<Geom_Surface> aNewSurf = aConvSurf.ConvertToAnalytical (theAllowedTol, false);
 // or conversion to a periodic surface
-Handle(Geom_Surface) aNewSurf = aConvSurf.ConvertToPeriodic (false);
+occ::handle<Geom_Surface> aNewSurf = aConvSurf.ConvertToPeriodic (false);
 // getting the maximum deviation of the new surface from the initial surface
-Standard_Real aMaxDist = aConvSurf.Gap();
+double aMaxDist = aConvSurf.Gap();
 ~~~~
 
 @subsubsection occt_shg_4_4_9 Unify Same Domain
@@ -1672,7 +1672,7 @@ The example of the usage is given below:
  TopoDS_Shape aResult = aTool.Shape();
  // Let theSh1 as a part of theSh
  // get the new (probably unified) shape form the theSh1
- TopoDS_Shape aResSh1 = aTool.Generated (theSh1);
+ TopoDS_Shape aResSh1 = aTool.History().Modified (theSh1);
 ~~~~
 
 @section occt_shg_5_ Auxiliary tools for repairing, analysis and upgrading
@@ -1686,9 +1686,9 @@ Requests may be applied as *Oriented* (i.e. only to an item with the same orient
 Then these requests may be applied to any shape, which may contain one or more of these individual shapes.
 
 This tool has a flag for taking the location of shapes into account (for keeping the structure of assemblies) (*ModeConsiderLocation*).
-If this mode is equal to Standard_True, the shared shapes with locations will be kept.
-If this mode is equal to Standard_False, some different shapes will be produced from one shape with different locations after rebuilding.
-By default, this mode is equal to Standard_False.
+If this mode is equal to true, the shared shapes with locations will be kept.
+If this mode is equal to false, some different shapes will be produced from one shape with different locations after rebuilding.
+By default, this mode is equal to false.
 
 To use this tool for the reconstruction of shapes it is necessary to take the following steps:
 1. Create this tool and use method *Apply()* for its initialization by the initial shape.
@@ -1711,15 +1711,15 @@ They differ only in queries of statuses in the *ShapeBuild_ReShape* class.
 Let us use the tool to get the result shape after modification of sub-shapes of the initial shape:
 
 ~~~~{.cpp}
-TopoDS_Shape theInitialShape = ...;
+TopoDS_Shape anInitialShape = ...;
 // creation of a rebuilding tool
-Handle(ShapeBuild_ReShape) aContext = new ShapeBuild_ReShape();
+occ::handle<ShapeBuild_ReShape> aContext = new ShapeBuild_ReShape();
 
 // next step is optional; it can be used for keeping the assembly structure
 aContext->ModeConsiderLocation = true;
 
 // initialization of this tool by the initial shape
-aContext->Apply (theInitialShape);
+aContext->Apply (anInitialShape);
 ...
 // getting the intermediate result for replacing theSubshape1 with the modified theNewSubshape1
 TopoDS_Shape aTempSubshape1 = aContext->Apply (theSubshape1);
@@ -1732,7 +1732,7 @@ TopoDS_Shape aTempSubshape2 = aContext->Apply (theSubshape2);
 aContext->Remove (aTempSubshape2);
 
 // getting the result and the history of modification
-TopoDS_Shape aResultShape = aContext->Apply (theInitialShape);
+TopoDS_Shape aResultShape = aContext->Apply (anInitialShape);
 
 // getting the resulting sub-shape from the theSubshape1 of the initial shape
 TopoDS_Shape aResultSubshape1 = aContext->Apply (theSubshape1);
@@ -1740,7 +1740,7 @@ TopoDS_Shape aResultSubshape1 = aContext->Apply (theSubshape1);
 
 @subsection occt_shg_5_2 Status definition
 
-*ShapExtend_Status* is used to report the status after executing some methods that can either fail, do something, or do nothing.
+*ShapeExtend_Status* is used to report the status after executing some methods that can either fail, do something, or do nothing.
 The status is a set of flags *DONEi* and *FAILi*.
 Any combination of them can be set at the same time. For exploring the status, enumeration is used.
 
@@ -1771,13 +1771,13 @@ This class also provides a method to check if the edge in the wire is a seam (if
 Let us remove edges from the wire and define whether it is seam edge:
 ~~~~{.cpp}
 TopoDS_Wire theInitWire = ...;
-Handle(ShapeExtend_Wire) anExtendWire = new ShapeExtend_Wire (theInitWire);
+occ::handle<ShapeExtend_WireData> anExtendWire = new ShapeExtend_WireData (theInitWire);
 
 // Removing edge theEdge1 from the wire
-Standard_Integer anEdge1Index = anExtendWire->Index (theEdge1);
+int anEdge1Index = anExtendWire->Index (theEdge1);
 anExtendWire.Remove (anEdge1Index);
 // Definition of whether theEdge2 is a seam edge
-Standard_Integer anEdge2Index = anExtendWire->Index (theEdge2);
+int anEdge2Index = anExtendWire->Index (theEdge2);
 anExtendWire->IsSeam (anEdge2Index);
 ~~~~
 
@@ -1798,20 +1798,20 @@ Messages are added to the Maps (stored as a field) that can be used, for instanc
 Let us send and get a message attached to object:
 
 ~~~~{.cpp}
-Handle(ShapeExtend_MsgRegistrator) aMsgReg = new ShapeExtend_MsgRegistrator();
+occ::handle<ShapeExtend_MsgRegistrator> aMsgReg = new ShapeExtend_MsgRegistrator();
 // attaches messages to an object (shape or entity)
 Message_Msg theMsg = ...;
-TopoDS_Shape theShape1 = ...;
-aMsgReg->Send (theShape1, theMsg, Message_WARNING);
-Handle(Standard_Transient) theEnt = ...;
+TopoDS_Shape aShape1 = ...;
+aMsgReg->Send (aShape1, theMsg, Message_WARNING);
+occ::handle<Standard_Transient> theEnt = ...;
 aMsgReg->Send (theEnt, theMsg, Message_WARNING);
 
 // get messages attached to shape
-const ShapeExtend_DataMapOfShapeListOfMsg& aMsgMap = aMsgReg->MapShape();
-if (aMsgMap.IsBound (theShape1))
+const NCollection_DataMap<TopoDS_Shape, Message_ListOfMsg, TopTools_ShapeMapHasher>& aMsgMap = aMsgReg->MapShape();
+if (aMsgMap.IsBound (aShape1))
 {
-  const Message_ListOfMsg& aMsgList = aMsgMap.Find (theShape1);
-  for (Message_ListIteratorOfListOfMsg aMsgIter (aMsgList); aMsgIter.More(); aMsgIter.Next())
+  const NCollection_List<Message_Msg>& aMsgList = aMsgMap.Find (aShape1);
+  for (NCollection_List<Message_Msg>::Iterator aMsgIter (aMsgList); aMsgIter.More(); aMsgIter.Next())
   {
     Message_Msg aMsg = aMsgIter.Value();
   }
@@ -1834,7 +1834,7 @@ XSDRAWIGES.cxx
   MoniTool_Timer::ClearTimers();
   ...
   MoniTool_TimerSentry aTimeSentry ("IGES_LoadFile");
-  Standard_Integer aStatus = aReader.LoadFile (theFilePath.ToCString());
+  int aStatus = aReader.LoadFile (theFilePath.ToCString());
   aTimeSentry.Stop();
   ...
   MoniTool_Timer::DumpTimers (std::cout);
@@ -1844,9 +1844,9 @@ IGESBRep_Reader.cxx
   ...
   #include <MoniTool_TimerSentry.hxx>
   ...
-  Standard_Integer aNbEntries = theModel->NbEntities();
+  int aNbEntries = theModel->NbEntities();
   ...
-  for (Standard_Integer i = 1; i<= aNbEntries; ++i)
+  for (int i = 1; i<= aNbEntries; ++i)
   {
     MoniTool_TimerSentry aTimeSentry ("IGESToBRep_Transfer");
     ...
@@ -1879,12 +1879,12 @@ The main function *XSAlgo_AlgoContainer::ProcessShape()* does shape processing w
 This function is used in the following way:
 
 ~~~~{.cpp}
-TopoDS_Shape theShape = ...;
-Standard_Real thePrec = ...;
-Standard_Real theMaxTol = ...;
+TopoDS_Shape aShape = ...;
+double aPrec = ...;
+double aMaxTol = ...;
 
-Handle(Standard_Transient) anInfo;
-TopoDS_Shape aResult = XSAlgo::AlgoContainer()->ProcessShape (theShape, thePrec, theMaxTol,
+occ::handle<Standard_Transient> anInfo;
+TopoDS_Shape aResult = XSAlgo::AlgoContainer()->ProcessShape (aShape, aPrec, aMaxTol,
                                                               "Name of ResourceFile", "NameSequence", anInfo);
 ~~~~
 
@@ -1902,19 +1902,19 @@ Let us create a custom sequence of operations:
   where *Tolerance* is the name of the parameter and 0.01 is its value.
 3. Add the following string into *void ShapeProcess_OperLibrary::Init()*:
 ~~~~{.cpp}
-  ShapeProcess::RegisterOperator (MyOper, new ShapeProcess_UOperator (myFunction));
+  ShapeProcess::RegisterOperator ("MyOper", new ShapeProcess_UOperator (myFunction));
 ~~~~
   where *myFunction* is a function which implements the operation.
 4. Create this function in *ShapeProcess_OperLibrary* as follows:
 ~~~~{.cpp}
-static bool myFunction (const Handle(ShapeProcess_Context)& theContext)
+static bool myFunction (const occ::handle<ShapeProcess_Context>& theContext)
 {
-  Handle(ShapeProcess_ShapeContext) aCtx = Handle(ShapeProcess_ShapeContext)::DownCast (theContext);
+  occ::handle<ShapeProcess_ShapeContext> aCtx = occ::down_cast<ShapeProcess_ShapeContext>(theContext);
   if (aCtx.IsNull()) { return false; }
   TopoDS_Shape aShape = aCtx->Result();
   // receive our parameter:
-  Standard_Real aToler = 0.0;
-  aCtx->GetReal (Tolerance, aToler);
+  double aToler = 0.0;
+  aCtx->GetReal ("Tolerance", aToler);
 ~~~~
 5. Make the necessary operations with *aShape* using the received value of parameter *Tolerance* from the resource file.
 ~~~~{.cpp}
@@ -2208,7 +2208,7 @@ Your message string goes here
 
 A custom file can be loaded into memory using the method *Message_MsgFile::LoadFile*, taking as an argument the path to your file as in the example below:
 ~~~~{.cpp}
-Standard_CString aMsgFilePath = "(path)/sample.file";
+const char* aMsgFilePath = "(path)/sample.file";
 Message_MsgFile::LoadFile (aMsgFilePath);
 ~~~~
 

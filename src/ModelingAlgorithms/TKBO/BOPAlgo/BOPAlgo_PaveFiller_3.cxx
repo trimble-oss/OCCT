@@ -26,7 +26,7 @@
 #include <NCollection_Map.hxx>
 #include <BOPDS_PaveBlock.hxx>
 #include <BOPDS_Pave.hxx>
-#include <NCollection_Vector.hxx>
+#include <NCollection_DynamicArray.hxx>
 #include <BOPTools_AlgoTools.hxx>
 #include <BOPTools_Parallel.hxx>
 #include <BndLib_Add3dCurve.hxx>
@@ -138,7 +138,7 @@ protected:
 
 //
 //=======================================================================
-typedef NCollection_Vector<BOPAlgo_EdgeEdge> BOPAlgo_VectorOfEdgeEdge;
+typedef NCollection_DynamicArray<BOPAlgo_EdgeEdge> BOPAlgo_VectorOfEdgeEdge;
 
 //=================================================================================================
 
@@ -175,7 +175,7 @@ void BOPAlgo_PaveFiller::PerformEE(const Message_ProgressRange& theRange)
                                    aMVCPB(100, aAllocator);
   BOPAlgo_DataMapOfPaveBlockBndBox aDMPBBox(100, aAllocator);
   //
-  NCollection_Vector<BOPDS_InterfEE>& aEEs = myDS->InterfEE();
+  NCollection_DynamicArray<BOPDS_InterfEE>& aEEs = myDS->InterfEE();
   aEEs.SetIncrement(iSize);
   //
   for (; myIterator->More(); myIterator->Next())
@@ -410,7 +410,9 @@ void BOPAlgo_PaveFiller::PerformEE(const Message_ProgressRange& theRange)
               occ::handle<BOPDS_PaveBlock>& aPB = (j < 2) ? aPB2 : aPB1;
               bIsOnPave[j]                      = ForceInterfVE(nV[j], aPB, aMEdges);
               if (bIsOnPave[j])
+              {
                 isVExists = true;
+              }
             }
           }
 
@@ -428,8 +430,10 @@ void BOPAlgo_PaveFiller::PerformEE(const Message_ProgressRange& theRange)
             const gp_Pnt aPOnE1 = BRepAdaptor_Curve(aE1).Value(aT1);
             const gp_Pnt aPOnE2 = BRepAdaptor_Curve(aE2).Value(aT2);
             if (aPOnE1.Distance(aPOnE2) > Precision::Intersection())
+            {
               // No intersection point
               continue;
+            }
 
             // Real intersection is present.
             // Update the existing vertex to cover the intersection point.
@@ -569,9 +573,9 @@ void BOPAlgo_PaveFiller::PerformEE(const Message_ProgressRange& theRange)
     int aNbV = aMVCPB.Extent();
     for (i = 1; i <= aNbV; ++i)
     {
-      occ::handle<BOPDS_PaveBlock>    aPB1, aPB2;
-      const BOPDS_CoupleOfPaveBlocks& aCPB = aMVCPB.FindFromIndex(i);
-      aCPB.PaveBlocks(aPB1, aPB2);
+      const BOPDS_CoupleOfPaveBlocks&     aCPB = aMVCPB.FindFromIndex(i);
+      const occ::handle<BOPDS_PaveBlock>& aPB1 = aCPB.PaveBlock1();
+      const occ::handle<BOPDS_PaveBlock>& aPB2 = aCPB.PaveBlock2();
       //
       aMEdges.Remove(aPB1->OriginalEdge());
       aMEdges.Remove(aPB2->OriginalEdge());
@@ -608,8 +612,8 @@ void BOPAlgo_PaveFiller::PerformNewVertices(
   TreatNewVertices(theMVCPB, aImages);
   //
   // 2. Add new vertices to myDS and connect indices to CPB structure
-  NCollection_Vector<BOPDS_InterfEE>& aEEs = myDS->InterfEE();
-  NCollection_Vector<BOPDS_InterfEF>& aEFs = myDS->InterfEF();
+  NCollection_DynamicArray<BOPDS_InterfEE>& aEEs = myDS->InterfEE();
+  NCollection_DynamicArray<BOPDS_InterfEF>& aEFs = myDS->InterfEF();
   //
   // 4. Compute Extra Paves and split Pave blocks by the Extra paves
   Message_ProgressScope aPS(theRange, nullptr, 2);
@@ -661,8 +665,9 @@ void BOPAlgo_PaveFiller::PerformNewVertices(
     const BOPDS_CoupleOfPaveBlocks& aCPB = theMVCPB.FindFromIndex(i);
     int                             iV   = aCPB.Index();
     //
-    occ::handle<BOPDS_PaveBlock> aPB[2];
-    aCPB.PaveBlocks(aPB[0], aPB[1]);
+    const occ::handle<BOPDS_PaveBlock>& aPB1  = aCPB.PaveBlock1();
+    const occ::handle<BOPDS_PaveBlock>& aPB2  = aCPB.PaveBlock2();
+    const occ::handle<BOPDS_PaveBlock>  aPB[] = {aPB1, aPB2};
     for (int j = 0; j < 2; ++j)
     {
       NCollection_List<int>* pLI = aMPBLI.ChangeSeek(aPB[j]);
@@ -738,7 +743,9 @@ void BOPAlgo_PaveFiller::FillShrunkData(occ::handle<BOPDS_PaveBlock>& thePB)
   {
     nE = thePB->OriginalEdge();
     if (nE < 0)
+    {
       return;
+    }
   }
 
   const TopoDS_Edge& aE = (*(TopoDS_Edge*)(&myDS->Shape(nE)));
@@ -786,9 +793,13 @@ void BOPAlgo_PaveFiller::AnalyzeShrunkData(const occ::handle<BOPDS_PaveBlock>& t
     if (!theSR.IsDone())
     {
       if (bWholeEdge)
+      {
         AddWarning(new BOPAlgo_AlertTooSmallEdge(aWarnShape));
+      }
       else
+      {
         AddWarning(new BOPAlgo_AlertBadPositioning(aWarnShape));
+      }
       double aTS1, aTS2;
       theSR.ShrunkRange(aTS1, aTS2);
       thePB->SetShrunkData(aTS1, aTS2, Bnd_Box(), false);
@@ -796,9 +807,13 @@ void BOPAlgo_PaveFiller::AnalyzeShrunkData(const occ::handle<BOPDS_PaveBlock>& t
     }
     //
     if (bWholeEdge)
+    {
       AddWarning(new BOPAlgo_AlertNotSplittableEdge(aWarnShape));
+    }
     else
+    {
       AddWarning(new BOPAlgo_AlertBadPositioning(aWarnShape));
+    }
   }
   //
   double aTS1, aTS2;
@@ -855,7 +870,7 @@ bool BOPAlgo_PaveFiller::ForceInterfVE(const int                     nV,
     BOPDS_Pave aPave;
     //
     //
-    NCollection_Vector<BOPDS_InterfVE>& aVEs = myDS->InterfVE();
+    NCollection_DynamicArray<BOPDS_InterfVE>& aVEs = myDS->InterfVE();
     aVEs.SetIncrement(10);
     // 1
     BOPDS_InterfVE& aVE = aVEs.Appended();
@@ -946,7 +961,7 @@ void BOPAlgo_PaveFiller::UpdateVerticesOfCB()
   // Fence map to avoid checking same Common block twice
   NCollection_Map<occ::handle<BOPDS_PaveBlock>> aMPBFence;
 
-  NCollection_Vector<NCollection_List<occ::handle<BOPDS_PaveBlock>>>& aPBP =
+  NCollection_DynamicArray<NCollection_List<occ::handle<BOPDS_PaveBlock>>>& aPBP =
     myDS->ChangePaveBlocksPool();
   const int aNbPBP = aPBP.Length();
   for (int i = 0; i < aNbPBP; ++i)
@@ -957,11 +972,15 @@ void BOPAlgo_PaveFiller::UpdateVerticesOfCB()
     {
       const occ::handle<BOPDS_CommonBlock>& aCB = myDS->CommonBlock(itPB.Value());
       if (aCB.IsNull())
+      {
         continue;
+      }
 
       const occ::handle<BOPDS_PaveBlock>& aPBR = aCB->PaveBlock1();
       if (!aMPBFence.Add(aPBR))
+      {
         continue;
+      }
 
       double aTolCB = aCB->Tolerance();
       if (aTolCB > 0.)
@@ -993,7 +1012,9 @@ void BOPAlgo_PaveFiller::ForceInterfEE(const Message_ProgressRange& theRange)
     if (aSI.ShapeType() == TopAbs_VERTEX)
     {
       if (myDS->HasInterf(i))
+      {
         myDS->InitPaveBlocksForVertex(i);
+      }
     }
     if (UserBreak(aPSOuter))
     {
@@ -1012,16 +1033,22 @@ void BOPAlgo_PaveFiller::ForceInterfEE(const Message_ProgressRange& theRange)
   {
     const BOPDS_ShapeInfo& aSI = myDS->ShapeInfo(i);
     if (aSI.ShapeType() != TopAbs_EDGE)
+    {
       // Not an edge
       continue;
+    }
 
     if (!aSI.HasReference())
+    {
       // Edge has no pave blocks
       continue;
+    }
 
     if (aSI.HasFlag())
+    {
       // Degenerated edge
       continue;
+    }
     if (UserBreak(aPSOuter))
     {
       return;
@@ -1033,7 +1060,9 @@ void BOPAlgo_PaveFiller::ForceInterfEE(const Message_ProgressRange& theRange)
       const occ::handle<BOPDS_PaveBlock>& aPB  = aItLPB.Value();
       const occ::handle<BOPDS_PaveBlock>& aPBR = myDS->RealPaveBlock(aPB);
       if (!aMPBFence.Add(aPBR))
+      {
         continue;
+      }
 
       // Get indices
       int nV1, nV2;
@@ -1043,14 +1072,18 @@ void BOPAlgo_PaveFiller::ForceInterfEE(const Message_ProgressRange& theRange)
       BOPDS_Pair                                      aPair(nV1, nV2);
       NCollection_List<occ::handle<BOPDS_PaveBlock>>* pList = aPBMap.ChangeSeek(aPair);
       if (!pList)
+      {
         pList = &aPBMap(aPBMap.Add(aPair, NCollection_List<occ::handle<BOPDS_PaveBlock>>(anAlloc)));
+      }
       pList->Append(aPBR);
     }
   }
 
   int aNbPB = aPBMap.Extent();
   if (!aNbPB)
+  {
     return;
+  }
 
   const bool bSICheckMode = (myArguments.Extent() == 1);
 
@@ -1065,7 +1098,9 @@ void BOPAlgo_PaveFiller::ForceInterfEE(const Message_ProgressRange& theRange)
     }
     const NCollection_List<occ::handle<BOPDS_PaveBlock>>& aLPB = aPBMap(i);
     if (aLPB.Extent() < 2)
+    {
       continue;
+    }
 
     const BOPDS_Pair& aPair = aPBMap.FindKey(i);
     int               nV1, nV2;
@@ -1098,7 +1133,9 @@ void BOPAlgo_PaveFiller::ForceInterfEE(const Message_ProgressRange& theRange)
       gp_Vec            aVTgt1;
       aBAC1.D1((aT11 + aT12) * 0.5, aPm, aVTgt1);
       if (aVTgt1.SquareMagnitude() < gp::Resolution())
+      {
         continue;
+      }
       aVTgt1.Normalize();
 
       NCollection_List<occ::handle<BOPDS_PaveBlock>>::Iterator aItLPB2 = aItLPB1;
@@ -1117,14 +1154,18 @@ void BOPAlgo_PaveFiller::ForceInterfEE(const Message_ProgressRange& theRange)
           // they came from the same argument
           if ((!myDS->IsNewShape(nV1) && (myDS->Rank(nV1) == iR1))
               || (!myDS->IsNewShape(nV2) && (myDS->Rank(nV2) == iR2)))
+          {
             continue;
+          }
         }
 
         // Check that the Pave blocks do not form the Common block already
         if (!aCB1.IsNull() && !aCB2.IsNull())
         {
           if (aCB1 == aCB2)
+          {
             continue;
+          }
         }
 
         const TopoDS_Edge& aE2 = TopoDS::Edge(myDS->Shape(nE2));
@@ -1142,18 +1183,24 @@ void BOPAlgo_PaveFiller::ForceInterfEE(const Message_ProgressRange& theRange)
             GeomAPI_ProjectPointOnCurve& aProjPC = myContext->ProjPC(aE2);
             aProjPC.Perform(aPm);
             if (!aProjPC.NbPoints())
+            {
               continue;
+            }
 
             gp_Pnt aPm2;
             gp_Vec aVTgt2;
             aBAC2.D1(aProjPC.LowerDistanceParameter(), aPm2, aVTgt2);
             if (aVTgt2.SquareMagnitude() < gp::Resolution())
+            {
               continue;
+            }
 
             // The angle should be close to zero
             double aCos = aVTgt1.Dot(aVTgt2.Normalized());
             if (std::abs(aCos) < 0.9063)
+            {
               bUseAddTol = false;
+            }
           }
         }
 
@@ -1179,7 +1226,9 @@ void BOPAlgo_PaveFiller::ForceInterfEE(const Message_ProgressRange& theRange)
 
   int aNbPairs = aVEdgeEdge.Length();
   if (!aNbPairs)
+  {
     return;
+  }
 
   // close preparation step
   aPSOuter.Next(0.7);
@@ -1201,9 +1250,11 @@ void BOPAlgo_PaveFiller::ForceInterfEE(const Message_ProgressRange& theRange)
   {
     return;
   }
-  NCollection_Vector<BOPDS_InterfEE>& aEEs = myDS->InterfEE();
+  NCollection_DynamicArray<BOPDS_InterfEE>& aEEs = myDS->InterfEE();
   if (aEEs.IsEmpty())
+  {
     aEEs.SetIncrement(10);
+  }
 
   // Analyze the results of intersection looking for TopAbs_EDGE
   // intersection type only.
@@ -1229,11 +1280,15 @@ void BOPAlgo_PaveFiller::ForceInterfEE(const Message_ProgressRange& theRange)
 
     const NCollection_Sequence<IntTools_CommonPrt>& aCParts = anEdgeEdge.CommonParts();
     if (aCParts.Length() != 1)
+    {
       continue;
+    }
 
     const IntTools_CommonPrt& aCP = aCParts(1);
     if (aCP.Type() != TopAbs_EDGE)
+    {
       continue;
+    }
 
     occ::handle<BOPDS_PaveBlock> aPB[] = {anEdgeEdge.PaveBlock1(), anEdgeEdge.PaveBlock2()};
     const int                    nE1   = aPB[0]->OriginalEdge();
@@ -1263,10 +1318,12 @@ void BOPAlgo_PaveFiller::ForceInterfEE(const Message_ProgressRange& theRange)
           myDS->CommonBlock(aPB[j])->PaveBlocks();
         NCollection_List<occ::handle<BOPDS_PaveBlock>>::Iterator aItLPB(aLPBCB);
         for (; aItLPB.More(); aItLPB.Next())
+        {
           BOPAlgo_Tools::FillMap<occ::handle<BOPDS_PaveBlock>>(aPB[j],
                                                                aItLPB.Value(),
                                                                aMPBLPB,
                                                                anAlloc);
+        }
       }
     }
     BOPAlgo_Tools::FillMap<occ::handle<BOPDS_PaveBlock>>(aPB[0], aPB[1], aMPBLPB, anAlloc);

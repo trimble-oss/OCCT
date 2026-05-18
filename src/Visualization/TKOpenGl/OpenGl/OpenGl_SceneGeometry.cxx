@@ -33,10 +33,8 @@ static const BVH_Vec4f ZERO_VEC_4F;
 
 IMPLEMENT_STANDARD_RTTIEXT(OpenGl_TriangleSet, OpenGl_BVHTriangulation3f)
 
-// =======================================================================
-// function : OpenGl_RaytraceMaterial
-// purpose  : Creates new default material
-// =======================================================================
+//=================================================================================================
+
 OpenGl_RaytraceMaterial::OpenGl_RaytraceMaterial()
     : Ambient(ZERO_VEC_4F),
       Diffuse(ZERO_VEC_4F),
@@ -48,10 +46,8 @@ OpenGl_RaytraceMaterial::OpenGl_RaytraceMaterial()
 {
 }
 
-// =======================================================================
-// function : OpenGl_RaytraceLight
-// purpose  : Creates new light source
-// =======================================================================
+//=================================================================================================
+
 OpenGl_RaytraceLight::OpenGl_RaytraceLight(const BVH_Vec4f& theEmission,
                                            const BVH_Vec4f& thePosition)
     : Emission(theEmission),
@@ -99,10 +95,8 @@ float OpenGl_TriangleSet::Center(const int theIndex, const int theAxis) const
          * 0.5f;
 }
 
-// =======================================================================
-// function : Box
-// purpose  : Returns AABB of primitive set
-// =======================================================================
+//=================================================================================================
+
 OpenGl_TriangleSet::BVH_BoxNt OpenGl_TriangleSet::Box() const
 {
   BVH_BoxNt                      aBox = BVH_PrimitiveSet<float, 3>::Box();
@@ -144,22 +138,14 @@ OpenGl_TriangleSet::OpenGl_TriangleSet(const size_t                             
 {
 }
 
-// =======================================================================
-// function : Clear
-// purpose  : Clears ray-tracing geometry
-// =======================================================================
+//=================================================================================================
+
 void OpenGl_RaytraceGeometry::Clear()
 {
-  BVH_Geometry<float, 3>::BVH_Geometry::Clear();
+  BVH_ObjectSet<float, 3>::Clear();
 
-  std::vector<OpenGl_RaytraceLight, NCollection_OccAllocator<OpenGl_RaytraceLight>> anEmptySources;
-
-  Sources.swap(anEmptySources);
-
-  std::vector<OpenGl_RaytraceMaterial, NCollection_OccAllocator<OpenGl_RaytraceMaterial>>
-    anEmptyMaterials;
-
-  Materials.swap(anEmptyMaterials);
+  Sources.Clear(true);
+  Materials.Clear(true);
 }
 
 struct OpenGL_BVHParallelBuilder
@@ -178,7 +164,9 @@ struct OpenGL_BVHParallelBuilder
       Set->Objects().ChangeValue(static_cast<int>(theObjectIdx)).operator->());
 
     if (aTriangleSet != nullptr)
+    {
       aTriangleSet->QuadBVH();
+    }
   }
 };
 
@@ -272,7 +260,7 @@ bool OpenGl_RaytraceGeometry::ProcessAcceleration()
       const int anObjectIdx = aBVH->BegPrimitive(aNodeIdx);
 
       Standard_ASSERT_RETURN(
-        anObjectIdx < myObjects.Size(),
+        anObjectIdx < myObjects.Length(),
         "Error! Invalid leaf node in high-level BVH (contains out-of-range object)",
         false);
 
@@ -287,8 +275,8 @@ bool OpenGl_RaytraceGeometry::ProcessAcceleration()
                                                    aVerticesOffset,
                                                    aElementsOffset);
 
-      aVerticesOffset += static_cast<int>(aTriangleSet->Vertices.size());
-      aElementsOffset += static_cast<int>(aTriangleSet->Elements.size());
+      aVerticesOffset += static_cast<int>(aTriangleSet->Vertices.Size());
+      aElementsOffset += static_cast<int>(aTriangleSet->Elements.Size());
 
       aBvhNodesOffset += aTriangleSet->QuadBVH()->Length();
     }
@@ -326,9 +314,11 @@ int OpenGl_RaytraceGeometry::AccelerationOffset(int theNodeIdx)
   const QuadBvhHandle& aBVH = QuadBVH();
 
   if (theNodeIdx >= aBVH->Length() || !aBVH->IsOuter(theNodeIdx))
+  {
     return INVALID_OFFSET;
+  }
 
-  return aBVH->NodeInfoBuffer().at(theNodeIdx).y();
+  return aBVH->NodeInfoBuffer().Value(theNodeIdx).y();
 }
 
 // =======================================================================
@@ -340,9 +330,11 @@ int OpenGl_RaytraceGeometry::VerticesOffset(int theNodeIdx)
   const QuadBvhHandle& aBVH = QuadBVH();
 
   if (theNodeIdx >= aBVH->Length() || !aBVH->IsOuter(theNodeIdx))
+  {
     return INVALID_OFFSET;
+  }
 
-  return aBVH->NodeInfoBuffer().at(theNodeIdx).z();
+  return aBVH->NodeInfoBuffer().Value(theNodeIdx).z();
 }
 
 // =======================================================================
@@ -354,9 +346,11 @@ int OpenGl_RaytraceGeometry::ElementsOffset(int theNodeIdx)
   const QuadBvhHandle& aBVH = QuadBVH();
 
   if (theNodeIdx >= aBVH->Length() || !aBVH->IsOuter(theNodeIdx))
+  {
     return INVALID_OFFSET;
+  }
 
-  return aBVH->NodeInfoBuffer().at(theNodeIdx).w();
+  return aBVH->NodeInfoBuffer().Value(theNodeIdx).w();
 }
 
 // =======================================================================
@@ -368,13 +362,17 @@ OpenGl_TriangleSet* OpenGl_RaytraceGeometry::TriangleSet(int theNodeIdx)
   const QuadBvhHandle& aBVH = QuadBVH();
 
   if (theNodeIdx >= aBVH->Length() || !aBVH->IsOuter(theNodeIdx))
+  {
     return nullptr;
+  }
 
-  if (aBVH->NodeInfoBuffer().at(theNodeIdx).x() > myObjects.Size())
+  if (aBVH->NodeInfoBuffer().Value(theNodeIdx).x() > myObjects.Length())
+  {
     return nullptr;
+  }
 
   return dynamic_cast<OpenGl_TriangleSet*>(
-    myObjects(aBVH->NodeInfoBuffer().at(theNodeIdx).x() - 1).get());
+    myObjects(aBVH->NodeInfoBuffer().Value(theNodeIdx).x() - 1).get());
 }
 
 // =======================================================================
@@ -389,7 +387,7 @@ bool OpenGl_RaytraceGeometry::AcquireTextures(const occ::handle<OpenGl_Context>&
   }
 
   int aTexIter = 0;
-  for (NCollection_Vector<occ::handle<OpenGl_Texture>>::Iterator aTexSrcIter(myTextures);
+  for (NCollection_DynamicArray<occ::handle<OpenGl_Texture>>::Iterator aTexSrcIter(myTextures);
        aTexSrcIter.More();
        aTexSrcIter.Next(), ++aTexIter)
   {
@@ -420,7 +418,7 @@ bool OpenGl_RaytraceGeometry::AcquireTextures(const occ::handle<OpenGl_Context>&
           GL_DEBUG_SEVERITY_HIGH,
           TCollection_AsciiString("Error: Failed to get 64-bit handle of OpenGL texture ")
             + OpenGl_Context::FormatGlError(anErr));
-        myTextureHandles.clear();
+        myTextureHandles.Clear();
         return false;
       }
     }
@@ -454,7 +452,7 @@ bool OpenGl_RaytraceGeometry::ReleaseTextures(const occ::handle<OpenGl_Context>&
     return true;
   }
 
-  for (size_t aTexIter = 0; aTexIter < myTextureHandles.size(); ++aTexIter)
+  for (size_t aTexIter = 0; aTexIter < myTextureHandles.Size(); ++aTexIter)
   {
     theContext->arbTexBindless->glMakeTextureHandleNonResidentARB(myTextureHandles[aTexIter]);
     const GLenum anErr = theContext->core11fwd->glGetError();
@@ -485,7 +483,7 @@ int OpenGl_RaytraceGeometry::AddTexture(const occ::handle<OpenGl_Texture>& theTe
     return -1;
   }
 
-  NCollection_Vector<occ::handle<OpenGl_Texture>>::iterator anIter =
+  NCollection_DynamicArray<occ::handle<OpenGl_Texture>>::iterator anIter =
     std::find(myTextures.begin(), myTextures.end(), theTexture);
 
   if (anIter == myTextures.end())
@@ -512,11 +510,11 @@ bool OpenGl_RaytraceGeometry::UpdateTextureHandles(const occ::handle<OpenGl_Cont
     return false;
   }
 
-  myTextureHandles.clear();
-  myTextureHandles.resize(myTextures.Size());
+  myTextureHandles.Clear();
+  myTextureHandles.Resize(myTextures.Size());
 
   int aTexIter = 0;
-  for (NCollection_Vector<occ::handle<OpenGl_Texture>>::Iterator aTexSrcIter(myTextures);
+  for (NCollection_DynamicArray<occ::handle<OpenGl_Texture>>::Iterator aTexSrcIter(myTextures);
        aTexSrcIter.More();
        aTexSrcIter.Next(), ++aTexIter)
   {
@@ -545,7 +543,7 @@ bool OpenGl_RaytraceGeometry::UpdateTextureHandles(const occ::handle<OpenGl_Cont
         GL_DEBUG_SEVERITY_HIGH,
         TCollection_AsciiString("Error: Failed to get 64-bit handle of OpenGL texture ")
           + OpenGl_Context::FormatGlError(anErr));
-      myTextureHandles.clear();
+      myTextureHandles.Clear();
       return false;
     }
   }

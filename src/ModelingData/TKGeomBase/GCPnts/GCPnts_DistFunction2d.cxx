@@ -41,14 +41,15 @@ GCPnts_DistFunction2d::GCPnts_DistFunction2d(const Adaptor2d_Curve2d& theCurve,
 bool GCPnts_DistFunction2d::Value(const double X, double& F)
 {
   if (X < myU1 || X > myU2)
+  {
     return false;
+  }
   //
   gp_Pnt2d aP2d = myCurve.Value(X);
   F             = -myLin.SquareDistance(aP2d);
   return true;
 }
 
-//
 //=================================================================================================
 
 GCPnts_DistFunction2dMV::GCPnts_DistFunction2dMV(GCPnts_DistFunction2d& theCurvLinDist)

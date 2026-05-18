@@ -14,10 +14,10 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-// Modified by MPS (june 96) : correction du trap dans le cas droite/Bezier
-// Modified by MPS (mai 97) : PRO 7598
-//                            tri des solutions pour eviter de rendre plusieurs
-//                            fois la meme solution
+// Modified by MPS (june 96) : fix for the trap in the case line/Bezier
+// Modified by MPS (may 97) : PRO 7598
+//                            sort solutions to avoid returning the same
+//                            solution multiple times
 
 #include <Adaptor3d_Curve.hxx>
 #include <Bnd_Range.hxx>
@@ -195,30 +195,54 @@ void Extrema_ExtCC::Perform()
   U22 = mySup[1];
 
   if (!Precision::IsInfinite(U11))
+  {
     myP1f = Extrema_CurveTool::Value(*myC[0], U11);
+  }
   if (!Precision::IsInfinite(U12))
+  {
     myP1l = Extrema_CurveTool::Value(*myC[0], U12);
+  }
   if (!Precision::IsInfinite(U21))
+  {
     myP2f = Extrema_CurveTool::Value(*myC[1], U21);
+  }
   if (!Precision::IsInfinite(U22))
+  {
     myP2l = Extrema_CurveTool::Value(*myC[1], U22);
+  }
 
   if (Precision::IsInfinite(U11) || Precision::IsInfinite(U21))
+  {
     mydist11 = RealLast();
+  }
   else
+  {
     mydist11 = myP1f.SquareDistance(myP2f);
+  }
   if (Precision::IsInfinite(U11) || Precision::IsInfinite(U22))
+  {
     mydist12 = RealLast();
+  }
   else
+  {
     mydist12 = myP1f.SquareDistance(myP2l);
+  }
   if (Precision::IsInfinite(U12) || Precision::IsInfinite(U21))
+  {
     mydist21 = RealLast();
+  }
   else
+  {
     mydist21 = myP1l.SquareDistance(myP2f);
+  }
   if (Precision::IsInfinite(U12) || Precision::IsInfinite(U22))
+  {
     mydist22 = RealLast();
+  }
   else
+  {
     mydist22 = myP1l.SquareDistance(myP2l);
+  }
 
   // Depending on the types of curves, the algorithm is chosen:
   //- _ExtElC, when one of the curves is a line and the other is elementary,
@@ -316,7 +340,9 @@ bool Extrema_ExtCC::IsParallel() const
 double Extrema_ExtCC::SquareDistance(const int N) const
 {
   if ((N < 1) || (N > NbExt()))
+  {
     throw Standard_OutOfRange();
+  }
   return mySqDist.Value(N);
 }
 
@@ -325,7 +351,9 @@ double Extrema_ExtCC::SquareDistance(const int N) const
 int Extrema_ExtCC::NbExt() const
 {
   if (!myDone)
+  {
     throw StdFail_NotDone();
+  }
   return mySqDist.Length();
 }
 
@@ -373,7 +401,9 @@ void Extrema_ExtCC::PrepareParallelResult(const double theUt11,
                                           const double theSqDist)
 {
   if (!myIsParallel)
+  {
     return;
+  }
 
   const GeomAbs_CurveType aType1 = Extrema_CurveTool::GetType(*myC[0]);
   const GeomAbs_CurveType aType2 = Extrema_CurveTool::GetType(*myC[1]);
@@ -447,9 +477,13 @@ void Extrema_ExtCC::PrepareParallelResult(const double theUt11,
       if (Precision::IsInfinite(theUt11))
       {
         if (isOpposite)
+        {
           aProjRng12.Add(Precision::Infinite());
+        }
         else
+        {
           aProjRng12.Add(-Precision::Infinite());
+        }
       }
       else
       {
@@ -461,9 +495,13 @@ void Extrema_ExtCC::PrepareParallelResult(const double theUt11,
       if (Precision::IsInfinite(theUt12))
       {
         if (isOpposite)
+        {
           aProjRng12.Add(-Precision::Infinite());
+        }
         else
+        {
           aProjRng12.Add(Precision::Infinite());
+        }
       }
       else
       {
@@ -815,7 +853,7 @@ void Extrema_ExtCC::PrepareResults(const Extrema_ExtElC& AlgExt,
       NbExt = AlgExt.NbExt();
       for (i = 1; i <= NbExt; i++)
       {
-        // Verification de la validite des parametres
+        // Verification of the validity of parameters
         AlgExt.Points(i, P1, P2);
         if (!theIsInverse)
         {

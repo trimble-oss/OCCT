@@ -43,7 +43,9 @@ TDocStd_Application::TDocStd_Application()
     : myIsDriverLoaded(true)
 {
   if (myMetaDataDriver.IsNull())
+  {
     myIsDriverLoaded = false;
+  }
 }
 
 //=================================================================================================
@@ -88,9 +90,13 @@ void TDocStd_Application::DefineFormat(const TCollection_AsciiString&           
   // set format ID in the drivers to allow them putting it in
   // the OCAF documents opened by these drivers
   if (!theReader.IsNull())
+  {
     theReader->SetFormat(theFormat);
+  }
   if (!theWriter.IsNull())
+  {
     theWriter->SetFormat(theFormat);
+  }
 
   // register drivers
   myReaders.Add(theFormat, theReader);
@@ -142,20 +148,25 @@ int TDocStd_Application::NbDocuments() const
 
 //=================================================================================================
 
-void TDocStd_Application::GetDocument(const int index, occ::handle<TDocStd_Document>& theDoc) const
+occ::handle<TDocStd_Document> TDocStd_Application::GetDocument(const int index) const
 {
-  CDF_DirectoryIterator it(myDirectory);
-  int                   current = 0;
-  for (; it.MoreDocument(); it.NextDocument())
+  int current = 0;
+  for (CDF_DirectoryIterator it(myDirectory); it.MoreDocument(); it.NextDocument())
   {
     current++;
     if (index == current)
     {
-      occ::handle<TDocStd_Document> D = occ::down_cast<TDocStd_Document>(it.Document());
-      theDoc                          = D;
-      return;
+      return occ::down_cast<TDocStd_Document>(it.Document());
     }
   }
+  return nullptr;
+}
+
+//=================================================================================================
+
+void TDocStd_Application::GetDocument(const int index, occ::handle<TDocStd_Document>& theDoc) const
+{
+  theDoc = GetDocument(index);
 }
 
 //=================================================================================================
@@ -218,7 +229,7 @@ int TDocStd_Application::IsInSession(const TCollection_ExtendedString& path) con
   occ::handle<TDocStd_Document> D;
   for (int i = 1; i <= nbdoc; i++)
   {
-    GetDocument(i, D);
+    D = GetDocument(i);
     if (D->IsSaved())
     {
       TCollection_ExtendedString unifiedDocPath(D->GetPath());
@@ -226,7 +237,9 @@ int TDocStd_Application::IsInSession(const TCollection_ExtendedString& path) con
       unifiedDocPath.ChangeAll('\\', '|');
 
       if (unifiedPath == unifiedDocPath)
+      {
         return i;
+      }
     }
   }
   return 0;
@@ -258,7 +271,9 @@ PCDM_ReaderStatus TDocStd_Application::Open(const TCollection_ExtendedString&   
     occ::handle<TDocStd_Document> D =
       occ::down_cast<TDocStd_Document>(Retrieve(directory, file, true, theFilter, theRange));
     if (theFilter.IsNull() || !theFilter->IsAppendMode())
+    {
       CDF_Application::Open(D);
+    }
     theDoc = D;
   }
   catch (Standard_Failure const& anException)
@@ -332,7 +347,9 @@ PCDM_StoreStatus TDocStd_Application::SaveAs(const occ::handle<TDocStd_Document>
     aMsg += directory;
     aMsg += " does not exist";
     if (!MessageDriver().IsNull())
+    {
       MessageDriver()->Send(aMsg.ToExtString(), Message_Fail);
+    }
     return storer.StoreStatus(); // CDF_SS_Failure;
   }
   storer.SetName(file);
@@ -350,9 +367,13 @@ PCDM_StoreStatus TDocStd_Application::SaveAs(const occ::handle<TDocStd_Document>
     }
   }
   if (storer.StoreStatus() == PCDM_SS_OK)
+  {
     theDoc->SetSaved();
+  }
   else if (!MessageDriver().IsNull())
+  {
     MessageDriver()->Send(storer.AssociatedStatusText(), Message_Fail);
+  }
 #ifdef OCCT_DEBUG
   std::cout << "TDocStd_Application::SaveAs(): The status = " << storer.StoreStatus() << std::endl;
 #endif
@@ -418,7 +439,9 @@ PCDM_StoreStatus TDocStd_Application::Save(const occ::handle<TDocStd_Document>& 
       }
     }
     if (storer.StoreStatus() == PCDM_SS_OK)
+    {
       D->SetSaved();
+    }
     status = storer.StoreStatus();
   }
   else
@@ -468,7 +491,9 @@ PCDM_StoreStatus TDocStd_Application::SaveAs(const occ::handle<TDocStd_Document>
       }
     }
     if (storer.StoreStatus() == PCDM_SS_OK)
+    {
       D->SetSaved();
+    }
     theStatusMessage = storer.AssociatedStatusText();
     aStatus          = storer.StoreStatus();
   }
@@ -544,7 +569,9 @@ PCDM_StoreStatus TDocStd_Application::Save(const occ::handle<TDocStd_Document>& 
       }
     }
     if (storer.StoreStatus() == PCDM_SS_OK)
+    {
       D->SetSaved();
+    }
     status           = storer.StoreStatus();
     theStatusMessage = storer.AssociatedStatusText();
   }

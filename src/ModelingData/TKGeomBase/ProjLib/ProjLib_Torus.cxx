@@ -54,17 +54,7 @@ void ProjLib_Torus::Init(const gp_Torus& To)
   isDone       = false;
 }
 
-//=======================================================================
-// function : EvalPnt2d / EvalDir2d
-// purpose  : returns the Projected Pnt / Dir in the parametrization range
-//           of myPlane.
-//           P is a point on a torus with the same Position as To,
-//           but with a major an minor radius equal to 1.
-//           ( in order to avoid to divide by Radius)
-//                / X = (1+cosV)*cosU        U = Atan(Y/X)
-//            P = | Y = (1+cosV)*sinU   ==>
-//                \ Z = sinV                 V = std::asin( Z)
-//=======================================================================
+//=================================================================================================
 
 static gp_Pnt2d EvalPnt2d(const gp_Vec& Ve, const gp_Torus& To)
 {
@@ -138,14 +128,18 @@ void ProjLib_Torus::Project(const gp_Circ& C)
     P1.SetY(V);
     P2.SetY(V);
     gp_Vec2d V2d(P1, P2);
-    // Normalement std::abs( P1.X() - P2.X()) = PI/2
-    // Si != PI/2, on a traverse la periode => On reverse la Direction
+    // Normally std::abs( P1.X() - P2.X()) = PI/2
+    // If != PI/2, we crossed the period => Reverse the Direction
     if (std::abs(P1.X() - P2.X()) > M_PI)
+    {
       V2d.Reverse();
+    }
 
     gp_Dir2d D2(V2d);
     if (P1.X() < 0)
+    {
       P1.SetX(2 * M_PI + P1.X());
+    }
     myLin = gp_Lin2d(P1, D2);
   }
   else
@@ -153,16 +147,20 @@ void ProjLib_Torus::Project(const gp_Circ& C)
     // Iso U  -> U = angle( Xt, OC)
     double U = Xt.AngleWithRef(OC, Xt ^ Yt);
     if (U < 0.)
+    {
       U += 2 * M_PI;
+    }
 
-    // Origine de la droite
+    // Origin of the line
     double V1 = OC.AngleWithRef(Xc, OC ^ Zt);
     if (V1 < 0.)
+    {
       V1 += 2 * M_PI;
+    }
 
     gp_Pnt2d P1(U, V1);
 
-    // Direction de la droite
+    // Direction of the line
     gp_Dir2d D2 = gp::DY2d();
     if (((OC ^ Zt) * (Xc ^ Yc)) < 0.)
     {

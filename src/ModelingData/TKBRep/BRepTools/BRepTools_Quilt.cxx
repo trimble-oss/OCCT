@@ -228,7 +228,7 @@ void BRepTools_Quilt::Add(const TopoDS_Shape& S)
         TopoDS_Iterator ite(W, false);
         double          UFirst, ULast;
 
-        // Reconstruction des wires.
+        // Reconstruction of wires.
 
         for (; ite.More(); ite.Next())
         {
@@ -247,11 +247,11 @@ void BRepTools_Quilt::Add(const TopoDS_Shape& S)
             }
             else
             {
-              // Si NE est REVERSED
-              // => les curve3d n ont pas la meme orientation.
-              // ( C est une convention cf BRepTools_Quilt.cdl. et la methode
-              // Bind.)
-              // => la PCurve de E sur F doit etre inversee.
+              // If NE is REVERSED
+              // => the 3D curves do not have the same orientation.
+              // (This is a convention, cf. BRepTools_Quilt.cdl and the Bind
+              // method.)
+              // => the PCurve of E on F must be reversed.
 
               OE                            = TopAbs::Reverse(OE);
               occ::handle<Geom2d_Curve> CE  = BRep_Tool::CurveOnSurface(E, F, UFirst, ULast);
@@ -353,7 +353,9 @@ bool BRepTools_Quilt::IsCopied(const TopoDS_Shape& S) const
     return !S.IsSame(myBounds.FindFromKey(S));
   }
   else
+  {
     return false;
+  }
 }
 
 //=================================================================================================
@@ -403,8 +405,10 @@ TopoDS_Shape BRepTools_Quilt::Shells() const
     const TopoDS_Shape& Shape = myBounds.FindFromIndex(ii); // it.Value();
     if (Shape.ShapeType() == TopAbs_FACE)
     {
-      for (TopExp_Explorer aExpEdg(Shape, TopAbs_EDGE); aExpEdg.More(); aExpEdg.Next()) // gka
+      for (TopExp_Explorer aExpEdg(Shape, TopAbs_EDGE); aExpEdg.More(); aExpEdg.Next())
+      { // gka
         EdgesFaces.Add(aExpEdg.Current());
+      }
 
       TopoDS_Shell       SH;
       TopAbs_Orientation NewO;
@@ -417,9 +421,13 @@ TopoDS_Shape BRepTools_Quilt::Shells() const
         {
           SH = TopoDS::Shell(M(E));
           if (SH.Orientation() == E.Orientation())
+          {
             NewO = TopAbs::Reverse(Shape.Orientation());
+          }
           else
+          {
             NewO = Shape.Orientation();
+          }
 
           MF.Bind(Shape, SH.Oriented(NewO));
           break;
@@ -456,7 +464,9 @@ TopoDS_Shape BRepTools_Quilt::Shells() const
             // Compare the orientation of E in SH and in oldshell.
             TopAbs_Orientation anOrien = E.Orientation();
             if (MF(Shape).Orientation() == TopAbs_REVERSED)
+            {
               anOrien = TopAbs::Reverse(anOrien);
+            }
 
             bool Rev = (anOrien == oldShell.Orientation());
             // if rev = True oldShell has to be reversed.
@@ -468,9 +478,13 @@ TopoDS_Shape BRepTools_Quilt::Shells() const
               TopAbs_Orientation NewOFo;
               // update the orientation of Fo in SH.
               if (Rev)
+              {
                 NewOFo = TopAbs::Reverse(MF(Fo).Orientation());
+              }
               else
+              {
                 NewOFo = MF(Fo).Orientation();
+              }
 
               MF.Bind(Fo, SH.Oriented(NewOFo));
               //	      B.Add  (SH.Oriented(TopAbs_FORWARD),Fo.Oriented(NewO));
@@ -486,16 +500,22 @@ TopoDS_Shape BRepTools_Quilt::Shells() const
               // TopTools_ShapeMapHasher>::Iterator itm(M);
               //		 itm.More(); ) {
               if (!M.IsBound(aexp.Current()))
+              {
                 continue;
+              }
               const TopoDS_Shape& ae = aexp.Current();
               TopoDS_Shape        as = M.Find(ae);
               if (as.IsSame(oldShell))
               {
                 // update the orientation of free edges in SH.
                 if (Rev)
+                {
                   NewO = TopAbs::Reverse(as.Orientation());
+                }
                 else
+                {
                   NewO = as.Orientation();
+                }
 
                 M.Bind(ae, SH.Oriented(NewO));
               }
@@ -506,10 +526,14 @@ TopoDS_Shape BRepTools_Quilt::Shells() const
           // Test if SH is always orientable.
           TopAbs_Orientation anOrien = E.Orientation();
           if (MF(Shape).Orientation() == TopAbs_REVERSED)
+          {
             anOrien = TopAbs::Reverse(anOrien);
+          }
 
           if (M(E).Orientation() == anOrien)
+          {
             SH.Orientable(false);
+          }
 
           // remove the edge from M (no more a free edge)
           M.UnBind(E);
@@ -518,11 +542,17 @@ TopoDS_Shape BRepTools_Quilt::Shells() const
         {
           NewO = E.Orientation();
           if (MF(Shape).Orientation() == TopAbs_REVERSED)
+          {
             NewO = TopAbs::Reverse(NewO);
+          }
           if (!E.IsNull())
+          {
             M.Bind(E, SH.Oriented(NewO));
+          }
           else
+          {
             continue;
+          }
         }
       }
 
@@ -530,7 +560,9 @@ TopoDS_Shape BRepTools_Quilt::Shells() const
       SH.Free(false);
     }
     else
+    {
       MapOtherShape.Add(Shape);
+    }
 
     // it.Next();
   }

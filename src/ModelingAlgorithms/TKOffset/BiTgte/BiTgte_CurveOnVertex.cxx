@@ -20,6 +20,7 @@
 #include <BRep_Tool.hxx>
 #include <Geom_BezierCurve.hxx>
 #include <Geom_BSplineCurve.hxx>
+#include <Geom_Curve.hxx>
 #include <gp_Circ.hxx>
 #include <gp_Elips.hxx>
 #include <gp_Hypr.hxx>
@@ -127,42 +128,35 @@ double BiTgte_CurveOnVertex::Period() const
 
 //=================================================================================================
 
-gp_Pnt BiTgte_CurveOnVertex::Value(const double) const
+gp_Pnt BiTgte_CurveOnVertex::EvalD0(const double) const
 {
   return myPnt;
 }
 
 //=================================================================================================
 
-void BiTgte_CurveOnVertex::D0(const double /*U*/, gp_Pnt& P) const
-{
-  P = myPnt;
-}
-
-//=================================================================================================
-
-void BiTgte_CurveOnVertex::D1(const double, gp_Pnt&, gp_Vec&) const
+Geom_Curve::ResD1 BiTgte_CurveOnVertex::EvalD1(const double) const
 {
   throw Standard_NotImplemented("BiTgte_CurveOnVertex");
 }
 
 //=================================================================================================
 
-void BiTgte_CurveOnVertex::D2(const double, gp_Pnt&, gp_Vec&, gp_Vec&) const
+Geom_Curve::ResD2 BiTgte_CurveOnVertex::EvalD2(const double) const
 {
   throw Standard_NotImplemented("BiTgte_CurveOnVertex");
 }
 
 //=================================================================================================
 
-void BiTgte_CurveOnVertex::D3(const double, gp_Pnt&, gp_Vec&, gp_Vec&, gp_Vec&) const
+Geom_Curve::ResD3 BiTgte_CurveOnVertex::EvalD3(const double) const
 {
   throw Standard_NotImplemented("BiTgte_CurveOnVertex");
 }
 
 //=================================================================================================
 
-gp_Vec BiTgte_CurveOnVertex::DN(const double, const int) const
+gp_Vec BiTgte_CurveOnVertex::EvalDN(const double, const int) const
 {
   throw Standard_NotImplemented("BiTgte_CurveOnVertex");
 }

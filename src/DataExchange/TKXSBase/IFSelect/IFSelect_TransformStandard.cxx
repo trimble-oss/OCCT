@@ -73,8 +73,12 @@ occ::handle<IFSelect_Modifier> IFSelect_TransformStandard::Modifier(const int nu
 int IFSelect_TransformStandard::ModifierRank(const occ::handle<IFSelect_Modifier>& modif) const
 {
   for (int i = themodifs.Length(); i >= 1; i--)
+  {
     if (modif == themodifs.Value(i))
+    {
       return i;
+    }
+  }
   return 0;
 }
 
@@ -82,11 +86,17 @@ bool IFSelect_TransformStandard::AddModifier(const occ::handle<IFSelect_Modifier
                                              const int                             atnum)
 {
   if (atnum < 0 || atnum > themodifs.Length())
+  {
     return false;
+  }
   if (atnum == 0)
+  {
     themodifs.Append(modif);
+  }
   else
+  {
     themodifs.InsertBefore(atnum, modif);
+  }
   return true;
 }
 
@@ -99,7 +109,9 @@ bool IFSelect_TransformStandard::RemoveModifier(const occ::handle<IFSelect_Modif
 bool IFSelect_TransformStandard::RemoveModifier(const int num)
 {
   if (num <= 0 || num > themodifs.Length())
+  {
     return false;
+  }
   themodifs.Remove(num);
   return true;
 }
@@ -114,7 +126,7 @@ bool IFSelect_TransformStandard::Perform(const Interface_Graph&                 
 {
   Interface_CopyTool TC(G.Model(), protocol);
   themap = TC.Control();
-  Copy(G, TC, newmod);
+  newmod = Copy(G, TC);
   return ApplyModifiers(G, protocol, TC, checks, newmod);
 }
 
@@ -122,18 +134,15 @@ void IFSelect_TransformStandard::Copy(const Interface_Graph&                 G,
                                       Interface_CopyTool&                    TC,
                                       occ::handle<Interface_InterfaceModel>& newmod) const
 {
-  if (CopyOption())
-    StandardCopy(G, TC, newmod);
-  else
-    OnTheSpot(G, TC, newmod);
+  newmod = Copy(G, TC);
 }
 
-void IFSelect_TransformStandard::StandardCopy(const Interface_Graph&                 G,
-                                              Interface_CopyTool&                    TC,
-                                              occ::handle<Interface_InterfaceModel>& newmod) const
+occ::handle<Interface_InterfaceModel> IFSelect_TransformStandard::StandardCopy(
+  const Interface_Graph& G,
+  Interface_CopyTool&    TC) const
 {
   const occ::handle<Interface_InterfaceModel>& original = G.Model();
-  newmod                                                = original->NewEmptyModel();
+  occ::handle<Interface_InterfaceModel>        newmod   = original->NewEmptyModel();
   TC.Clear();
   int                                   nb     = G.Size();
   occ::handle<NCollection_HArray1<int>> remain = new NCollection_HArray1<int>(0, nb + 1);
@@ -144,16 +153,39 @@ void IFSelect_TransformStandard::StandardCopy(const Interface_Graph&            
     TC.TransferEntity(original->Value(i));
   }
   TC.FillModel(newmod);
+  return newmod;
+}
+
+occ::handle<Interface_InterfaceModel> IFSelect_TransformStandard::Copy(const Interface_Graph& G,
+                                                                       Interface_CopyTool& TC) const
+{
+  return CopyOption() ? StandardCopy(G, TC) : OnTheSpot(G, TC);
+}
+
+void IFSelect_TransformStandard::StandardCopy(const Interface_Graph&                 G,
+                                              Interface_CopyTool&                    TC,
+                                              occ::handle<Interface_InterfaceModel>& newmod) const
+{
+  newmod = StandardCopy(G, TC);
+}
+
+occ::handle<Interface_InterfaceModel> IFSelect_TransformStandard::OnTheSpot(
+  const Interface_Graph& G,
+  Interface_CopyTool&    TC) const
+{
+  int nb = G.Size();
+  for (int i = 1; i <= nb; i++)
+  {
+    TC.Bind(G.Entity(i), G.Entity(i));
+  }
+  return G.Model();
 }
 
 void IFSelect_TransformStandard::OnTheSpot(const Interface_Graph&                 G,
                                            Interface_CopyTool&                    TC,
                                            occ::handle<Interface_InterfaceModel>& newmod) const
 {
-  int nb = G.Size();
-  for (int i = 1; i <= nb; i++)
-    TC.Bind(G.Entity(i), G.Entity(i));
-  newmod = G.Model();
+  newmod = OnTheSpot(G, TC);
 }
 
 bool IFSelect_TransformStandard::ApplyModifiers(const Interface_Graph&                 G,
@@ -172,7 +204,9 @@ bool IFSelect_TransformStandard::ApplyModifiers(const Interface_Graph&          
   {
     occ::handle<IFSelect_Modifier> unmod = Modifier(i);
     if (unmod->MayChangeGraph())
+    {
       chg = true;
+    }
 
     //    Apply this Modifier (nb : the Dispatch, we don't care about it)
     //    First, the Selection
@@ -182,14 +216,18 @@ bool IFSelect_TransformStandard::ApplyModifiers(const Interface_Graph&          
 
     occ::handle<IFSelect_Selection> sel = thesel;
     if (sel.IsNull())
+    {
       sel = unmod->Selection();
+    }
     if (!sel.IsNull())
     {
       Interface_EntityIterator entiter = sel->UniqueResult(G);
       ctx.Select(entiter);
     }
     if (ctx.IsForNone())
+    {
       continue;
+    }
     unmod->Perform(ctx, newmod, protocol, TC);
 
     //    Error Reporting
@@ -199,12 +237,12 @@ bool IFSelect_TransformStandard::ApplyModifiers(const Interface_Graph&          
     {
       checks.Merge(checklist);
       sout << "IFSelect_TransformStandard :  Messages from Modifier n0 " << i << " of " << nb
-           << std::endl;
+           << '\n';
       checklist.Print(sout, newmod, false);
     }
     if (!checklist.IsEmpty(true))
     {
-      sout << " --  Abandon TransformStandard  --" << std::endl;
+      sout << " --  Abandon TransformStandard  --" << '\n';
       res = false;
       break;
     }
@@ -212,7 +250,9 @@ bool IFSelect_TransformStandard::ApplyModifiers(const Interface_Graph&          
 
   //   Model not modified and Graph not modified: say it
   if (newmod == original && !chg)
+  {
     newmod.Nullify();
+  }
   return res;
 }
 
@@ -220,7 +260,9 @@ bool IFSelect_TransformStandard::Updated(const occ::handle<Standard_Transient>& 
                                          occ::handle<Standard_Transient>&       entto) const
 {
   if (themap.IsNull())
+  {
     return false;
+  }
   return themap->Search(entfrom, entto);
 }
 
@@ -229,16 +271,26 @@ TCollection_AsciiString IFSelect_TransformStandard::Label() const
   char                    lab[30];
   TCollection_AsciiString labl("");
   if (CopyOption())
+  {
     labl.AssignCat("Standard Copy");
+  }
   else
+  {
     labl.AssignCat("On the spot Edition");
+  }
   int nb = NbModifiers();
   if (nb == 0)
+  {
     Sprintf(lab, " (no Modifier)");
+  }
   if (nb == 1)
+  {
     Sprintf(lab, " - %s", Modifier(1)->Label().ToCString());
+  }
   if (nb > 1)
+  {
     Sprintf(lab, " - %d Modifiers", nb);
+  }
   labl.AssignCat(lab);
   return labl;
 }

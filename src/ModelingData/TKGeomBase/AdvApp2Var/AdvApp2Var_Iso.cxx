@@ -48,6 +48,13 @@ AdvApp2Var_Iso::AdvApp2Var_Iso()
 
 //=================================================================================================
 
+AdvApp2Var_Iso::AdvApp2Var_Iso(const GeomAbs_IsoType type, const int iu, const int iv)
+    : AdvApp2Var_Iso(type, 0.5, 0.0, 1.0, 0.0, 1.0, 0, iu, iv)
+{
+}
+
+//=================================================================================================
+
 AdvApp2Var_Iso::AdvApp2Var_Iso(const GeomAbs_IsoType type,
                                const double          cte,
                                const double          Ufirst,
@@ -140,7 +147,9 @@ void AdvApp2Var_Iso::MakeApprox(const AdvApp2Var_Context&           Conditions,
       UVFONC[1] = myU1;
       NBROOT    = (Conditions.URoots())->Length();
       if (myExtremOrder > -1)
+      {
         NBROOT -= 2;
+      }
       ROOTLG = (double*)&HUROOT->ChangeArray1()(HUROOT->Lower());
       NDGJAC = Conditions.UJacDeg();
       NCFLIM = Conditions.ULimit();
@@ -153,7 +162,9 @@ void AdvApp2Var_Iso::MakeApprox(const AdvApp2Var_Context&           Conditions,
       UVFONC[3] = myV1;
       NBROOT    = (Conditions.VRoots())->Length();
       if (myExtremOrder > -1)
+      {
         NBROOT -= 2;
+      }
       ROOTLG = (double*)&HVROOT->ChangeArray1()(HVROOT->Lower());
       NDGJAC = Conditions.VJacDeg();
       NCFLIM = Conditions.VLimit();
@@ -284,9 +295,13 @@ void AdvApp2Var_Iso::MakeApprox(const AdvApp2Var_Context&           Conditions,
       goto FINISH;
     }
     if (NCOEFF <= ncfapp)
+    {
       NCOEFF = ncfapp;
+    }
     if (ierapp == -1)
+    {
       IERCOD = -1;
+    }
     //   return constraints of order 0 to IORDRE of extremities
     int ider, jpos = HCONTR1->Lower();
     for (ider = 0; ider <= IORDRE; ider++)
@@ -413,7 +428,9 @@ void AdvApp2Var_Iso::ResetApprox()
 void AdvApp2Var_Iso::OverwriteApprox()
 {
   if (myHasResult)
+  {
     myApprIsDone = true;
+  }
 }
 
 //=================================================================================================
@@ -491,9 +508,13 @@ double AdvApp2Var_Iso::V1() const
 int AdvApp2Var_Iso::UOrder() const
 {
   if (Type() == GeomAbs_IsoU)
+  {
     return myDerivOrder;
+  }
   else
+  {
     return myExtremOrder;
+  }
 }
 
 //=================================================================================================
@@ -501,9 +522,13 @@ int AdvApp2Var_Iso::UOrder() const
 int AdvApp2Var_Iso::VOrder() const
 {
   if (Type() == GeomAbs_IsoV)
+  {
     return myDerivOrder;
+  }
   else
+  {
     return myExtremOrder;
+  }
 }
 
 //=================================================================================================

@@ -20,7 +20,7 @@
 #include <Bisector_BisecCC.hxx>
 #include <Bisector_BisecPC.hxx>
 #include <Bisector_Curve.hxx>
-#include <GCE2d_MakeSegment.hxx>
+#include <GC_MakeSegment2d.hxx>
 #include <Geom2d_BSplineCurve.hxx>
 #include <Geom2d_CartesianPoint.hxx>
 #include <Geom2d_Circle.hxx>
@@ -103,7 +103,7 @@ void Bisector_Bisec::Perform(const occ::handle<Geom2d_Curve>& afirstcurve,
     {
       if (aBS->Pole(1).Distance(aBS->Pole(2)) < 1.e-4)
       {
-        afirstcurve1 = GCE2d_MakeSegment(aBS->Pole(1), aBS->Pole(2)).Value();
+        afirstcurve1 = GC_MakeSegment2d(aBS->Pole(1), aBS->Pole(2)).Value();
         Type1        = STANDARD_TYPE(Geom2d_Line);
       }
     }
@@ -125,7 +125,7 @@ void Bisector_Bisec::Perform(const occ::handle<Geom2d_Curve>& afirstcurve,
     {
       if (aBS->Pole(1).Distance(aBS->Pole(2)) < 1.e-4)
       {
-        asecondcurve1 = GCE2d_MakeSegment(aBS->Pole(1), aBS->Pole(2)).Value();
+        asecondcurve1 = GC_MakeSegment2d(aBS->Pole(1), aBS->Pole(2)).Value();
         Type2         = STANDARD_TYPE(Geom2d_Line);
       }
     }
@@ -162,7 +162,9 @@ void Bisector_Bisec::Perform(const occ::handle<Geom2d_Curve>& afirstcurve,
       // if (Fd.Dot(Sd) < Precision::Angular() - 1.) {
       // if (Fd.Dot(Sd) < 10*Precision::Angular() - 1.) //patch
       if (Fd.Dot(Sd) < std::sqrt(2. * Precision::Angular()) - 1.)
+      {
         IsLine = true;
+      }
     }
     if (IsLine)
     {
@@ -371,14 +373,20 @@ void Bisector_Bisec::Perform(const occ::handle<Geom2d_Curve>& afirstcurve,
           Bis    = BisAna;
         }
         else
+        {
           Bis = BisPC;
+        }
       }
     }
   }
   if (UFirst < Bis->FirstParameter())
+  {
     UFirst = Bis->FirstParameter();
+  }
   if (ULast > Bis->LastParameter())
+  {
     ULast = Bis->LastParameter();
+  }
   thebisector = new Geom2d_TrimmedCurve(Bis, UFirst, ULast);
 }
 
@@ -508,7 +516,9 @@ void Bisector_Bisec::Perform(const occ::handle<Geom2d_Point>& afirstpoint,
           Bis    = BisAna;
         }
         else
+        {
           Bis = BisPC;
+        }
       }
     }
   }
@@ -568,7 +578,7 @@ const occ::handle<Geom2d_TrimmedCurve>& Bisector_Bisec::ChangeValue()
 
 //=============================================================================
 // function : ReplaceByLineIfIsToSmall
-// purpose  : If the size of an algorithmic bissectrice is negligeable it is
+// purpose  : If the size of an algorithmic bissectrice is negligible, it is
 //           replaced by a half-straight.
 //=============================================================================
 static void ReplaceByLineIfIsToSmall(occ::handle<Bisector_Curve>& Bis,
@@ -577,13 +587,17 @@ static void ReplaceByLineIfIsToSmall(occ::handle<Bisector_Curve>& Bis,
 
 {
   if (std::abs(ULast - UFirst) > 2. * Precision::PConfusion() * 10.)
+  {
     return; // patch
+  }
 
   gp_Pnt2d PF = Bis->Value(UFirst);
   gp_Pnt2d PL = Bis->Value(ULast);
 
   if (PF.Distance(PL) > Precision::Confusion() * 10.)
+  {
     return;
+  }
 
   gp_Vec2d T1 = Bis->DN(UFirst, 1);
 
@@ -638,9 +652,13 @@ static bool IsMaxRC(const occ::handle<Geom2d_Curve>& C, double U, double& R)
     if (KL < KF)
     {
       if (KL == 0.0)
+      {
         R = Precision::Infinite();
+      }
       else
+      {
         R = 1 / KL;
+      }
       IsMax = true;
     }
   }
@@ -649,9 +667,13 @@ static bool IsMaxRC(const occ::handle<Geom2d_Curve>& C, double U, double& R)
     if (KF < KL)
     {
       if (KF == 0.0)
+      {
         R = Precision::Infinite();
+      }
       else
+      {
         R = 1 / KF;
+      }
       IsMax = true;
     }
   }

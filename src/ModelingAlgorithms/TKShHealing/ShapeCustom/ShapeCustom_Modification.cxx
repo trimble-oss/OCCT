@@ -27,10 +27,7 @@ void ShapeCustom_Modification::SetMsgRegistrator(
   myMsgReg = msgreg;
 }
 
-//=======================================================================
-// function : MsgRegistrator
-// purpose  : Returns message registrator
-//=======================================================================
+//=================================================================================================
 
 occ::handle<ShapeExtend_BasicMsgRegistrator> ShapeCustom_Modification::MsgRegistrator() const
 {
@@ -44,5 +41,7 @@ void ShapeCustom_Modification::SendMsg(const TopoDS_Shape&   shape,
                                        const Message_Gravity gravity) const
 {
   if (!myMsgReg.IsNull())
+  {
     myMsgReg->Send(shape, message, gravity);
+  }
 }

@@ -90,7 +90,9 @@ void GeomAdaptor_SurfaceOfRevolution::Load(const occ::handle<Adaptor3d_Curve>& C
 {
   myBasisCurve = C;
   if (myHaveAxis)
+  {
     Load(myAxis); // to evaluate the new myAxeRev.
+  }
 }
 
 //=================================================================================================
@@ -130,18 +132,26 @@ void GeomAdaptor_SurfaceOfRevolution::Load(const gp_Ax1& V)
   else
   {
     double First = myBasisCurve->FirstParameter();
-    P            = Value(0., 0.); // ce qui ne veut pas dire grand chose
+    P            = Value(0., 0.); // which does not mean much
     if (GetType() == GeomAbs_Cone)
     {
       if (gp_Lin(myAxis).Distance(P) <= Precision::Confusion())
+      {
         Q = ElCLib::Value(1., myBasisCurve->Line());
+      }
       else
+      {
         Q = P;
+      }
     }
     else if (Precision::IsInfinite(First))
+    {
       Q = P;
+    }
     else
+    {
       Q = Value(0., First);
+    }
   }
 
   gp_Dir DZ = myAxis.Direction();
@@ -182,7 +192,9 @@ void GeomAdaptor_SurfaceOfRevolution::Load(const gp_Ax1& V)
   {
     gp_Dir DC = (myBasisCurve->Circle()).Axis().Direction();
     if ((Ox.Crossed(Oz)).Dot(DC) < 0.)
+    {
       myAxeRev.ZReverse();
+    }
   }
 }
 
@@ -376,7 +388,9 @@ GeomAbs_SurfaceType GeomAdaptor_SurfaceOfRevolution::GetType() const
         }
       }
       else if (myAxis.IsNormal(Axe, TolAng))
+      {
         return GeomAbs_Plane;
+      }
       else
       {
         double uf     = myBasisCurve->FirstParameter();
@@ -387,7 +401,7 @@ GeomAbs_SurfaceType GeomAdaptor_SurfaceOfRevolution::GetType() const
           gp_Pnt pf  = myBasisCurve->Value(uf);
           gp_Pnt pl  = myBasisCurve->Value(ul);
           double len = pf.Distance(pl);
-          // on calcule la distance projetee sur l axe.
+          // Compute the distance projected onto the axis.
           gp_Vec vlin(pf, pl);
           gp_Vec vaxe(myAxis.Direction());
           double projlen = std::abs(vaxe.Dot(vlin));
@@ -401,7 +415,9 @@ GeomAbs_SurfaceType GeomAdaptor_SurfaceOfRevolution::GetType() const
             }
           }
           else if (projlen <= TolConf)
+          {
             return GeomAbs_Plane;
+          }
         }
         gp_Vec V(myAxis.Location(), myBasisCurve->Line().Location());
         gp_Vec W(Axe.Direction());
@@ -426,9 +442,13 @@ GeomAbs_SurfaceType GeomAdaptor_SurfaceOfRevolution::GetType() const
       //
 
       if (!C.Position().IsCoplanar(myAxis, TolConf, TolAng))
+      {
         return GeomAbs_SurfaceOfRevolution;
+      }
       else if (aLin.Distance(aLC) <= TolConf)
+      {
         return GeomAbs_Sphere;
+      }
       else
       {
         MajorRadius = aLin.Distance(aLC);
@@ -461,7 +481,9 @@ gp_Pln GeomAdaptor_SurfaceOfRevolution::Plane() const
   gp_Pnt P(myAxis.Location().XYZ() + aDot * myAxis.Direction().XYZ());
   Axe.SetLocation(P);
   if (Axe.XDirection().Dot(myBasisCurve->Line().Direction()) >= -Precision::Confusion())
+  {
     Axe.XReverse();
+  }
 
   return gp_Pln(Axe);
 }
@@ -497,7 +519,9 @@ gp_Cone GeomAdaptor_SurfaceOfRevolution::Cone() const
     t /= ldir.Dot(Axe.XDirection());
     OP0.Add(-t * gp_Vec(ldir));
     if (OP0.Dot(Axe.Direction()) > 0.)
+    {
       Angle = -Angle;
+    }
   }
   return gp_Cone(Axe, Angle, R);
 }

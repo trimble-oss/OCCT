@@ -31,10 +31,8 @@ enum
   ConvexMask     = 64
 };
 
-//=======================================================================
-// function : Read
-// purpose  : Read persistent data from a file
-//=======================================================================
+//=================================================================================================
+
 void ShapePersistent_TopoDS::HShape::Read(StdObjMgt_ReadData& theReadData)
 {
   theReadData >> myEntry;
@@ -71,7 +69,9 @@ static inline void AddShape(TopoDS_Shape&                            theParent,
     Handle(ShapePersistent_TopoDS::HShape)::DownCast(theRef);
 
   if (aShape)
+  {
     BRep_Builder().Add(theParent, aShape->Import());
+  }
 }
 
 static inline void AddShape(TopoDS_Shape& theParent, const StdObject_Shape& theShape)
@@ -87,7 +87,9 @@ void ShapePersistent_TopoDS::pTBase::addShapesT(TopoDS_Shape& theParent) const
   {
     typename ShapesArray::Iterator anIter(*aShapes->Array());
     for (; anIter.More(); anIter.Next())
+    {
       AddShape(theParent, anIter.Value());
+    }
   }
 }
 
@@ -109,10 +111,8 @@ template class ShapePersistent_TopoDS::pTSimple<TopoDS_TSolid>;
 template class ShapePersistent_TopoDS::pTSimple<TopoDS_TCompSolid>;
 template class ShapePersistent_TopoDS::pTSimple<TopoDS_TCompound>;
 
-//=======================================================================
-// function : Translate
-// purpose  : Creates a persistent object from a shape
-//=======================================================================
+//=================================================================================================
+
 Handle(ShapePersistent_TopoDS::HShape) ShapePersistent_TopoDS::Translate(
   const TopoDS_Shape&                                                                      theShape,
   NCollection_DataMap<occ::handle<Standard_Transient>, occ::handle<StdObjMgt_Persistent>>& theMap,
@@ -121,7 +121,9 @@ Handle(ShapePersistent_TopoDS::HShape) ShapePersistent_TopoDS::Translate(
   occ::handle<HShape> pHShape;
 
   if (theShape.IsNull())
+  {
     return pHShape;
+  }
 
   pHShape = new HShape;
 
@@ -208,17 +210,29 @@ Handle(ShapePersistent_TopoDS::HShape) ShapePersistent_TopoDS::Translate(
     // Shape flags
     int aFlags = 0;
     if (theShape.Modified())
+    {
       aFlags |= ModifiedMask;
+    }
     if (theShape.Checked())
+    {
       aFlags |= CheckedMask;
+    }
     if (theShape.Orientable())
+    {
       aFlags |= OrientableMask;
+    }
     if (theShape.Closed())
+    {
       aFlags |= ClosedMask;
+    }
     if (theShape.Infinite())
+    {
       aFlags |= InfiniteMask;
+    }
     if (theShape.Convex())
+    {
       aFlags |= ConvexMask;
+    }
     aPTShape->myFlags = aFlags;
 
     // Copy current Shape

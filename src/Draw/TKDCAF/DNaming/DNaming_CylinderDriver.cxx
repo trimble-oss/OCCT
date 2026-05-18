@@ -46,7 +46,7 @@ DNaming_CylinderDriver::DNaming_CylinderDriver() = default;
 // function : Validate
 // purpose  : Validates labels of a function in <log>.
 //=======================================================================
-void DNaming_CylinderDriver::Validate(occ::handle<TFunction_Logbook>&) const {}
+void DNaming_CylinderDriver::Validate(const occ::handle<TFunction_Logbook>&) const {}
 
 //=======================================================================
 // function : MustExecute
@@ -66,7 +66,9 @@ int DNaming_CylinderDriver::Execute(occ::handle<TFunction_Logbook>& theLog) cons
   occ::handle<TFunction_Function> aFunction;
   Label().FindAttribute(TFunction_Function::GetID(), aFunction);
   if (aFunction.IsNull())
+  {
     return -1;
+  }
 
   double                           aRadius  = DNaming::GetReal(aFunction, CYL_RADIUS)->Get();
   double                           aHeight  = DNaming::GetReal(aFunction, CYL_HEIGHT)->Get();
@@ -158,7 +160,9 @@ int DNaming_CylinderDriver::Execute(occ::handle<TFunction_Logbook>& theLog) cons
 
   // restore location
   if (!aLocation.IsIdentity())
+  {
     TNaming::Displace(RESPOSITION(aFunction), aLocation, true);
+  }
 
   theLog->SetValid(RESPOSITION(aFunction), true);
   aFunction->SetFailure(DONE);

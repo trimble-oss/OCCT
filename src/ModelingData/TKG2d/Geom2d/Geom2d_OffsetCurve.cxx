@@ -19,11 +19,14 @@
 #include <Geom2d_BezierCurve.hxx>
 #include <Geom2d_BSplineCurve.hxx>
 #include <Geom2d_Curve.hxx>
+#include <Geom2dEval_RepCurveDesc.hxx>
+#include <Geom2dEval_RepUtils.pxx>
 #include <Geom2d_Geometry.hxx>
 #include <Geom2d_OffsetCurve.hxx>
 #include <Geom2d_OffsetCurveUtils.pxx>
 #include <Geom2d_TrimmedCurve.hxx>
 #include <Geom2d_UndefinedDerivative.hxx>
+#include <Geom2d_UndefinedValue.hxx>
 #include <Standard_NullValue.hxx>
 #include <gp.hxx>
 #include <gp_Pnt2d.hxx>
@@ -33,6 +36,7 @@
 #include <Precision.hxx>
 #include <Standard_ConstructionError.hxx>
 #include <Standard_NotImplemented.hxx>
+#include <Standard_ProgramError.hxx>
 #include <Standard_RangeError.hxx>
 #include <Standard_Type.hxx>
 
@@ -40,18 +44,27 @@ IMPLEMENT_STANDARD_RTTIEXT(Geom2d_OffsetCurve, Geom2d_Curve)
 
 static const double MyAngularToleranceForG1 = Precision::Angular();
 
-//==================================================================================================
+//=================================================================================================
+
+void Geom2d_OffsetCurve::SetEvalRepresentation(
+  const occ::handle<Geom2dEval_RepCurveDesc::Base>& theDesc)
+{
+  Geom2dEval_RepUtils::ValidateCurveDesc(theDesc, this);
+  myEvalRep = theDesc;
+}
+
+//=================================================================================================
 
 occ::handle<Geom2d_Geometry> Geom2d_OffsetCurve::Copy() const
 {
   return new Geom2d_OffsetCurve(*this);
 }
 
-//==================================================================================================
+//=================================================================================================
 // function : Geom2d_OffsetCurve
 // purpose  : Basis curve cannot be an Offset curve or trimmed from
 //            offset curve.
-//==================================================================================================
+//=================================================================================================
 
 Geom2d_OffsetCurve::Geom2d_OffsetCurve(const occ::handle<Geom2d_Curve>& theCurve,
                                        const double                     theOffset,
@@ -61,35 +74,38 @@ Geom2d_OffsetCurve::Geom2d_OffsetCurve(const occ::handle<Geom2d_Curve>& theCurve
   SetBasisCurve(theCurve, isTheNotCheckC0);
 }
 
-//==================================================================================================
+//=================================================================================================
 
 Geom2d_OffsetCurve::Geom2d_OffsetCurve(const Geom2d_OffsetCurve& theOther)
-    : offsetValue(theOther.offsetValue),
+    : basisCurve(occ::down_cast<Geom2d_Curve>(theOther.basisCurve->Copy())),
+      myEvalRep(Geom2dEval_RepUtils::CloneCurveDesc(theOther.myEvalRep)),
+      offsetValue(theOther.offsetValue),
       myBasisCurveContinuity(theOther.myBasisCurveContinuity)
 {
   // Deep copy basis curve without validation
-  basisCurve = occ::down_cast<Geom2d_Curve>(theOther.basisCurve->Copy());
 }
 
-//==================================================================================================
+//=================================================================================================
 
 void Geom2d_OffsetCurve::Reverse()
 {
+  ClearEvalRepresentation();
   basisCurve->Reverse();
   offsetValue = -offsetValue;
 }
 
-//==================================================================================================
+//=================================================================================================
 
 double Geom2d_OffsetCurve::ReversedParameter(const double U) const
 {
   return basisCurve->ReversedParameter(U);
 }
 
-//==================================================================================================
+//=================================================================================================
 
 void Geom2d_OffsetCurve::SetBasisCurve(const occ::handle<Geom2d_Curve>& C, const bool isNotCheckC0)
 {
+  ClearEvalRepresentation();
   const double              aUf = C->FirstParameter(), aUl = C->LastParameter();
   occ::handle<Geom2d_Curve> aCheckingCurve = C;
   bool                      isTrimmed      = false;
@@ -145,21 +161,22 @@ void Geom2d_OffsetCurve::SetBasisCurve(const occ::handle<Geom2d_Curve>& C, const
   }
 }
 
-//==================================================================================================
+//=================================================================================================
 
 void Geom2d_OffsetCurve::SetOffsetValue(const double D)
 {
+  ClearEvalRepresentation();
   offsetValue = D;
 }
 
-//==================================================================================================
+//=================================================================================================
 
 occ::handle<Geom2d_Curve> Geom2d_OffsetCurve::BasisCurve() const
 {
   return basisCurve;
 }
 
-//==================================================================================================
+//=================================================================================================
 
 GeomAbs_Shape Geom2d_OffsetCurve::Continuity() const
 {
@@ -192,110 +209,185 @@ GeomAbs_Shape Geom2d_OffsetCurve::Continuity() const
   return OffsetShape;
 }
 
-//==================================================================================================
+//=================================================================================================
 
-void Geom2d_OffsetCurve::D0(const double theU, gp_Pnt2d& theP) const
+gp_Pnt2d Geom2d_OffsetCurve::EvalD0(const double theU) const
 {
-  if (!Geom2d_OffsetCurveUtils::EvaluateD0(theU, basisCurve.get(), offsetValue, theP))
+  gp_Pnt2d aEvalRepResult;
+  if (Geom2dEval_RepUtils::TryEvalCurveD0(myEvalRep, theU, aEvalRepResult))
   {
-    throw Standard_NullValue("Geom2d_OffsetCurve::D0: Unable to calculate offset point");
+    return aEvalRepResult;
   }
+
+  const Geom2d_Curve::ResD1 aBasisD1 = basisCurve->EvalD1(theU);
+  gp_Pnt2d                  aValue   = aBasisD1.Point;
+  if (!Geom2d_OffsetCurveUtils::CalculateD0(aValue, aBasisD1.D1, offsetValue))
+  {
+    throw Geom2d_UndefinedValue("Geom2d_OffsetCurve::EvalD0");
+  }
+  return aValue;
 }
 
-//==================================================================================================
+//=================================================================================================
 
-void Geom2d_OffsetCurve::D1(const double theU, gp_Pnt2d& theP, gp_Vec2d& theV1) const
+Geom2d_Curve::ResD1 Geom2d_OffsetCurve::EvalD1(const double theU) const
 {
-  if (!Geom2d_OffsetCurveUtils::EvaluateD1(theU, basisCurve.get(), offsetValue, theP, theV1))
+  Geom2d_Curve::ResD1 aEvalRepResult;
+  if (Geom2dEval_RepUtils::TryEvalCurveD1(myEvalRep, theU, aEvalRepResult))
   {
-    throw Standard_NullValue("Geom2d_OffsetCurve::D1: Unable to calculate offset D1");
+    return aEvalRepResult;
   }
+
+  const Geom2d_Curve::ResD2 aBasisD2 = basisCurve->EvalD2(theU);
+  gp_Pnt2d                  aValue   = aBasisD2.Point;
+  gp_Vec2d                  aD1      = aBasisD2.D1;
+  if (!Geom2d_OffsetCurveUtils::CalculateD1(aValue, aD1, aBasisD2.D2, offsetValue))
+  {
+    throw Geom2d_UndefinedDerivative("Geom2d_OffsetCurve::EvalD1");
+  }
+  return Geom2d_Curve::ResD1{aValue, aD1};
 }
 
-//==================================================================================================
+//=================================================================================================
 
-void Geom2d_OffsetCurve::D2(const double theU,
-                            gp_Pnt2d&    theP,
-                            gp_Vec2d&    theV1,
-                            gp_Vec2d&    theV2) const
+Geom2d_Curve::ResD2 Geom2d_OffsetCurve::EvalD2(const double theU) const
 {
-  if (!Geom2d_OffsetCurveUtils::EvaluateD2(theU, basisCurve.get(), offsetValue, theP, theV1, theV2))
+  Geom2d_Curve::ResD2 aEvalRepResult;
+  if (Geom2dEval_RepUtils::TryEvalCurveD2(myEvalRep, theU, aEvalRepResult))
   {
-    throw Standard_NullValue("Geom2d_OffsetCurve::D2: Unable to calculate offset D2");
+    return aEvalRepResult;
   }
-}
 
-//==================================================================================================
-
-void Geom2d_OffsetCurve::D3(const double theU,
-                            gp_Pnt2d&    theP,
-                            gp_Vec2d&    theV1,
-                            gp_Vec2d&    theV2,
-                            gp_Vec2d&    theV3) const
-{
-  if (!Geom2d_OffsetCurveUtils::EvaluateD3(theU,
-                                           basisCurve.get(),
-                                           offsetValue,
-                                           theP,
-                                           theV1,
-                                           theV2,
-                                           theV3))
+  const Geom2d_Curve::ResD3 aBasisD3 = basisCurve->EvalD3(theU);
+  gp_Pnt2d                  aValue   = aBasisD3.Point;
+  gp_Vec2d                  aD1 = aBasisD3.D1, aD2 = aBasisD3.D2, aD3 = aBasisD3.D3;
+  bool                      isDirectionChange = false;
+  if (aD1.SquareMagnitude() <= gp::Resolution())
   {
-    throw Standard_NullValue("Geom2d_OffsetCurve::D3: Unable to calculate offset D3");
-  }
-}
-
-//==================================================================================================
-
-gp_Vec2d Geom2d_OffsetCurve::DN(const double U, const int N) const
-{
-  Standard_RangeError_Raise_if(N < 1, "Exception: Geom2d_OffsetCurve::DN(). N<1.");
-
-  gp_Vec2d aVN;
-  if (!Geom2d_OffsetCurveUtils::EvaluateDN(U, basisCurve.get(), offsetValue, N, aVN))
-  {
-    if (N > 3)
+    gp_Vec2d aDummyD4;
+    if (!Geom2d_OffsetCurveUtils::AdjustDerivative(*basisCurve,
+                                                   3,
+                                                   theU,
+                                                   aD1,
+                                                   aD2,
+                                                   aD3,
+                                                   aDummyD4,
+                                                   isDirectionChange))
     {
-      throw Standard_NotImplemented("Exception: Derivative order is greater than 3. "
-                                    "Cannot compute of derivative.");
+      throw Geom2d_UndefinedDerivative("Geom2d_OffsetCurve::EvalD2");
     }
-    throw Standard_NullValue("Geom2d_OffsetCurve::DN: Unable to calculate offset DN");
   }
-  return aVN;
+  if (!Geom2d_OffsetCurveUtils::CalculateD2(aValue, aD1, aD2, aD3, isDirectionChange, offsetValue))
+  {
+    throw Geom2d_UndefinedDerivative("Geom2d_OffsetCurve::EvalD2");
+  }
+  return Geom2d_Curve::ResD2{aValue, aD1, aD2};
 }
 
-//==================================================================================================
+//=================================================================================================
+
+Geom2d_Curve::ResD3 Geom2d_OffsetCurve::EvalD3(const double theU) const
+{
+  Geom2d_Curve::ResD3 aEvalRepResult;
+  if (Geom2dEval_RepUtils::TryEvalCurveD3(myEvalRep, theU, aEvalRepResult))
+  {
+    return aEvalRepResult;
+  }
+
+  const Geom2d_Curve::ResD3 aBasisD3 = basisCurve->EvalD3(theU);
+  const gp_Vec2d            aD4Basis = basisCurve->EvalDN(theU, 4);
+  gp_Pnt2d                  aValue   = aBasisD3.Point;
+  gp_Vec2d                  aD1 = aBasisD3.D1, aD2 = aBasisD3.D2, aD3 = aBasisD3.D3;
+  gp_Vec2d                  aD4               = aD4Basis;
+  bool                      isDirectionChange = false;
+  if (aD1.SquareMagnitude() <= gp::Resolution())
+  {
+    if (!Geom2d_OffsetCurveUtils::AdjustDerivative(*basisCurve,
+                                                   4,
+                                                   theU,
+                                                   aD1,
+                                                   aD2,
+                                                   aD3,
+                                                   aD4,
+                                                   isDirectionChange))
+    {
+      throw Geom2d_UndefinedDerivative("Geom2d_OffsetCurve::EvalD3");
+    }
+  }
+  if (!Geom2d_OffsetCurveUtils::CalculateD3(aValue,
+                                            aD1,
+                                            aD2,
+                                            aD3,
+                                            aD4,
+                                            isDirectionChange,
+                                            offsetValue))
+  {
+    throw Geom2d_UndefinedDerivative("Geom2d_OffsetCurve::EvalD3");
+  }
+  return Geom2d_Curve::ResD3{aValue, aD1, aD2, aD3};
+}
+
+//=================================================================================================
+
+gp_Vec2d Geom2d_OffsetCurve::EvalDN(const double U, const int N) const
+{
+  if (N < 1)
+  {
+    throw Geom2d_UndefinedDerivative("Geom2d_OffsetCurve::EvalDN");
+  }
+  gp_Vec2d aEvalRepResult;
+  if (Geom2dEval_RepUtils::TryEvalCurveDN(myEvalRep, U, N, aEvalRepResult))
+  {
+    return aEvalRepResult;
+  }
+  switch (N)
+  {
+    case 1: {
+      return EvalD1(U).D1;
+    }
+    case 2: {
+      return EvalD2(U).D2;
+    }
+    case 3: {
+      return EvalD3(U).D3;
+    }
+    default:
+      return basisCurve->EvalDN(U, N);
+  }
+}
+
+//=================================================================================================
 
 double Geom2d_OffsetCurve::FirstParameter() const
 {
   return basisCurve->FirstParameter();
 }
 
-//==================================================================================================
+//=================================================================================================
 
 double Geom2d_OffsetCurve::LastParameter() const
 {
   return basisCurve->LastParameter();
 }
 
-//==================================================================================================
+//=================================================================================================
 
 double Geom2d_OffsetCurve::Offset() const
 {
   return offsetValue;
 }
 
-//==================================================================================================
+//=================================================================================================
 
 bool Geom2d_OffsetCurve::IsClosed() const
 {
   gp_Pnt2d PF, PL;
-  D0(FirstParameter(), PF);
-  D0(LastParameter(), PL);
-  return (PF.Distance(PL) <= gp::Resolution());
+  Geom2d_Curve::D0(FirstParameter(), PF);
+  Geom2d_Curve::D0(LastParameter(), PL);
+  return PF.SquareDistance(PL) <= Precision::Computational();
 }
 
-//==================================================================================================
+//=================================================================================================
 
 bool Geom2d_OffsetCurve::IsCN(const int N) const
 {
@@ -303,50 +395,51 @@ bool Geom2d_OffsetCurve::IsCN(const int N) const
   return basisCurve->IsCN(N + 1);
 }
 
-//==================================================================================================
+//=================================================================================================
 
 bool Geom2d_OffsetCurve::IsPeriodic() const
 {
   return basisCurve->IsPeriodic();
 }
 
-//==================================================================================================
+//=================================================================================================
 
 double Geom2d_OffsetCurve::Period() const
 {
   return basisCurve->Period();
 }
 
-//==================================================================================================
+//=================================================================================================
 
 void Geom2d_OffsetCurve::Transform(const gp_Trsf2d& T)
 {
+  ClearEvalRepresentation();
   basisCurve->Transform(T);
   offsetValue *= std::abs(T.ScaleFactor());
 }
 
-//==================================================================================================
+//=================================================================================================
 
 double Geom2d_OffsetCurve::TransformedParameter(const double U, const gp_Trsf2d& T) const
 {
   return basisCurve->TransformedParameter(U, T);
 }
 
-//==================================================================================================
+//=================================================================================================
 
 double Geom2d_OffsetCurve::ParametricTransformation(const gp_Trsf2d& T) const
 {
   return basisCurve->ParametricTransformation(T);
 }
 
-//==================================================================================================
+//=================================================================================================
 
 GeomAbs_Shape Geom2d_OffsetCurve::GetBasisCurveContinuity() const
 {
   return myBasisCurveContinuity;
 }
 
-//==================================================================================================
+//=================================================================================================
 
 void Geom2d_OffsetCurve::DumpJson(Standard_OStream& theOStream, int theDepth) const
 {

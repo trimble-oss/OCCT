@@ -78,10 +78,8 @@ int Law_Composite::NbIntervals(const GeomAbs_Shape S) const
   return nbr_interval;
 }
 
-//=======================================================================
-// function : Intervals
-// purpose  : Meme simplifications....
-//=======================================================================
+//=================================================================================================
+
 void Law_Composite::Intervals(NCollection_Array1<double>& T, const GeomAbs_Shape S) const
 {
   NCollection_List<occ::handle<Law_Function>>::Iterator It(funclist);
@@ -192,7 +190,9 @@ void Law_Composite::Prepare(double& W)
 
   curfunc->Bounds(f, l);
   if (f <= Wtest && Wtest <= l)
+  {
     return;
+  }
   if (W <= first)
   {
     curfunc = funclist.First();
@@ -209,7 +209,9 @@ void Law_Composite::Prepare(double& W)
       curfunc = It.Value();
       curfunc->Bounds(f, l);
       if (f <= Wtest && Wtest <= l)
+      {
         return;
+      }
     }
   }
 }

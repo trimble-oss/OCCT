@@ -15,6 +15,7 @@
 
 #include <OSD_File.hxx>
 #include <OSD_Environment.hxx>
+#include <NCollection_LinearVector.hxx>
 
 #include <OpenGl_Context.hxx>
 #include <OpenGl_ShaderProgram.hxx>
@@ -135,7 +136,11 @@ OpenGl_VariableSetterSelector::OpenGl_VariableSetterSelector()
     Graphic3d_UniformValueTypeID<NCollection_Vec3<int>>::ID,
     new OpenGl_VariableSetter<NCollection_Vec3<int>>())(
     Graphic3d_UniformValueTypeID<NCollection_Vec4<int>>::ID,
-    new OpenGl_VariableSetter<NCollection_Vec4<int>>());
+    new OpenGl_VariableSetter<NCollection_Vec4<int>>())(
+    Graphic3d_UniformValueTypeID<NCollection_Mat3<float>>::ID,
+    new OpenGl_VariableSetter<NCollection_Mat3<float>>())(
+    Graphic3d_UniformValueTypeID<NCollection_Mat4<float>>::ID,
+    new OpenGl_VariableSetter<NCollection_Mat4<float>>());
 }
 
 // =======================================================================
@@ -658,13 +663,14 @@ bool OpenGl_ShaderProgram::Initialize(
   if (const OpenGl_ShaderUniformLocation aLocSampler =
         GetUniformLocation(theCtx, "occShadowMapSamplers"))
   {
-    std::vector<GLint> aShadowSamplers(myNbShadowMaps);
-    const GLint        aSamplFrom = GLint(theCtx->ShadowMapTexUnit()) - myNbShadowMaps + 1;
+    NCollection_LinearVector<GLint> aShadowSamplers;
+    aShadowSamplers.Resize(myNbShadowMaps);
+    const GLint aSamplFrom = GLint(theCtx->ShadowMapTexUnit()) - myNbShadowMaps + 1;
     for (int aSamplerIter = 0; aSamplerIter < myNbShadowMaps; ++aSamplerIter)
     {
       aShadowSamplers[aSamplerIter] = aSamplFrom + aSamplerIter;
     }
-    SetUniform(theCtx, aLocSampler, myNbShadowMaps, &aShadowSamplers.front());
+    SetUniform(theCtx, aLocSampler, myNbShadowMaps, &aShadowSamplers[0]);
   }
 
   if (const OpenGl_ShaderUniformLocation aLocSampler =
@@ -765,10 +771,8 @@ bool OpenGl_ShaderProgram::DetachShader(const occ::handle<OpenGl_Context>&      
   return true;
 }
 
-// =======================================================================
-// function : Link
-// purpose  : Links the program object
-// =======================================================================
+//=================================================================================================
+
 bool OpenGl_ShaderProgram::link(const occ::handle<OpenGl_Context>& theCtx)
 {
   if (myProgramID == NO_PROGRAM)
@@ -1267,6 +1271,26 @@ bool OpenGl_ShaderProgram::SetUniform(const occ::handle<OpenGl_Context>& theCtx,
   return true;
 }
 
+//=================================================================================================
+
+bool OpenGl_ShaderProgram::SetUniform(const occ::handle<OpenGl_Context>& theCtx,
+                                      GLint                              theLocation,
+                                      const NCollection_Mat3<float>&     theValue,
+                                      GLboolean                          theTranspose)
+{
+  if (myProgramID == NO_PROGRAM || theLocation == INVALID_LOCATION)
+  {
+    return false;
+  }
+
+  theCtx->core20fwd->glUniformMatrix3fv(theLocation,
+                                        1,
+                                        GL_FALSE,
+                                        theTranspose ? theValue.Transposed().GetData()
+                                                     : theValue.GetData());
+  return true;
+}
+
 // =======================================================================
 // function : SetUniform
 // purpose  : Specifies the value of the floating-point uniform 4x4 matrix
@@ -1480,10 +1504,8 @@ bool OpenGl_ShaderProgram::Create(const occ::handle<OpenGl_Context>& theCtx)
   return myProgramID != NO_PROGRAM;
 }
 
-// =======================================================================
-// function : Release
-// purpose  : Destroys shader program
-// =======================================================================
+//=================================================================================================
+
 void OpenGl_ShaderProgram::Release(OpenGl_Context* theCtx)
 {
   if (myProgramID == NO_PROGRAM)

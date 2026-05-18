@@ -28,14 +28,14 @@ TCollection_HExtendedString::TCollection_HExtendedString() = default;
 
 //=================================================================================================
 
-TCollection_HExtendedString::TCollection_HExtendedString(const char* message)
+TCollection_HExtendedString::TCollection_HExtendedString(const char* const message)
     : myString(message)
 {
 }
 
 //=================================================================================================
 
-TCollection_HExtendedString::TCollection_HExtendedString(const char16_t* message)
+TCollection_HExtendedString::TCollection_HExtendedString(const char16_t* const message)
     : myString(message)
 {
 }
@@ -212,8 +212,8 @@ int TCollection_HExtendedString::SearchFromEnd(
 //=================================================================================================
 
 occ::handle<TCollection_HExtendedString> TCollection_HExtendedString::Token(
-  const char16_t* separators,
-  const int       whichone) const
+  const char16_t* const separators,
+  const int             whichone) const
 {
   return new TCollection_HExtendedString(myString.Token(separators, whichone));
 }
@@ -244,7 +244,7 @@ const TCollection_ExtendedString& TCollection_HExtendedString::String() const
 //---------------------------------------------------------------------
 void TCollection_HExtendedString::Print(Standard_OStream& S) const
 {
-  S << "begin class HExtendedString " << std::endl;
+  S << "begin class HExtendedString " << '\n';
   myString.Print(S);
 }
 

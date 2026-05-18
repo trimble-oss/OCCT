@@ -26,6 +26,7 @@
 #include <Geom_BezierCurve.hxx>
 #include <ElCLib.hxx>
 #include <Adaptor3d_Curve.hxx>
+#include <Geom_Curve.hxx>
 #include <GeomAdaptor_Curve.hxx>
 #include <Geom_Line.hxx>
 #include <GeomConvert.hxx>
@@ -39,17 +40,14 @@
 #include <math_Matrix.hxx>
 #include <gce_MakeParab.hxx>
 #include <gce_MakeDir.hxx>
-#include <LProp3d_CLProps.hxx>
+#include <LProp_CLProps3d.hxx>
 #include <math_Function.hxx>
 #include <math_BrentMinimum.hxx>
 
 const double aParabolaLimit  = 20000.;
 const double aHyperbolaLimit = 10.;
 
-//=======================================================================
-// function : OnPlane_Value
-// purpose  : Evaluate current point of the projected curve
-//=======================================================================
+//=================================================================================================
 
 static gp_Pnt OnPlane_Value(const double                        U,
                             const occ::handle<Adaptor3d_Curve>& aCurvePtr,
@@ -71,10 +69,7 @@ static gp_Pnt OnPlane_Value(const double                        U,
   return Point;
 }
 
-//=======================================================================
-// function : OnPlane_DN
-// purpose  : Evaluate current point of the projected curve
-//=======================================================================
+//=================================================================================================
 
 static gp_Vec OnPlane_DN(const double                        U,
                          const int                           DerivativeRequest,
@@ -226,10 +221,7 @@ static bool OnPlane_D3(const double                        U,
   return true;
 }
 
-//=======================================================================
-//  class  : ProjLib_OnPlane
-// purpose  : Use to approximate the projection on a plane
-//=======================================================================
+//=================================================================================================
 
 class ProjLib_OnPlane : public AppCont_Function
 
@@ -269,18 +261,14 @@ public:
   }
 };
 
-//=======================================================================
-//  class  : ProjLib_MaxCurvature
-// purpose  : Use to search apex of parabola or hyperbola, which is its projection
-//           on a plane. Apex is point with maximal curvature
-//=======================================================================
+//=================================================================================================
 
 class ProjLib_MaxCurvature : public math_Function
 
 {
 
 public:
-  ProjLib_MaxCurvature(LProp3d_CLProps& theProps)
+  ProjLib_MaxCurvature(LProp_CLProps3d& theProps)
       : myProps(&theProps)
   {
   }
@@ -293,7 +281,7 @@ public:
   }
 
 private:
-  LProp3d_CLProps* myProps;
+  LProp_CLProps3d* myProps;
 };
 
 //=====================================================================//
@@ -493,11 +481,7 @@ occ::handle<Adaptor3d_Curve> ProjLib_ProjectOnPlane::ShallowCopy() const
   return aCopy;
 }
 
-//=======================================================================
-// function : Project
-// purpose  : Returns the projection of a point <Point> on a plane
-//           <ThePlane>  along a direction <TheDir>.
-//=======================================================================
+//=================================================================================================
 
 static gp_Pnt ProjectPnt(const gp_Ax3& ThePlane, const gp_Dir& TheDir, const gp_Pnt& Point)
 {
@@ -512,11 +496,7 @@ static gp_Pnt ProjectPnt(const gp_Ax3& ThePlane, const gp_Dir& TheDir, const gp_
   return P;
 }
 
-//=======================================================================
-// function : Project
-// purpose  : Returns the projection of a Vector <Vec> on a plane
-//           <ThePlane> along a direction <TheDir>.
-//=======================================================================
+//=================================================================================================
 
 static gp_Vec ProjectVec(const gp_Ax3& ThePlane, const gp_Dir& TheDir, const gp_Vec& Vec)
 {
@@ -553,7 +533,6 @@ void ProjLib_ProjectOnPlane::Load(const occ::handle<Adaptor3d_Curve>& C,
   gp_Elips Elips;
   //  gp_Hypr  Hypr ;
 
-  int               num_knots;
   GeomAbs_CurveType Type = C->GetType();
 
   gp_Ax2 Axis;
@@ -572,7 +551,7 @@ void ProjLib_ProjectOnPlane::Load(const occ::handle<Adaptor3d_Curve>& C,
       gp_Vec Xc = ProjectVec(myPlane, myDirection, gp_Vec(L.Direction()));
 
       if (Xc.Magnitude() < Precision::Confusion())
-      { // line orthog au plan
+      { // line orthogonal to the plane
         myType                    = GeomAbs_BSplineCurve;
         gp_Pnt                  P = ProjectPnt(myPlane, myDirection, L.Location());
         NCollection_Array1<int> Mults(1, 2);
@@ -639,9 +618,7 @@ void ProjLib_ProjectOnPlane::Load(const occ::handle<Adaptor3d_Curve>& C,
 
           occ::handle<Geom_BSplineCurve> NewCurvePtr =
             GeomConvert::CurveToBSplineCurve(NewTrimCurvePtr);
-          num_knots = NewCurvePtr->NbKnots();
-          NCollection_Array1<double> BsplineKnots(1, num_knots);
-          NewCurvePtr->Knots(BsplineKnots);
+          NCollection_Array1<double> BsplineKnots(NewCurvePtr->Knots());
 
           BSplCLib::Reparametrize(myCurve->FirstParameter(),
                                   myCurve->LastParameter(),
@@ -807,7 +784,9 @@ void ProjLib_ProjectOnPlane::Load(const occ::handle<Adaptor3d_Curve>& C,
       {
         occ::handle<Geom_Curve> aResultCurve = GeomCirclePtr;
         if (aResultCurve.IsNull())
+        {
           aResultCurve = GeomEllipsePtr;
+        }
         // start and end parameters of the projected curve
         double aParFirst = myCurve->FirstParameter();
         double aParLast  = myCurve->LastParameter();
@@ -816,7 +795,9 @@ void ProjLib_ProjectOnPlane::Load(const occ::handle<Adaptor3d_Curve>& C,
         GeomLib_Tool::Parameter(aResultCurve, aPntFirst, Precision::Confusion(), myFirstPar);
         GeomLib_Tool::Parameter(aResultCurve, aPntLast, Precision::Confusion(), myLastPar);
         while (myLastPar <= myFirstPar)
+        {
           myLastPar += myResult->Period();
+        }
       }
     }
     break;
@@ -1019,9 +1000,13 @@ const occ::handle<GeomAdaptor_Curve>& ProjLib_ProjectOnPlane::GetResult() const
 double ProjLib_ProjectOnPlane::FirstParameter() const
 {
   if (myKeepParam || myIsApprox)
+  {
     return myCurve->FirstParameter();
+  }
   else
+  {
     return myFirstPar;
+  }
 }
 
 //=================================================================================================
@@ -1029,9 +1014,13 @@ double ProjLib_ProjectOnPlane::FirstParameter() const
 double ProjLib_ProjectOnPlane::LastParameter() const
 {
   if (myKeepParam || myIsApprox)
+  {
     return myCurve->LastParameter();
+  }
   else
+  {
     return myLastPar;
+  }
 }
 
 //=================================================================================================
@@ -1083,9 +1072,13 @@ bool ProjLib_ProjectOnPlane::IsClosed() const
 bool ProjLib_ProjectOnPlane::IsPeriodic() const
 {
   if (myIsApprox)
+  {
     return false;
+  }
   else
+  {
     return myCurve->IsPeriodic();
+  }
 }
 
 //=================================================================================================
@@ -1098,92 +1091,91 @@ double ProjLib_ProjectOnPlane::Period() const
   }
 
   if (myIsApprox)
+  {
     return false;
+  }
   else
+  {
     return myCurve->Period();
-}
-
-//=================================================================================================
-
-gp_Pnt ProjLib_ProjectOnPlane::Value(const double U) const
-{
-  if (myType != GeomAbs_OtherCurve)
-  {
-    return myResult->Value(U);
-  }
-  else
-  {
-    return OnPlane_Value(U, myCurve, myPlane, myDirection);
   }
 }
 
 //=================================================================================================
 
-void ProjLib_ProjectOnPlane::D0(const double U, gp_Pnt& P) const
+gp_Pnt ProjLib_ProjectOnPlane::EvalD0(const double theU) const
 {
   if (myType != GeomAbs_OtherCurve)
   {
-    myResult->D0(U, P);
+    return myResult->EvalD0(theU);
   }
   else
   {
-    P = OnPlane_Value(U, myCurve, myPlane, myDirection);
+    return OnPlane_Value(theU, myCurve, myPlane, myDirection);
   }
 }
 
 //=================================================================================================
 
-void ProjLib_ProjectOnPlane::D1(const double U, gp_Pnt& P, gp_Vec& V) const
+Geom_Curve::ResD1 ProjLib_ProjectOnPlane::EvalD1(const double theU) const
 {
   if (myType != GeomAbs_OtherCurve)
   {
-    myResult->D1(U, P, V);
+    return myResult->EvalD1(theU);
   }
   else
   {
-    OnPlane_D1(U, P, V, myCurve, myPlane, myDirection);
+    gp_Pnt aP;
+    gp_Vec aV;
+    OnPlane_D1(theU, aP, aV, myCurve, myPlane, myDirection);
+    return {aP, aV};
   }
 }
 
 //=================================================================================================
 
-void ProjLib_ProjectOnPlane::D2(const double U, gp_Pnt& P, gp_Vec& V1, gp_Vec& V2) const
+Geom_Curve::ResD2 ProjLib_ProjectOnPlane::EvalD2(const double theU) const
 {
   if (myType != GeomAbs_OtherCurve)
   {
-    myResult->D2(U, P, V1, V2);
+    return myResult->EvalD2(theU);
   }
   else
   {
-    OnPlane_D2(U, P, V1, V2, myCurve, myPlane, myDirection);
+    gp_Pnt aP;
+    gp_Vec aV1, aV2;
+    OnPlane_D2(theU, aP, aV1, aV2, myCurve, myPlane, myDirection);
+    return {aP, aV1, aV2};
   }
 }
 
 //=================================================================================================
 
-void ProjLib_ProjectOnPlane::D3(const double U, gp_Pnt& P, gp_Vec& V1, gp_Vec& V2, gp_Vec& V3) const
+Geom_Curve::ResD3 ProjLib_ProjectOnPlane::EvalD3(const double theU) const
 {
   if (myType != GeomAbs_OtherCurve)
   {
-    myResult->D3(U, P, V1, V2, V3);
+    return myResult->EvalD3(theU);
   }
   else
   {
-    OnPlane_D3(U, P, V1, V2, V3, myCurve, myPlane, myDirection);
+    gp_Pnt aP;
+    gp_Vec aV1, aV2, aV3;
+    OnPlane_D3(theU, aP, aV1, aV2, aV3, myCurve, myPlane, myDirection);
+    return {aP, aV1, aV2, aV3};
   }
 }
 
 //=================================================================================================
 
-gp_Vec ProjLib_ProjectOnPlane::DN(const double U, const int DerivativeRequest) const
+gp_Vec ProjLib_ProjectOnPlane::EvalDN(const double theU, const int theN) const
 {
   if (myType != GeomAbs_OtherCurve)
   {
-    return myResult->DN(U, DerivativeRequest);
+    return myResult->EvalDN(theU, theN);
   }
   else
   {
-    return OnPlane_DN(U, DerivativeRequest, myCurve, myPlane, myDirection);
+    return OnPlane_DN(theU, theN, myCurve, myPlane, myDirection);
   }
 }
 
@@ -1213,7 +1205,9 @@ GeomAbs_CurveType ProjLib_ProjectOnPlane::GetType() const
 gp_Lin ProjLib_ProjectOnPlane::Line() const
 {
   if (myType != GeomAbs_Line)
+  {
     throw Standard_NoSuchObject("ProjLib_ProjectOnPlane:Line");
+  }
 
   return myResult->Line();
 }
@@ -1223,7 +1217,9 @@ gp_Lin ProjLib_ProjectOnPlane::Line() const
 gp_Circ ProjLib_ProjectOnPlane::Circle() const
 {
   if (myType != GeomAbs_Circle)
+  {
     throw Standard_NoSuchObject("ProjLib_ProjectOnPlane:Circle");
+  }
 
   return myResult->Circle();
 }
@@ -1233,7 +1229,9 @@ gp_Circ ProjLib_ProjectOnPlane::Circle() const
 gp_Elips ProjLib_ProjectOnPlane::Ellipse() const
 {
   if (myType != GeomAbs_Ellipse)
+  {
     throw Standard_NoSuchObject("ProjLib_ProjectOnPlane:Ellipse");
+  }
 
   return myResult->Ellipse();
 }
@@ -1243,7 +1241,9 @@ gp_Elips ProjLib_ProjectOnPlane::Ellipse() const
 gp_Hypr ProjLib_ProjectOnPlane::Hyperbola() const
 {
   if (myType != GeomAbs_Hyperbola)
+  {
     throw Standard_NoSuchObject("ProjLib_ProjectOnPlane:Hyperbola");
+  }
 
   return myResult->Hyperbola();
 }
@@ -1253,7 +1253,9 @@ gp_Hypr ProjLib_ProjectOnPlane::Hyperbola() const
 gp_Parab ProjLib_ProjectOnPlane::Parabola() const
 {
   if (myType != GeomAbs_Parabola)
+  {
     throw Standard_NoSuchObject("ProjLib_ProjectOnPlane:Parabola");
+  }
 
   return myResult->Parabola();
 }
@@ -1263,12 +1265,18 @@ gp_Parab ProjLib_ProjectOnPlane::Parabola() const
 int ProjLib_ProjectOnPlane::Degree() const
 {
   if ((GetType() != GeomAbs_BSplineCurve) && (GetType() != GeomAbs_BezierCurve))
+  {
     throw Standard_NoSuchObject("ProjLib_ProjectOnPlane:Degree");
+  }
 
   if (myIsApprox)
+  {
     return myResult->Degree();
+  }
   else
+  {
     return myCurve->Degree();
+  }
 }
 
 //=================================================================================================
@@ -1276,12 +1284,18 @@ int ProjLib_ProjectOnPlane::Degree() const
 bool ProjLib_ProjectOnPlane::IsRational() const
 {
   if ((GetType() != GeomAbs_BSplineCurve) && (GetType() != GeomAbs_BezierCurve))
+  {
     throw Standard_NoSuchObject("ProjLib_ProjectOnPlane:IsRational");
+  }
 
   if (myIsApprox)
+  {
     return myResult->IsRational();
+  }
   else
+  {
     return myCurve->IsRational();
+  }
 }
 
 //=================================================================================================
@@ -1289,12 +1303,18 @@ bool ProjLib_ProjectOnPlane::IsRational() const
 int ProjLib_ProjectOnPlane::NbPoles() const
 {
   if ((GetType() != GeomAbs_BSplineCurve) && (GetType() != GeomAbs_BezierCurve))
+  {
     throw Standard_NoSuchObject("ProjLib_ProjectOnPlane:NbPoles");
+  }
 
   if (myIsApprox)
+  {
     return myResult->NbPoles();
+  }
   else
+  {
     return myCurve->NbPoles();
+  }
 }
 
 //=================================================================================================
@@ -1302,12 +1322,18 @@ int ProjLib_ProjectOnPlane::NbPoles() const
 int ProjLib_ProjectOnPlane::NbKnots() const
 {
   if (GetType() != GeomAbs_BSplineCurve)
+  {
     throw Standard_NoSuchObject("ProjLib_ProjectOnPlane:NbKnots");
+  }
 
   if (myIsApprox)
+  {
     return myResult->NbKnots();
+  }
   else
+  {
     return myCurve->NbKnots();
+  }
 }
 
 //=================================================================================================
@@ -1315,7 +1341,9 @@ int ProjLib_ProjectOnPlane::NbKnots() const
 occ::handle<Geom_BezierCurve> ProjLib_ProjectOnPlane::Bezier() const
 {
   if (myType != GeomAbs_BezierCurve)
+  {
     throw Standard_NoSuchObject("ProjLib_ProjectOnPlane:Bezier");
+  }
 
   return myResult->Bezier();
 }
@@ -1325,7 +1353,9 @@ occ::handle<Geom_BezierCurve> ProjLib_ProjectOnPlane::Bezier() const
 occ::handle<Geom_BSplineCurve> ProjLib_ProjectOnPlane::BSpline() const
 {
   if (myType != GeomAbs_BSplineCurve)
+  {
     throw Standard_NoSuchObject("ProjLib_ProjectOnPlane:BSpline");
+  }
 
   return myResult->BSpline();
 }
@@ -1409,7 +1439,7 @@ bool ProjLib_ProjectOnPlane::BuildParabolaByApex(occ::handle<Geom_Curve>& theGeo
                                // copy of instance;
   occ::handle<Adaptor3d_Curve> aProjCrv = ShallowCopy();
   myType                                = aCurType;
-  LProp3d_CLProps      aProps(aProjCrv, 2, Precision::Confusion());
+  LProp_CLProps3d      aProps(aProjCrv, 2, Precision::Confusion());
   ProjLib_MaxCurvature aMaxCur(aProps);
   math_BrentMinimum    aSolver(Precision::PConfusion());
   aSolver.Perform(aMaxCur, -10. * aF, 0., 10. * aF);
@@ -1467,7 +1497,7 @@ bool ProjLib_ProjectOnPlane::BuildHyperbolaByApex(occ::handle<Geom_Curve>& theGe
   occ::handle<Adaptor3d_Curve> aProjCrv = ShallowCopy();
   myType                                = aCurType;
   // Searching hyperbola apex as point with maximal curvature
-  LProp3d_CLProps      aProps(aProjCrv, 2, Precision::Confusion());
+  LProp_CLProps3d      aProps(aProjCrv, 2, Precision::Confusion());
   ProjLib_MaxCurvature aMaxCur(aProps);
   math_BrentMinimum    aSolver(Precision::PConfusion());
   aSolver.Perform(aMaxCur, -5., 0., 5.);

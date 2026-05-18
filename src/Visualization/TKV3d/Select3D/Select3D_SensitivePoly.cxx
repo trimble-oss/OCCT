@@ -235,8 +235,7 @@ bool Select3D_SensitivePoly::Matches(SelectBasics_SelectingVolumeManager& theMgr
   }
   else if (mySensType == Select3D_TOS_INTERIOR)
   {
-    occ::handle<NCollection_HArray1<gp_Pnt>> anArrayOfPnt;
-    Points3D(anArrayOfPnt);
+    const occ::handle<NCollection_HArray1<gp_Pnt>> anArrayOfPnt = Points3D();
     if (!theMgr.IsOverlapAllowed())
     {
       if (theMgr.GetActiveSelectionType() == SelectMgr_SelectionType_Polyline)
@@ -272,7 +271,9 @@ bool Select3D_SensitivePoly::Matches(SelectBasics_SelectingVolumeManager& theMgr
 Select3D_BndBox3d Select3D_SensitivePoly::BoundingBox()
 {
   if (myBndBox.IsValid())
+  {
     return myBndBox;
+  }
 
   Select3D_BndBox3d aBndBox;
   for (int aPntIter = 0; aPntIter < myPolyg.Size(); ++aPntIter)
@@ -296,7 +297,9 @@ Select3D_BndBox3d Select3D_SensitivePoly::BoundingBox()
 int Select3D_SensitivePoly::Size() const
 {
   if (!mySegmentIndexes.IsNull())
+  {
     return mySegmentIndexes->Length();
+  }
 
   return -1;
 }
@@ -309,7 +312,9 @@ int Select3D_SensitivePoly::Size() const
 Select3D_BndBox3d Select3D_SensitivePoly::Box(const int theIdx) const
 {
   if (mySegmentIndexes.IsNull())
+  {
     return Select3D_BndBox3d(NCollection_Vec3<double>(RealLast()));
+  }
 
   const int aSegmentIdx = mySegmentIndexes->Value(theIdx);
   gp_Pnt    aPnt1       = myPolyg.Pnt3d(aSegmentIdx);
@@ -334,7 +339,9 @@ Select3D_BndBox3d Select3D_SensitivePoly::Box(const int theIdx) const
 double Select3D_SensitivePoly::Center(const int theIdx, const int theAxis) const
 {
   if (mySegmentIndexes.IsNull())
+  {
     return RealLast();
+  }
 
   const Select3D_BndBox3d        aBndBox = Box(theIdx);
   const NCollection_Vec3<double> aCenter = (aBndBox.CornerMin() + aBndBox.CornerMax()) * 0.5;
@@ -349,7 +356,9 @@ double Select3D_SensitivePoly::Center(const int theIdx, const int theAxis) const
 void Select3D_SensitivePoly::Swap(const int theIdx1, const int theIdx2)
 {
   if (mySegmentIndexes.IsNull())
+  {
     return;
+  }
 
   const int aSegmentIdx1                 = mySegmentIndexes->Value(theIdx1);
   const int aSegmentIdx2                 = mySegmentIndexes->Value(theIdx2);

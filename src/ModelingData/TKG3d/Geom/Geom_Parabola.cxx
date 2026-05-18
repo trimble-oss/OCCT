@@ -63,7 +63,9 @@ Geom_Parabola::Geom_Parabola(const Ax2& A2, const double Focal)
 {
 
   if (Focal < 0.0)
+  {
     throw Standard_ConstructionError();
+  }
   pos = A2;
 }
 
@@ -139,7 +141,9 @@ void Geom_Parabola::SetFocal(const double Focal)
 {
 
   if (Focal < 0.0)
+  {
     throw Standard_ConstructionError();
+  }
   focalLength = Focal;
 }
 
@@ -163,43 +167,47 @@ Ax1 Geom_Parabola::Directrix() const
 
 //=================================================================================================
 
-void Geom_Parabola::D0(const double U, Pnt& P) const
+gp_Pnt Geom_Parabola::EvalD0(const double U) const
 {
-
-  P = ElCLib::ParabolaValue(U, pos, focalLength);
+  return ElCLib::ParabolaValue(U, pos, focalLength);
 }
 
 //=================================================================================================
 
-void Geom_Parabola::D1(const double U, Pnt& P, Vec& V1) const
+Geom_Curve::ResD1 Geom_Parabola::EvalD1(const double U) const
 {
-
-  ElCLib::ParabolaD1(U, pos, focalLength, P, V1);
+  Geom_Curve::ResD1 aResult;
+  ElCLib::ParabolaD1(U, pos, focalLength, aResult.Point, aResult.D1);
+  return aResult;
 }
 
 //=================================================================================================
 
-void Geom_Parabola::D2(const double U, Pnt& P, Vec& V1, Vec& V2) const
+Geom_Curve::ResD2 Geom_Parabola::EvalD2(const double U) const
 {
-
-  ElCLib::ParabolaD2(U, pos, focalLength, P, V1, V2);
+  Geom_Curve::ResD2 aResult;
+  ElCLib::ParabolaD2(U, pos, focalLength, aResult.Point, aResult.D1, aResult.D2);
+  return aResult;
 }
 
 //=================================================================================================
 
-void Geom_Parabola::D3(const double U, Pnt& P, Vec& V1, Vec& V2, Vec& V3) const
+Geom_Curve::ResD3 Geom_Parabola::EvalD3(const double U) const
 {
-
-  ElCLib::ParabolaD2(U, pos, focalLength, P, V1, V2);
-  V3.SetCoord(0.0, 0.0, 0.0);
+  Geom_Curve::ResD3 aResult;
+  ElCLib::ParabolaD2(U, pos, focalLength, aResult.Point, aResult.D1, aResult.D2);
+  aResult.D3.SetCoord(0.0, 0.0, 0.0);
+  return aResult;
 }
 
 //=================================================================================================
 
-Vec Geom_Parabola::DN(const double U, const int N) const
+gp_Vec Geom_Parabola::EvalDN(const double U, const int N) const
 {
-
-  Standard_RangeError_Raise_if(N < 1, " ");
+  if (N < 1)
+  {
+    throw Geom_UndefinedDerivative();
+  }
   return ElCLib::ParabolaDN(U, pos, focalLength, N);
 }
 
@@ -236,7 +244,9 @@ void Geom_Parabola::Transform(const Trsf& T)
 double Geom_Parabola::TransformedParameter(const double U, const gp_Trsf& T) const
 {
   if (Precision::IsInfinite(U))
+  {
     return U;
+  }
   return U * std::abs(T.ScaleFactor());
 }
 

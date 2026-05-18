@@ -42,22 +42,14 @@ XmlTObjDrivers_ReferenceDriver::XmlTObjDrivers_ReferenceDriver(
 {
 }
 
-//=======================================================================
-// function : NewEmpty
-// purpose  : Creates a new attribute
-//=======================================================================
+//=================================================================================================
 
 occ::handle<TDF_Attribute> XmlTObjDrivers_ReferenceDriver::NewEmpty() const
 {
   return new TObj_TReference;
 }
 
-//=======================================================================
-// function : Paste
-// purpose  : Translate the contents of <aSource> and put it
-//           into <aTarget>, using the relocation table
-//           <aRelocTable> to keep the sharings.
-//=======================================================================
+//=================================================================================================
 
 bool XmlTObjDrivers_ReferenceDriver::Paste(const XmlObjMgt_Persistent&       Source,
                                            const occ::handle<TDF_Attribute>& Target,
@@ -76,7 +68,9 @@ bool XmlTObjDrivers_ReferenceDriver::Paste(const XmlObjMgt_Persistent&       Sou
   TDF_Tool::Label(Target->Label().Data(), MasterEntry, aMasterLabel);
   // referred label
   if (InHolderEntry.IsEmpty())
+  {
     TDF_Tool::Label(Target->Label().Data(), RefEntry, aLabel, true);
+  }
   else
   {
     occ::handle<TObj_Model> aModel = TObj_Assistant::FindModel(InHolderEntry.ToCString());
@@ -88,14 +82,7 @@ bool XmlTObjDrivers_ReferenceDriver::Paste(const XmlObjMgt_Persistent&       Sou
   return !aLabel.IsNull() && !aMasterLabel.IsNull();
 }
 
-//=======================================================================
-// function : Paste
-// purpose  : Translate the contents of <aSource> and put it
-//           into <aTarget>, using the relocation table
-//           <aRelocTable> to keep the sharings.
-//           Store master and referred labels as entry, the other model referred
-//           as entry in model-container
-//=======================================================================
+//=================================================================================================
 
 void XmlTObjDrivers_ReferenceDriver::Paste(const occ::handle<TDF_Attribute>& Source,
                                            XmlObjMgt_Persistent&             Target,
@@ -105,7 +92,9 @@ void XmlTObjDrivers_ReferenceDriver::Paste(const occ::handle<TDF_Attribute>& Sou
 
   occ::handle<TObj_Object> aLObject = aSource->Get();
   if (aLObject.IsNull())
+  {
     return;
+  }
 
   // referred entry
   TCollection_AsciiString entry;
@@ -121,7 +110,9 @@ void XmlTObjDrivers_ReferenceDriver::Paste(const occ::handle<TDF_Attribute>& Sou
 
   // is reference to other document
   if (aLabel.Root() == aMasterLabel.Root())
+  {
     return;
+  }
 
   occ::handle<TObj_Model> aModel = aLObject->GetModel();
   TCollection_AsciiString aModelName(aModel->GetModelName()->String());

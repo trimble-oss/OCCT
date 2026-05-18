@@ -36,9 +36,10 @@ Bnd_Sphere::Bnd_Sphere(const gp_XYZ& theCenter,
 
 void Bnd_Sphere::SquareDistances(const gp_XYZ& theXYZ, double& theMin, double& theMax) const
 {
-  theMax = (theXYZ - myCenter).SquareModulus();
-  theMin = (theMax - myRadius < 0 ? 0.0 : theMax - myRadius * myRadius);
-  theMax += myRadius * myRadius;
+  theMax              = (theXYZ - myCenter).SquareModulus();
+  const double aRadSq = myRadius * myRadius;
+  theMin              = (theMax < aRadSq ? 0.0 : theMax - aRadSq);
+  theMax += aRadSq;
 }
 
 void Bnd_Sphere::Distances(const gp_XYZ& theXYZ, double& theMin, double& theMax) const
@@ -87,7 +88,9 @@ void Bnd_Sphere::Add(const Bnd_Sphere& theOther)
   }
 
   if (theOther.myRadius + aDist <= myRadius)
+  {
     return; // this sphere encloses other
+  }
 
   // expansion
   const double dfR          = (aDist + myRadius + theOther.myRadius) * 0.5;
@@ -108,9 +111,13 @@ bool Bnd_Sphere::IsOut(const gp_XYZ& theXYZ, double& theMaxDist) const
   double aCurMinDist, aCurMaxDist;
   Distances(theXYZ, aCurMinDist, aCurMaxDist);
   if (aCurMinDist > theMaxDist)
+  {
     return true;
+  }
   if (myIsValid && aCurMaxDist < theMaxDist)
+  {
     theMaxDist = aCurMaxDist;
+  }
   return false;
 }
 

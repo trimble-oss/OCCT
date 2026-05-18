@@ -49,10 +49,8 @@ occ::handle<TDF_Attribute> XmlMDataXtd_PresentationDriver::NewEmpty() const
   return (new TDataXtd_Presentation());
 }
 
-//=======================================================================
-// function : Paste
-// purpose  : persistent -> transient (retrieve)
-//=======================================================================
+//=================================================================================================
+
 bool XmlMDataXtd_PresentationDriver::Paste(const XmlObjMgt_Persistent&       theSource,
                                            const occ::handle<TDF_Attribute>& theTarget,
                                            XmlObjMgt_RRelocationTable&) const
@@ -177,17 +175,17 @@ bool XmlMDataXtd_PresentationDriver::Paste(const XmlObjMgt_Persistent&       the
   return true;
 }
 
-//=======================================================================
-// function : Paste
-// purpose  : transient -> persistent (store)
-//=======================================================================
+//=================================================================================================
+
 void XmlMDataXtd_PresentationDriver::Paste(const occ::handle<TDF_Attribute>& theSource,
                                            XmlObjMgt_Persistent&             theTarget,
                                            XmlObjMgt_SRelocationTable&) const
 {
   occ::handle<TDataXtd_Presentation> aTPrs = occ::down_cast<TDataXtd_Presentation>(theSource);
   if (aTPrs.IsNull())
+  {
     return;
+  }
 
   // convert GUID into attribute value
   char                aGuidStr[40];
@@ -198,7 +196,9 @@ void XmlMDataXtd_PresentationDriver::Paste(const occ::handle<TDF_Attribute>& the
 
   // is displayed
   if (aTPrs->IsDisplayed())
+  {
     theTarget.Element().setAttribute(::IsDisplayedString(), ::DisplayedString());
+  }
 
   int aNb;
 

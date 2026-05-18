@@ -167,48 +167,57 @@ void Geom_Line::Transform(const gp_Trsf& T)
 
 //=================================================================================================
 
-void Geom_Line::D0(const double U, gp_Pnt& P) const
+gp_Pnt Geom_Line::EvalD0(const double U) const
 {
-  P = ElCLib::LineValue(U, pos);
+  return ElCLib::LineValue(U, pos);
 }
 
 //=================================================================================================
 
-void Geom_Line::D1(const double U, gp_Pnt& P, gp_Vec& V1) const
+Geom_Curve::ResD1 Geom_Line::EvalD1(const double U) const
 {
-
-  ElCLib::LineD1(U, pos, P, V1);
+  Geom_Curve::ResD1 aResult;
+  ElCLib::LineD1(U, pos, aResult.Point, aResult.D1);
+  return aResult;
 }
 
 //=================================================================================================
 
-void Geom_Line::D2(const double U, gp_Pnt& P, gp_Vec& V1, gp_Vec& V2) const
+Geom_Curve::ResD2 Geom_Line::EvalD2(const double U) const
 {
-
-  ElCLib::LineD1(U, pos, P, V1);
-  V2.SetCoord(0.0, 0.0, 0.0);
+  Geom_Curve::ResD2 aResult;
+  ElCLib::LineD1(U, pos, aResult.Point, aResult.D1);
+  aResult.D2.SetCoord(0.0, 0.0, 0.0);
+  return aResult;
 }
 
 //=================================================================================================
 
-void Geom_Line::D3(const double U, gp_Pnt& P, gp_Vec& V1, gp_Vec& V2, gp_Vec& V3) const
+Geom_Curve::ResD3 Geom_Line::EvalD3(const double U) const
 {
-
-  ElCLib::LineD1(U, pos, P, V1);
-  V2.SetCoord(0.0, 0.0, 0.0);
-  V3.SetCoord(0.0, 0.0, 0.0);
+  Geom_Curve::ResD3 aResult;
+  ElCLib::LineD1(U, pos, aResult.Point, aResult.D1);
+  aResult.D2.SetCoord(0.0, 0.0, 0.0);
+  aResult.D3.SetCoord(0.0, 0.0, 0.0);
+  return aResult;
 }
 
 //=================================================================================================
 
-gp_Vec Geom_Line::DN(const double, const int N) const
+gp_Vec Geom_Line::EvalDN(const double, const int N) const
 {
-
-  Standard_RangeError_Raise_if(N <= 0, " ");
+  if (N < 1)
+  {
+    throw Geom_UndefinedDerivative();
+  }
   if (N == 1)
+  {
     return gp_Vec(pos.Direction());
+  }
   else
+  {
     return gp_Vec(0.0, 0.0, 0.0);
+  }
 }
 
 //=================================================================================================
@@ -216,7 +225,9 @@ gp_Vec Geom_Line::DN(const double, const int N) const
 double Geom_Line::TransformedParameter(const double U, const gp_Trsf& T) const
 {
   if (Precision::IsInfinite(U))
+  {
     return U;
+  }
   return U * std::abs(T.ScaleFactor());
 }
 

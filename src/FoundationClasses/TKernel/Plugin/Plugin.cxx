@@ -26,33 +26,51 @@
 
 #include <Standard_WarningDisableFunctionCast.hxx>
 
-static char                tc[1000];
-static Standard_PCharacter thePluginId = tc;
+#include <shared_mutex>
+#include <mutex>
 
 //=================================================================================================
 
 occ::handle<Standard_Transient> Plugin::Load(const Standard_GUID& aGUID, const bool theVerbose)
 {
+  char                aPluginIdBuf[1000];
+  Standard_PCharacter aPluginId = aPluginIdBuf;
+  aGUID.ToCString(aPluginId);
+  TCollection_AsciiString pid(aPluginId);
 
-  aGUID.ToCString(thePluginId);
-  TCollection_AsciiString                                           pid(thePluginId);
+  static std::shared_mutex                                          aMapMutex;
   static NCollection_DataMap<TCollection_AsciiString, OSD_Function> theMapOfFunctions;
   OSD_Function                                                      f;
 
+  // Fast path: read-only cache lookup under shared lock.
+  {
+    std::shared_lock<std::shared_mutex> aReadLock(aMapMutex);
+    if (theMapOfFunctions.Find(pid, f))
+    {
+      aReadLock.unlock();
+      Standard_Transient* (*fp)(const Standard_GUID&) =
+        reinterpret_cast<Standard_Transient* (*)(const Standard_GUID&)>(reinterpret_cast<void*>(f));
+      return (*fp)(aGUID);
+    }
+  }
+
+  // Slow path: exclusive lock for plugin loading.
+  std::unique_lock<std::shared_mutex> aWriteLock(aMapMutex);
   if (!theMapOfFunctions.IsBound(pid))
   {
-
     occ::handle<Resource_Manager> PluginResource = new Resource_Manager("Plugin");
-    TCollection_AsciiString       theResource(thePluginId);
+    TCollection_AsciiString       theResource(aPluginId);
     theResource += ".Location";
 
     if (!PluginResource->Find(theResource.ToCString()))
     {
       Standard_SStream aMsg;
       aMsg << "could not find the resource:";
-      aMsg << theResource.ToCString() << std::endl;
+      aMsg << theResource.ToCString() << '\n';
       if (theVerbose)
-        std::cout << "could not find the resource:" << theResource.ToCString() << std::endl;
+      {
+        std::cout << "could not find the resource:" << theResource.ToCString() << '\n';
+      }
       throw Plugin_Failure(aMsg.str().c_str());
     }
 
@@ -80,8 +98,10 @@ occ::handle<Standard_Transient> Plugin::Load(const Standard_GUID& aGUID, const b
       aMsg << "; reason:";
       aMsg << error.ToCString();
       if (theVerbose)
+      {
         std::cout << "could not open: " << PluginResource->Value(theResource.ToCString())
-                  << " ; reason: " << error.ToCString() << std::endl;
+                  << " ; reason: " << error.ToCString() << '\n';
+      }
       throw Plugin_Failure(aMsg.str().c_str());
     }
     f = theSharedLibrary.DlSymb("PLUGINFACTORY");
@@ -97,12 +117,14 @@ occ::handle<Standard_Transient> Plugin::Load(const Standard_GUID& aGUID, const b
     theMapOfFunctions.Bind(pid, f);
   }
   else
+  {
     f = theMapOfFunctions(pid);
+  }
+  aWriteLock.unlock();
 
   // Cast through void* to avoid -Wcast-function-type-mismatch warning.
   // This is safe for dynamically loaded plugin symbols.
   Standard_Transient* (*fp)(const Standard_GUID&) =
     reinterpret_cast<Standard_Transient* (*)(const Standard_GUID&)>(reinterpret_cast<void*>(f));
-  occ::handle<Standard_Transient> theServiceFactory = (*fp)(aGUID);
-  return theServiceFactory;
+  return (*fp)(aGUID);
 }

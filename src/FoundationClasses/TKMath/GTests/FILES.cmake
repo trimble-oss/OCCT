@@ -6,9 +6,14 @@ set(OCCT_TKMath_GTests_FILES
   Bnd_B3_Test.cxx
   Bnd_BoundSortBox_Test.cxx
   Bnd_Box_Test.cxx
+  Bnd_Box2d_Test.cxx
   Bnd_OBB_Test.cxx
+  Bnd_Range_Test.cxx
+  Bnd_Sphere_Test.cxx
   BSplCLib_Cache_Test.cxx
+  BSplCLib_Test.cxx
   BSplSLib_Cache_Test.cxx
+  BSplSLib_Test.cxx
   BVH_BinnedBuilder_Test.cxx
   BVH_Box_Test.cxx
   BVH_BuildQueue_Test.cxx
@@ -22,11 +27,36 @@ set(OCCT_TKMath_GTests_FILES
   BVH_Traverse_Test.cxx
   BVH_Triangulation_Test.cxx
   BVH_Tree_Test.cxx
+  # Convert tests
+  Convert_CircleToBSplineCurve_Test.cxx
+  Convert_CompBezierCurvesToBSplineCurve_Test.cxx
+  Convert_CompPolynomialToPoles_Test.cxx
+  Convert_ConeToBSplineSurface_Test.cxx
+  Convert_CylinderToBSplineSurface_Test.cxx
+  Convert_EllipseToBSplineCurve_Test.cxx
+  Convert_GridPolynomialToPoles_Test.cxx
+  Convert_HyperbolaToBSplineCurve_Test.cxx
+  Convert_ParabolaToBSplineCurve_Test.cxx
+  Convert_SphereToBSplineSurface_Test.cxx
+  Convert_TorusToBSplineSurface_Test.cxx
   CSLib_Test.cxx
   ElCLib_Test.cxx
   gp_Ax3_Test.cxx
+  gp_Circ_Test.cxx
+  gp_Dir_Test.cxx
+  gp_Dir2d_Test.cxx
+  gp_GTrsf_Test.cxx
+  gp_Lin_Test.cxx
   gp_Mat_Test.cxx
+  gp_Pln_Test.cxx
+  gp_Pnt_Test.cxx
+  gp_Pnt2d_Test.cxx
+  gp_Quaternion_Test.cxx
+  gp_Torus_Test.cxx
   gp_Trsf_Test.cxx
+  gp_Vec_Test.cxx
+  gp_Vec2d_Test.cxx
+  gp_XYZ_Test.cxx
   math_BFGS_Test.cxx
   math_BissecNewton_Test.cxx
   math_BracketMinimum_Test.cxx
@@ -59,12 +89,15 @@ set(OCCT_TKMath_GTests_FILES
   math_Uzawa_Test.cxx
   math_Vector_Test.cxx
   # MathUtils tests
+  MathUtils_Bracket_Test.cxx
   MathUtils_Functor_Test.cxx
   # MathPoly tests
   MathPoly_Test.cxx
   MathPoly_Comparison_Test.cxx
+  MathPoly_Laguerre_Test.cxx
   # MathLin tests
   MathLin_Test.cxx
+  MathLin_EigenSearch_Test.cxx
   MathLin_Comparison_Test.cxx
   # MathOpt tests
   MathOpt_1D_Test.cxx
@@ -86,6 +119,9 @@ set(OCCT_TKMath_GTests_FILES
   MathInteg_Comparison_Test.cxx
   # MathSys tests
   MathSys_LM_Test.cxx
+  MathSys_Newton2D_Test.cxx
+  MathSys_Newton3D_Test.cxx
+  MathSys_Newton4D_Test.cxx
   MathSys_Comparison_Test.cxx
   PLib_Test.cxx
   PLib_JacobiPolynomial_Test.cxx

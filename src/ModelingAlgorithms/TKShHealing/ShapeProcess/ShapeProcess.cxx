@@ -56,7 +56,8 @@ private:
 
 //=================================================================================================
 
-bool ShapeProcess::RegisterOperator(const char* name, const occ::handle<ShapeProcess_Operator>& op)
+bool ShapeProcess::RegisterOperator(const char* const                         name,
+                                    const occ::handle<ShapeProcess_Operator>& op)
 {
   if (aMapOfOperators.IsBound(name))
   {
@@ -71,7 +72,7 @@ bool ShapeProcess::RegisterOperator(const char* name, const occ::handle<ShapePro
 
 //=================================================================================================
 
-bool ShapeProcess::FindOperator(const char* name, occ::handle<ShapeProcess_Operator>& op)
+bool ShapeProcess::FindOperator(const char* const name, occ::handle<ShapeProcess_Operator>& op)
 {
   if (!aMapOfOperators.IsBound(name))
   {
@@ -87,7 +88,7 @@ bool ShapeProcess::FindOperator(const char* name, occ::handle<ShapeProcess_Opera
 //=================================================================================================
 
 bool ShapeProcess::Perform(const occ::handle<ShapeProcess_Context>& context,
-                           const char*                              seq,
+                           const char* const                        seq,
                            const Message_ProgressRange&             theProgress)
 {
   ScopeLock aSequenceScope(*context, seq);
@@ -114,7 +115,9 @@ bool ShapeProcess::Perform(const occ::handle<ShapeProcess_Context>& context,
   {
     oper = sequence.Token(" \t,;", i);
     if (oper.Length() <= 0)
+    {
       break;
+    }
     sequenceOfOperators.Append(oper);
   }
 
@@ -126,7 +129,9 @@ bool ShapeProcess::Perform(const occ::handle<ShapeProcess_Context>& context,
     for (int i1 = 1; i1 <= sequenceOfOperators.Length(); i1++)
     {
       if (i1 > 1)
+      {
         Seq += ",";
+      }
       Seq += sequenceOfOperators.Value(i1);
     }
     SMSG0.Arg(Seq.ToCString());
@@ -164,7 +169,9 @@ bool ShapeProcess::Perform(const occ::handle<ShapeProcess_Context>& context,
     {
       OCC_CATCH_SIGNALS
       if (op->Perform(context, aRange))
+      {
         isDone = true;
+      }
     }
     catch (Standard_Failure const& anException)
     {
@@ -188,9 +195,9 @@ bool ShapeProcess::Perform(const occ::handle<ShapeProcess_Context>& theContext,
     return false;
   }
 
-  std::vector<std::pair<const char*, occ::handle<ShapeProcess_Operator>>> anOperators =
+  NCollection_LinearVector<std::pair<const char*, occ::handle<ShapeProcess_Operator>>> anOperators =
     getOperators(theOperations);
-  if (anOperators.empty())
+  if (anOperators.IsEmpty())
   {
     return false;
   }
@@ -198,7 +205,7 @@ bool ShapeProcess::Perform(const occ::handle<ShapeProcess_Context>& theContext,
   bool                  anIsAnySuccess = false;
   Message_ProgressScope aProgressScope(theProgress,
                                        nullptr,
-                                       static_cast<double>(anOperators.size()));
+                                       static_cast<double>(anOperators.Size()));
   for (const auto& anOperator : anOperators)
   {
     const char*                               anOperationName = anOperator.first;
@@ -244,10 +251,10 @@ std::pair<ShapeProcess::Operation, bool> ShapeProcess::ToOperationFlag(const cha
 
 //=================================================================================================
 
-std::vector<std::pair<const char*, occ::handle<ShapeProcess_Operator>>> ShapeProcess::getOperators(
-  const ShapeProcess::OperationsFlags& theFlags)
+NCollection_LinearVector<std::pair<const char*, occ::handle<ShapeProcess_Operator>>> ShapeProcess::
+  getOperators(const ShapeProcess::OperationsFlags& theFlags)
 {
-  std::vector<std::pair<const char*, occ::handle<ShapeProcess_Operator>>> aResult;
+  NCollection_LinearVector<std::pair<const char*, occ::handle<ShapeProcess_Operator>>> aResult;
   for (std::underlying_type<Operation>::type anOperation = Operation::First;
        anOperation <= Operation::Last;
        ++anOperation)
@@ -262,7 +269,7 @@ std::vector<std::pair<const char*, occ::handle<ShapeProcess_Operator>>> ShapePro
       occ::handle<ShapeProcess_Operator> anOperator;
       if (FindOperator(anOperationName, anOperator))
       {
-        aResult.emplace_back(anOperationName, anOperator);
+        aResult.EmplaceAppend(anOperationName, anOperator);
       }
     }
   }

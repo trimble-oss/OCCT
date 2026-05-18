@@ -27,10 +27,7 @@ static const char aRefPrefix[] = "/document/label";
 static const char aRefElem1[]  = "/label[@tag=";
 static const char aRefElem2[]  = "]";
 
-//=======================================================================
-// function : IdString
-// purpose  : return name of ID attribute to be used everywhere
-//=======================================================================
+//=================================================================================================
 
 const XmlObjMgt_DOMString& XmlObjMgt::IdString()
 {
@@ -38,12 +35,7 @@ const XmlObjMgt_DOMString& XmlObjMgt::IdString()
   return aString;
 }
 
-//=======================================================================
-// function : SetStringValue
-// purpose  : Add theData as the last child text node to theElement
-// remark   : Set isClearText to True if only you guarantee that the string
-//           does not contain '&', '<', '>', '\"', '\'', etc.
-//=======================================================================
+//=================================================================================================
 
 void XmlObjMgt::SetStringValue(XmlObjMgt_Element&         theElement,
                                const XmlObjMgt_DOMString& theData,
@@ -52,14 +44,13 @@ void XmlObjMgt::SetStringValue(XmlObjMgt_Element&         theElement,
   XmlObjMgt_Document aDocument = theElement.getOwnerDocument();
   LDOM_Text          aText     = aDocument.createTextNode(theData);
   if (isClearText)
+  {
     aText.SetValueClear();
+  }
   theElement.appendChild(aText);
 }
 
-//=======================================================================
-// function : GetStringValue
-// purpose  : returns the first child text node
-//=======================================================================
+//=================================================================================================
 
 XmlObjMgt_DOMString XmlObjMgt::GetStringValue(const XmlObjMgt_Element& theElement)
 {
@@ -69,24 +60,21 @@ XmlObjMgt_DOMString XmlObjMgt::GetStringValue(const XmlObjMgt_Element& theElemen
   {
     if (aNode.getNodeType() == LDOM_Node::TEXT_NODE)
     {
-      aString = ((const LDOM_Text&)aNode).getData();
+      aString = static_cast<const LDOM_Text&>(aNode).getData();
       break;
     }
   }
   return aString;
 }
 
-//=======================================================================
-// function : SprintfExtStr
-// purpose  : Converts theString to hex printable representation and put it
-//         : to the out buffer
-//=======================================================================
+//=================================================================================================
+
 void SprintfExtStr(char* out, const TCollection_ExtendedString& theString)
 {
-  unsigned short* p       = (unsigned short*)theString.ToExtString();
-  int             len     = theString.Length();
-  int             i       = 0;
-  unsigned short  mask[4] = {0xf000, 0x0f00, 0x00f0, 0x000f};
+  const unsigned short* p       = reinterpret_cast<const unsigned short*>(theString.ToExtString());
+  int                   len     = theString.Length();
+  int                   i       = 0;
+  unsigned short        mask[4] = {0xf000, 0x0f00, 0x00f0, 0x000f};
   while (len)
   {
     for (int j = 0, k = 3; j < 4; j++, k--)
@@ -94,9 +82,13 @@ void SprintfExtStr(char* out, const TCollection_ExtendedString& theString)
       unsigned short v = *(p + i) & mask[j]; // x000
       v                = (unsigned short)(v >> (4 * k));
       if (v < 10)
+      {
         v |= 0x30;
+      }
       else
+      {
         v += 87;
+      }
       out[4 * i + j] = (char)v;
     }
     i++;
@@ -105,10 +97,7 @@ void SprintfExtStr(char* out, const TCollection_ExtendedString& theString)
   out[4 * theString.Length()] = 0x00;
 }
 
-//=======================================================================
-// function : SetExtendedString
-// purpose  : Add text node to element and initialize it with string
-//=======================================================================
+//=================================================================================================
 
 bool XmlObjMgt::SetExtendedString(XmlObjMgt_Element&                theElement,
                                   const TCollection_ExtendedString& theString)
@@ -145,10 +134,7 @@ bool XmlObjMgt::SetExtendedString(XmlObjMgt_Element&                theElement,
   return true;
 }
 
-//=======================================================================
-// function : GetExtendedString
-// purpose  : Get the first text node in theElement and convert to ExtendedStr
-//=======================================================================
+//=================================================================================================
 
 bool XmlObjMgt::GetExtendedString(const XmlObjMgt_Element&    theElement,
                                   TCollection_ExtendedString& theString)
@@ -157,11 +143,7 @@ bool XmlObjMgt::GetExtendedString(const XmlObjMgt_Element&    theElement,
   return true;
 }
 
-//=======================================================================
-// function : GetTagEntryString
-// purpose  : Convert XPath expression (DOMString) into TagEntry string
-//           Returns False on error
-//=======================================================================
+//=================================================================================================
 
 bool XmlObjMgt::GetTagEntryString(const XmlObjMgt_DOMString& theSource,
                                   TCollection_AsciiString&   theTagEntry)
@@ -170,7 +152,9 @@ bool XmlObjMgt::GetTagEntryString(const XmlObjMgt_DOMString& theSource,
   const size_t aPrefixSize = sizeof(aRefPrefix) - 1;
   const char*  aSource     = theSource.GetString();
   if (strncmp(aSource, aRefPrefix, aPrefixSize))
+  {
     return false;
+  }
 
   //    Begin aTagEntry string
   char* aTagEntry    = (char*)Standard::Allocate(strlen(aSource) / 2); // quite enough to hold it
@@ -185,11 +169,15 @@ bool XmlObjMgt::GetTagEntryString(const XmlObjMgt_DOMString& theSource,
   {
     //  Check the first part of individual tag: "/label[@tag="
     if (strncmp(aSource, aRefElem1, anElem1Size))
+    {
       return false;
+    }
     aSource += anElem1Size;
     const char aQuote = aSource[0];
     if (aQuote != '\'' && aQuote != '\"')
+    {
       return false;
+    }
 
     //  Check the integer value of the tag
     errno = 0;
@@ -197,14 +185,18 @@ bool XmlObjMgt::GetTagEntryString(const XmlObjMgt_DOMString& theSource,
     long  aTagValue = strtol(&aSource[1], &aPtr, 10);
     int   aLen      = (int)(aPtr - &aSource[1]);
     if (aTagValue < 0 || aLen == 0 || aPtr[0] != aQuote || errno == ERANGE || errno == EINVAL)
+    {
       return false;
+    }
     aTagEntryPtr[0] = ':';
     memcpy(&aTagEntryPtr[1], &aSource[1], aLen);
     aTagEntryPtr += (aLen + 1);
 
     //  Check the final part of individual tag : "]"
     if (strncmp(aPtr + 1, aRefElem2, anElem2Size))
+    {
       return false;
+    }
     aSource = aPtr + 1 + anElem2Size;
   }
   aTagEntryPtr[0] = '\0';
@@ -213,10 +205,7 @@ bool XmlObjMgt::GetTagEntryString(const XmlObjMgt_DOMString& theSource,
   return true;
 }
 
-//=======================================================================
-// function : SetTagEntryString
-// purpose  : Form an XPath string corresponding to the input TagEntry
-//=======================================================================
+//=================================================================================================
 
 void XmlObjMgt::SetTagEntryString(XmlObjMgt_DOMString&           theTarget,
                                   const TCollection_AsciiString& theTagEntry)
@@ -224,14 +213,20 @@ void XmlObjMgt::SetTagEntryString(XmlObjMgt_DOMString&           theTarget,
   //    Begin parsing theTagEntry
   const char* aTagEntry = (const char*)theTagEntry.ToCString() + 1;
   if (aTagEntry[-1] != '0')
+  {
     return;
+  }
 
   //    Count the number of tags in the label entry string
   const char* aPtr      = aTagEntry;
   int         aTagCount = 0;
   while (*aPtr)
+  {
     if (*aPtr++ == ':')
+    {
       aTagCount++;
+    }
+  }
 
   //    Create a buffer to accumulate the XPath reference
   const size_t anElem1Size = sizeof(aRefElem1) - 1;
@@ -246,7 +241,9 @@ void XmlObjMgt::SetTagEntryString(XmlObjMgt_DOMString&           theTarget,
     //  Check for the end-of-string; find the delimiter ':'
     aPtr = strchr(aTagEntry, ':');
     if (aPtr == nullptr)
+    {
       break;
+    }
     aTagEntry = aPtr + 1;
 
     //  Find the range of characters for an integer number
@@ -255,7 +252,9 @@ void XmlObjMgt::SetTagEntryString(XmlObjMgt_DOMString&           theTarget,
     long  aTagValue = strtol(aTagEntry, &ptr, 10);
     int   aTagSize  = (int)(ptr - aTagEntry);
     if (aTagValue < 0 || aTagSize == 0 || errno == ERANGE || errno == EINVAL)
+    {
       return; // error
+    }
 
     //  Add one XPath level to the expression in aTarget
     memcpy(&aTargetPtr[0], aRefElem1, anElem1Size);
@@ -282,8 +281,12 @@ XmlObjMgt_Element XmlObjMgt::FindChildElement(const XmlObjMgt_Element& theSource
     {
       LDOM_Element anElem = (LDOM_Element&)aNode;
       if (anElem.getAttribute(IdString()).GetInteger(anId))
+      {
         if (anId == theId)
+        {
           return anElem;
+        }
+      }
     }
     aNode = aNode.getNextSibling();
   }
@@ -301,7 +304,9 @@ XmlObjMgt_Element XmlObjMgt::FindChildByRef(const XmlObjMgt_Element&   theSource
 {
   int anID;
   if (theSource.getAttribute(theRefName).GetInteger(anID))
+  {
     return FindChildElement(theSource, anID);
+  }
   return LDOM_Element();
 }
 
@@ -321,7 +326,9 @@ bool XmlObjMgt::GetInteger(const char*& theString, int& theValue)
   errno       = 0;
   long aValue = strtol(theString, &ptr, 10);
   if (ptr == theString || errno == ERANGE || errno == EINVAL)
+  {
     return false;
+  }
   theValue  = int(aValue);
   theString = ptr;
   return true;
@@ -335,7 +342,9 @@ bool XmlObjMgt::GetReal(const char*& theString, double& theValue)
   errno    = 0;
   theValue = Strtod(theString, &ptr);
   if (ptr == theString || errno == ERANGE || errno == EINVAL)
+  {
     return false;
+  }
 
   theString = ptr;
 
@@ -357,7 +366,9 @@ bool XmlObjMgt::GetReal(const char*& theString, double& theValue)
       return true;
     }
     else
+    {
       return false;
+    }
   }
   else if (*ptr && !IsSpace(*ptr))
   {
@@ -368,10 +379,8 @@ bool XmlObjMgt::GetReal(const char*& theString, double& theValue)
   return true;
 }
 
-//=======================================================================
-// function : GetReal
-// purpose  : Convert LDOMString to Real
-//=======================================================================
+//=================================================================================================
+
 bool XmlObjMgt::GetReal(const XmlObjMgt_DOMString& theString, double& theValue)
 {
   switch (theString.Type())

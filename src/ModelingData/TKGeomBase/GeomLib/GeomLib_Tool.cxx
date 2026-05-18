@@ -32,12 +32,7 @@
 // value can't be too high to be not in conflict with previous rule.
 static const double PARTOLERANCE = 1.e-9;
 
-//=======================================================================
-// function : Parameter
-// purpose  : Get parameter on curve of given point
-//           return FALSE if point is far from curve than MaxDist
-//           or computation fails
-//=======================================================================
+//=================================================================================================
 
 bool GeomLib_Tool::Parameter(const occ::handle<Geom_Curve>& Curve,
                              const gp_Pnt&                  Point,
@@ -45,7 +40,9 @@ bool GeomLib_Tool::Parameter(const occ::handle<Geom_Curve>& Curve,
                              double&                        U)
 {
   if (Curve.IsNull())
+  {
     return false;
+  }
   //
   U           = 0.;
   double aTol = MaxDist * MaxDist;
@@ -54,11 +51,15 @@ bool GeomLib_Tool::Parameter(const occ::handle<Geom_Curve>& Curve,
   Extrema_ExtPC     extrema(Point, aGAC);
   //
   if (!extrema.IsDone())
+  {
     return false;
+  }
   //
   int n = extrema.NbExt();
   if (n <= 0)
+  {
     return false;
+  }
   //
   int    i = 0, iMin = 0;
   double Dist2Min = RealLast();
@@ -82,12 +83,7 @@ bool GeomLib_Tool::Parameter(const occ::handle<Geom_Curve>& Curve,
   return true;
 }
 
-//=======================================================================
-// function : Parameters
-// purpose  : Get parameters on surface of given point
-//           return FALSE if point is far from surface than MaxDist
-//           or computation fails
-//=======================================================================
+//=================================================================================================
 
 bool GeomLib_Tool::Parameters(const occ::handle<Geom_Surface>& Surface,
                               const gp_Pnt&                    Point,
@@ -96,7 +92,9 @@ bool GeomLib_Tool::Parameters(const occ::handle<Geom_Surface>& Surface,
                               double&                          V)
 {
   if (Surface.IsNull())
+  {
     return false;
+  }
   //
   U           = 0.;
   V           = 0.;
@@ -108,11 +106,15 @@ bool GeomLib_Tool::Parameters(const occ::handle<Geom_Surface>& Surface,
   Extrema_ExtPS extrema(Point, aGAS, aTolU, aTolV, Extrema_ExtFlag_MIN);
   //
   if (!extrema.IsDone())
+  {
     return false;
+  }
   //
   int n = extrema.NbExt();
   if (n <= 0)
+  {
     return false;
+  }
   //
   double Dist2Min = RealLast();
   int    i = 0, iMin = 0;
@@ -136,12 +138,7 @@ bool GeomLib_Tool::Parameters(const occ::handle<Geom_Surface>& Surface,
   return true;
 }
 
-//=======================================================================
-// function : Parameter
-// purpose  : Get parameter on curve of given point
-//           return FALSE if point is far from curve than MaxDist
-//           or computation fails
-//=======================================================================
+//=================================================================================================
 
 bool GeomLib_Tool::Parameter(const occ::handle<Geom2d_Curve>& Curve,
                              const gp_Pnt2d&                  Point,
@@ -149,7 +146,9 @@ bool GeomLib_Tool::Parameter(const occ::handle<Geom2d_Curve>& Curve,
                              double&                          U)
 {
   if (Curve.IsNull())
+  {
     return false;
+  }
   //
   U           = 0.;
   double aTol = MaxDist * MaxDist;
@@ -157,10 +156,14 @@ bool GeomLib_Tool::Parameter(const occ::handle<Geom2d_Curve>& Curve,
   Geom2dAdaptor_Curve aGAC(Curve);
   Extrema_ExtPC2d     extrema(Point, aGAC);
   if (!extrema.IsDone())
+  {
     return false;
+  }
   int n = extrema.NbExt();
   if (n <= 0)
+  {
     return false;
+  }
   int    i = 0, iMin = 0;
   double Dist2Min = RealLast();
   for (i = 1; i <= n; i++)
@@ -289,19 +292,7 @@ private:
 };
 } // namespace
 
-//=======================================================================
-// function : ComputeDeviation
-// purpose  : Computes parameter on curve (*thePrmOnCurve) where maximal deviation
-//           (maximal value of correspond function FuncSolveDeviation) is obtained.
-//           ALGORITHM!
-//           The point is looked for where 1st derivative of the function
-//            FuncSolveDeviation is equal to 0. It is made by iterative formula:
-//
-//                U(n+1)=U(n) - D1/D2,
-//
-//            where D1 and D2 are 1st and 2nd derivative of the function, computed in
-//            the point U(n). U(0) = theStartParameter.
-//=======================================================================
+//=================================================================================================
 double GeomLib_Tool::ComputeDeviation(const Geom2dAdaptor_Curve& theCurve,
                                       const double               theFPar,
                                       const double               theLPar,
@@ -396,13 +387,7 @@ double GeomLib_Tool::ComputeDeviation(const Geom2dAdaptor_Curve& theCurve,
   return std::sqrt(aSqDefl);
 }
 
-//=======================================================================
-// function : ComputeDeviation
-// purpose  : Computes parameter on curve (*thePrmOnCurve) where maximal deviation
-//           (maximal value of correspond function FuncSolveDeviation) is obtained
-//           (fast but not precisely).
-//           math_PSO Algorithm is used.
-//=======================================================================
+//=================================================================================================
 double GeomLib_Tool::ComputeDeviation(const Geom2dAdaptor_Curve& theCurve,
                                       const double               theFPar,
                                       const double               theLPar,

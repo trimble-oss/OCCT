@@ -152,7 +152,9 @@ static char* getEncodingName(const char* theEncodingName)
 
   int aLen = 0;
   while (anEncoding[aLen++] != chNull)
+  {
     ;
+  }
 
   char* aResult = new char[aLen];
   memcpy(aResult, anEncoding, aLen * sizeof(char));
@@ -177,11 +179,7 @@ LDOM_XmlWriter::LDOM_XmlWriter(const char* theEncoding)
 LDOM_XmlWriter::~LDOM_XmlWriter()
 {
   delete[] myEncodingName;
-
-  if (myABuffer != nullptr)
-  {
-    delete[] myABuffer;
-  }
+  delete[] myABuffer;
 }
 
 //=================================================================================================
@@ -319,16 +317,14 @@ void LDOM_XmlWriter::Write(Standard_OStream& theOStream, const LDOM_Node& theNod
     }
     default:
 #ifndef _MSC_VER
-      std::cerr << "Unrecognized node type = " << (long)theNode.getNodeType() << std::endl
+      std::cerr << "Unrecognized node type = " << (long)theNode.getNodeType() << '\n'
 #endif
         ;
   }
 }
 
-//=======================================================================
-// function :
-// purpose  : Stream out an LDOMString
-//=======================================================================
+//=================================================================================================
+
 void LDOM_XmlWriter::Write(Standard_OStream& theOStream, const LDOMBasicString& theString)
 {
   switch (theString.Type())
@@ -417,10 +413,7 @@ void LDOM_XmlWriter::WriteAttribute(Standard_OStream& theOStream, const LDOM_Nod
     aLength = (int)(20 + strlen(aName));
     if (aLength > myABufferLen)
     {
-      if (myABuffer != nullptr)
-      {
-        delete[] myABuffer;
-      }
+      delete[] myABuffer;
 
       myABuffer    = new char[aLength + 1];
       myABufferLen = aLength;
@@ -452,10 +445,7 @@ void LDOM_XmlWriter::WriteAttribute(Standard_OStream& theOStream, const LDOM_Nod
 
     if (aLength > myABufferLen)
     {
-      if (myABuffer != nullptr)
-      {
-        delete[] myABuffer;
-      }
+      delete[] myABuffer;
 
       myABuffer    = new char[aLength + 1];
       myABufferLen = aLength;

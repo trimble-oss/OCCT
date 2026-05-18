@@ -25,6 +25,8 @@
 #include <Precision.hxx>
 #include <ProjLib_Cone.hxx>
 
+#include <cmath>
+
 //=================================================================================================
 
 ProjLib_Cone::ProjLib_Cone() = default;
@@ -126,7 +128,9 @@ void ProjLib_Cone::Project(const gp_Circ& C)
 
   // to find point U V, we use the code from ElSLib
   // without applying the Trsf to the point (unnecessary round trip).
-  if (x == 0.0 && y == 0.0)
+  // x/y are direction cosines (dimensionless); use angular tolerance
+  // to avoid unstable atan2() around zero.
+  if (std::abs(x) <= Precision::Angular() && std::abs(y) <= Precision::Angular())
   {
     U = 0.;
   }
@@ -139,16 +143,22 @@ void ProjLib_Cone::Project(const gp_Circ& C)
     U = std::atan2(y, x);
   }
   if (U < 0.)
+  {
     U += 2 * M_PI;
+  }
 
   V = z / std::cos(myCone.SemiAngle());
 
   gp_Pnt2d P2d1(U, V);
   gp_Dir2d D2d;
   if (ZCone.Dot(ZCir) > 0.)
+  {
     D2d.SetCoord(1., 0.);
+  }
   else
+  {
     D2d.SetCoord(-1., 0.);
+  }
 
   myLin  = gp_Lin2d(P2d1, D2d);
   isDone = true;

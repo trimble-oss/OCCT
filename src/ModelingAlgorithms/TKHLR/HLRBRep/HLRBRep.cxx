@@ -78,7 +78,9 @@ TopoDS_Edge HLRBRep::MakeEdge(const HLRBRep_Curve& ec, const double U1, const do
       }
       BRepLib_MakeEdge2d mke2d(ec2d, sta, end);
       if (mke2d.IsDone())
+      {
         Edg = mke2d.Edge();
+      }
       break;
     }
 
@@ -89,7 +91,9 @@ TopoDS_Edge HLRBRep::MakeEdge(const HLRBRep_Curve& ec, const double U1, const do
       double                           fpar, lpar;
       occ::handle<Geom_Curve>          aCurve = BRep_Tool::Curve(anEdge, fpar, lpar);
       if (aCurve->DynamicType() == STANDARD_TYPE(Geom_TrimmedCurve))
+      {
         aCurve = (occ::down_cast<Geom_TrimmedCurve>(aCurve))->BasisCurve();
+      }
       occ::handle<Geom_BSplineCurve> BSplCurve(occ::down_cast<Geom_BSplineCurve>(aCurve));
       occ::handle<Geom_BSplineCurve> theCurve =
         occ::down_cast<Geom_BSplineCurve>(BSplCurve->Copy());
@@ -97,11 +101,8 @@ TopoDS_Edge HLRBRep::MakeEdge(const HLRBRep_Curve& ec, const double U1, const do
       {
         theCurve->Segment(sta, end);
         NCollection_Array1<gp_Pnt2d> Poles(1, theCurve->NbPoles());
-        NCollection_Array1<double>   knots(1, theCurve->NbKnots());
-        NCollection_Array1<int>      mults(1, theCurve->NbKnots());
-        //-- ec.KnotsAndMultiplicities(knots,mults);
-        theCurve->Knots(knots);
-        theCurve->Multiplicities(mults);
+        NCollection_Array1<double>   knots(theCurve->Knots());
+        NCollection_Array1<int>      mults(theCurve->Multiplicities());
         if (theCurve->IsRational())
         {
           NCollection_Array1<double> Weights(1, theCurve->NbPoles());
@@ -146,7 +147,9 @@ TopoDS_Edge HLRBRep::MakeEdge(const HLRBRep_Curve& ec, const double U1, const do
       }
       BRepLib_MakeEdge2d mke2d(ec2d, sta, end);
       if (mke2d.IsDone())
+      {
         Edg = mke2d.Edge();
+      }
       break;
     }
     default: {
@@ -171,7 +174,9 @@ TopoDS_Edge HLRBRep::MakeEdge(const HLRBRep_Curve& ec, const double U1, const do
       occ::handle<Geom2d_BSplineCurve> ec2d = new Geom2d_BSplineCurve(Poles, knots, mults, 1);
       BRepLib_MakeEdge2d               mke2d(ec2d, sta, end);
       if (mke2d.IsDone())
+      {
         Edg = mke2d.Edge();
+      }
     }
   }
   return Edg;
@@ -204,14 +209,18 @@ TopoDS_Edge HLRBRep::MakeEdge3d(const HLRBRep_Curve& ec, const double U1, const 
 
   constexpr double Tol = Precision::PConfusion();
   if (std::abs(fpar - U1) <= Tol)
+  {
     V1new = V1;
+  }
   else
   {
     gp_Pnt aPnt = BAcurve.Value(U1);
     V1new       = BRepLib_MakeVertex(aPnt);
   }
   if (std::abs(lpar - U2) <= Tol)
+  {
     V2new = V2;
+  }
   else
   {
     gp_Pnt aPnt = BAcurve.Value(U2);
@@ -235,9 +244,13 @@ void HLRBRep::PolyHLRAngleAndDeflection(const double InAngl, double& OutAngl, do
 
   OutAngl = InAngl;
   if (OutAngl < HAngMin)
+  {
     OutAngl = HAngMin;
+  }
   if (OutAngl > HAngMax)
+  {
     OutAngl = HAngMax;
+  }
   OutAngl =
     HAngLim
     + sqrt((OutAngl - HAngMin) * (HAngMax - HAngLim) * (HAngMax - HAngLim) / (HAngMax - HAngMin));

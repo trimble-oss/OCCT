@@ -29,6 +29,8 @@
 #include <Standard_OutOfRange.hxx>
 #include <StdFail_NotDone.hxx>
 
+//=================================================================================================
+
 Extrema_ExtCC2d::Extrema_ExtCC2d()
     : myIsFindSingleSolution(false),
       myDone(false),
@@ -47,6 +49,8 @@ Extrema_ExtCC2d::Extrema_ExtCC2d()
 {
 }
 
+//=================================================================================================
+
 Extrema_ExtCC2d::Extrema_ExtCC2d(const Adaptor2d_Curve2d& C1,
                                  const Adaptor2d_Curve2d& C2,
                                  const double             TolC1,
@@ -60,6 +64,8 @@ Extrema_ExtCC2d::Extrema_ExtCC2d(const Adaptor2d_Curve2d& C1,
              TolC2);
   Perform(C1, Extrema_Curve2dTool::FirstParameter(C1), Extrema_Curve2dTool::LastParameter(C1));
 }
+
+//=================================================================================================
 
 Extrema_ExtCC2d::Extrema_ExtCC2d(const Adaptor2d_Curve2d& C1,
                                  const Adaptor2d_Curve2d& C2,
@@ -75,6 +81,8 @@ Extrema_ExtCC2d::Extrema_ExtCC2d(const Adaptor2d_Curve2d& C1,
   Perform(C1, U1, U2);
 }
 
+//=================================================================================================
+
 void Extrema_ExtCC2d::Initialize(const Adaptor2d_Curve2d& C2,
                                  const double             V1,
                                  const double             V2,
@@ -87,6 +95,8 @@ void Extrema_ExtCC2d::Initialize(const Adaptor2d_Curve2d& C2,
   mytolc1 = TolC1;
   mytolc2 = TolC2;
 }
+
+//=================================================================================================
 
 void Extrema_ExtCC2d::Perform(const Adaptor2d_Curve2d& C1, const double U1, const double U2)
 {
@@ -115,7 +125,7 @@ void Extrema_ExtCC2d::Perform(const Adaptor2d_Curve2d& C1, const double U1, cons
   switch (type1)
   {
       //
-      //  La premiere courbe est un cercle:
+      //  The first curve is a circle:
       //
     case GeomAbs_Circle: {
 
@@ -160,7 +170,9 @@ void Extrema_ExtCC2d::Perform(const Adaptor2d_Curve2d& C1, const double U1, cons
           aParamSolver->Perform();
           double Period2 = 0.;
           if (Extrema_Curve2dTool::IsPeriodic(*myC))
+          {
             Period2 = Extrema_Curve2dTool::Period(*myC);
+          }
           Results(*aParamSolver, U11, U12, U21, U22, 2 * M_PI, Period2);
         }
         break;
@@ -169,7 +181,7 @@ void Extrema_ExtCC2d::Perform(const Adaptor2d_Curve2d& C1, const double U1, cons
     break;
 
       //
-      // La premiere courbe est une ellipse:
+      // The first curve is an ellipse:
       //
     case GeomAbs_Ellipse: {
 
@@ -220,7 +232,9 @@ void Extrema_ExtCC2d::Perform(const Adaptor2d_Curve2d& C1, const double U1, cons
           aParamSolver->Perform();
           double Period2 = 0.;
           if (Extrema_Curve2dTool::IsPeriodic(*myC))
+          {
             Period2 = Extrema_Curve2dTool::Period(*myC);
+          }
           Results(*aParamSolver, U11, U12, U21, U22, 2 * M_PI, Period2);
         }
         break;
@@ -229,7 +243,7 @@ void Extrema_ExtCC2d::Perform(const Adaptor2d_Curve2d& C1, const double U1, cons
     break;
 
       //
-      // La premiere courbe est une parabole:
+      // The first curve is a parabola:
       //
     case GeomAbs_Parabola: {
 
@@ -284,7 +298,9 @@ void Extrema_ExtCC2d::Perform(const Adaptor2d_Curve2d& C1, const double U1, cons
           aParamSolver->Perform();
           double Period2 = 0.;
           if (Extrema_Curve2dTool::IsPeriodic(*myC))
+          {
             Period2 = Extrema_Curve2dTool::Period(*myC);
+          }
           Results(*aParamSolver, U11, U12, U21, U22, 0., Period2);
         }
         break;
@@ -293,7 +309,7 @@ void Extrema_ExtCC2d::Perform(const Adaptor2d_Curve2d& C1, const double U1, cons
     break;
 
       //
-      // La premiere courbe est une hyperbole:
+      // The first curve is a hyperbola:
       //
     case GeomAbs_Hyperbola: {
 
@@ -347,7 +363,9 @@ void Extrema_ExtCC2d::Perform(const Adaptor2d_Curve2d& C1, const double U1, cons
           aParamSolver->Perform();
           double Period2 = 0.;
           if (Extrema_Curve2dTool::IsPeriodic(*myC))
+          {
             Period2 = Extrema_Curve2dTool::Period(*myC);
+          }
           Results(*aParamSolver, U11, U12, U21, U22, 0., Period2);
         }
         break;
@@ -356,7 +374,7 @@ void Extrema_ExtCC2d::Perform(const Adaptor2d_Curve2d& C1, const double U1, cons
     break;
 
       //
-      // La premiere courbe est une Line:
+      // The first curve is a line:
       //
     case GeomAbs_Line: {
 
@@ -401,7 +419,9 @@ void Extrema_ExtCC2d::Perform(const Adaptor2d_Curve2d& C1, const double U1, cons
           aParamSolver->Perform();
           double Period2 = 0.;
           if (Extrema_Curve2dTool::IsPeriodic(*myC))
+          {
             Period2 = Extrema_Curve2dTool::Period(*myC);
+          }
           Results(*aParamSolver, U11, U12, U21, U22, 0., Period2);
         }
         break;
@@ -410,7 +430,7 @@ void Extrema_ExtCC2d::Perform(const Adaptor2d_Curve2d& C1, const double U1, cons
     break;
 
       //
-      // La premiere courbe est une BezierCurve ou une BSplineCurve:
+      // The first curve is a BezierCurve or a BSplineCurve:
       //
     default: {
       aParamSolver = opencascade::make_shared<Extrema_ECC2d>(C1, *myC);
@@ -418,46 +438,70 @@ void Extrema_ExtCC2d::Perform(const Adaptor2d_Curve2d& C1, const double U1, cons
       aParamSolver->Perform();
       double Period1 = 0.;
       if (Extrema_Curve2dTool::IsPeriodic(C1))
+      {
         Period1 = Extrema_Curve2dTool::Period(C1);
+      }
       double Period2 = 0.;
       if (Extrema_Curve2dTool::IsPeriodic(*myC))
+      {
         Period2 = Extrema_Curve2dTool::Period(*myC);
+      }
       Results(*aParamSolver, U11, U12, U21, U22, Period1, Period2);
     }
     break;
   };
 }
 
+//=================================================================================================
+
 bool Extrema_ExtCC2d::IsDone() const
 {
   return myDone;
 }
 
+//=================================================================================================
+
 double Extrema_ExtCC2d::SquareDistance(const int N) const
 {
   if (!myDone)
+  {
     throw StdFail_NotDone();
+  }
   if ((N <= 0) || (N > mynbext))
+  {
     throw Standard_OutOfRange();
+  }
   return mySqDist.Value(N);
 }
+
+//=================================================================================================
 
 int Extrema_ExtCC2d::NbExt() const
 {
   if (!myDone)
+  {
     throw StdFail_NotDone();
+  }
   return mynbext;
 }
+
+//=================================================================================================
 
 void Extrema_ExtCC2d::Points(const int N, Extrema_POnCurv2d& P1, Extrema_POnCurv2d& P2) const
 {
   if (!myDone)
+  {
     throw StdFail_NotDone();
+  }
   if ((N <= 0) || (N > mynbext))
+  {
     throw Standard_OutOfRange();
+  }
   P1 = mypoints.Value(2 * N - 1);
   P2 = mypoints.Value(2 * N);
 }
+
+//=================================================================================================
 
 void Extrema_ExtCC2d::TrimmedSquareDistances(double&   dist11,
                                              double&   dist12,
@@ -477,6 +521,8 @@ void Extrema_ExtCC2d::TrimmedSquareDistances(double&   dist11,
   P21    = P2f;
   P22    = P2l;
 }
+
+//=================================================================================================
 
 void Extrema_ExtCC2d::Results(const Extrema_ExtElC2d& AlgExt,
                               const double            Ut11,
@@ -499,25 +545,33 @@ void Extrema_ExtCC2d::Results(const Extrema_ExtElC2d& AlgExt,
       NbExt = AlgExt.NbExt();
       for (i = 1; i <= NbExt; i++)
       {
-        // Verification de la validite des parametres pour le cas trimme:
+        // Verification of the validity of parameters for the trimmed case:
         AlgExt.Points(i, P1, P2);
         if (!inverse)
         {
           U = P1.Parameter();
           if (Period1 != 0.0)
+          {
             U = ElCLib::InPeriod(U, Ut11, Ut11 + Period1);
+          }
           U2 = P2.Parameter();
           if (Period2 != 0.0)
+          {
             U2 = ElCLib::InPeriod(U2, Ut21, Ut21 + Period2);
+          }
         }
         else
         {
           U2 = P1.Parameter();
           if (Period2 != 0.0)
+          {
             U2 = ElCLib::InPeriod(U2, Ut21, Ut21 + Period2);
+          }
           U = P2.Parameter();
           if (Period1 != 0.0)
+          {
             U = ElCLib::InPeriod(U, Ut11, Ut11 + Period1);
+          }
         }
         if ((U >= Ut11 - Precision::PConfusion()) && (U <= Ut12 + Precision::PConfusion())
             && (U2 >= Ut21 - Precision::PConfusion()) && (U2 <= Ut22 + Precision::PConfusion()))
@@ -550,6 +604,8 @@ void Extrema_ExtCC2d::Results(const Extrema_ExtElC2d& AlgExt,
   }
 }
 
+//=================================================================================================
+
 void Extrema_ExtCC2d::Results(const Extrema_ECC2d& AlgExt,
                               const double         Ut11,
                               const double         Ut12,
@@ -569,14 +625,18 @@ void Extrema_ExtCC2d::Results(const Extrema_ECC2d& AlgExt,
     NbExt   = AlgExt.NbExt();
     for (i = 1; i <= NbExt; i++)
     {
-      // Verification de la validite des parametres pour le cas trimme:
+      // Verification of parameter validity for the trimmed case:
       AlgExt.Points(i, P1, P2);
       U = P1.Parameter();
       if (Period1 != 0.0)
+      {
         U = ElCLib::InPeriod(U, Ut11, Ut11 + Period1);
+      }
       U2 = P2.Parameter();
       if (Period2 != 0.0)
+      {
         U2 = ElCLib::InPeriod(U2, Ut21, Ut21 + Period2);
+      }
 
       if ((U >= Ut11 - Precision::PConfusion()) && (U <= Ut12 + Precision::PConfusion())
           && (U2 >= Ut21 - Precision::PConfusion()) && (U2 <= Ut22 + Precision::PConfusion()))
@@ -598,10 +658,14 @@ void Extrema_ExtCC2d::Results(const Extrema_ECC2d& AlgExt,
   }
 }
 
+//=================================================================================================
+
 bool Extrema_ExtCC2d::IsParallel() const
 {
   if (!myDone)
+  {
     throw StdFail_NotDone();
+  }
   return myIsPar;
 }
 

@@ -28,6 +28,7 @@
 #include <gp_Sphere.hxx>
 #include <gp_Torus.hxx>
 #include <gp_Vec.hxx>
+#include <Standard_Failure.hxx>
 #include <Standard_NotImplemented.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(Adaptor3d_Surface, Standard_Transient)
@@ -179,77 +180,6 @@ bool Adaptor3d_Surface::IsVPeriodic() const
 double Adaptor3d_Surface::VPeriod() const
 {
   throw Standard_NotImplemented("Adaptor3d_Surface::VPeriod");
-}
-
-//=================================================================================================
-
-// gp_Pnt Adaptor3d_Surface::Value(const double U, const double V) const
-gp_Pnt Adaptor3d_Surface::Value(const double, const double) const
-{
-  throw Standard_NotImplemented("Adaptor3d_Surface::Value");
-}
-
-//=================================================================================================
-
-// void Adaptor3d_Surface::D0(const double U, const double V, gp_Pnt& P) const
-void Adaptor3d_Surface::D0(const double, const double, gp_Pnt&) const
-{
-  throw Standard_NotImplemented("Adaptor3d_Surface::D0");
-}
-
-//=================================================================================================
-
-// void Adaptor3d_Surface::D1(const double U, const double V, gp_Pnt& P, gp_Vec& D1U,
-// gp_Vec& D1V) const
-void Adaptor3d_Surface::D1(const double, const double, gp_Pnt&, gp_Vec&, gp_Vec&) const
-{
-  throw Standard_NotImplemented("Adaptor3d_Surface::D1");
-}
-
-//=================================================================================================
-
-// void Adaptor3d_Surface::D2(const double U, const double V, gp_Pnt& P, gp_Vec& D1U,
-// gp_Vec& D1V, gp_Vec& D2U, gp_Vec& D2V, gp_Vec& D2UV) const
-void Adaptor3d_Surface::D2(const double,
-                           const double,
-                           gp_Pnt&,
-                           gp_Vec&,
-                           gp_Vec&,
-                           gp_Vec&,
-                           gp_Vec&,
-                           gp_Vec&) const
-{
-  throw Standard_NotImplemented("Adaptor3d_Surface::D2");
-}
-
-//=================================================================================================
-
-// void Adaptor3d_Surface::D3(const double U, const double V, gp_Pnt& P, gp_Vec& D1U,
-// gp_Vec& D1V, gp_Vec& D2U, gp_Vec& D2V, gp_Vec& D2UV, gp_Vec& D3U, gp_Vec& D3V, gp_Vec& D3UUV,
-// gp_Vec& D3UVV) const
-void Adaptor3d_Surface::D3(const double,
-                           const double,
-                           gp_Pnt&,
-                           gp_Vec&,
-                           gp_Vec&,
-                           gp_Vec&,
-                           gp_Vec&,
-                           gp_Vec&,
-                           gp_Vec&,
-                           gp_Vec&,
-                           gp_Vec&,
-                           gp_Vec&) const
-{
-  throw Standard_NotImplemented("Adaptor3d_Surface::D3");
-}
-
-//=================================================================================================
-
-// gp_Vec Adaptor3d_Surface::DN(const double U, const double V, const int
-// Nu, const int Nv) const
-gp_Vec Adaptor3d_Surface::DN(const double, const double, const int, const int) const
-{
-  throw Standard_NotImplemented("Adaptor3d_Surface::DN");
 }
 
 //=================================================================================================
@@ -413,4 +343,54 @@ occ::handle<Adaptor3d_Surface> Adaptor3d_Surface::BasisSurface() const
 double Adaptor3d_Surface::OffsetValue() const
 {
   throw Standard_NotImplemented("Adaptor3d_Surface::OffsetValue");
+}
+
+//=================================================================================================
+
+gp_Pnt Adaptor3d_Surface::EvalD0(const double theU, const double theV) const
+{
+  (void)theU;
+  (void)theV;
+  throw Standard_NotImplemented("Adaptor3d_Surface::EvalD0");
+}
+
+//=================================================================================================
+
+Geom_Surface::ResD1 Adaptor3d_Surface::EvalD1(const double theU, const double theV) const
+{
+  (void)theU;
+  (void)theV;
+  throw Standard_NotImplemented("Adaptor3d_Surface::EvalD1");
+}
+
+//=================================================================================================
+
+Geom_Surface::ResD2 Adaptor3d_Surface::EvalD2(const double theU, const double theV) const
+{
+  (void)theU;
+  (void)theV;
+  throw Standard_NotImplemented("Adaptor3d_Surface::EvalD2");
+}
+
+//=================================================================================================
+
+Geom_Surface::ResD3 Adaptor3d_Surface::EvalD3(const double theU, const double theV) const
+{
+  (void)theU;
+  (void)theV;
+  throw Standard_NotImplemented("Adaptor3d_Surface::EvalD3");
+}
+
+//=================================================================================================
+
+gp_Vec Adaptor3d_Surface::EvalDN(const double theU,
+                                 const double theV,
+                                 const int    theNu,
+                                 const int    theNv) const
+{
+  (void)theU;
+  (void)theV;
+  (void)theNu;
+  (void)theNv;
+  throw Standard_NotImplemented("Adaptor3d_Surface::EvalDN");
 }

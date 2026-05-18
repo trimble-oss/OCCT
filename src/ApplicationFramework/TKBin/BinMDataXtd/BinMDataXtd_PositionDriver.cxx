@@ -39,10 +39,7 @@ occ::handle<TDF_Attribute> BinMDataXtd_PositionDriver::NewEmpty() const
   return new TDataXtd_Position();
 }
 
-//=======================================================================
-// function : Paste
-// purpose  : persistent -> transient (retrieve)
-//=======================================================================
+//=================================================================================================
 
 bool BinMDataXtd_PositionDriver::Paste(const BinObjMgt_Persistent&       theSource,
                                        const occ::handle<TDF_Attribute>& theTarget,
@@ -52,18 +49,24 @@ bool BinMDataXtd_PositionDriver::Paste(const BinObjMgt_Persistent&       theSour
   double                         aValue;
   bool                           ok = theSource >> aValue;
   if (!ok)
+  {
     return ok;
+  }
   gp_Pnt aPosition(0., 0., 0.);
   aPosition.SetX(aValue);
 
   ok = theSource >> aValue;
   if (!ok)
+  {
     return ok;
+  }
   aPosition.SetY(aValue);
 
   ok = theSource >> aValue;
   if (!ok)
+  {
     return ok;
+  }
   aPosition.SetZ(aValue);
 
   anAtt->SetPosition(aPosition);
@@ -71,10 +74,7 @@ bool BinMDataXtd_PositionDriver::Paste(const BinObjMgt_Persistent&       theSour
   return ok;
 }
 
-//=======================================================================
-// function : Paste
-// purpose  : transient -> persistent (store)
-//=======================================================================
+//=================================================================================================
 
 void BinMDataXtd_PositionDriver::Paste(
   const occ::handle<TDF_Attribute>& theSource,

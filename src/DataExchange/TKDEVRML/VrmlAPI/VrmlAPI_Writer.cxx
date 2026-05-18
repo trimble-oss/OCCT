@@ -159,13 +159,22 @@ void VrmlAPI_Writer::SetDeflection(const double aDef)
     myDrawer->SetTypeOfDeflection(Aspect_TOD_ABSOLUTE);
   }
   else
+  {
     myDrawer->SetTypeOfDeflection(Aspect_TOD_RELATIVE);
+  }
 }
 
 void VrmlAPI_Writer::SetRepresentation(const VrmlAPI_RepresentationOfShape aRep)
 {
   myRepresentation = aRep;
 }
+
+VrmlAPI_RepresentationOfShape VrmlAPI_Writer::GetRepresentation() const
+{
+  return myRepresentation;
+}
+
+//=================================================================================================
 
 void VrmlAPI_Writer::SetTransparencyToMaterial(occ::handle<Vrml_Material>& aMaterial,
                                                const double                aTransparency)
@@ -174,12 +183,16 @@ void VrmlAPI_Writer::SetTransparencyToMaterial(occ::handle<Vrml_Material>& aMate
   aMaterial->SetTransparency(t);
 }
 
+//=================================================================================================
+
 void VrmlAPI_Writer::SetShininessToMaterial(occ::handle<Vrml_Material>& aMaterial,
                                             const double                aShininess)
 {
   occ::handle<NCollection_HArray1<double>> s = new NCollection_HArray1<double>(1, 1, aShininess);
   aMaterial->SetShininess(s);
 }
+
+//=================================================================================================
 
 void VrmlAPI_Writer::SetAmbientColorToMaterial(
   occ::handle<Vrml_Material>&                             aMaterial,
@@ -188,12 +201,16 @@ void VrmlAPI_Writer::SetAmbientColorToMaterial(
   aMaterial->SetAmbientColor(Color);
 }
 
+//=================================================================================================
+
 void VrmlAPI_Writer::SetDiffuseColorToMaterial(
   occ::handle<Vrml_Material>&                             aMaterial,
   const occ::handle<NCollection_HArray1<Quantity_Color>>& Color)
 {
   aMaterial->SetDiffuseColor(Color);
 }
+
+//=================================================================================================
 
 void VrmlAPI_Writer::SetSpecularColorToMaterial(
   occ::handle<Vrml_Material>&                             aMaterial,
@@ -202,16 +219,13 @@ void VrmlAPI_Writer::SetSpecularColorToMaterial(
   aMaterial->SetSpecularColor(Color);
 }
 
+//=================================================================================================
+
 void VrmlAPI_Writer::SetEmissiveColorToMaterial(
   occ::handle<Vrml_Material>&                             aMaterial,
   const occ::handle<NCollection_HArray1<Quantity_Color>>& Color)
 {
   aMaterial->SetEmissiveColor(Color);
-}
-
-VrmlAPI_RepresentationOfShape VrmlAPI_Writer::GetRepresentation() const
-{
-  return myRepresentation;
 }
 
 occ::handle<Vrml_Material> VrmlAPI_Writer::GetFrontMaterial() const
@@ -254,7 +268,9 @@ occ::handle<Vrml_Material> VrmlAPI_Writer::GetUnfreeBoundsMaterial() const
   return myUnfreeBoundsMaterial;
 }
 
-bool VrmlAPI_Writer::Write(const TopoDS_Shape& aShape, const char* aFile, const int aVersion) const
+bool VrmlAPI_Writer::Write(const TopoDS_Shape& aShape,
+                           const char* const   aFile,
+                           const int           aVersion) const
 {
   const occ::handle<OSD_FileSystem>& aFileSystem = OSD_FileSystem::DefaultFileSystem();
   std::shared_ptr<std::ostream>      anOutStream =
@@ -268,7 +284,7 @@ bool VrmlAPI_Writer::Write(const TopoDS_Shape& aShape, const char* aFile, const 
 }
 
 bool VrmlAPI_Writer::WriteDoc(const occ::handle<TDocStd_Document>& theDoc,
-                              const char*                          theFile,
+                              const char* const                    theFile,
                               const double                         theScale) const
 {
   const occ::handle<OSD_FileSystem>& aFileSystem = OSD_FileSystem::DefaultFileSystem();
@@ -289,9 +305,13 @@ bool VrmlAPI_Writer::Write(const TopoDS_Shape& aShape,
                            const int           aVersion) const
 {
   if (aVersion == 1)
+  {
     return write_v1(aShape, theOStream);
+  }
   else if (aVersion == 2)
+  {
     return write_v2(aShape, theOStream);
+  }
 
   return false;
 }
@@ -387,15 +407,21 @@ bool VrmlAPI_Writer::write_v1(const TopoDS_Shape& aShape, Standard_OStream& theO
 
   Vrml::VrmlHeaderWriter(theOStream);
   if (myRepresentation == VrmlAPI_BothRepresentation)
+  {
     Vrml::CommentWriter(
       " This file contents both Shaded and Wire Frame representation of selected Shape ",
       theOStream);
+  }
   if (myRepresentation == VrmlAPI_ShadedRepresentation)
+  {
     Vrml::CommentWriter(" This file contents only Shaded representation of selected Shape ",
                         theOStream);
+  }
   if (myRepresentation == VrmlAPI_WireFrameRepresentation)
+  {
     Vrml::CommentWriter(" This file contents only Wire Frame representation of selected Shape ",
                         theOStream);
+  }
 
   Vrml_Separator S1;
   S1.Print(theOStream);
@@ -442,12 +468,16 @@ bool VrmlAPI_Writer::write_v2(const TopoDS_Shape& aShape, Standard_OStream& theO
   bool anExtFace = false;
   if (myRepresentation == VrmlAPI_ShadedRepresentation
       || myRepresentation == VrmlAPI_BothRepresentation)
+  {
     anExtFace = true;
+  }
 
   bool anExtEdge = false;
   if (myRepresentation == VrmlAPI_WireFrameRepresentation
       || myRepresentation == VrmlAPI_BothRepresentation)
+  {
     anExtEdge = true;
+  }
 
   VrmlData_Scene        aScene;
   VrmlData_ShapeConvert aConv(aScene);

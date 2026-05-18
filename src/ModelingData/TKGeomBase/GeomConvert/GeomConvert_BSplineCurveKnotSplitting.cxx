@@ -13,7 +13,7 @@
 // commercial license or contractual agreement.
 
 // Jean-Claude Vauthier 27 November 1991
-// Passage sur C1 Aout 1992
+// Switch to C1 August 1992
 
 #include <BSplCLib.hxx>
 #include <Geom_BSplineCurve.hxx>
@@ -32,7 +32,9 @@ GeomConvert_BSplineCurveKnotSplitting::GeomConvert_BSplineCurveKnotSplitting(
 {
 
   if (ContinuityRange < 0)
+  {
     throw Standard_RangeError();
+  }
 
   int FirstIndex = BasisCurve->FirstUKnotIndex();
   int LastIndex  = BasisCurve->LastUKnotIndex();
@@ -47,10 +49,8 @@ GeomConvert_BSplineCurveKnotSplitting::GeomConvert_BSplineCurveKnotSplitting(
   }
   else
   {
-    int             NbKnots = BasisCurve->NbKnots();
-    Array1OfInteger Mults(1, NbKnots);
-    BasisCurve->Multiplicities(Mults);
-    int Mmax = BSplCLib::MaxKnotMult(Mults, FirstIndex, LastIndex);
+    const Array1OfInteger& Mults = BasisCurve->Multiplicities();
+    int                    Mmax  = BSplCLib::MaxKnotMult(Mults, FirstIndex, LastIndex);
     if (Degree - Mmax >= ContinuityRange)
     {
       splitIndexes = new HArray1OfInteger(1, 2);

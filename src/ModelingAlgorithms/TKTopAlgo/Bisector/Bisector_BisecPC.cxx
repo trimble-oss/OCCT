@@ -19,8 +19,9 @@
 #include <ElCLib.hxx>
 #include <Geom2d_Curve.hxx>
 #include <Geom2d_Geometry.hxx>
+#include <Geom2d_UndefinedDerivative.hxx>
 #include <Geom2dAPI_ProjectPointOnCurve.hxx>
-#include <Geom2dLProp_CLProps2d.hxx>
+#include <GeomLProp_CLProps.hxx>
 #include <gp.hxx>
 #include <gp_Ax2d.hxx>
 #include <gp_Pnt2d.hxx>
@@ -96,7 +97,9 @@ void Bisector_BisecPC::Perform(const occ::handle<Geom2d_Curve>& Cu,
   //--------------------------------------------
   ComputeIntervals();
   if (isEmpty)
+  {
     return;
+  }
 
   //-------------------------
   // Construction extensions.
@@ -287,7 +290,9 @@ bool Bisector_BisecPC::IsClosed() const
     // -----------------------------------------------------------------------
     if (startIntervals.First() == curve->FirstParameter()
         && endIntervals.First() == curve->LastParameter())
+    {
       return true;
+    }
   }
   return false;
 }
@@ -315,7 +320,9 @@ void Bisector_BisecPC::Extension(const double U,
   if (U < startIntervals.Value(bisInterval))
   {
     if (pointStartBis.IsEqual(point, Precision::PConfusion()))
+    {
       P = pointStartBis;
+    }
     else
     {
       dU = U - startIntervals.Value(bisInterval);
@@ -327,7 +334,9 @@ void Bisector_BisecPC::Extension(const double U,
   else if (U > endIntervals.Value(bisInterval))
   {
     if (pointEndBis.IsEqual(point, Precision::PConfusion()))
+    {
       P = pointEndBis;
+    }
     else
     {
       dU = U - endIntervals.Value(bisInterval);
@@ -405,7 +414,9 @@ void Bisector_BisecPC::Values(const double U,
   }
 
   if (N == 0)
+  {
     return; // End Calculation Point;
+  }
 
   gp_Vec2d Nu(-Tuu.Y(), Tuu.X()); // derivative of the normal by U.
   double   NuPPC    = Nu.Dot(aPPC);
@@ -417,7 +428,9 @@ void Bisector_BisecPC::Values(const double U,
   V1 = Tu - A1 * Nu - A2 * Nor;
   //--------------------------
   if (N == 1)
+  {
     return; // End calculation D1.
+  }
 
   gp_Vec2d Nuu(-T3u.Y(), T3u.X());
 
@@ -529,53 +542,60 @@ double Bisector_BisecPC::Distance(const double U) const
 
 //=================================================================================================
 
-void Bisector_BisecPC::D0(const double U, gp_Pnt2d& P) const
+gp_Pnt2d Bisector_BisecPC::EvalD0(const double U) const
 {
-  P = point;
+  gp_Pnt2d P = point;
   gp_Vec2d V1, V2, V3;
   Values(U, 0, P, V1, V2, V3);
+  return P;
 }
 
 //=================================================================================================
 
-void Bisector_BisecPC::D1(const double U, gp_Pnt2d& P, gp_Vec2d& V) const
+Geom2d_Curve::ResD1 Bisector_BisecPC::EvalD1(const double U) const
 {
-  P = point;
-  V.SetCoord(0., 0.);
+  Geom2d_Curve::ResD1 aResult;
+  aResult.Point = point;
+  aResult.D1.SetCoord(0., 0.);
   gp_Vec2d V2, V3;
-  Values(U, 1, P, V, V2, V3);
+  Values(U, 1, aResult.Point, aResult.D1, V2, V3);
+  return aResult;
 }
 
 //=================================================================================================
 
-void Bisector_BisecPC::D2(const double U, gp_Pnt2d& P, gp_Vec2d& V1, gp_Vec2d& V2) const
+Geom2d_Curve::ResD2 Bisector_BisecPC::EvalD2(const double U) const
 {
-  P = point;
-  V1.SetCoord(0., 0.);
-  V2.SetCoord(0., 0.);
+  Geom2d_Curve::ResD2 aResult;
+  aResult.Point = point;
+  aResult.D1.SetCoord(0., 0.);
+  aResult.D2.SetCoord(0., 0.);
   gp_Vec2d V3;
-  Values(U, 2, P, V1, V2, V3);
+  Values(U, 2, aResult.Point, aResult.D1, aResult.D2, V3);
+  return aResult;
 }
 
 //=================================================================================================
 
-void Bisector_BisecPC::D3(const double U,
-                          gp_Pnt2d&    P,
-                          gp_Vec2d&    V1,
-                          gp_Vec2d&    V2,
-                          gp_Vec2d&    V3) const
+Geom2d_Curve::ResD3 Bisector_BisecPC::EvalD3(const double U) const
 {
-  P = point;
-  V1.SetCoord(0., 0.);
-  V2.SetCoord(0., 0.);
-  V3.SetCoord(0., 0.);
-  Values(U, 3, P, V1, V2, V3);
+  Geom2d_Curve::ResD3 aResult;
+  aResult.Point = point;
+  aResult.D1.SetCoord(0., 0.);
+  aResult.D2.SetCoord(0., 0.);
+  aResult.D3.SetCoord(0., 0.);
+  Values(U, 3, aResult.Point, aResult.D1, aResult.D2, aResult.D3);
+  return aResult;
 }
 
 //=================================================================================================
 
-gp_Vec2d Bisector_BisecPC::DN(const double U, const int N) const
+gp_Vec2d Bisector_BisecPC::EvalDN(const double U, const int N) const
 {
+  if (N < 1)
+  {
+    throw Geom2d_UndefinedDerivative("Bisector_BisecPC::EvalDN");
+  }
   gp_Pnt2d P = point;
   gp_Vec2d V1(0., 0.);
   gp_Vec2d V2(0., 0.);
@@ -590,7 +610,7 @@ gp_Vec2d Bisector_BisecPC::DN(const double U, const int N) const
     case 3:
       return V3;
     default: {
-      throw Standard_NotImplemented();
+      throw Geom2d_UndefinedDerivative("Bisector_BisecPC::EvalDN");
     }
   }
 }
@@ -848,17 +868,17 @@ void Bisector_BisecPC::Init(const occ::handle<Geom2d_Curve>&    Curve,
 void Bisector_BisecPC::Dump(const int, const int Offset) const
 {
   Indent(Offset);
-  std::cout << "Bisector_BisecPC :" << std::endl;
+  std::cout << "Bisector_BisecPC :" << '\n';
   Indent(Offset);
-  std::cout << "Point :" << std::endl;
-  std::cout << " X = " << point.X() << std::endl;
-  std::cout << " Y = " << point.Y() << std::endl;
-  std::cout << "Sign  :" << sign << std::endl;
-  std::cout << "Number Of Intervals :" << startIntervals.Length() << std::endl;
+  std::cout << "Point :" << '\n';
+  std::cout << " X = " << point.X() << '\n';
+  std::cout << " Y = " << point.Y() << '\n';
+  std::cout << "Sign  :" << sign << '\n';
+  std::cout << "Number Of Intervals :" << startIntervals.Length() << '\n';
   for (int i = 1; i <= startIntervals.Length(); i++)
   {
     std::cout << "Interval number :" << i << "Start :" << startIntervals.Value(i)
-              << "  end :" << endIntervals.Value(i) << std::endl;
+              << "  end :" << endIntervals.Value(i) << '\n';
   }
-  std::cout << "Index Current Interval :" << currentInterval << std::endl;
+  std::cout << "Index Current Interval :" << currentInterval << '\n';
 }

@@ -23,10 +23,11 @@
 #include <Geom2d_Curve.hxx>
 #include <Geom2d_Geometry.hxx>
 #include <Geom2d_Line.hxx>
+#include <Geom2d_UndefinedDerivative.hxx>
 #include <Geom2dAPI_ProjectPointOnCurve.hxx>
 #include <Geom2dGcc_Circ2d2TanRad.hxx>
 #include <Geom2dInt_GInter.hxx>
-#include <Geom2dLProp_CLProps2d.hxx>
+#include <GeomLProp_CLProps.hxx>
 #include <gp.hxx>
 #include <gp_Pnt2d.hxx>
 #include <gp_Trsf2d.hxx>
@@ -202,7 +203,9 @@ void Bisector_BisecCC::Perform(const occ::handle<Geom2d_Curve>& Cu1,
       if (Dist < Precision::Infinite())
       {
         if (P.Distance(prevPnt) > Precision::Confusion())
+        {
           myPolygon.Append(Bisector_PointOnBis(UC1, UC2, U, Dist, P));
+        }
       }
       else
       {
@@ -210,7 +213,9 @@ void Bisector_BisecCC::Perform(const occ::handle<Geom2d_Curve>& Cu1,
         P    = ValueByInt(USol, UC1, UC2, Dist);
         endIntervals.SetValue(1, USol);
         if (P.Distance(prevPnt) > Precision::Confusion())
+        {
           myPolygon.Append(Bisector_PointOnBis(UC1, UC2, USol, Dist, P));
+        }
         break;
       }
       U += dU;
@@ -233,7 +238,9 @@ void Bisector_BisecCC::Perform(const occ::handle<Geom2d_Curve>& Cu1,
   if (isConvex1 && isConvex2)
   {
     if (YaPoly)
+    {
       pointEnd = myPolygon.Last().Point();
+    }
   }
   else
   {
@@ -308,10 +315,14 @@ void Bisector_BisecCC::Perform(const occ::handle<Geom2d_Curve>& Cu1,
     }
   }
   if (!YaPoly && !extensionStart && !extensionEnd)
+  {
     isEmpty = true;
+  }
   //  modified by NIZHNY-EAP Mon Jan 17 17:32:40 2000 ___BEGIN___
   if (myPolygon.Length() <= 2)
+  {
     isEmpty = true;
+  }
   //  modified by NIZHNY-EAP Mon Jan 17 17:32:42 2000 ___END___
 }
 
@@ -540,7 +551,9 @@ bool Bisector_BisecCC::IsClosed() const
   {
     if (startIntervals.First() == curve1->FirstParameter()
         && endIntervals.Last() == curve1->LastParameter())
+    {
       return true;
+    }
   }
   return false;
 }
@@ -678,9 +691,13 @@ gp_Pnt2d Bisector_BisecCC::ValueAndDist(const double U, double& U1, double& U2, 
         math_FunctionRoot SolRoot(H, VInit, EpsH, VMin - EpsH100, VMax + EpsH100);
 
         if (SolRoot.IsDone())
+        {
           U2 = SolRoot.Root();
+        }
         else
+        {
           Valid = false;
+        }
       }
     }
   }
@@ -941,7 +958,9 @@ gp_Pnt2d Bisector_BisecCC::ValueByInt(const double U, double& U1, double& U2, do
         if (K1 != 0.)
         {
           if (Dist > 1 / (K1 * K1))
+          {
             YaSol = false;
+          }
         }
       }
       if (YaSol)
@@ -952,7 +971,9 @@ gp_Pnt2d Bisector_BisecCC::ValueByInt(const double U, double& U1, double& U2, do
           if (K2 != 0.)
           {
             if (Dist > 1 / (K2 * K2))
+            {
               YaSol = false;
+            }
           }
         }
       }
@@ -968,50 +989,56 @@ gp_Pnt2d Bisector_BisecCC::ValueByInt(const double U, double& U1, double& U2, do
 
 //=================================================================================================
 
-void Bisector_BisecCC::D0(const double U, gp_Pnt2d& P) const
+gp_Pnt2d Bisector_BisecCC::EvalD0(const double U) const
 {
   double U1, U2, Dist;
 
-  P = ValueAndDist(U, U1, U2, Dist);
+  return ValueAndDist(U, U1, U2, Dist);
 }
 
 //=================================================================================================
 
-void Bisector_BisecCC::D1(const double U, gp_Pnt2d& P, gp_Vec2d& V) const
+Geom2d_Curve::ResD1 Bisector_BisecCC::EvalD1(const double U) const
 {
-  V.SetCoord(0., 0.);
+  Geom2d_Curve::ResD1 aResult;
+  aResult.D1.SetCoord(0., 0.);
   gp_Vec2d V2, V3;
-  Values(U, 1, P, V, V2, V3);
+  Values(U, 1, aResult.Point, aResult.D1, V2, V3);
+  return aResult;
 }
 
 //=================================================================================================
 
-void Bisector_BisecCC::D2(const double U, gp_Pnt2d& P, gp_Vec2d& V1, gp_Vec2d& V2) const
+Geom2d_Curve::ResD2 Bisector_BisecCC::EvalD2(const double U) const
 {
-  V1.SetCoord(0., 0.);
-  V2.SetCoord(0., 0.);
+  Geom2d_Curve::ResD2 aResult;
+  aResult.D1.SetCoord(0., 0.);
+  aResult.D2.SetCoord(0., 0.);
   gp_Vec2d V3;
-  Values(U, 2, P, V1, V2, V3);
+  Values(U, 2, aResult.Point, aResult.D1, aResult.D2, V3);
+  return aResult;
 }
 
 //=================================================================================================
 
-void Bisector_BisecCC::D3(const double U,
-                          gp_Pnt2d&    P,
-                          gp_Vec2d&    V1,
-                          gp_Vec2d&    V2,
-                          gp_Vec2d&    V3) const
+Geom2d_Curve::ResD3 Bisector_BisecCC::EvalD3(const double U) const
 {
-  V1.SetCoord(0., 0.);
-  V2.SetCoord(0., 0.);
-  V3.SetCoord(0., 0.);
-  Values(U, 3, P, V1, V2, V3);
+  Geom2d_Curve::ResD3 aResult;
+  aResult.D1.SetCoord(0., 0.);
+  aResult.D2.SetCoord(0., 0.);
+  aResult.D3.SetCoord(0., 0.);
+  Values(U, 3, aResult.Point, aResult.D1, aResult.D2, aResult.D3);
+  return aResult;
 }
 
 //=================================================================================================
 
-gp_Vec2d Bisector_BisecCC::DN(const double U, const int N) const
+gp_Vec2d Bisector_BisecCC::EvalDN(const double U, const int N) const
 {
+  if (N < 1)
+  {
+    throw Geom2d_UndefinedDerivative("Bisector_BisecCC::EvalDN");
+  }
   gp_Pnt2d P;
   gp_Vec2d V1(0., 0.);
   gp_Vec2d V2(0., 0.);
@@ -1026,7 +1053,7 @@ gp_Vec2d Bisector_BisecCC::DN(const double U, const int N) const
     case 3:
       return V3;
     default: {
-      throw Standard_NotImplemented();
+      throw Geom2d_UndefinedDerivative("Bisector_BisecCC::EvalDN");
     }
   }
 }
@@ -1087,7 +1114,9 @@ void Bisector_BisecCC::Values(const double U,
   P = ValueAndDist(U, U0, V0, Dist);
 
   if (N == 0)
+  {
     return;
+  }
   //------------------------------------------------------------------
   // Return point, tangent, normal to C1 by parameter U0.
   //-------------------------------------------------------------------
@@ -1172,7 +1201,9 @@ void Bisector_BisecCC::Values(const double U,
     }
   }
   if (N == 1)
+  {
     return;
+  }
 }
 
 //=============================================================================
@@ -1281,7 +1312,9 @@ gp_Pnt2d Bisector_BisecCC::Extension(const double U,
       Tang = T1;
     }
     if (T1.Dot(Tang) < 0.)
+    {
       Tang = -Tang;
+    }
   }
 
   T = Tang.Normalized();
@@ -1423,7 +1456,9 @@ static bool PointByInt(const occ::handle<Geom2d_Curve>& CA,
         if (K1 != 0.)
         {
           if (Dist > std::abs(1 / K1))
+          {
             YaSol = false;
+          }
         }
       }
       if (YaSol)
@@ -1434,7 +1469,9 @@ static bool PointByInt(const occ::handle<Geom2d_Curve>& CA,
           if (K2 != 0.)
           {
             if (Dist > std::abs(1 / K2))
+            {
               YaSol = false;
+            }
           }
         }
       }
@@ -1477,11 +1514,17 @@ void Bisector_BisecCC::SupLastParameter()
 occ::handle<Geom2d_Curve> Bisector_BisecCC::Curve(const int I) const
 {
   if (I == 1)
+  {
     return curve1;
+  }
   else if (I == 2)
+  {
     return curve2;
+  }
   else
+  {
     throw Standard_OutOfRange();
+  }
 }
 
 //=================================================================================================
@@ -1546,20 +1589,20 @@ double Bisector_BisecCC::Parameter(const gp_Pnt2d& P) const
 void Bisector_BisecCC::Dump(const int, const int Offset) const
 {
   Indent(Offset);
-  std::cout << "Bisector_BisecCC :" << std::endl;
+  std::cout << "Bisector_BisecCC :" << '\n';
   Indent(Offset);
   //  std::cout <<"Curve1 :"<<curve1<<std::endl;
   //  std::cout <<"Curve2 :"<<curve2<<std::endl;
-  std::cout << "Sign1  :" << sign1 << std::endl;
-  std::cout << "Sign2  :" << sign2 << std::endl;
+  std::cout << "Sign1  :" << sign1 << '\n';
+  std::cout << "Sign2  :" << sign2 << '\n';
 
-  std::cout << "Number Of Intervals :" << startIntervals.Length() << std::endl;
+  std::cout << "Number Of Intervals :" << startIntervals.Length() << '\n';
   for (int i = 1; i <= startIntervals.Length(); i++)
   {
     std::cout << "Interval number :" << i << "Start :" << startIntervals.Value(i)
-              << "  end :" << endIntervals.Value(i) << std::endl;
+              << "  end :" << endIntervals.Value(i) << '\n';
   }
-  std::cout << "Index Current Interval :" << currentInterval << std::endl;
+  std::cout << "Index Current Interval :" << currentInterval << '\n';
 }
 
 //=================================================================================================
@@ -1567,11 +1610,17 @@ void Bisector_BisecCC::Dump(const int, const int Offset) const
 void Bisector_BisecCC::Curve(const int I, const occ::handle<Geom2d_Curve>& C)
 {
   if (I == 1)
+  {
     curve1 = C;
+  }
   else if (I == 2)
+  {
     curve2 = C;
+  }
   else
+  {
     throw Standard_OutOfRange();
+  }
 }
 
 //=================================================================================================
@@ -1579,11 +1628,17 @@ void Bisector_BisecCC::Curve(const int I, const occ::handle<Geom2d_Curve>& C)
 void Bisector_BisecCC::Sign(const int I, const double S)
 {
   if (I == 1)
+  {
     sign1 = S;
+  }
   else if (I == 2)
+  {
     sign2 = S;
+  }
   else
+  {
     throw Standard_OutOfRange();
+  }
 }
 
 //=================================================================================================
@@ -1605,11 +1660,17 @@ void Bisector_BisecCC::DistMax(const double D)
 void Bisector_BisecCC::IsConvex(const int I, const bool IsConvex)
 {
   if (I == 1)
+  {
     isConvex1 = IsConvex;
+  }
   else if (I == 2)
+  {
     isConvex2 = IsConvex;
+  }
   else
+  {
     throw Standard_OutOfRange();
+  }
 }
 
 //=================================================================================================

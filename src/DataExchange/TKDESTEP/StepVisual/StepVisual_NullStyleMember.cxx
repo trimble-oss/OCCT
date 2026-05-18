@@ -34,11 +34,13 @@ const char* StepVisual_NullStyleMember::EnumText() const
 
 //=================================================================================================
 
-void StepVisual_NullStyleMember::SetEnumText(const int /*theValue*/, const char* theText)
+void StepVisual_NullStyleMember::SetEnumText(const int /*theValue*/, const char* const theText)
 {
   int aVal = tool.Value(theText);
   if (aVal >= 0)
+  {
     SetInt(aVal);
+  }
 }
 
 //=================================================================================================

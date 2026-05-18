@@ -14,6 +14,7 @@
 #include <GeomFill_CorrectedFrenet.hxx>
 #include <Geom_BSplineCurve.hxx>
 #include <Geom_Curve.hxx>
+#include <Geom_TrimmedCurve.hxx>
 #include <GeomAdaptor_Curve.hxx>
 #include <BRepAdaptor_CompCurve.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
@@ -27,7 +28,7 @@
 
 #include <gtest/gtest.h>
 
-//==================================================================================================
+//=================================================================================================
 
 TEST(GeomFill_CorrectedFrenet, EndlessLoopPrevention)
 {
@@ -71,7 +72,7 @@ TEST(GeomFill_CorrectedFrenet, EndlessLoopPrevention)
   EXPECT_GT(aBinormal2.Magnitude(), 1e-10);
 }
 
-//==================================================================================================
+//=================================================================================================
 
 TEST(GeomFill_CorrectedFrenet, SmallStepHandling)
 {
@@ -98,7 +99,7 @@ TEST(GeomFill_CorrectedFrenet, SmallStepHandling)
   EXPECT_NO_THROW({ aCorrectedFrenet.D0(0.5, aTangent, aNormal, aBinormal); });
 }
 
-//==================================================================================================
+//=================================================================================================
 
 TEST(GeomFill_CorrectedFrenet, ParameterProgressionGuarantee)
 {
@@ -133,7 +134,7 @@ TEST(GeomFill_CorrectedFrenet, ParameterProgressionGuarantee)
   }
 }
 
-//==================================================================================================
+//=================================================================================================
 
 TEST(GeomFill_CorrectedFrenet, ActualReproducerCase)
 {
@@ -146,8 +147,8 @@ TEST(GeomFill_CorrectedFrenet, ActualReproducerCase)
   ShapeExtend_WireData anExtend;
   for (int i = 2; i <= aPoints.Length(); i++)
   {
-    occ::handle<Geom_Curve> aCurve = GC_MakeSegment(aPoints(i - 1), aPoints(i)).Value();
-    TopoDS_Edge             anEdge = BRepBuilderAPI_MakeEdge(aCurve).Edge();
+    occ::handle<Geom_TrimmedCurve> aCurve = GC_MakeSegment(aPoints(i - 1), aPoints(i)).Value();
+    TopoDS_Edge                    anEdge = BRepBuilderAPI_MakeEdge(aCurve).Edge();
     anExtend.Add(anEdge);
   }
 

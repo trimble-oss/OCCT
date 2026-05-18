@@ -22,7 +22,6 @@
 #include <NCollection_IndexedMap.hxx>
 #include <Message_Messenger.hxx>
 #include <Standard_Type.hxx>
-#include <TColStd_MapIteratorOfPackedMapOfInteger.hxx>
 #include <TColStd_PackedMapOfInteger.hxx>
 #include <TDataStd_IntPackedMap.hxx>
 #include <TDF_Attribute.hxx>
@@ -81,7 +80,9 @@ bool BinMDataStd_IntPackedMapDriver::Paste(const BinObjMgt_Persistent&       Sou
         return false;
       }
       if (!aHMap->ChangeMap().Add(aKey))
+      {
         return false;
+      }
     }
     aTagAtt->ChangeMap(aHMap);
   }
@@ -92,9 +93,13 @@ bool BinMDataStd_IntPackedMapDriver::Paste(const BinObjMgt_Persistent&       Sou
   {
     uint8_t aDeltaValue;
     if (!(Source >> aDeltaValue))
+    {
       return false;
+    }
     else
+    {
       aDelta = (aDeltaValue != 0);
+    }
   }
   aTagAtt->SetDelta(aDelta);
   return true;
@@ -120,9 +125,11 @@ void BinMDataStd_IntPackedMapDriver::Paste(
   Target << aSize;
   if (aSize)
   {
-    TColStd_MapIteratorOfPackedMapOfInteger anIt(anAtt->GetMap());
+    TColStd_PackedMapOfInteger::Iterator anIt(anAtt->GetMap());
     for (; anIt.More(); anIt.Next())
+    {
       Target << anIt.Key();
+    }
   }
   Target << (uint8_t)(anAtt->GetDelta() ? 1 : 0);
 }

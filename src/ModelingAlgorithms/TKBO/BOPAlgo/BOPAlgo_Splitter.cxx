@@ -57,11 +57,8 @@ void BOPAlgo_Splitter::Perform(const Message_ProgressRange& theRange)
   //
   if (myEntryPoint == 1)
   {
-    if (myPaveFiller)
-    {
-      delete myPaveFiller;
-      myPaveFiller = nullptr;
-    }
+    delete myPaveFiller;
+    myPaveFiller = nullptr;
   }
   //
   // prepare shapes for intersection
@@ -115,7 +112,9 @@ void BOPAlgo_Splitter::BuildResult(const TopAbs_ShapeEnum theType)
         const TopoDS_Shape& aSFirst = it.Value();
         it.Next();
         if (!it.More())
+        {
           myShape = aSFirst;
+        }
       }
     }
   }

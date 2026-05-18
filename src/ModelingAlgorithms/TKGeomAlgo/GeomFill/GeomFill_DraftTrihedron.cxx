@@ -59,10 +59,8 @@ void GeomFill_DraftTrihedron::SetAngle(const double Angle)
   myCos   = std::cos(myAngle);
 }
 
-//=======================================================================
-// function : D0
-// purpose  : calculation of trihedron
-//=======================================================================
+//=================================================================================================
+
 bool GeomFill_DraftTrihedron::D0(const double Param,
                                  gp_Vec&      Tangent,
                                  gp_Vec&      Normal,
@@ -78,7 +76,9 @@ bool GeomFill_DraftTrihedron::D0(const double Param,
 
   b /= normb;
   if (normb < 1.e-12)
+  {
     return false;
+  }
 
   gp_Vec v = b.Crossed(T);
 
@@ -125,7 +125,9 @@ bool GeomFill_DraftTrihedron::D1(const double Param,
   gp_Vec db, b = T.Crossed(B);
   normb = b.Magnitude();
   if (normb < 1.e-12)
+  {
     return false;
+  }
   b /= normb;
   aux = DT.Crossed(B);
   db.SetLinearForm(-(b.Dot(aux)), b, aux);
@@ -186,7 +188,9 @@ bool GeomFill_DraftTrihedron::D2(const double Param,
   gp_Vec db, d2b, b = T.Crossed(B);
   normb = b.Magnitude();
   if (normb < 1.e-12)
+  {
     return false;
+  }
 
   aux  = DT.Crossed(B);
   aux2 = D2T.Crossed(B);
@@ -305,7 +309,9 @@ void GeomFill_DraftTrihedron::GetAverageLaw(gp_Vec& ATangent, gp_Vec& ANormal, g
   {
     Param = myTrimmed->FirstParameter() + i * Step;
     if (Param > myTrimmed->LastParameter())
+    {
       Param = myTrimmed->LastParameter();
+    }
     D0(Param, T, N, BN);
     ATangent += T;
     ANormal += N;

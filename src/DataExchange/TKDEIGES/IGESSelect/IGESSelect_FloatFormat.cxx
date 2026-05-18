@@ -59,13 +59,15 @@ void IGESSelect_FloatFormat::SetZeroSuppress(const bool mode)
   thezerosup = mode;
 }
 
-void IGESSelect_FloatFormat::SetFormat(const char* format)
+void IGESSelect_FloatFormat::SetFormat(const char* const format)
 {
   themainform.Clear();
   themainform.AssignCat(format);
 }
 
-void IGESSelect_FloatFormat::SetFormatForRange(const char* form, const double R1, const double R2)
+void IGESSelect_FloatFormat::SetFormatForRange(const char* const form,
+                                               const double      R1,
+                                               const double      R2)
 {
   theformrange.Clear();
   theformrange.AssignCat(form);
@@ -94,14 +96,18 @@ void IGESSelect_FloatFormat::Perform(IFSelect_ContextWrite& /*ctx*/,
   writer.FloatWriter().SetFormat(themainform.ToCString());
   writer.FloatWriter().SetZeroSuppress(thezerosup);
   if (theformrange.Length() > 0)
+  {
     writer.FloatWriter().SetFormatForRange(theformrange.ToCString(), therangemin, therangemax);
+  }
 }
 
 TCollection_AsciiString IGESSelect_FloatFormat::Label() const
 {
   TCollection_AsciiString lab("Float Format ");
   if (thezerosup)
+  {
     lab.AssignCat(" ZeroSup ");
+  }
   lab.AssignCat(themainform);
   if (theformrange.Length() > 0)
   {

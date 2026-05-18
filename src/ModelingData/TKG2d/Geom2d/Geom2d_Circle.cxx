@@ -161,37 +161,46 @@ bool Geom2d_Circle::IsPeriodic() const
 
 //=================================================================================================
 
-void Geom2d_Circle::D0(const double U, Pnt2d& P) const
+gp_Pnt2d Geom2d_Circle::EvalD0(const double U) const
 {
-  P = ElCLib::CircleValue(U, pos, radius);
+  return ElCLib::CircleValue(U, pos, radius);
 }
 
 //=================================================================================================
 
-void Geom2d_Circle::D1(const double U, Pnt2d& P, Vec2d& V1) const
+Geom2d_Curve::ResD1 Geom2d_Circle::EvalD1(const double U) const
 {
-  ElCLib::CircleD1(U, pos, radius, P, V1);
+  Geom2d_Curve::ResD1 aResult;
+  ElCLib::CircleD1(U, pos, radius, aResult.Point, aResult.D1);
+  return aResult;
 }
 
 //=================================================================================================
 
-void Geom2d_Circle::D2(const double U, Pnt2d& P, Vec2d& V1, Vec2d& V2) const
+Geom2d_Curve::ResD2 Geom2d_Circle::EvalD2(const double U) const
 {
-  ElCLib::CircleD2(U, pos, radius, P, V1, V2);
+  Geom2d_Curve::ResD2 aResult;
+  ElCLib::CircleD2(U, pos, radius, aResult.Point, aResult.D1, aResult.D2);
+  return aResult;
 }
 
 //=================================================================================================
 
-void Geom2d_Circle::D3(const double U, Pnt2d& P, Vec2d& V1, Vec2d& V2, Vec2d& V3) const
+Geom2d_Curve::ResD3 Geom2d_Circle::EvalD3(const double U) const
 {
-  ElCLib::CircleD3(U, pos, radius, P, V1, V2, V3);
+  Geom2d_Curve::ResD3 aResult;
+  ElCLib::CircleD3(U, pos, radius, aResult.Point, aResult.D1, aResult.D2, aResult.D3);
+  return aResult;
 }
 
 //=================================================================================================
 
-Vec2d Geom2d_Circle::DN(const double U, const int N) const
+gp_Vec2d Geom2d_Circle::EvalDN(const double U, const int N) const
 {
-  Standard_RangeError_Raise_if(N < 1, " ");
+  if (N < 1)
+  {
+    throw Geom2d_UndefinedDerivative();
+  }
   return ElCLib::CircleDN(U, pos, radius, N);
 }
 

@@ -34,7 +34,7 @@ Architectural guidance and ready-to-use solutions provided by OCAF offer you the
   * The final application can be developed by industrializing the prototype — you don't need to restart the development from scratch. 
   * The Open Source nature of the platform guarantees the long-term usefulness of your development.   
 
-OCAF is much more than just one toolkit among many in the CAS.CADE Object Libraries. Since it can handle any data and algorithms in these libraries -- be it modeling algorithms, topology or geometry -- OCAF is their logical supplement. 
+OCAF is much more than just one toolkit among many in Open CASCADE Technology. Since it can handle any data and algorithms in these libraries -- be it modeling algorithms, topology or geometry -- OCAF is their logical supplement. 
 
 The table below contrasts the design of a modeling application using object libraries alone and using OCAF. 
 
@@ -64,7 +64,7 @@ The subsequent chapters of this document explain the concepts and show how to us
 
 OCAF provides you with an object-oriented Application-Document-Attribute model consisting of C++ class libraries. 
 
-@figure{ocaf_wp_image003.png,"The Application-Document-Attribute model",420}
+@figure{images/ocaf_wp_image003.png,"The Application-Document-Attribute model",420}
 
 @subsubsection occt_ocaf_1_2_1 Application
 
@@ -132,7 +132,7 @@ In addition,  application-specific data can be added by defining new attribute c
   For example, to associate a texture to a face in a geometric model, 
   both the face and the texture are attached to the same reference-key.  
  
-@figure{ocaf_image004.png,"Topology driven versus reference-key driven approaches",360}
+@figure{images/ocaf_image004.png,"Topology driven versus reference-key driven approaches",360}
 
  Reference-keys can be created in two ways:   
  
@@ -224,7 +224,7 @@ List of tags of the right-bottom label is "0:3:4": this label has tag 4, its fat
 
 Let's have a look at the example:
   
-@figure{ocaf_wp_image007.png,"The coffee machine",200}
+@figure{images/ocaf_wp_image007.png,"The coffee machine",200}
   
    In the image the application for designing coffee  machines first allocates 
   a label for the machine unit. It then adds sub-labels  for the main features 
@@ -236,7 +236,7 @@ Let's have a look at the example:
   Later on, you can  modify the handle's geometry without changing its color — 
   both remain attached  to the same label.  
   
-@figure{ocaf_wp_image005.png,"The data structure of the coffee machine",361}
+@figure{images/ocaf_wp_image005.png,"The data structure of the coffee machine",361}
  
   The nesting of labels is key to OCAF. This allows a  label to have its own structure 
   with its local addressing scheme which can be  reused in a more complex structure. 
@@ -282,7 +282,7 @@ A tag is an integer, which identifies a label in two ways:
 
 In relative identification, a label’s tag has a meaning relative to the father label only. For a specific label, you might, for example, have four child labels identified by the tags 2, 7, 18, 100. In using relative identification, you ensure that you have a safe scope for setting attributes. 
 
-In absolute identification, a label’s place in the data framework is specified unambiguously by a colon-separated list of tags of all the labels from the one in question to the root of the data framework. This list is called an entry. *TDF_Tool::TagList* allows retrieving the entry for a specific label. 
+In absolute identification, a label’s place in the data framework is specified unambiguously by a colon-separated list of tags of all the labels from the one in question to the root of the data framework. This list is called an entry. *TDF_Tool::Entry* allows retrieving the entry for a specific label. 
 
 In both relative and absolute identification, it is important to remember that the value of an integer has no intrinsic semantics whatsoever. In other words, the natural sequence that integers suggest, i.e. 0, 1, 2, 3, 4 ... -- has no importance here. The integer value of a tag is simply a key. 
 
@@ -311,9 +311,9 @@ To retrieve a child label from a tag which you have specified yourself, you need
 
 
 ~~~~{.cpp}
-TDF_Label achild = root.FindChild(3,Standard_False); 
+TDF_Label achild = root.FindChild(3,false); 
 if (!achild.IsNull()) { 
-Standard_Integer tag = achild.Tag(); 
+int tag = achild.Tag(); 
 } 
 ~~~~
 
@@ -345,8 +345,8 @@ You could also use the same syntax but add the Boolean *true* as a value of the 
 
 
 ~~~~{.cpp}
-TDF_Label level1 = root.FindChild(3,Standard_True); 
-TDF_Label level2 = level1.FindChild(1,Standard_True); 
+TDF_Label level1 = root.FindChild(3,true); 
+TDF_Label level2 = level1.FindChild(1,true); 
 ~~~~
 @subsubsection occt_ocaf_3_4_3 Retrieving child labels
 
@@ -356,7 +356,7 @@ You can retrieve child labels of your current label by iteration on the first le
 ~~~~{.cpp}
 TDF_Label current; 
 // 
-for (TDF_ChildIterator it1 (current,Standard_False); it1.More(); it1.Next()) { 
+for (TDF_ChildIterator it1 (current,false); it1.More(); it1.Next()) { 
 achild = it1.Value(); 
 // 
 // do something on a child (level 1) 
@@ -365,7 +365,7 @@ achild = it1.Value();
 ~~~~
 You can also retrieve all child labels in every descendant generation of your current label by iteration on all levels in the scope of this label. 
 ~~~~{.cpp}
-for (TDF_ChildIterator itall (current,Standard_True); itall.More(); itall.Next()) { 
+for (TDF_ChildIterator itall (current,true); itall.More(); itall.Next()) { 
 achild = itall.Value(); 
 // 
 // do something on a child (all levels) 
@@ -376,13 +376,13 @@ Using *TDF_Tool::Entry* with *TDF_ChildIterator* you can retrieve the entries of
 
  
 ~~~~{.cpp}
-void DumpChildren(const TDF_Label& aLabel) 
+void DumpChildren(const TDF_Label& theLabel) 
 { 
   TDF_ChildIterator it; 
   TCollection_AsciiString es; 
-  for (it.Initialize(aLabel,Standard_True); it.More(); it.Next()){ 
+  for (it.Initialize(theLabel,true); it.More(); it.Next()){ 
     TDF_Tool::Entry(it.Value(),es); 
-    cout  <<  as.ToCString()  <<  endl; 
+    std::cout << es.ToCString() << std::endl; 
   } 
 } 
 ~~~~
@@ -423,20 +423,20 @@ You can create a new instance of an attribute and retrieve its GUID. In the exam
 
 
 ~~~~{.cpp}
-Handle(TDataStd_Integer) INT = new TDataStd_Integer(); 
+occ::handle<TDataStd_Integer> INT = new TDataStd_Integer(); 
 Standard_GUID guid = INT->ID(); 
 ~~~~
 
 @subsubsection occt_ocaf_3_5_3 Attaching an attribute to a label
 
-To attach an attribute to a label, you use *TDF_Label::Add*. Repetition of this syntax raises an error message because there is already an attribute with the same GUID attached to the current label. 
+To attach an attribute to a label, you use *TDF_Label::AddAttribute*. Repetition of this syntax raises an error message because there is already an attribute with the same GUID attached to the current label. 
 
 *TDF_Attribute::Label* for *INT* then returns the label *attach* to which *INT* is attached. 
 
 
 ~~~~{.cpp}
-current.Add (INT); // INT is now attached to current 
-current.Add (INT); // causes failure 
+current.AddAttribute (INT); // INT is now attached to current 
+current.AddAttribute (INT); // causes failure 
 TDF_Label attach = INT->Label(); 
 ~~~~
 
@@ -444,32 +444,32 @@ Note. There is an exception from this rule for some sub-set of Standard attribut
 
 @subsubsection occt_ocaf_3_5_4 Testing the attachment to a label
 
-You can test whether an attribute is attached to a label or not by using *TDF_Attribute::IsA* with the GUID of the attribute as an argument. In the example below, you test whether the current label has an integer attribute, and then, if that is so, how many attributes are attached to it. *TDataStd_Integer::GetID* provides the GUID argument needed by the method IsAttribute. 
+You can test whether an attribute of a given type is attached to a label by calling *TDF_Label::IsAttribute* with the attribute's GUID. In the example below, you test whether the current label has an integer attribute, and then, if that is so, how many attributes are attached to it. *TDataStd_Integer::GetID* provides the GUID argument needed by *IsAttribute*.
 
-*TDF_Attribute::HasAttribute* tests whether there is an attached attribute, and *TDF_Tool::NbAttributes* returns the number of attributes attached to the label in question, e.g. *current*. 
+*TDF_Label::HasAttribute* reports whether at least one attribute is attached, and *TDF_Label::NbAttributes* returns their count for the label in question (e.g. *current*).
 
 
 ~~~~{.cpp}
 // Testing of attribute attachment 
 // 
-if (current.IsA(TDataStd_Integer::GetID())) { 
+if (current.IsAttribute(TDataStd_Integer::GetID())) { 
 // the label has an Integer attribute attached 
 } 
 if (current.HasAttribute()) { 
 // the label has at least one attribute attached 
-Standard_Integer nbatt = current.NbAttributes(); 
+int nbatt = current.NbAttributes(); 
 // the label has nbatt attributes attached 
 } 
 ~~~~
 @subsubsection occt_ocaf_3_5_5 Removing an attribute from a label
 
-To remove an attribute from a label, you use *TDF_Label::Forget* with the GUID of the deleted attribute. To remove all attributes of a label, *TDF_Label::ForgetAll*. 
+To remove an attribute from a label, you use *TDF_Label::ForgetAttribute* with the GUID of the deleted attribute. To remove all attributes of a label, *TDF_Label::ForgetAllAttributes*. 
 
 
 ~~~~{.cpp}
-current.Forget(TDataStd_Integer::GetID()); 
+current.ForgetAttribute(TDataStd_Integer::GetID()); 
 // integer attribute is now not attached to current label 
-current.ForgetAll(); 
+current.ForgetAllAttributes(); 
 // current has now 0 attributes attached 
 ~~~~
 @subsubsection occt_ocaf_3_5_6 Specific attribute creation
@@ -541,7 +541,7 @@ The attribute *TDataStd_UAttribute* with the chosen unique GUID identifies the d
   which references the coffee pot of the first document 
   (the XLink contains the relative path of the coffee pot document and the entry of the coffee pot data [0:1] ).  
 
-@figure{ocaf_wp_image006.png,"The coffee machine compound document",360}
+@figure{images/ocaf_wp_image006.png,"The coffee machine compound document",360}
  
   In this context, the end-user of the coffee machine application can open the coffee pot document, 
   modify the geometry of, for  example, the reservoir, and overwrite the document without worrying 
@@ -604,7 +604,7 @@ As a container for your data framework, you need a document, and your document m
 To create an application, use the following syntax. 
 
 ~~~~{.cpp}
-Handle(TDocStd_Application) app = new TDocStd_Application (); 
+occ::handle<TDocStd_Application> app = new TDocStd_Application (); 
 ~~~~
 
 @subsubsection occt_ocaf_4_2_2 Creating a new document
@@ -612,7 +612,7 @@ Handle(TDocStd_Application) app = new TDocStd_Application ();
 To the application which you declared in the previous example (4.2.1), you must add the document *doc* as an argument of *TDocStd_Application::NewDocument*. 
 
 ~~~~{.cpp}
-Handle(TDocStd_Document) doc; 
+occ::handle<TDocStd_Document> doc; 
 app->NewDocument("NewDocumentFormat", doc); 
 ~~~~
 
@@ -625,7 +625,7 @@ If your application defines specific OCAF attributes, you need to define your ow
 To retrieve the application containing your document, you use the syntax below. 
 
 ~~~~{.cpp}
-app = Handle(TDocStd_Application)::DownCast (doc->Application()); 
+app = occ::down_cast<TDocStd_Application>(doc->Application()); 
 ~~~~
 @subsection occt_ocaf_4_3 The Document
 
@@ -695,7 +695,7 @@ On reading, the format identifier stored in the file is used and recorded in the
 @subsubsection occt_ocaf_4_3_plugins Defining storage format by resource files 
 
 The alternative  method to define formats is via usage of resource files. 
-This  method was  used in earlier versions of OCCT and is considered as deprecated since version 7.1.0.
+This method was used in earlier versions of OCCT and is deprecated. New applications should use the driver-based approach described above.
 This method allows loading persistence drivers on demand, using plugin mechanism.
 
 To use this method, create your own application class inheriting from *TDocStd_Application*, and override method *ResourcesName()*.
@@ -714,19 +714,19 @@ NewDocumentFormat.RetrievalPlugin: 76fb4c04-ea9a-46aa-88a2-25f6a228d902
 The GUIDs should be unique and correspond to the GUIDs supported by relevant plugin.
 You can use an existing plugins (see the table above) or create your own.
 
-Finally, make a copy of the resource file "Plugin" from *$CASROOT/src/StdResource* and, if necessary, add the definition of your plugin in it, for instance:
+Finally, make a copy of the resource file "Plugin" from the OCCT installation resource directory (e.g., `<install>/share/opencascade/resources`) and, if necessary, add the definition of your plugin in it, for instance:
 
 ~~~~
 bb5aa176-c65c-4c84-862e-6b7c1fe16921.Location: TKNewFormat
 76fb4c04-ea9a-46aa-88a2-25f6a228d902.Location: TKNewFormat
 ~~~~
 
-In order to have these resource files loaded during the program execution, it is necessary to set two environment variables: *CSF_PluginDefaults* and *CSF_NewFormatDefaults*.
-For example, set the files in the directory *MyApplicationPath/MyResources*: 
+In order to have these resource files loaded during the program execution, set the environment variables *CSF_PluginDefaults* (used by the plugin loader) and *CSF_<ResourcesName>Defaults* (built from the value returned by `ResourcesName()`, e.g. *CSF_NewFormatDefaults*).
+For example, set the files in the directory *MyApplicationPath/MyResources*:
 
 ~~~~
-setenv CSF_PluginDefaults MyApplicationPath/MyResources 
-setenv CSF_NewFormatDefaults MyApplicationPath/MyResources 
+setenv CSF_PluginDefaults MyApplicationPath/MyResources
+setenv CSF_NewFormatDefaults MyApplicationPath/MyResources
 ~~~~
 
 @subsubsection occt_ocaf_4_3_3 Saving a document
@@ -749,7 +749,7 @@ For binary formats only the part of the stored document can be loaded. For that 
 or to define one or several entries for sub-tree that must be loaded only. The following example opens document *doc*, but reads only "0:1:2" label and its sub-labels and only *TDataStd_Name* attributes on them.
 
 ~~~~{.cpp}
-Handle(PCDM_ReaderFilter) filter = new PCDM_ReaderFilter("0:1:2");
+occ::handle<PCDM_ReaderFilter> filter = new PCDM_ReaderFilter("0:1:2");
 filter->AddRead("TDataStd_Name");
 app->Open("example.cbf", doc, filter); 
 ~~~~
@@ -757,7 +757,7 @@ app->Open("example.cbf", doc, filter);
 Also, using filters, part of the document can be appended into the already loaded document from the same file. For an example, to read into the previously opened *doc* all attributes, except *TDataStd_Name* and *TDataStd_Integer*:
 
 ~~~~{.cpp}
-Handle(PCDM_ReaderFilter) filter2 = new PCDM_ReaderFilter(PCDM_ReaderFilter::AppendMode_Protect);
+occ::handle<PCDM_ReaderFilter> filter2 = new PCDM_ReaderFilter(PCDM_ReaderFilter::AppendMode_Protect);
 filter2->AddSkipped("TDataStd_Name");
 filter2->AddSkipped("TDataStd_Integer");
 app->Open("example.cbf", doc, filter2); 
@@ -792,7 +792,7 @@ to another place defined by a label.
 
 ~~~~{.cpp}
     TDF_CopyLabel aCopy;
-    TDF_IDFilter aFilter (Standard_False);
+    TDF_IDFilter aFilter (false);
 
     //Don't copy TDataStd_TreeNode attribute
 
@@ -806,7 +806,7 @@ to another place defined by a label.
 
 The filter is used to forbid copying a specified type of attribute. 
 
-You can also have a look at the class *TDF_Closure*, which can be useful to determine the dependencies of the part you want to cut from the document.
+You can also have a look at the class *TDF_ClosureTool*, which can be useful to determine the dependencies of the part you want to cut from the document.
 
 @subsection occt_ocaf_4_4 External Links
 
@@ -823,8 +823,8 @@ Note that documents can be copied with or without a possibility of updating an e
 To copy a document with a possibility of updating it later, you use *TDocStd_XLinkTool::CopyWithLink*. 
 
 ~~~~{.cpp}
-Handle(TDocStd_Document) doc1; 
-Handle(TDocStd_Document) doc2; 
+occ::handle<TDocStd_Document> doc1; 
+occ::handle<TDocStd_Document> doc2; 
 
 TDF_Label source = doc1->GetData()->Root(); 
 TDF_Label target = doc2->GetData()->Root(); 
@@ -920,7 +920,7 @@ builder.Generated(oldshape1,newshape1);
 // set another pair of shapes with the same evolution 
 builder.Generated(oldshape2,newshape2); 
 // get the result - TNaming_NamedShape attribute 
-Handle(TNaming_NamedShape) ns = builder.NamedShape(); 
+occ::handle<TNaming_NamedShape> ns = builder.NamedShape(); 
 ~~~~
 
 @subsection occt_ocaf_5_5 Reading the contents of a named shape attribute
@@ -929,8 +929,8 @@ You can use the method <i>TNaming_NamedShape::Evolution()</i> to get the evoluti
   
 More detailed information about the contents of the named shape or about the modification history of a topology can be obtained with the following: 
 * *TNaming_Tool* provides a common high-level functionality for access to the named shapes contents:
-	* The method <i>GetShape(Handle(TNaming_NamedShape)) </i>  returns a compound of new shapes of the given named shape;
-	* The method <i>CurrentShape(Handle(TNaming_NamedShape))</i>  returns a compound of the shapes, which are latest versions of the shapes from the given named shape;
+	* The method <i>GetShape(occ::handle\<TNaming_NamedShape\>) </i>  returns a compound of new shapes of the given named shape;
+	* The method <i>CurrentShape(occ::handle\<TNaming_NamedShape\>)</i>  returns a compound of the shapes, which are latest versions of the shapes from the given named shape;
 	* The method <i>NamedShape(TopoDS_Shape,TDF_Label) </i> returns a named shape, which contains a given shape as a new shape. A given label is any label from the data framework -- it just gives access to it.
 * *TNaming_Iterator* gives access to the named shape and hooks pairs.
 
@@ -1006,16 +1006,16 @@ The class *TNaming_Tool* provides a toolkit to read current data contained in th
 If you need to create a topological attribute for existing data, use the method *NamedShape*. 
 
 ~~~~{.cpp}
-class MyPkg_MyClass 
+class CafTest_MyClass 
 { 
-public: Standard_Boolean SameEdge (const Handle(CafTest_Line)& L1, const Handle(CafTest_Line)& L2); 
+public: bool SameEdge (const occ::handle<CafTest_Line>& L1, const occ::handle<CafTest_Line>& L2); 
 }; 
 
-Standard_Boolean CafTest_MyClass::SameEdge (const Handle(CafTest_Line)& L1, const Handle(CafTest_Line)& L2) 
+bool CafTest_MyClass::SameEdge (const occ::handle<CafTest_Line>& L1, const occ::handle<CafTest_Line>& L2) 
 { 
-  Handle(TNaming_NamedShape) NS1 = L1->NamedShape(); 
-  Handle(TNaming_NamedShape) NS2 = L2->NamedShape(); 
-  return BRepTools::Compare(NS1,NS2); 
+  occ::handle<TNaming_NamedShape> NS1 = L1->NamedShape(); 
+  occ::handle<TNaming_NamedShape> NS2 = L2->NamedShape(); 
+  return BRepTools::Compare(TopoDS::Edge(NS1->Get()), TopoDS::Edge(NS2->Get())); 
 } 
 ~~~~
 
@@ -1036,7 +1036,7 @@ The job is done. The application should do the rest -- the Hammer calculates a c
 
 What happens if the user changes the position of some Nails? How will the Hammer know about it? It keeps reference to the surface of each Nail. However, if a Nail is relocated, the Hammer should know the new position of the selected surface. Otherwise, it will “strike” at the old position (keep the fingers away!)…
 
-Topological naming mechanism should help the Hammer to obtain the relocated surfaces. The Hammer “asks” the mechanism to “resolve” the selected shapes by calling method *TNaming_Selection::Solve()* and the mechanism “returns” the modified surfaces located at the new position by calling  *TNaming_Selector::NamedShape()*.
+Topological naming mechanism should help the Hammer to obtain the relocated surfaces. The Hammer “asks” the mechanism to “resolve” the selected shapes by calling method *TNaming_Selector::Solve()* and the mechanism “returns” the modified surfaces located at the new position by calling  *TNaming_Selector::NamedShape()*.
 
 The topological naming is represented as a “black box” in the example above. Now it is time to make the box a little more “transparent”.
 
@@ -1057,7 +1057,7 @@ Each function gives the topological naming some hints how to “re-solve” the 
 How does it work?
 * The Hammer selects a face of a Nail calling *TNaming_Selector::Select()*. This call makes a unique name for the selected shape. In our example, it will be a direct reference to the label of the top face of the Nail (Face 1).
 * When the user moves a Nail along the wooden plate, the Translator registers this modification by putting the pairs: “old” face of the Nail -- new face of the Nail into its sub-labels. 
-* When the Hammer calls *TNaming::Solve()*, the topological naming “looks” at the unique name of the selected shape and tries to re-solve it:
+* When the Hammer calls *TNaming_Selector::Solve()*, the topological naming “looks” at the unique name of the selected shape and tries to re-solve it:
 	* It finds the 1st appearance of the selected shape in the data tree -- it is a label under the Nail function *Face 1*.
 	* It follows the evolution of this face. In our case, there is only one evolution -- the translation: *Face 1* (top face) -- <i>Face 1’</i> (relocated top face). So, the last evolution is the relocated top face.
 * Calling the method *TNaming_Selector::NamedShape()* the Hammer obtains the last evolution of the selected face -- the relocated top face.
@@ -1167,7 +1167,7 @@ To find an attribute attached to a specific label, you use the GUID of the attri
 
 ~~~~{.cpp}
     Standard_GUID anID = MyAttributeClass::GetID();
-    Standard_Boolean HasAttribute = aLabel.Find(anID,anAttribute);
+    bool HasAttribute = aLabel.FindAttribute(anID,anAttribute);
 ~~~~
 
 @subsubsection occt_ocaf_6_2_2 Conventional Interface of Standard Attributes
@@ -1220,7 +1220,7 @@ It is possible to describe any model by means of standard OCAF attributes.
 
   Certainly, other variants are also possible.
 
-@figure{ocaf_tree_wp_image003.png,"Allocation of all data as one  array of double values",350}
+@figure{images/ocaf_tree_wp_image003.png,"Allocation of all data as one  array of double values",350}
  
   The first approach to allocation of all  data represented as one array of double values 
   saves initial memory and is easy to implement. 
@@ -1237,7 +1237,7 @@ It is possible to describe any model by means of standard OCAF attributes.
   In this case we create 100  000 labels -- one label for each measurement point 
   and attach an array of double  values to these labels:  
  
-@figure{ocaf_tree_wp_image004.png,"Allocation of data of each  measurement point as arrays of double values",288}
+@figure{images/ocaf_tree_wp_image004.png,"Allocation of data of each  measurement point as arrays of double values",288}
  
   Now edition of data is safer as far as  memory usage is concerned. 
   Change of value for one measurement point (any  value: point coordinates, load, and so on) backs-up only one small array of double values.
@@ -1248,7 +1248,7 @@ It is possible to describe any model by means of standard OCAF attributes.
    
   The third case of allocation of data  through OCAF tree is represented below:  
 
-@figure{ocaf_tree_wp_image005.png,"Allocation of data into separate arrays of double values",354}
+@figure{images/ocaf_tree_wp_image005.png,"Allocation of data into separate arrays of double values",354}
 
   In this case sub-labels are involved and we  can easily access the values of each measurement point, 
   load or matrix. We don’t need an interface class with methods of access to the data 
@@ -1265,7 +1265,7 @@ It is possible to describe any model by means of standard OCAF attributes.
   In this case we  implement the third variant of using the standard attributes (see picture 3), 
   but we use less memory (because we use only one attribute instead of three):  
  
-@figure{ocaf_tree_wp_image006.png,"Allocation of data into newly  created OCAF attribute",383}
+@figure{images/ocaf_tree_wp_image006.png,"Allocation of data into newly  created OCAF attribute",383}
 
   The second variant of using standard OCAF attributes still has drawbacks: 
   when data is edited, OCAF backs-up all values  of the measurement point.   
@@ -1291,12 +1291,12 @@ It is possible to describe any model by means of standard OCAF attributes.
  static method Set in next way:
 
 ~~~~{.cpp}
-static Handle(TDataStd_Real) Set (const TDF_Label& label, const Standard_Real value);
+static occ::handle<TDataStd_Real> Set (const TDF_Label& label, const double value);
 ~~~~
 
  This is a default form which is kept by the attribute. It uses the default GUID for the attribute identification - TDataStd_Real::GetID(). 
  In case if you want to use the new feature (user defined Real attribute), for example to define several attributes which should keep a value 
- of the same type - Standard_Real, but to be associated with different user's notions (or objects) the new static method Set should be used. 
+ of the same type - double, but to be associated with different user's notions (or objects) the new static method Set should be used. 
  In our example we will define two Real attributes which presents two customer's objects - Density and Volume and will be put on the same Label.
 
 ~~~~{.cpp}
@@ -1312,7 +1312,7 @@ TDataStd_Real::Set(aLabel, DENSITY, 1.2);
 TDataStd_Real::Set(aLabel, VOLUME, 185.5);
 
  To find an user defined Real attribute just use a corresponding GUID:
-Handle (TDataStd_Real) anAtt;
+occ::handle<TDataStd_Real> anAtt;
 aLabel.FindAttribute (DENSITY, anAtt);
 ~~~~
 
@@ -1323,7 +1323,7 @@ aLabel.FindAttribute (DENSITY, anAtt);
 
 ~~~~{.cpp}
     TDF_Label aLabel = ...;
-    Standard_Integer aValue = ...;
+    int aValue = ...;
     Standard_GUID aGuid = TDataStd_Integer::GetID();
     TDataStd_Integer::Set(aLabel, aGuid, aValue);
 ~~~~
@@ -1331,7 +1331,7 @@ aLabel.FindAttribute (DENSITY, anAtt);
  2. Using the default constructor
 
 ~~~~{.cpp}
-    Handle(TDataStd_Integer) anInt = new TDataStd_Integer();
+    occ::handle<TDataStd_Integer> anInt = new TDataStd_Integer();
     anInt->SetID(aGuid);
     aLabel.Add(anInt);
     anInt->Set(aValue);
@@ -1353,8 +1353,12 @@ The class *TPrsStd_AISViewer* allows you to define an interactive viewer attribu
 To initialize the AIS viewer as in the example below, use method *Find*. 
 
 ~~~~{.cpp}
-// "access" is any label of the data framework 
-Handle(TPrsStd_AISViewer) viewer = TPrsStd_AISViewer::Find(access) 
+// "access" is any label of the data framework
+occ::handle<TPrsStd_AISViewer> viewer;
+if (TPrsStd_AISViewer::Find (access, viewer))
+{
+  // viewer is now usable
+}
 ~~~~
 
 @subsection occt_ocaf_7_2_2 Defining a presentation attribute
@@ -1378,9 +1382,9 @@ To fill a driver table with standard drivers, first initialize the AIS viewer as
 
 **Example** 
 ~~~~{.cpp}
-DriverTable::Get() -> InitStandardDrivers(); 
+TPrsStd_DriverTable::Get() -> InitStandardDrivers(); 
 // next, attach your named shape to a label 
-TPrsStd_AISPresentation::Set(NS}; 
+TPrsStd_AISPresentation::Set(NS); 
 // here, attach the AISPresentation to NS. 
 ~~~~
 
@@ -1437,7 +1441,7 @@ The procedure of its creation is as follows:
   Let us describe the usage of the Function Mechanism of Open CASCADE Application Framework on a simple example.  
   This example represents a "nail" composed by a cone and two cylinders of different radius and height:  
 
-@figure{ocaf_functionmechanism_wp_image003.png,"A nail",160}
+@figure{images/ocaf_functionmechanism_wp_image003.png,"A nail",160}
 
   These three objects (a cone and two cylinders) are  independent, 
   but the Function Mechanism makes them connected to each other and representing one object -- a nail.  
@@ -1546,7 +1550,7 @@ To automatically erase the nail from the viewer and the data  tree it is enough 
   The function of the cone is independent. The functions of the cylinders depend on the cone function. 
   The nail function depends on the  results of all functions:  
 
-@figure{ocaf_functionmechanism_wp_image005.png,"A graph of dependencies between functions",232}
+@figure{images/ocaf_functionmechanism_wp_image005.png,"A graph of dependencies between functions",232}
 
   Computation of the model starts with the cone function, then the long cylinder, 
   after that the header cylinder and, finally, the result is generated  by the nail function at the end of function chain.  
@@ -1589,31 +1593,31 @@ To automatically erase the nail from the viewer and the data  tree it is enough 
 ~~~~{.cpp}
 
 // The scope of functions is defined.
-Handle(TFunction_Scope) aScope = TFunction_Scope::Set (anyLabel);
+occ::handle<TFunction_Scope> aScope = TFunction_Scope::Set (anyLabel);
 
 // The information on modifications in the model is received.
-TFunction_Logbook& aLog = aScope->GetLogbook();
+occ::handle<TFunction_Logbook> aLog = aScope->GetLogbook();
 
 // The iterator is iInitialized by  the scope of functions.
 TFunction_Iterator anIterator (anyLabel);
-anIterator.SetUsageOfExecutionOrder (true);
+anIterator.SetUsageOfExecutionStatus (true);
 
 // The function is iterated,  its dependency is checked on the modified data and  executed if necessary.
-for (; anIterator.more(); anIterator.Next())
+for (; anIterator.More(); anIterator.Next())
 {
   // The function iterator may return a list of  current functions for execution.
   // It might be useful for multi-threaded execution  of functions.
-  const TDF_LabelList& aCurrentFunctions = anIterator.Current();
+  const NCollection_List<TDF_Label>& aCurrentFunctions = anIterator.Current();
 
   // The list of current functions is iterated.
-  for (TDF_ListIteratorOfLabelList aCurrentIterator (aCurrentFunctions);
+  for (NCollection_List<TDF_Label>::Iterator aCurrentIterator (aCurrentFunctions);
        aCurrentIterator.More(); aCurrentIterator.Next())
   {
     //  An interface for the function is created.
     TFunction_IFunction anInterface (aCurrentIterator.Value());
 
     //  The function driver is retrieved.
-    Handle(TFunction_Driver) aDriver = anInterface.GetDriver();
+    occ::handle<TFunction_Driver> aDriver = anInterface.GetDriver();
 
     //  The dependency of the function on the  modified data is checked.
     if (aDriver->MustExecute (aLog))
@@ -1636,34 +1640,35 @@ for (; anIterator.more(); anIterator.Next())
 
 ~~~~{.cpp}
 
-    // A virtual method  ::Arguments() returns a list of arguments of the function.  
-    CylinderDriver::Arguments( TDF_LabelList&amp; args )  
-    {  
+    // A virtual method ::Arguments() returns a list of arguments of the function.
+    void CylinderDriver::Arguments( NCollection_List<TDF_Label>& args ) const
+    {
       // The direct arguments, located at sub-leaves of the function, are collected (see picture 2)
-      TDF_ChildIterator  cIterator( Label(), false );  
-      for (;  cIterator.More(); cIterator.Next() )  
-      {  
-        // Direct argument.  
-        TDF_Label  sublabel = cIterator.Value();  
-        Args.Append(  sublabel );  
+      TDF_ChildIterator  cIterator( Label(), false );
+      for (;  cIterator.More(); cIterator.Next() )
+      {
+        // Direct argument.
+        TDF_Label  sublabel = cIterator.Value();
+        args.Append(  sublabel );
 
-        // The references to the external data are  checked.  
-        Handle(TDF_Reference)  ref;  
-        If (  sublabel.FindAttribute( TDF_Reference::GetID(), ref ) )  
-        {  
-          args.Append(  ref-Get() );  
+        // The references to the external data are  checked.
+        occ::handle<TDF_Reference>  ref;
+        if (  sublabel.FindAttribute( TDF_Reference::GetID(), ref ) )
+        {
+          args.Append(  ref->Get() );
         }
     }
-     
-    // A virtual method ::Results()  returns a list of result leaves.  
-    CylinderDriver::Results( TDF_LabelList&amp; res )  
-    {  
-      // The result is kept at the function  label.  
-      Res.Append(  Label() );  
+
+    // A virtual method ::Results() returns a list of result leaves.
+    void CylinderDriver::Results( NCollection_List<TDF_Label>& res ) const
+    {
+      // The result is kept at the function  label.
+      res.Append(  Label() );
     }
      
     // Execution of the function  driver.  
-    Int CylinderDriver::Execute( TFunction_Logbook&amp; log )  
+    int CylinderDriver::Execute (occ::handle<TFunction_Logbook>& log) const
+
     {  
       // Position of the cylinder - position of the first  function (cone)   
       //is  elevated along Z for height values of all  previous functions.  
@@ -1673,26 +1678,27 @@ for (; anIterator.more(); anIterator.Next())
       TDF_Label radiusLabel  = Label().FindChild( 2 );  
        
       // The multiplicator of the radius ()is retrieved.  
-      Handle(TDataStd_Real)  radiusValue;  
+      occ::handle<TDataStd_Real>  radiusValue;  
       radiusLabel.FindAttribute(  TDataStd_Real::GetID(), radiusValue);  
        
       // The reference to the radius is retrieved.  
-      Handle(TDF_Reference)  refRadius;  
-      RadiusLabel.FindAttribute(  TDF_Reference::GetID(), refRadius );  
+      occ::handle<TDF_Reference>  refRadius;  
+      radiusLabel.FindAttribute(  TDF_Reference::GetID(), refRadius );  
        
       // The radius value is calculated.  
       double radius = 0.0;
       
       if (  refRadius.IsNull() )
       {
-        radius  = radiusValue-Get();  
+        radius  = radiusValue->Get();  
       }
       else  
       {  
         // The referenced radius value is  retrieved.   
-        Handle(TDataStd_Real)  referencedRadiusValue;  
-        RefRadius-Get().FindAttribute(TDataStd_Real::GetID()  ,referencedRadiusValue );  
-        radius  = referencedRadiusValue-Get() * radiusValue-Get();  
+        occ::handle<TDataStd_Real>  referencedRadiusValue;  
+        refRadius->Get().FindAttribute (TDataStd_Real::GetID(), referencedRadiusValue);
+
+        radius  = referencedRadiusValue->Get() * radiusValue->Get();  
       }  
        
       // The height value is retrieved.  
@@ -1703,10 +1709,10 @@ for (; anIterator.more(); anIterator.Next())
        
       // The result (cylinder) is set  
       TNaming_Builder  builder( Label() );  
-      Builder.Generated(  cylinder );  
+      builder.Generated(  cylinder );  
        
-      // The modification of the result leaf is saved in  the log.  
-      log.SetImpacted(  Label() );  
+      // The modification of the result leaf is saved in  the log.
+      log->SetImpacted (Label());
        
       return 0;
     }
@@ -1776,9 +1782,9 @@ There is one attribute driver for XML persistence for each transient attribute f
 
 At the beginning of storage/retrieval process, one instance of each attribute driver is created and appended to driver table implemented as *XmlMDF_ADriverTable*.  During OCAF Data storage, attribute drivers are retrieved from the driver table by the type of attribute. In the retrieval step, a data map is created linking names of *DOM_Elements* and attribute drivers, and then attribute drivers are sought in this map by *DOM_Element* qualified tag names. 
 
-Every transient attribute is saved as a *DOM_Element* (root element of OCAF attribute) with attributes and possibly sub-nodes. The name of the root element can be defined in the attribute driver as a string passed to the base class constructor. The default is the attribute type name. Similarly, namespace prefixes for each attribute can be set. There is no default value, but it is possible to pass NULL or an empty string to store attributes without namespace prefixes. 
+Every transient attribute is saved as a *DOM_Element* (root element of OCAF attribute) with attributes and possibly sub-nodes. The name of the root element can be defined in the attribute driver as a string passed to the base class constructor. The default is the attribute type name. Similarly, namespace prefixes for each attribute can be set. There is no default value, but it is possible to pass nullptr or an empty string to store attributes without namespace prefixes. 
 
-The basic class *XmlMDF_ADriver* supports errors reporting via the method *WriteMessage(const TCollection_ExtendedString&)*. It sends a message string to its message driver which is initialized in the constructor with a *Handle(CDM_MessageDriver)* passed from the application by Document Storage/Retrieval Driver. 
+The basic class *XmlMDF_ADriver* supports error reporting via the method *WriteMessage(const TCollection_ExtendedString&)*. The message is forwarded to the *Message_Messenger* the driver was constructed with -- in practice the application's Document Storage/Retrieval Driver passes its messenger (e.g. *Message::DefaultMessenger*) when instantiating the attribute drivers.
 
 @subsection occt_ocaf_9_3 XML Document Structure
 
@@ -1950,8 +1956,8 @@ The other available format is *XmlOcaf*. The class **TObj_Model** declares and p
 implementation of two virtual methods: 
 
 ~~~~{.cpp}
-    virtual Standard_Boolean Load (const char* theFile); 
-    virtual Standard_Boolean SaveAs (const char* theFile); 
+    virtual bool Load (const char* theFile); 
+    virtual bool SaveAs (const char* theFile); 
 ~~~~
 
 which retrieve and store the model from or 
@@ -1959,7 +1965,7 @@ in the OCAF file. The descendants
 should define the following protected method to support Load and Save operations:
 
 ~~~~{.cpp}
-    virtual Standard_Boolean initNewModel (const Standard_Boolean IsNew); 
+    virtual bool initNewModel (const bool IsNew); 
 ~~~~
 
 This method is called by *Load* after creation of a new model 
@@ -1999,20 +2005,20 @@ All objects in the model are stored in the main partition and accessed by iterat
 To access all model objects use: 
 
 ~~~~{.cpp}
-    virtual Handle(TObj_ObjectIterator) GetObjects () const; 
+    virtual occ::handle<TObj_ObjectIterator> GetObjects () const; 
 ~~~~
 
 This method returns a recursive iterator on all objects stored in the model.
 
 ~~~~{.cpp}
-    virtual Handle(TObj_ObjectIterator) GetChildren () const; 
+    virtual occ::handle<TObj_ObjectIterator> GetChildren () const; 
 ~~~~
 
 This method returns an iterator on child objects of the main partition.
 Use the following method to get the main partition: 
 
 ~~~~{.cpp}
-    Handle(TObj_Partition) GetMainPartition() const; 
+    occ::handle<TObj_Partition> GetMainPartition() const; 
 ~~~~
 
 To receive the iterator on objects of a specific type *AType* use the following call: 
@@ -2024,7 +2030,7 @@ To receive the iterator on objects of a specific type *AType* use the following 
 The set of protected methods is provided for descendant classes to deal with partitions: 
 
 ~~~~{.cpp}
-    virtual Handle(TObj_Partition) getPartition (const TDF_Label, const Standard_Boolean  theHidden) const; 
+    virtual occ::handle<TObj_Partition> getPartition (const TDF_Label, const bool  theHidden) const; 
 ~~~~
 
 This method returns (creating if necessary) a partition in the specified label of the document. 
@@ -2037,15 +2043,15 @@ in the sub-label of the specified label in the document
 (the label of the main partition for the second method) and with the given name: 
 
 ~~~~{.cpp}
-    virtual Handle(TObj_Partition) getPartition (const TDF_Label, const Standard_Integer theIndex, const TCollection_ExtendedString& theName, const Standard_Boolean  theHidden) const; 
-    virtual Handle(TObj_Partition) getPartition (const Standard_Integer theIndex, const TCollection_ExtendedString& theName, const Standard_Boolean  theHidden) const; 
+    virtual occ::handle<TObj_Partition> getPartition (const TDF_Label, const int theIndex, const TCollection_ExtendedString& theName, const bool  theHidden) const; 
+    virtual occ::handle<TObj_Partition> getPartition (const int theIndex, const TCollection_ExtendedString& theName, const bool  theHidden) const; 
 ~~~~
 
 If the default object naming and the name register mechanism 
 is turned on, the object can be found in the model by its unique name: 
 
 ~~~~{.cpp}
-    Handle(TObj_Object) FindObject (const Handle(TCollection_HExtendedString)& theName, const Handle(TObj_TNameContainer)& theDictionary) const; 
+    occ::handle<TObj_Object> FindObject (const occ::handle<TCollection_HExtendedString>& theName, const occ::handle<TObj_TNameContainer>& theDictionary) const; 
 ~~~~
 
 @subsubsection occt_tobj_2_5 Own model data
@@ -2072,13 +2078,13 @@ To ignore name registering it is necessary to redefine the methods *SetName*,
 Use the following methods for the naming mechanism: 
 
 ~~~~{.cpp}
-    Standard_Boolean IsRegisteredName (const Handle(TCollection_HExtendedString)& theName, const Handle(TObj_TNameContainer)& theDictionary ) const; 
+    bool IsRegisteredName (const occ::handle<TCollection_HExtendedString>& theName, const occ::handle<TObj_TNameContainer>& theDictionary ) const; 
 ~~~~
 
 Returns **True** if the object name is already registered in the indicated (or model) dictionary. 
 
 ~~~~{.cpp}
-    void RegisterName (const Handle(TCollection_HExtendedString)& theName, const TDF_Label& theLabel, const Handle(TObj_TNameContainer)& theDictionary ) const; 
+    void RegisterName (const occ::handle<TCollection_HExtendedString>& theName, const TDF_Label& theLabel, const occ::handle<TObj_TNameContainer>& theDictionary ) const; 
 ~~~~
 
 Registers the object name with the indicated label where the object 
@@ -2087,14 +2093,14 @@ of the method *SetName* of the object registers the new name automatically
 (if the name is not yet registered for any other object) 
 
 ~~~~{.cpp}
-    void UnRegisterName (const Handle(TCollection_HExtendedString)& theName, const Handle(TObj_TNameContainer)& theDictionary ) const; 
+    void UnRegisterName (const occ::handle<TCollection_HExtendedString>& theName, const occ::handle<TObj_TNameContainer>& theDictionary ) const; 
 ~~~~
 
 Unregisters the name from the dictionary.
 The names of *TObj* model objects are removed from the dictionary when the objects are deleted from the model.
 
 ~~~~{.cpp}
-    Handle(TObj_TNameContainer) GetDictionary() const;
+    occ::handle<TObj_TNameContainer> GetDictionary() const;
 ~~~~
 
 Returns a default instance of the model dictionary (located at the model root label). 
@@ -2108,7 +2114,7 @@ that returns the dictionary where names of objects should be registered.
 Class *TObj_Model* provides the API for transaction mechanism (supported by OCAF): 
 
 ~~~~{.cpp}
-    Standard_Boolean HasOpenCommand() const; 
+    bool HasOpenCommand() const; 
 ~~~~
 
 Returns True if a Command transaction is open 
@@ -2132,13 +2138,13 @@ Commits the Command transaction. Does nothing If there is no open Command transa
 Aborts the Command transaction. Does nothing if there is no open Command transaction. 
 
 ~~~~{.cpp}
-    Standard_Boolean IsModified() const; 
+    bool IsModified() const; 
 ~~~~
 
 Returns True if the model document has a modified status (has changes after the last save) 
 
 ~~~~{.cpp}
-    void SetModified( const Standard_Boolean ); 
+    void SetModified( const bool ); 
 ~~~~
 
 Changes the modified status by force. For synchronization of transactions 
@@ -2166,13 +2172,13 @@ of the model format. The current version of the model
 format is stored in the model file and can be checked upon retrieval. 
 
 ~~~~{.cpp}
-    Standard_Integer GetFormatVersion() const; 
+    int GetFormatVersion() const; 
 ~~~~
 
 Returns the format version stored in the model file 
 
 ~~~~{.cpp}
-    void SetFormatVersion(const Standard_Integer theVersion); 
+    void SetFormatVersion(const int theVersion); 
 ~~~~
 
 Defines the format version used for save. 
@@ -2206,20 +2212,20 @@ The following methods are used for model update to ensure its consistency
 with respect to the other models in case of cross-model dependencies: 
 
 ~~~~{.cpp}
-    virtual Standard_Boolean Update(); 
+    virtual bool Update(); 
 ~~~~
 
 This method is usually called after loading of the model. 
 The default implementation does nothing and returns **True**. 
 
 ~~~~{.cpp}
-    virtual Standard_Boolean initNewModel( const Standard_Boolean IsNew); 
+    virtual bool initNewModel( const bool IsNew); 
 ~~~~
 
 This method performs model initialization, check and updates (as described above). 
 
 ~~~~{.cpp}
-    virtual void updateBackReferences( const Handle(TObj_Object)& theObj); 
+    virtual void updateBackReferences( const occ::handle<TObj_Object>& theObj); 
 ~~~~
 
 This method is called from the previous method to update back references 
@@ -2231,7 +2237,7 @@ of the indicated object after the retrieval of the model from file
 To copy the model between OCAF documents use the following methods: 
 
 ~~~~{.cpp}
-    virtual Standard_Boolean Paste (Handle(TObj_Model) theModel, Handle(TDF_RelocationTable) theRelocTable = 0 ); 
+    virtual bool Paste (occ::handle<TObj_Model> theModel, occ::handle<TDF_RelocationTable> theRelocTable = 0 ); 
 ~~~~
 
 Pastes the current model to the new model. The relocation table 
@@ -2239,13 +2245,13 @@ ensures correct copying of the sub-data shared by several parts of the model.
 It stores a map of processed original objects of relevant types in their copies. 
 
 ~~~~{.cpp}
-    virtual Handle(TObj_Model) NewEmpty() = 0; 
+    virtual occ::handle<TObj_Model> NewEmpty() = 0; 
 ~~~~
 
 Redefines a pure virtual method to create a new empty instance of the model. 
 
 ~~~~{.cpp}
-    void CopyReferences ( const Handle(TObj_Model)& theTarget, const Handle(TDF_RelocationTable)& theRelocTable); 
+    void CopyReferences ( const occ::handle<TObj_Model>& theTarget, const occ::handle<TDF_RelocationTable>& theRelocTable); 
 ~~~~
 
 Copies the references from the current model to the target model. 
@@ -2257,8 +2263,8 @@ The messenger is stored as the field of the model instance
 and can be set and retrieved by the following methods: 
 
 ~~~~{.cpp}
-    void SetMessenger( const Handle(Message_Messenger)& ); 
-    Handle(Message_Messenger) Messenger() const; 
+    void SetMessenger( const occ::handle<Message_Messenger>& ); 
+    occ::handle<Message_Messenger> Messenger() const; 
 ~~~~
 
 A developer should create his own instance of the Messenger 
@@ -2325,17 +2331,17 @@ The *TObj_Object* class provides some basic features that can be inherited (or, 
 An object can be received from the model by the following methods: 
 
 ~~~~{.cpp}
-    static Standard_Boolean GetObj ( const TDF_Label& theLabel, Handle(TObj_Object)& theResObject, const Standard_Boolean isSuper = Standard_False ); 
+    static bool GetObj ( const TDF_Label& theLabel, occ::handle<TObj_Object>& theResObject, const bool isSuper = false ); 
 ~~~~
 
 Returns *True* if the object has been found in the indicated label (or in the upper level label if *isSuper* is *True*). 
 
 ~~~~{.cpp}
-    Handle(TObj_Object) GetFatherObject ( const Handle(Standard_Type)& theType = NULL ) const; 
+    occ::handle<TObj_Object> GetFatherObject ( const occ::handle<Standard_Type>& theType = nullptr ) const; 
 ~~~~
 
 Returns the father object of the indicated type 
-for the current object (the direct father object if the type is NULL). 
+for the current object (the direct father object if the type is nullptr). 
 
 @subsubsection occt_tobj_3_3 Data layout and inheritance
 
@@ -2359,8 +2365,8 @@ See the declaration of the TObj_Partition class for the example.
 to access the data stored in sub-labels by their tag numbers: 
 
 ~~~~{.cpp}
-    TDF_Label getDataLabel (const Standard_Integer theRank1, const Standard_Integer theRank2 = 0) const; 
-    TDF_Label getReferenceLabel (const Standard_Integer theRank1, const Standard_Integer theRank2 = 0) const; 
+    TDF_Label getDataLabel (const int theRank1, const int theRank2 = 0) const; 
+    TDF_Label getReferenceLabel (const int theRank1, const int theRank2 = 0) const; 
 ~~~~
 
 Returns the label in *Data* or *References* sub-labels at a given tag number (theRank1). 
@@ -2370,26 +2376,26 @@ This is useful when the data to be stored are represented by multiple OCAF attri
 of the same type (e.g. sequences of homogeneous data or references). 
 
 The get/set methods allow easily accessing the data located in the specified data label 
-for the most widely used data types (*Standard_Real*, *Standard_Integer*, *TCollection_HExtendedString*,
- *TColStd_HArray1OfReal*, *TColStd_HArray1OfInteger*, *TColStd_HArray1OfExtendedString*). 
+for the most widely used data types (*double*, *int*, *TCollection_HExtendedString*,
+ *NCollection_HArray1<double>*, *NCollection_HArray1<int>*, *NCollection_HArray1<TCollection_ExtendedString>*). 
 For instance, methods provided for real numbers are: 
 
 ~~~~{.cpp}
-    Standard_Real getReal (const Standard_Integer theRank1, const Standard_Integer theRank2 = 0) const; 
-    Standard_Boolean setReal (const Standard_Real theValue, const Standard_Integer theRank1, const Standard_Integer theRank2 = 0, const Standard_Real theTolerance = 0.) const; 
+    double getReal (const int theRank1, const int theRank2 = 0) const; 
+    bool setReal (const double theValue, const int theRank1, const int theRank2 = 0, const double theTolerance = 0.) const; 
 ~~~~
 
 Similar methods are provided to access references to other objects: 
 
 ~~~~{.cpp}
-    Handle(TObj_Object) getReference (const Standard_Integer theRank1, const Standard_Integer theRank2 = 0) const; 
-    Standard_Boolean setReference (const Handle(TObj_Object) &theObject, const Standard_Integer theRank1, const Standard_Integer theRank2 = 0); 
+    occ::handle<TObj_Object> getReference (const int theRank1, const int theRank2 = 0) const; 
+    bool setReference (const occ::handle<TObj_Object> &theObject, const int theRank1, const int theRank2 = 0); 
 ~~~~
 
 The method *addReference* gives an easy way to store a sequence of homogeneous references in one label. 
 
 ~~~~{.cpp}
-    TDF_Label addReference (const Standard_Integer theRank1, const Handle(TObj_Object) &theObject); 
+    TDF_Label addReference (const int theRank1, const occ::handle<TObj_Object> &theObject); 
 ~~~~
 
 Note that while references to other objects should be defined by descendant classes 
@@ -2453,24 +2459,24 @@ If necessary, it is easy to redefine a couple of object methods
 This functionality is provided by the following methods: 
 
 ~~~~{.cpp}
-    virtual Handle(TObj_TNameContainer) GetDictionary() const; 
+    virtual occ::handle<TObj_TNameContainer> GetDictionary() const; 
 ~~~~
 
 Returns the name container where the name of object should be registered. 
 The default implementation returns the model name container. 
 
 ~~~~{.cpp}
-    Handle(TCollection_HExtendedString) GetName() const; 
-    Standard_Boolean GetName( TCollection_ExtendedString& theName ) const; 
-    Standard_Boolean GetName( TCollection_AsciiString& theName ) const; 
+    occ::handle<TCollection_HExtendedString> GetName() const; 
+    bool GetName( TCollection_ExtendedString& theName ) const; 
+    bool GetName( TCollection_AsciiString& theName ) const; 
 ~~~~
 
 Returns the object name. The methods with in / out argument return False if the object name is not defined. 
 
 ~~~~{.cpp}
-    virtual Standard_Boolean SetName ( const Handle(TCollection_HExtendedString)& theName ) const; 
-    Standard_Boolean SetName         ( const Handle(TCollection_HAsciiString)& theName ) const; 
-    Standard_Boolean SetName         ( const Standard_CString theName ) const; 
+    virtual bool SetName ( const occ::handle<TCollection_HExtendedString>& theName ) const; 
+    bool SetName         ( const occ::handle<TCollection_HAsciiString>& theName ) const; 
+    bool SetName         ( const char* theName ) const; 
 ~~~~
 
 Attributes a new name to the object and returns **True** if the name has been attributed successfully. 
@@ -2501,17 +2507,17 @@ from different *TObj* models, facilitating the construction of complex relations
 The most used methods for work with references are: 
 
 ~~~~{.cpp}
-    virtual Standard_Boolean HasReference( const Handle(TObj_Object)& theObject) const; 
+    virtual bool HasReference( const occ::handle<TObj_Object>& theObject) const; 
 ~~~~
 
 Returns True if the current object refers to the indicated object. 
 
 ~~~~{.cpp}
-    virtual Handle(TObj_ObjectIterator) GetReferences ( const Handle(Standard_Type)& theType = NULL ) const; 
+    virtual occ::handle<TObj_ObjectIterator> GetReferences ( const occ::handle<Standard_Type>& theType = nullptr ) const; 
 ~~~~
 
 Returns an iterator on the object references. The optional argument *theType* 
-restricts the types of referred objects, or does not if it is NULL. 
+restricts the types of referred objects, or does not if it is nullptr. 
 
 ~~~~{.cpp}
     virtual void RemoveAllReferences(); 
@@ -2520,27 +2526,27 @@ restricts the types of referred objects, or does not if it is NULL.
 Removes all references from the current object. 
 
 ~~~~{.cpp}
-    virtual void RemoveReference( const Handle(TObj_Object)& theObject ); 
+    virtual void RemoveReference( const occ::handle<TObj_Object>& theObject ); 
 ~~~~
 
 Removes the reference to the indicated object. 
 
 ~~~~{.cpp}
-    virtual Handle(TObj_ObjectIterator) GetBackReferences ( const Handle(Standard_Type)& theType = NULL ) const; 
+    virtual occ::handle<TObj_ObjectIterator> GetBackReferences ( const occ::handle<Standard_Type>& theType = nullptr ) const; 
 ~~~~
 
 Returns an iterator on the object back references. 
-The argument theType restricts the types of master objects, or does not if it is NULL. 
+The argument theType restricts the types of master objects, or does not if it is nullptr. 
 
 ~~~~{.cpp}
-    virtual void ReplaceReference  ( const Handle(TObj_Object)& theOldObject,  const Handle(TObj_Object)& theNewObject ); 
+    virtual void ReplaceReference  ( const occ::handle<TObj_Object>& theOldObject,  const occ::handle<TObj_Object>& theNewObject ); 
 ~~~~
 
 Replaces the reference to theOldObject by the reference to *theNewObject*. 
-The handle theNewObject may be NULL to remove the reference. 
+The handle theNewObject may be nullptr to remove the reference. 
 
 ~~~~{.cpp}
-    virtual Standard_Boolean RelocateReferences  ( const TDF_Label& theFromRoot,  const TDF_Label& theToRoot, const Standard_Boolean theUpdateackRefs = Standard_True ); 
+    virtual bool RelocateReferences  ( const TDF_Label& theFromRoot,  const TDF_Label& theToRoot, const bool theUpdateackRefs = true ); 
 ~~~~
 
 Replaces all references to a descendant label of *theFromRoot* 
@@ -2549,7 +2555,7 @@ Returns **False** if the resulting reference does not point at a *TObj_Object*.
 Updates back references if theUpdateackRefs is **True**. 
 
 ~~~~{.cpp}
-    virtual Standard_Boolean CanRemoveReference ( const Handle(TObj_Object)& theObj) const; 
+    virtual bool CanRemoveReference ( const occ::handle<TObj_Object>& theObj) const; 
 ~~~~
 
 Returns **True** if the reference can be removed and the master object 
@@ -2594,13 +2600,13 @@ but the behavior depends on the deletion mode *TObj_DeletingMode*:
 The most used methods for object removing are: 
 
 ~~~~{.cpp}
-    virtual Standard_Boolean CanDetachObject (const TObj_DeletingMode theMode = TObj_FreeOnly ); 
+    virtual bool CanDetachObject (const TObj_DeletingMode theMode = TObj_FreeOnly ); 
 ~~~~
 
 Returns **True** if the object can be deleted with the indicated deletion mode. 
 
 ~~~~{.cpp}
-    virtual Standard_Boolean Detach ( const TObj_DeletingMode theMode = TObj_FreeOnly ); 
+    virtual bool Detach ( const TObj_DeletingMode theMode = TObj_FreeOnly ); 
 ~~~~
 
 Removes the object from the document if possible 
@@ -2613,7 +2619,7 @@ Returns **True** if the objects have been successfully deleted.
 *TObj_Object* provides a number of special virtual methods  to support replications of objects. These methods should be redefined by descendants when necessary. 
 
 ~~~~{.cpp}
-    virtual Handle(TObj_Object) Clone (const TDF_Label& theTargetLabel, Handle(TDF_RelocationTable) theRelocTable = 0); 
+    virtual occ::handle<TObj_Object> Clone (const TDF_Label& theTargetLabel, occ::handle<TDF_RelocationTable> theRelocTable = 0); 
 ~~~~
 
 Copies the object to theTargetLabel. The new object will have all references of its original. 
@@ -2622,7 +2628,7 @@ but the name is changed by adding the postfix *_copy*.
 To assign different names to the copies redefine the method: 
 
 ~~~~{.cpp}
-    virtual Handle(TCollection_HExtendedString) GetNameForClone ( const Handle(TObj_Object)& ) const; 
+    virtual occ::handle<TCollection_HExtendedString> GetNameForClone ( const occ::handle<TObj_Object>& ) const; 
 ~~~~
 
 Returns the name for a new object copy. It could be useful to return the same object name 
@@ -2630,13 +2636,13 @@ if the copy will be in the other model or in the other partition with its own di
 The method *Clone* uses the following public methods for object data replications: 
 
 ~~~~{.cpp}
-    virtual void CopyReferences (const const Handle(TObj_Object)& theTargetObject, const Handle(TDF_RelocationTable) theRelocTable); 
+    virtual void CopyReferences (const occ::handle<TObj_Object>& theTargetObject, const occ::handle<TDF_RelocationTable> theRelocTable); 
 ~~~~
 
 Adds to the copy of the original object its references. 
 
 ~~~~{.cpp}
-    virtual void CopyChildren (TDF_Label& theTargetLabel, const Handle(TDF_RelocationTable) theRelocTable); 
+    virtual void CopyChildren (TDF_Label& theTargetLabel, const occ::handle<TDF_RelocationTable> theRelocTable); 
 ~~~~
 
 Copies the children of an object to the target child label. 
@@ -2657,10 +2663,10 @@ The user (developer) can define any new flags in descendant classes.
 To set/get an object, the flags use the following methods: 
 
 ~~~~{.cpp}
-    Standard_Integer GetFlags() const; 
-    void SetFlags( const Standard_Integer theMask ); 
-    Stadnard_Boolean TestFlags( const Standard_Integer theMask ) const; 
-    void ClearFlags( const Standard_Integer theMask = 0 ); 
+    int GetFlags() const; 
+    void SetFlags( const int theMask ); 
+    bool TestFlags( const int theMask ) const; 
+    void ClearFlags( const int theMask = 0 ); 
 ~~~~
 
 In addition, the generic virtual interface stores the logical properties 
@@ -2668,7 +2674,7 @@ of the object class in the form of a set of bit flags.
 Type flags can be received by the method: 
 
 ~~~~{.cpp}
-    virtual Standard_Integer GetTypeFlags() const; 
+    virtual int GetTypeFlags() const; 
 ~~~~
 
 The default implementation returns the flag **Visible** 
@@ -2694,31 +2700,31 @@ The main partition object methods:
 Allocates and returns a new label for creation of a new child object. 
 
 ~~~~{.cpp}
-    void SetNamePrefix  ( const Handle(TCollection_HExtendedString)& thePrefix); 
+    void SetNamePrefix  ( const occ::handle<TCollection_HExtendedString>& thePrefix); 
 ~~~~
 
 Defines the prefix for automatic generation of names of the newly created objects. 
 
 ~~~~{.cpp}
-    Handle(TCollection_HExtendedString) GetNamePrefix() const; 
+    occ::handle<TCollection_HExtendedString> GetNamePrefix() const; 
 ~~~~
 
 Returns the current name prefix. 
 
 ~~~~{.cpp}
-    Handle(TCollection_HExtendedString) GetNewName ( const Standard_Boolean theIsToChangeCount) const; 
+    occ::handle<TCollection_HExtendedString> GetNewName ( const bool theIsToChangeCount) const; 
 ~~~~
 
 Generates the new name and increases the internal counter of child objects if theIsToChangeCount is **True**. 
 
 ~~~~{.cpp}
-    Standard_Integer GetLastIndex() const; 
+    int GetLastIndex() const; 
 ~~~~
 
 Returns the last reserved child index. 
 
 ~~~~{.cpp}
-    void SetLastIndex( const Standard_Integer theIndex ); 
+    void SetLastIndex( const int theIndex ); 
 ~~~~
 
 Sets the last reserved index. 

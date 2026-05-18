@@ -169,15 +169,21 @@ static gp_XYZ GetAnyNormal(gp_XYZ orig)
 {
   gp_XYZ Norm;
   if (std::abs(orig.Z()) < Precision::Confusion())
+  {
     Norm.SetCoord(0, 0, 1);
+  }
   else
   {
     Norm.SetCoord(orig.Z(), 0, -orig.X());
     double nrm = Norm.Modulus();
     if (nrm < Precision::Confusion())
+    {
       Norm.SetCoord(0, 0, 1);
+    }
     else
+    {
       Norm = Norm / nrm;
+    }
   }
   return Norm;
 }
@@ -198,7 +204,9 @@ static bool ArePolesPlanar(const NCollection_Array1<gp_Pnt>& Poles, gp_XYZ& Norm
   Normal = Poles(Poles.Length()).XYZ() ^ Poles(1).XYZ();
   int i; // svv Jan 10 2000 : porting on DEC
   for (i = 1; i < Poles.Length(); i++)
+  {
     Normal += Poles(i).XYZ() ^ Poles(i + 1).XYZ();
+  }
 
   constexpr double tol = Precision::Confusion();
   double           nrm = Normal.Modulus();
@@ -211,8 +219,12 @@ static bool ArePolesPlanar(const NCollection_Array1<gp_Pnt>& Poles, gp_XYZ& Norm
 
   double scl = Poles(1).XYZ() * Normal;
   for (i = 2; i <= Poles.Length(); i++)
+  {
     if (std::abs(Poles(i).XYZ() * Normal - scl) > tol)
+    {
       return false;
+    }
+  }
   return true;
 }
 
@@ -249,16 +261,12 @@ static bool IsPlanar(const occ::handle<Geom_Curve>& curve, gp_XYZ& Normal)
   if (curve->IsKind(STANDARD_TYPE(Geom_BSplineCurve)))
   {
     DeclareAndCast(Geom_BSplineCurve, BSpline, curve);
-    NCollection_Array1<gp_Pnt> Poles(1, BSpline->NbPoles());
-    BSpline->Poles(Poles);
-    return ArePolesPlanar(Poles, Normal);
+    return ArePolesPlanar(BSpline->Poles(), Normal);
   }
   if (curve->IsKind(STANDARD_TYPE(Geom_BezierCurve)))
   {
     DeclareAndCast(Geom_BezierCurve, Bezier, curve);
-    NCollection_Array1<gp_Pnt> Poles(1, Bezier->NbPoles());
-    Bezier->Poles(Poles);
-    return ArePolesPlanar(Poles, Normal);
+    return ArePolesPlanar(Bezier->Poles(), Normal);
   }
   return false;
 }
@@ -301,18 +309,26 @@ occ::handle<IGESData_IGESEntity> GeomToIGES_GeomCurve::TransferCurve(
   double Umin = Udeb;
   double Umax = Ufin;
   if (Precision::IsNegativeInfinite(Udeb))
+  {
     Umin = -Precision::Infinite();
+  }
   if (Precision::IsPositiveInfinite(Ufin))
+  {
     Umax = Precision::Infinite();
+  }
 
   //%12 pdn: cut curve for E3
   double First = mycurve->FirstParameter();
   double Last  = mycurve->LastParameter();
   //: l5 abv 14 Jan 99: protect against exceptions in Segment()
   if (Umin - First < Precision::PConfusion())
+  {
     Umin = First;
+  }
   if (Last - Umax < Precision::PConfusion())
+  {
     Umax = Last;
+  }
   if (Umin - First > Precision::PConfusion() || Last - Umax > Precision::PConfusion())
   {
     try
@@ -322,7 +338,9 @@ occ::handle<IGESData_IGESEntity> GeomToIGES_GeomCurve::TransferCurve(
       if (!bspl.IsNull())
       {
         if (std::abs(Umax - Umin) > Precision::PConfusion())
+        {
           bspl->Segment(Umin, Umax);
+        }
         mycurve = bspl;
       }
     }
@@ -348,10 +366,9 @@ occ::handle<IGESData_IGESEntity> GeomToIGES_GeomCurve::TransferCurve(
 
   // Sequence des Knots de [-Deg, Index+1] dans IGESGeom.
   // and from [1, Nbpoles+Deg+1] in Geom
-  int                        Knotindex;
-  double                     rtampon;
-  NCollection_Array1<double> K(1, Nbpoles + Deg + 1);
-  mycurve->KnotSequence(K);
+  int                                      Knotindex;
+  double                                   rtampon;
+  const NCollection_Array1<double>&        K       = mycurve->KnotSequence();
   int                                      itampon = -Deg;
   occ::handle<NCollection_HArray1<double>> Knots = new NCollection_HArray1<double>(-Deg, Index + 1);
   for (Knotindex = K.Lower(); Knotindex <= K.Upper(); Knotindex++)
@@ -362,8 +379,7 @@ occ::handle<IGESData_IGESEntity> GeomToIGES_GeomCurve::TransferCurve(
   }
 
   // Tableau Weights de [0,Index]
-  NCollection_Array1<double> W(1, Nbpoles);
-  mycurve->Weights(W);
+  const NCollection_Array1<double>& W              = mycurve->WeightsArray();
   itampon                                          = 0;
   occ::handle<NCollection_HArray1<double>> Weights = new NCollection_HArray1<double>(0, Index);
   for (Knotindex = W.Lower(); Knotindex <= W.Upper(); Knotindex++)
@@ -374,9 +390,8 @@ occ::handle<IGESData_IGESEntity> GeomToIGES_GeomCurve::TransferCurve(
   }
 
   // Tableau Poles de [0,Index]
-  NCollection_Array1<gp_Pnt> P(1, Nbpoles);
-  mycurve->Poles(P);
-  int Poleindex;
+  const NCollection_Array1<gp_Pnt>& P = mycurve->Poles();
+  int                               Poleindex;
   itampon = 0;
   double                                   Xpt, Ypt, Zpt;
   occ::handle<NCollection_HArray1<gp_XYZ>> Poles = new NCollection_HArray1<gp_XYZ>(0, Index);
@@ -398,7 +413,9 @@ occ::handle<IGESData_IGESEntity> GeomToIGES_GeomCurve::TransferCurve(
   //%11 pdn 13.01.98 computing planar flag and normal
   IPlan = IsPlanar(start, Norm);
   if (Norm.Z() < 0)
+  {
     Norm.Reverse();
+  }
   BSplineC->Init(Index, Deg, IPlan, IClos, IPolyn, IPerio, Knots, Weights, Poles, Umin, Umax, Norm);
 
   res = BSplineC;
@@ -530,7 +547,9 @@ occ::handle<IGESData_IGESEntity> GeomToIGES_GeomCurve::TransferCurve(
   double U1 = Udeb;
   double U2 = Ufin;
   if (std::abs(Udeb) <= gp::Resolution())
+  {
     U1 = 0.0;
+  }
 
   // creation du "CircularArc" (#100)
   // --------------------------------
@@ -550,9 +569,13 @@ occ::handle<IGESData_IGESEntity> GeomToIGES_GeomCurve::TransferCurve(
   gp_Pnt pfirst, plast;
   start->D0(U1, pfirst);
   if (std::abs(Ufin - Udeb - 2 * M_PI) <= Precision::PConfusion())
+  {
     plast = pfirst;
+  }
   else
+  {
     start->D0(U2, plast);
+  }
   //
   Build.EvalXYZ(((start->Circ()).Location()).XYZ(), Xc, Yc, Zc);
   Build.EvalXYZ(pfirst.XYZ(), Xs, Ys, Zs);
@@ -608,11 +631,14 @@ occ::handle<IGESData_IGESEntity> GeomToIGES_GeomCurve::TransferCurve(
     const occ::handle<Geom_Curve>& aCopy = copystart; // to avoid ambiguity
     GeomConvert_ApproxCurve        approx(aCopy, Precision::Approximation(), GeomAbs_C1, 100, 6);
     if (approx.HasResult())
+    {
       Bspline = approx.Curve();
+    }
     if (Bspline.IsNull())
-      GeomConvert::CurveToBSplineCurve(copystart, Convert_QuasiAngular);
-    NCollection_Array1<double> Knots(1, Bspline->NbKnots());
-    Bspline->Knots(Knots);
+    {
+      Bspline = GeomConvert::CurveToBSplineCurve(copystart, Convert_QuasiAngular);
+    }
+    NCollection_Array1<double> Knots(Bspline->Knots());
     BSplCLib::Reparametrize(Udeb, Udeb + 2 * M_PI, Knots);
     Bspline->SetKnots(Knots);
     return TransferCurve(Bspline, Udeb, Ufin);
@@ -623,7 +649,9 @@ occ::handle<IGESData_IGESEntity> GeomToIGES_GeomCurve::TransferCurve(
   double                         U1 = Udeb;
   double                         U2 = Ufin;
   if (std::abs(Udeb) <= gp::Resolution())
+  {
     U1 = 0.0;
+  }
 
   // creation du "ConicArc" (#104)
   // -----------------------------
@@ -692,9 +720,13 @@ occ::handle<IGESData_IGESEntity> GeomToIGES_GeomCurve::TransferCurve(
   double                         U1 = Udeb;
   double                         U2 = Ufin;
   if (Precision::IsNegativeInfinite(Udeb))
+  {
     U1 = -Precision::Infinite();
+  }
   if (Precision::IsPositiveInfinite(Ufin))
+  {
     U2 = Precision::Infinite();
+  }
 
   // creation du "ConicArc" (#104)
   // -----------------------------
@@ -761,9 +793,13 @@ occ::handle<IGESData_IGESEntity> GeomToIGES_GeomCurve::TransferCurve(
   double                         U1 = Udeb;
   double                         U2 = Ufin;
   if (Precision::IsNegativeInfinite(Udeb))
+  {
     U1 = -Precision::Infinite();
+  }
   if (Precision::IsPositiveInfinite(Ufin))
+  {
     U2 = Precision::Infinite();
+  }
 
   // creation du "ConicArc" (#104)
   // -----------------------------
@@ -828,9 +864,13 @@ occ::handle<IGESData_IGESEntity> GeomToIGES_GeomCurve::TransferCurve(
   double                     U1   = Udeb;
   double                     U2   = Ufin;
   if (Precision::IsNegativeInfinite(Udeb))
+  {
     U1 = -Precision::Infinite();
+  }
   if (Precision::IsPositiveInfinite(Ufin))
+  {
     U2 = Precision::Infinite();
+  }
 
   // creation du "Line" (#110)
   // -------------------------
@@ -865,9 +905,13 @@ occ::handle<IGESData_IGESEntity> GeomToIGES_GeomCurve::TransferCurve(
   double                            U1      = Udeb;
   double                            U2      = Ufin;
   if (Precision::IsNegativeInfinite(Udeb))
+  {
     U1 = -Precision::Infinite();
+  }
   if (Precision::IsPositiveInfinite(Ufin))
+  {
     U2 = Precision::Infinite();
+  }
 
   if (Interface_Static::IVal("write.iges.offset.mode") == 0)
   {

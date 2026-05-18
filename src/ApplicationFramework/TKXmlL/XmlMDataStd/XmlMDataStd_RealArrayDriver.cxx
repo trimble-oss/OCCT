@@ -49,10 +49,8 @@ occ::handle<TDF_Attribute> XmlMDataStd_RealArrayDriver::NewEmpty() const
   return (new TDataStd_RealArray());
 }
 
-//=======================================================================
-// function : Paste
-// purpose  : persistent -> transient (retrieve)
-//=======================================================================
+//=================================================================================================
+
 bool XmlMDataStd_RealArrayDriver::Paste(const XmlObjMgt_Persistent&       theSource,
                                         const occ::handle<TDF_Attribute>& theTarget,
                                         XmlObjMgt_RRelocationTable&       theRelocTable) const
@@ -65,9 +63,13 @@ bool XmlMDataStd_RealArrayDriver::Paste(const XmlObjMgt_Persistent&       theSou
   Standard_GUID       aGUID;
   XmlObjMgt_DOMString aGUIDStr = anElement.getAttribute(::AttributeIDString());
   if (aGUIDStr.Type() == XmlObjMgt_DOMString::LDOM_NULL)
+  {
     aGUID = TDataStd_RealArray::GetID(); // default case
+  }
   else
+  {
     aGUID = Standard_GUID(static_cast<const char*>(aGUIDStr.GetString())); // user defined case
+  }
   aRealArray->SetID(aGUID);
 
   int aFirstInd, aLastInd, ind;
@@ -75,7 +77,9 @@ bool XmlMDataStd_RealArrayDriver::Paste(const XmlObjMgt_Persistent&       theSou
   // Read the FirstIndex; if the attribute is absent initialize to 1
   XmlObjMgt_DOMString aFirstIndex = anElement.getAttribute(::FirstIndexString());
   if (aFirstIndex == nullptr)
+  {
     aFirstInd = 1;
+  }
   else if (!aFirstIndex.GetInteger(aFirstInd))
   {
     TCollection_ExtendedString aMessageString =
@@ -107,7 +111,9 @@ bool XmlMDataStd_RealArrayDriver::Paste(const XmlObjMgt_Persistent&       theSou
     {
       int anIntValue;
       if (aString.GetInteger(anIntValue))
+      {
         aRealArray->SetValue(aFirstInd, double(anIntValue));
+      }
     }
     else
     {
@@ -134,10 +140,14 @@ bool XmlMDataStd_RealArrayDriver::Paste(const XmlObjMgt_Persistent&       theSou
         myMessageDriver->Send(aMessageString, Message_Warning);
         // skip the first space, if exists
         while (*aValueStr != 0 && IsSpace(*aValueStr))
+        {
           ++aValueStr;
+        }
         // skip to the next space separator
         while (*aValueStr != 0 && !IsSpace(*aValueStr))
+        {
           ++aValueStr;
+        }
       }
       aRealArray->SetValue(ind, aValue);
     }
@@ -158,17 +168,17 @@ bool XmlMDataStd_RealArrayDriver::Paste(const XmlObjMgt_Persistent&       theSou
       return false;
     }
     else
+    {
       aDelta = aDeltaValue != 0;
+    }
   }
   aRealArray->SetDelta(aDelta);
 
   return true;
 }
 
-//=======================================================================
-// function : Paste
-// purpose  : transient -> persistent (store)
-//=======================================================================
+//=================================================================================================
+
 void XmlMDataStd_RealArrayDriver::Paste(const occ::handle<TDF_Attribute>& theSource,
                                         XmlObjMgt_Persistent&             theTarget,
                                         XmlObjMgt_SRelocationTable&) const
@@ -179,7 +189,9 @@ void XmlMDataStd_RealArrayDriver::Paste(const occ::handle<TDF_Attribute>& theSou
   int                                             aL = realArray.Lower(), anU = realArray.Upper();
 
   if (aL != 1)
+  {
     theTarget.Element().setAttribute(::FirstIndexString(), aL);
+  }
   theTarget.Element().setAttribute(::LastIndexString(), anU);
   theTarget.Element().setAttribute(::IsDeltaOn(), aRealArray->GetDelta() ? 1 : 0);
 
@@ -207,7 +219,9 @@ void XmlMDataStd_RealArrayDriver::Paste(const occ::handle<TDF_Attribute>& theSou
         nbChars += Sprintf(buf, "%.17g ", realArray.Value(i++)) + 1 /*a space*/;
       }
       if (nbChars)
+      {
         str.Allocate(nbChars);
+      }
     }
   }
 
@@ -216,7 +230,9 @@ void XmlMDataStd_RealArrayDriver::Paste(const occ::handle<TDF_Attribute>& theSou
   {
     iChar += Sprintf(&(str[iChar]), "%.17g ", realArray.Value(i));
     if (i >= anU)
+    {
       break;
+    }
     ++i;
   }
 
@@ -224,7 +240,7 @@ void XmlMDataStd_RealArrayDriver::Paste(const occ::handle<TDF_Attribute>& theSou
   if (realArray.Length())
   {
     str[iChar - 1] = '\0';
-    XmlObjMgt::SetStringValue(theTarget, (char*)str, true);
+    XmlObjMgt::SetStringValue(theTarget, static_cast<char*>(str), true);
   }
   if (aRealArray->ID() != TDataStd_RealArray::GetID())
   {

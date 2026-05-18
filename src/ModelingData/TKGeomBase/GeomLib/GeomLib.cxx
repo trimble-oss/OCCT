@@ -15,31 +15,25 @@
 // commercial license or contractual agreement.
 
 // Version:
-// pmn 24/09/96 Ajout du prolongement de courbe.
-//              jct 15/04/97 Ajout du prolongement de surface.
-//              jct 24/04/97 simplification ou suppression de calculs
-//                           inutiles dans ExtendSurfByLength
-//                           correction de Tbord et Continuity=0 accepte
-//                           correction du calcul de lambda et appel a
-//                           TangExtendToConstraint avec lambmin au lieu de 1.
-//                           correction du passage Sr rat --> BSp nD
-//              xab 26/06/97 treatement partiel anulation des derivees
-//                           partiels du denonimateur des Surfaces BSplines Rationnelles
-//                           dans le cas de valeurs proportionnelles des denominateurs
-//                           en umin umax et/ou vmin vmax.
-//              pmn 4/07/97  Gestion de la continuite dans BuildCurve3d (PRO9097)
-//              xab 10/07/97 on revient en arriere sur l'ajout du 26/06/97
-//              pmn 26/09/97 Ajout des parametres d'approx dans BuildCurve3d
-//              xab 29/09/97 on reintegre l'ajout du 26/06/97
-//              pmn 31/10/97 Ajoute AdjustExtremity
-//              jct 26/11/98 blindage dans ExtendSurf qd NTgte = 0 (CTS21288)
-//              jct 19/01/99 traitement de la periodicite dans ExtendSurf
-// Design:
-// Warning:      None
-// References:   None
-// Language:     C++2.0
-// Purpose:
-// Declarations:
+// pmn 24/09/96 Added curve extension.
+//              jct 15/04/97 Added surface extension.
+//              jct 24/04/97 simplification or removal of unnecessary
+//                           computations in ExtendSurfByLength;
+//                           correction of Tbord and Continuity=0 accepted;
+//                           correction of lambda computation and call to
+//                           TangExtendToConstraint with lambmin instead of 1;
+//                           correction of rational surface to nD BSpline conversion.
+//              xab 26/06/97 partial treatment of derivative cancellation
+//                           in the denominator of rational BSpline surfaces
+//                           when denominator values are proportional
+//                           at umin, umax and/or vmin, vmax.
+//              pmn 4/07/97  Continuity management in BuildCurve3d (PRO9097)
+//              xab 10/07/97 reverted the addition from 26/06/97
+//              pmn 26/09/97 Added approx parameters in BuildCurve3d
+//              xab 29/09/97 reintegrated the addition from 26/06/97
+//              pmn 31/10/97 Added AdjustExtremity
+//              jct 26/11/98 safeguard in ExtendSurf when NTgte = 0 (CTS21288)
+//              jct 19/01/99 periodicity handling in ExtendSurf
 
 #include <GeomLib.hxx>
 
@@ -128,11 +122,7 @@ static bool CompareWeightPoles(const NCollection_Array1<gp_Pnt>&       thePoles1
                                const NCollection_Array1<double>* const theW2,
                                const double                            theTol);
 
-//=======================================================================
-// function : ComputeLambda
-// purpose  : Calcul le facteur lambda qui minimise la variation de vittesse
-//           sur une interpolation d'hermite d'ordre (i,0)
-//=======================================================================
+//=================================================================================================
 static void ComputeLambda(const math_Matrix& Constraint,
                           const math_Matrix& Hermit,
                           const double       Length,
@@ -238,7 +228,7 @@ static void ComputeLambda(const math_Matrix& Constraint,
 
   if (EMin > Precision::Confusion())
   {
-    // Recheche des extrema de la fonction
+    // Search for extrema of the function
     GeomLib_PolyFunc      FF(pol4);
     GeomLib_LogSample     S(Lambda / 1000, 50 * Lambda, 100);
     math_FunctionAllRoots Solve(FF,
@@ -407,12 +397,12 @@ void GeomLib::FuseIntervals(const NCollection_Array1<double>& I1,
 {
   int    ind1 = 1, ind2 = 1;
   double v1, v2;
-  // Initialisations : les IND1 et IND2 pointent sur le 1er element
-  // de chacune des 2 tables a traiter.INDS pointe sur le dernier
-  // element cree de TABSOR
+  // Initializations: IND1 and IND2 point to the 1st element
+  // of each of the 2 tables to process. INDS points to the last
+  // created element of TABSOR
 
-  //--- On remplit TABSOR en parcourant TABLE1 et TABLE2 simultanement ---
-  //------------------ en eliminant les occurrences multiples ------------
+  //--- Fill TABSOR by traversing TABLE1 and TABLE2 simultaneously ---
+  //------------------ eliminating multiple occurrences ----------------
 
   while ((ind1 <= I1.Upper()) && (ind2 <= I2.Upper()))
   {
@@ -420,7 +410,7 @@ void GeomLib::FuseIntervals(const NCollection_Array1<double>& I1,
     v2 = I2(ind2);
     if (std::abs(v1 - v2) <= Epspar)
     {
-      // Ici les elements de I1 et I2 conviennent .
+      // Here the elements of I1 and I2 match.
       if (IsAdjustToFirstInterval)
       {
         Seq.Append(v1);
@@ -434,13 +424,13 @@ void GeomLib::FuseIntervals(const NCollection_Array1<double>& I1,
     }
     else if (v1 < v2)
     {
-      // Ici l' element de I1 convient.
+      // Here the element of I1 is suitable.
       Seq.Append(v1);
       ind1++;
     }
     else
     {
-      // Ici l' element de TABLE2 convient.
+      // Here the element of TABLE2 is suitable.
       Seq.Append(v2);
       ind2++;
     }
@@ -448,7 +438,7 @@ void GeomLib::FuseIntervals(const NCollection_Array1<double>& I1,
 
   if (ind1 > I1.Upper())
   {
-    //----- Ici I1 est epuise, on complete avec la fin de TABLE2 -------
+    //----- Here I1 is exhausted, complete with the end of TABLE2 -------
 
     for (; ind2 <= I2.Upper(); ind2++)
     {
@@ -458,7 +448,7 @@ void GeomLib::FuseIntervals(const NCollection_Array1<double>& I1,
 
   if (ind2 > I2.Upper())
   {
-    //----- Ici I2 est epuise, on complete avec la fin de I1 -------
+    //----- Here I2 is exhausted, complete with the end of I1 -------
     for (; ind1 <= I1.Upper(); ind1++)
     {
       Seq.Append(I1(ind1));
@@ -591,11 +581,10 @@ occ::handle<Geom_Curve> GeomLib::To3d(const gp_Ax2&                    Position,
   }
   else if (KindOfCurve == STANDARD_TYPE(Geom2d_BezierCurve))
   {
-    occ::handle<Geom2d_BezierCurve> CBez2d  = occ::down_cast<Geom2d_BezierCurve>(Curve2d);
-    int                             Nbpoles = CBez2d->NbPoles();
-    NCollection_Array1<gp_Pnt2d>    Poles2d(1, Nbpoles);
-    CBez2d->Poles(Poles2d);
-    NCollection_Array1<gp_Pnt> Poles3d(1, Nbpoles);
+    occ::handle<Geom2d_BezierCurve>     CBez2d  = occ::down_cast<Geom2d_BezierCurve>(Curve2d);
+    const NCollection_Array1<gp_Pnt2d>& Poles2d = CBez2d->Poles();
+    const int                           Nbpoles = Poles2d.Length();
+    NCollection_Array1<gp_Pnt>          Poles3d(1, Nbpoles);
     for (int i = 1; i <= Nbpoles; i++)
     {
       Poles3d(i) = ElCLib::To3d(Position, Poles2d(i));
@@ -603,9 +592,7 @@ occ::handle<Geom_Curve> GeomLib::To3d(const gp_Ax2&                    Position,
     occ::handle<Geom_BezierCurve> CBez3d;
     if (CBez2d->IsRational())
     {
-      NCollection_Array1<double> TheWeights(1, Nbpoles);
-      CBez2d->Weights(TheWeights);
-      CBez3d = new Geom_BezierCurve(Poles3d, TheWeights);
+      CBez3d = new Geom_BezierCurve(Poles3d, CBez2d->WeightsArray());
     }
     else
     {
@@ -615,29 +602,27 @@ occ::handle<Geom_Curve> GeomLib::To3d(const gp_Ax2&                    Position,
   }
   else if (KindOfCurve == STANDARD_TYPE(Geom2d_BSplineCurve))
   {
-    occ::handle<Geom2d_BSplineCurve> CBSpl2d    = occ::down_cast<Geom2d_BSplineCurve>(Curve2d);
-    int                              Nbpoles    = CBSpl2d->NbPoles();
-    int                              Nbknots    = CBSpl2d->NbKnots();
-    int                              TheDegree  = CBSpl2d->Degree();
-    bool                             IsPeriodic = CBSpl2d->IsPeriodic();
-    NCollection_Array1<gp_Pnt2d>     Poles2d(1, Nbpoles);
-    CBSpl2d->Poles(Poles2d);
-    NCollection_Array1<gp_Pnt> Poles3d(1, Nbpoles);
+    occ::handle<Geom2d_BSplineCurve>    CBSpl2d    = occ::down_cast<Geom2d_BSplineCurve>(Curve2d);
+    const int                           TheDegree  = CBSpl2d->Degree();
+    const bool                          IsPeriodic = CBSpl2d->IsPeriodic();
+    const NCollection_Array1<gp_Pnt2d>& Poles2d    = CBSpl2d->Poles();
+    const int                           Nbpoles    = Poles2d.Length();
+    NCollection_Array1<gp_Pnt>          Poles3d(1, Nbpoles);
     for (int i = 1; i <= Nbpoles; i++)
     {
       Poles3d(i) = ElCLib::To3d(Position, Poles2d(i));
     }
-    NCollection_Array1<double> TheKnots(1, Nbknots);
-    NCollection_Array1<int>    TheMults(1, Nbknots);
-    CBSpl2d->Knots(TheKnots);
-    CBSpl2d->Multiplicities(TheMults);
-    occ::handle<Geom_BSplineCurve> CBSpl3d;
+    const NCollection_Array1<double>& TheKnots = CBSpl2d->Knots();
+    const NCollection_Array1<int>&    TheMults = CBSpl2d->Multiplicities();
+    occ::handle<Geom_BSplineCurve>    CBSpl3d;
     if (CBSpl2d->IsRational())
     {
-      NCollection_Array1<double> TheWeights(1, Nbpoles);
-      CBSpl2d->Weights(TheWeights);
-      CBSpl3d =
-        new Geom_BSplineCurve(Poles3d, TheWeights, TheKnots, TheMults, TheDegree, IsPeriodic);
+      CBSpl3d = new Geom_BSplineCurve(Poles3d,
+                                      CBSpl2d->WeightsArray(),
+                                      TheKnots,
+                                      TheMults,
+                                      TheDegree,
+                                      IsPeriodic);
     }
     else
     {
@@ -703,8 +688,8 @@ occ::handle<Geom2d_Curve> GeomLib::GTransform(const occ::handle<Geom2d_Curve>& C
   if (Form != gp_Other)
   {
 
-    // Alors, la GTrsf est en fait une Trsf.
-    // La geometrie des courbes sera alors inchangee.
+    // Then, the GTrsf is actually a Trsf.
+    // The curve geometry will then remain unchanged.
 
     occ::handle<Geom2d_Curve> C = occ::down_cast<Geom2d_Curve>(Curve->Transformed(GTrsf.Trsf2d()));
     return C;
@@ -731,8 +716,8 @@ occ::handle<Geom2d_Curve> GeomLib::GTransform(const occ::handle<Geom2d_Curve>& C
           || TheBasisType == STANDARD_TYPE(Geom2d_BezierCurve))
       {
 
-        // Dans ces cas le parametrage est conserve sur la courbe transformee
-        // on peut donc la trimmer avec les parametres de la courbe de base.
+        // In these cases the parameterization is preserved on the transformed curve,
+        // so we can trim it with the parameters of the base curve.
 
         double U1 = C->FirstParameter();
         double U2 = C->LastParameter();
@@ -744,10 +729,9 @@ occ::handle<Geom2d_Curve> GeomLib::GTransform(const occ::handle<Geom2d_Curve>& C
       else if (TheBasisType == STANDARD_TYPE(Geom2d_Line))
       {
 
-        // Dans ce cas, le parametrage n`est plus conserve.
-        // Il faut recalculer les parametres de Trimming sur la courbe
-        // resultante. ( Calcul par projection ( ElCLib) des points debut
-        // et fin transformes)
+        // In this case, the parameterization is no longer preserved.
+        // We must recompute the trimming parameters on the resulting
+        // curve (by projecting the transformed start and end points using ElCLib).
 
         occ::handle<Geom2d_Line> L =
           occ::down_cast<Geom2d_Line>(GTransform(C->BasisCurve(), GTrsf));
@@ -769,8 +753,8 @@ occ::handle<Geom2d_Curve> GeomLib::GTransform(const occ::handle<Geom2d_Curve>& C
                || TheBasisType == STANDARD_TYPE(Geom2d_Hyperbola))
       {
 
-        // Dans ces cas, la geometrie de la courbe n`est pas conservee
-        // on la convertir en BSpline avant de lui appliquer la Trsf.
+        // In these cases, the curve geometry is not preserved;
+        // convert it to BSpline before applying the Trsf.
 
         occ::handle<Geom2d_BSplineCurve> BS = Geom2dConvert::CurveToBSplineCurve(C);
         return GTransform(BS, GTrsf);
@@ -778,7 +762,7 @@ occ::handle<Geom2d_Curve> GeomLib::GTransform(const occ::handle<Geom2d_Curve>& C
       else
       {
 
-        // La transformee d`une OffsetCurve vaut ????? Sais pas faire !!
+        // The transform of an OffsetCurve is not supported.
 
         occ::handle<Geom2d_Curve> dummy;
         return dummy;
@@ -790,7 +774,7 @@ occ::handle<Geom2d_Curve> GeomLib::GTransform(const occ::handle<Geom2d_Curve>& C
       occ::handle<Geom2d_Line> L   = occ::down_cast<Geom2d_Line>(Curve->Copy());
       gp_Lin2d                 Lin = L->Lin2d();
       gp_Pnt2d                 P   = Lin.Location();
-      gp_Pnt2d                 PP  = L->Value(10.); // pourquoi pas !!
+      gp_Pnt2d                 PP  = L->Value(10.); // arbitrary point
       P.SetXY(GTrsf.Transformed(P.XY()));
       PP.SetXY(GTrsf.Transformed(PP.XY()));
       L->SetLocation(P);
@@ -801,14 +785,12 @@ occ::handle<Geom2d_Curve> GeomLib::GTransform(const occ::handle<Geom2d_Curve>& C
     else if (TheType == STANDARD_TYPE(Geom2d_BezierCurve))
     {
 
-      // Les GTrsf etant des operation lineaires, la transformee d`une courbe
-      // a poles est la courbe dont les poles sont la transformee des poles
-      // de la courbe de base.
+      // Since GTrsf is a linear operation, the transform of a pole-based curve
+      // is the curve whose poles are the transforms of the base curve's poles.
 
       occ::handle<Geom2d_BezierCurve> C       = occ::down_cast<Geom2d_BezierCurve>(Curve->Copy());
-      int                             NbPoles = C->NbPoles();
-      NCollection_Array1<gp_Pnt2d>    Poles(1, NbPoles);
-      C->Poles(Poles);
+      const int                       NbPoles = C->NbPoles();
+      NCollection_Array1<gp_Pnt2d>    Poles(C->Poles());
       for (int i = 1; i <= NbPoles; i++)
       {
         Poles(i).SetXY(GTrsf.Transformed(Poles(i).XY()));
@@ -819,12 +801,11 @@ occ::handle<Geom2d_Curve> GeomLib::GTransform(const occ::handle<Geom2d_Curve>& C
     else if (TheType == STANDARD_TYPE(Geom2d_BSplineCurve))
     {
 
-      // Voir commentaire pour les Bezier.
+      // See comment for Bezier curves above.
 
       occ::handle<Geom2d_BSplineCurve> C       = occ::down_cast<Geom2d_BSplineCurve>(Curve->Copy());
-      int                              NbPoles = C->NbPoles();
-      NCollection_Array1<gp_Pnt2d>     Poles(1, NbPoles);
-      C->Poles(Poles);
+      const int                        NbPoles = C->NbPoles();
+      NCollection_Array1<gp_Pnt2d>     Poles(C->Poles());
       for (int i = 1; i <= NbPoles; i++)
       {
         Poles(i).SetXY(GTrsf.Transformed(Poles(i).XY()));
@@ -835,8 +816,8 @@ occ::handle<Geom2d_Curve> GeomLib::GTransform(const occ::handle<Geom2d_Curve>& C
     else if (TheType == STANDARD_TYPE(Geom2d_Circle) || TheType == STANDARD_TYPE(Geom2d_Ellipse))
     {
 
-      // Dans ces cas, la geometrie de la courbe n`est pas conservee
-      // on la convertir en BSpline avant de lui appliquer la Trsf.
+      // In these cases, the curve geometry is not preserved;
+      // convert it to BSpline before applying the Trsf.
 
       occ::handle<Geom2d_BSplineCurve> C = Geom2dConvert::CurveToBSplineCurve(Curve);
       return GTransform(C, GTrsf);
@@ -845,7 +826,7 @@ occ::handle<Geom2d_Curve> GeomLib::GTransform(const occ::handle<Geom2d_Curve>& C
              || TheType == STANDARD_TYPE(Geom2d_OffsetCurve))
     {
 
-      // On ne sait pas faire : return a null Handle;
+      // Not supported: return a null Handle;
 
       occ::handle<Geom2d_Curve> dummy;
       return dummy;
@@ -867,7 +848,9 @@ void GeomLib::SameRange(const double                     Tolerance,
                         occ::handle<Geom2d_Curve>&       NewCurvePtr)
 {
   if (CurvePtr.IsNull())
+  {
     throw Standard_Failure();
+  }
   if (std::abs(LastOnCurve - RequestedLast) <= Tolerance
       && std::abs(FirstOnCurve - RequestedFirst) <= Tolerance)
   {
@@ -917,9 +900,9 @@ void GeomLib::SameRange(const double                     Tolerance,
       NewCurvePtr = new Geom2d_TrimmedCurve(NewCurvePtr, RequestedFirst, RequestedLast);
     }
     //
-    //  attention a des problemes de limitation : utiliser le MEME test que dans
-    //  Geom2d_TrimmedCurve::SetTrim car sinon comme on risque de relimite sur
-    //  RequestedFirst et RequestedLast on aura un probleme
+    //  Beware of limitation issues: use the SAME test as in
+    //  Geom2d_TrimmedCurve::SetTrim, otherwise since we may re-trim on
+    //  RequestedFirst and RequestedLast we will have a problem
     //
     //
     else if (std::abs(LastOnCurve - FirstOnCurve) > Precision::PConfusion()
@@ -930,8 +913,7 @@ void GeomLib::SameRange(const double                     Tolerance,
         new Geom2d_TrimmedCurve(CurvePtr, FirstOnCurve, LastOnCurve);
 
       occ::handle<Geom2d_BSplineCurve> BS = Geom2dConvert::CurveToBSplineCurve(TC);
-      NCollection_Array1<double>       Knots(1, BS->NbKnots());
-      BS->Knots(Knots);
+      NCollection_Array1<double>       Knots(BS->Knots());
 
       BSplCLib::Reparametrize(RequestedFirst, RequestedLast, Knots);
 
@@ -978,8 +960,7 @@ void GeomLib::SameRange(const double                     Tolerance,
 
     //
     occ::handle<Geom2d_BSplineCurve> BS = Geom2dConvert::CurveToBSplineCurve(TC);
-    NCollection_Array1<double>       Knots(1, BS->NbKnots());
-    BS->Knots(Knots);
+    NCollection_Array1<double>       Knots(BS->Knots());
 
     BSplCLib::Reparametrize(RequestedFirst, RequestedLast, Knots);
 
@@ -988,10 +969,7 @@ void GeomLib::SameRange(const double                     Tolerance,
   }
 }
 
-//=======================================================================
-// class : GeomLib_CurveOnSurfaceEvaluator
-// purpose: The evaluator for the Curve 3D building
-//=======================================================================
+//=================================================================================================
 
 class GeomLib_CurveOnSurfaceEvaluator : public AdvApprox_EvaluatorFunction
 {
@@ -1029,7 +1007,7 @@ void GeomLib_CurveOnSurfaceEvaluator::Evaluate(int*, /*Dimension*/
 {
   gp_Pnt Point;
 
-  // Gestion des positionnements gauche / droite
+  // Handle left / right positioning
   if ((DebutFin[0] != FirstParam) || (DebutFin[1] != LastParam))
   {
     TrimCurve  = CurveOnSurface.Trim(DebutFin[0], DebutFin[1], Precision::PConfusion());
@@ -1037,27 +1015,33 @@ void GeomLib_CurveOnSurfaceEvaluator::Evaluate(int*, /*Dimension*/
     LastParam  = DebutFin[1];
   }
 
-  // Positionemment
+  // Positioning
   if (*DerivativeRequest == 0)
   {
     TrimCurve->D0((*Parameter), Point);
 
     for (int ii = 0; ii < 3; ii++)
+    {
       Result[ii] = Point.Coord(ii + 1);
+    }
   }
   if (*DerivativeRequest == 1)
   {
     gp_Vec Vector;
     TrimCurve->D1((*Parameter), Point, Vector);
     for (int ii = 0; ii < 3; ii++)
+    {
       Result[ii] = Vector.Coord(ii + 1);
+    }
   }
   if (*DerivativeRequest == 2)
   {
     gp_Vec Vector, VecBis;
     TrimCurve->D2((*Parameter), Point, VecBis, Vector);
     for (int ii = 0; ii < 3; ii++)
+    {
       Result[ii] = Vector.Coord(ii + 1);
+    }
   }
   ReturnCode[0] = 0;
 }
@@ -1138,7 +1122,7 @@ void GeomLib::BuildCurve3d(const double              Tolerance,
   occ::handle<NCollection_HArray1<double>> Tolerance3DPtr = new NCollection_HArray1<double>(1, 1);
   Tolerance3DPtr->SetValue(1, Tolerance);
 
-  // Recherche des discontinuitees
+  // Search for discontinuities
   int                        NbIntervalC2 = Curve.NbIntervals(GeomAbs_C2);
   NCollection_Array1<double> Param_de_decoupeC2(1, NbIntervalC2 + 1);
   Curve.Intervals(Param_de_decoupeC2, GeomAbs_C2);
@@ -1151,7 +1135,7 @@ void GeomLib::BuildCurve3d(const double              Tolerance,
   // To force Trim on first evaluator call
   GeomLib_CurveOnSurfaceEvaluator ev(Curve, FirstParameter - 1., LastParameter + 1.);
 
-  // Approximation avec decoupe preferentiel
+  // Approximation with preferential cutting
   AdvApprox_PrefAndRec      Preferentiel(Param_de_decoupeC2, Param_de_decoupeC3);
   AdvApprox_ApproxAFunction anApproximator(0,
                                            0,
@@ -1173,7 +1157,7 @@ void GeomLib::BuildCurve3d(const double              Tolerance,
     GeomLib_MakeCurvefromApprox aCurveBuilder(anApproximator);
 
     occ::handle<Geom_BSplineCurve> aCurvePtr = aCurveBuilder.Curve(1);
-    // On rend les resultats de l'approx
+    // Return the approximation results
     MaxDeviation     = anApproximator.MaxError(3, 1);
     AverageDeviation = anApproximator.AverageError(3, 1);
     NewCurvePtr      = aCurvePtr;
@@ -1188,7 +1172,7 @@ void GeomLib::AdjustExtremity(occ::handle<Geom_BoundedCurve>& Curve,
                               const gp_Vec&                   T1,
                               const gp_Vec&                   T2)
 {
-  // il faut Convertir l'entree (en preservant si possible le parametrage)
+  // Convert the input (preserving the parameterization if possible)
   occ::handle<Geom_BSplineCurve> aIn, aDef;
   aIn = GeomConvert::CurveToBSplineCurve(Curve, Convert_QuasiAngular);
 
@@ -1210,7 +1194,7 @@ void GeomLib::AdjustExtremity(occ::handle<Geom_BoundedCurve>& Curve,
     FK(ii) = aIn->LastParameter();
   }
 
-  // Calculs des contraintes de deformations
+  // Calculation of deformation constraints
   aIn->D1(Ti(1), P, V);
   PolesDef(1).ChangeCoord() = P1.XYZ() - P.XYZ();
   Vtan                      = T1;
@@ -1225,10 +1209,12 @@ void GeomLib::AdjustExtremity(occ::handle<Geom_BoundedCurve>& Curve,
   DV                        = Vtan * (Vtan * V) - V;
   PolesDef(4).ChangeCoord() = (Ti(4) - Ti(1)) * DV.XYZ();
 
-  // Interpolation des contraintes
+  // Interpolation of constraints
   math_Matrix Mat(1, 4, 1, 4);
   if (!PLib::HermiteCoefficients(0., 1., 1, 1, Mat))
+  {
     throw Standard_ConstructionError();
+  }
 
   for (jj = 1; jj <= 4; jj++)
   {
@@ -1242,7 +1228,7 @@ void GeomLib::AdjustExtremity(occ::handle<Geom_BoundedCurve>& Curve,
 
   PLib::CoefficientsPoles(Coeffs, PLib::NoWeights(), PolesDef, PLib::NoWeights());
 
-  // Ajout de la deformation
+  // Add the deformation
   NCollection_Array1<double> K(1, 2);
   NCollection_Array1<int>    M(1, 2);
   K(1) = Ti(1);
@@ -1251,9 +1237,13 @@ void GeomLib::AdjustExtremity(occ::handle<Geom_BoundedCurve>& Curve,
 
   aDef = new (Geom_BSplineCurve)(PolesDef, K, M, 3);
   if (aIn->Degree() < 3)
+  {
     aIn->IncreaseDegree(3);
+  }
   else
+  {
     aDef->IncreaseDegree(aIn->Degree());
+  }
 
   for (ii = 2; ii < aIn->NbKnots(); ii++)
   {
@@ -1261,7 +1251,9 @@ void GeomLib::AdjustExtremity(occ::handle<Geom_BoundedCurve>& Curve,
   }
 
   if (aDef->NbPoles() != aIn->NbPoles())
+  {
     throw Standard_ConstructionError("Inconsistent poles's number");
+  }
 
   for (ii = 1; ii <= aDef->NbPoles(); ii++)
   {
@@ -1280,7 +1272,9 @@ void GeomLib::ExtendCurveToPoint(occ::handle<Geom_BoundedCurve>& Curve,
                                  const bool                      After)
 {
   if (Continuity < 1 || Continuity > 3)
+  {
     return;
+  }
   int         size = Continuity + 2;
   double      Ubord, Tol = 1.e-6;
   math_Matrix MatCoefs(1, size, 1, size);
@@ -1288,10 +1282,10 @@ void GeomLib::ExtendCurveToPoint(occ::handle<Geom_BoundedCurve>& Curve,
   int         ii, jj;
   gp_Vec      d1, d2, d3;
   gp_Pnt      p0;
-  // il faut Convertir l'entree (en preservant si possible le parametrage)
+  // Convert the input (preserving the parameterization if possible)
   GeomConvert_CompCurveToBSplineCurve Concat(Curve, Convert_QuasiAngular);
 
-  // Les contraintes de constructions
+  // Construction constraints
   NCollection_Array1<gp_XYZ> Cont(1, size);
   if (After)
   {
@@ -1302,14 +1296,14 @@ void GeomLib::ExtendCurveToPoint(occ::handle<Geom_BoundedCurve>& Curve,
     Ubord = Curve->FirstParameter();
   }
   PLib::HermiteCoefficients(0,
-                            1, // Les Bornes
+                            1, // The Bounds
                             Continuity,
-                            0, // Les Ordres de contraintes
+                            0, // The constraint orders
                             MatCoefs);
 
   Curve->D3(Ubord, p0, d1, d2, d3);
   if (!After)
-  { // Inversion du parametrage
+  { // Invert the parameterization
     d1 *= -1;
     d3 *= -1;
   }
@@ -1335,7 +1329,7 @@ void GeomLib::ExtendCurveToPoint(occ::handle<Geom_BoundedCurve>& Curve,
     norm /= 9;
     dt = d1.Magnitude() / norm;
     if ((dt < 1.5) && (dt > 0.75))
-    { // Le bord est dans la moyenne on le garde
+    { // The edge is within the average, keep it
       Lambda = ((double)1) / std::max(d1.Magnitude() / L1, Tol);
     }
     else
@@ -1345,10 +1339,10 @@ void GeomLib::ExtendCurveToPoint(occ::handle<Geom_BoundedCurve>& Curve,
   }
   else
   {
-    return; // Pas d'extension
+    return; // No extension
   }
 
-  // Optimisation du Lambda
+  // Optimization of Lambda
   math_Matrix Cons(1, 3, 1, size);
   Cons(1, 1)    = p0.X();
   Cons(2, 1)    = p0.Y();
@@ -1373,13 +1367,17 @@ void GeomLib::ExtendCurveToPoint(occ::handle<Geom_BoundedCurve>& Curve,
   }
   ComputeLambda(Cons, MatCoefs, L1, Lambda);
 
-  // Construction dans la Base Polynomiale
+  // Construction in the Polynomial Basis
   Cont(1) = p0.XYZ();
   Cont(2) = d1.XYZ() * Lambda;
   if (Continuity >= 2)
+  {
     Cont(3) = d2.XYZ() * std::pow(Lambda, 2);
+  }
   if (Continuity >= 3)
+  {
     Cont(4) = d3.XYZ() * std::pow(Lambda, 3);
+  }
   Cont(size) = Point.XYZ();
 
   NCollection_Array1<gp_Pnt> ExtrapPoles(1, size);
@@ -1395,7 +1393,7 @@ void GeomLib::ExtendCurveToPoint(occ::handle<Geom_BoundedCurve>& Curve,
     }
   }
 
-  // Convertion Dans la Base de Bernstein
+  // Conversion to the Bernstein Basis
   PLib::CoefficientsPoles(ExtraCoeffs, PLib::NoWeights(), ExtrapPoles, PLib::NoWeights());
 
   occ::handle<Geom_BezierCurve> Bezier = new (Geom_BezierCurve)(ExtrapPoles);
@@ -1407,15 +1405,14 @@ void GeomLib::ExtendCurveToPoint(occ::handle<Geom_BoundedCurve>& Curve,
   // Concatenation
   Ok = Concat.Add(Bezier, Tol, After);
   if (!Ok)
+  {
     throw Standard_ConstructionError("ExtendCurveToPoint");
+  }
 
   Curve = Concat.BSplineCurve();
 }
 
-//=======================================================================
-// function : ExtendKPart
-// purpose  : Extension par longueur des surfaces cannonique
-//=======================================================================
+//=================================================================================================
 static bool ExtendKPart(occ::handle<Geom_RectangularTrimmedSurface>& Surface,
                         const double                                 Length,
                         const bool                                   InU,
@@ -1423,7 +1420,9 @@ static bool ExtendKPart(occ::handle<Geom_RectangularTrimmedSurface>& Surface,
 {
 
   if (Surface.IsNull())
+  {
     return false;
+  }
 
   bool                      Ok = true;
   double                    Uf, Ul, Vf, Vl;
@@ -1440,9 +1439,13 @@ static bool ExtendKPart(occ::handle<Geom_RectangularTrimmedSurface>& Surface,
     {
       case GeomAbs_Plane: {
         if (After)
+        {
           Ul += Length;
+        }
         else
+        {
           Uf -= Length;
+        }
         Surface = new (Geom_RectangularTrimmedSurface)(Support, Uf, Ul, Vf, Vl);
         break;
       }
@@ -1459,9 +1462,13 @@ static bool ExtendKPart(occ::handle<Geom_RectangularTrimmedSurface>& Surface,
       case GeomAbs_Cylinder:
       case GeomAbs_SurfaceOfExtrusion: {
         if (After)
+        {
           Vl += Length;
+        }
         else
+        {
           Vf -= Length;
+        }
         Surface = new (Geom_RectangularTrimmedSurface)(Support, Uf, Ul, Vf, Vl);
         break;
       }
@@ -1482,7 +1489,9 @@ void GeomLib::ExtendSurfByLength(occ::handle<Geom_BoundedSurface>& Surface,
                                  const bool                        After)
 {
   if (Continuity < 0 || Continuity > 3)
+  {
     return;
+  }
   int Cont = Continuity;
 
   // Kpart ?
@@ -1494,7 +1503,7 @@ void GeomLib::ExtendSurfByLength(occ::handle<Geom_BoundedSurface>& Surface,
     return;
   }
 
-  //  format BSplineSurface avec un degre suffisant pour la continuite voulue
+  //  BSplineSurface format with a degree sufficient for the desired continuity
   occ::handle<Geom_BSplineSurface> BS = occ::down_cast<Geom_BSplineSurface>(Surface);
   if (BS.IsNull())
   {
@@ -1507,14 +1516,22 @@ void GeomLib::ExtendSurfByLength(occ::handle<Geom_BoundedSurface>& Surface,
     const occ::handle<Geom_Surface>& aSurf   = Surface; // to resolve ambiguity
     GeomConvert_ApproxSurface        theApprox(aSurf, Tol, UCont, VCont, degU, degV, nmax, thePrec);
     if (theApprox.HasResult())
+    {
       BS = theApprox.Surface();
+    }
     else
+    {
       BS = GeomConvert::SurfaceToBSplineSurface(Surface);
+    }
   }
   if (InU && (BS->UDegree() < Continuity + 1))
+  {
     BS->IncreaseDegree(Continuity + 1, BS->VDegree());
+  }
   if (!InU && (BS->VDegree() < Continuity + 1))
+  {
     BS->IncreaseDegree(BS->UDegree(), Continuity + 1);
+  }
 
   // if BS was periodic in the extension direction, it will no longer be
   if ((InU && (BS->IsUPeriodic())) || (!InU && (BS->IsVPeriodic())))
@@ -1531,7 +1548,9 @@ void GeomLib::ExtendSurfByLength(occ::handle<Geom_BoundedSurface>& Surface,
   constexpr double EpsW     = 10 * Precision::PConfusion();
   int              gap      = 3;
   if (rational)
+  {
     gap++;
+  }
 
   int                                      Cdeg = 0, Cdim = 0, NbP = 0, Ksize = 0, Psize = 1;
   int                                      ii, jj, ipole, Kount;
@@ -1542,11 +1561,11 @@ void GeomLib::ExtendSurfByLength(occ::handle<Geom_BoundedSurface>& Surface,
 
   for (Kount = 0, Ok = false; Kount <= 2 && !Ok; Kount++)
   {
-    //  transformation de la surface en une BSpline non rationnelle a une variable
-    //  de degre UDegree ou VDegree et de dimension 3 ou 4 x NbVpoles ou NbUpoles
-    //  le nombre de poles egal a NbUpoles ou NbVpoles
-    //  ATTENTION : dans le cas rationnel, un point de coordonnees (x,y,z)
-    //              et de poids w devient un point de coordonnees (wx, wy, wz, w )
+    //  Transform the surface into a non-rational BSpline in one variable
+    //  of degree UDegree or VDegree and dimension 3 or 4 x NbVpoles or NbUpoles
+    //  the number of poles equals NbUpoles or NbVpoles
+    //  WARNING: in the rational case, a point with coordinates (x,y,z)
+    //           and weight w becomes a point with coordinates (wx, wy, wz, w)
 
     if (InU)
     {
@@ -1562,18 +1581,25 @@ void GeomLib::ExtendSurfByLength(occ::handle<Geom_BoundedSurface>& Surface,
     }
 
     //  the flat knots
-    Ksize  = NbP + Cdeg + 1;
-    FKnots = new (NCollection_HArray1<double>)(1, Ksize);
+    Ksize = NbP + Cdeg + 1;
     if (InU)
-      BS->UKnotSequence(FKnots->ChangeArray1());
+    {
+      FKnots = new NCollection_HArray1<double>(BS->UKnotSequence());
+    }
     else
-      BS->VKnotSequence(FKnots->ChangeArray1());
+    {
+      FKnots = new NCollection_HArray1<double>(BS->VKnotSequence());
+    }
 
     //  the parameter of the connection knot
     if (After)
+    {
       Tbord = FKnots->Value(FKnots->Upper() - Cdeg);
+    }
     else
+    {
       Tbord = FKnots->Value(FKnots->Lower() + Cdeg);
+    }
 
     //  the poles
     Psize = Cdim * NbP;
@@ -1589,7 +1615,9 @@ void GeomLib::ExtendSurfByLength(occ::handle<Geom_BoundedSurface>& Surface,
           Poles->SetValue(ipole + 1, BS->Pole(ii, jj).Y());
           Poles->SetValue(ipole + 2, BS->Pole(ii, jj).Z());
           if (rational)
+          {
             Poles->SetValue(ipole + 3, BS->Weight(ii, jj));
+          }
           ipole += gap;
         }
       }
@@ -1604,7 +1632,9 @@ void GeomLib::ExtendSurfByLength(occ::handle<Geom_BoundedSurface>& Surface,
           Poles->SetValue(ipole + 1, BS->Pole(ii, jj).Y());
           Poles->SetValue(ipole + 2, BS->Pole(ii, jj).Z());
           if (rational)
+          {
             Poles->SetValue(ipole + 3, BS->Weight(ii, jj));
+          }
           ipole += gap;
         }
       }
@@ -1714,9 +1744,13 @@ void GeomLib::ExtendSurfByLength(occ::handle<Geom_BoundedSurface>& Surface,
       // We increase the degree of the border iso to bring the poles of the surface closer
       // And we retry
       if (InU)
+      {
         BS->IncreaseDegree(BS->UDegree(), BS->VDegree() + 2);
+      }
       else
+      {
         BS->IncreaseDegree(BS->UDegree() + 2, BS->VDegree());
+      }
     }
   }
 
@@ -1783,7 +1817,7 @@ void GeomLib::ExtendSurfByLength(occ::handle<Geom_BoundedSurface>& Surface,
                                      *FKRadr,
                                      *PRadr);
 
-    //  recopie des poles du resultat sous forme de points 3D et de poids
+    //  Copy the result poles as 3D points and weights
     int NU, NV, indice;
     if (InU)
     {
@@ -1802,7 +1836,9 @@ void GeomLib::ExtendSurfByLength(occ::handle<Geom_BoundedSurface>& Surface,
     NCollection_Array2<double>& NewW = NewWeights->ChangeArray2();
 
     if (!rational)
+    {
       NewW.Init(1.);
+    }
     bool NullWeight = false;
 
     if (InU)
@@ -1819,7 +1855,9 @@ void GeomLib::ExtendSurfByLength(occ::handle<Geom_BoundedSurface>& Surface,
           {
             ww = PRes(indice + 3);
             if (std::abs(ww - 1.0) < EpsW)
+            {
               ww = 1.0;
+            }
             if (ww < EpsW)
             {
               NullWeight = true;
@@ -1847,7 +1885,9 @@ void GeomLib::ExtendSurfByLength(occ::handle<Geom_BoundedSurface>& Surface,
           {
             ww = PRes(indice + 3);
             if (std::abs(ww - 1.0) < EpsW)
+            {
               ww = 1.0;
+            }
             if (ww < EpsW)
             {
               NullWeight = true;
@@ -1875,13 +1915,17 @@ void GeomLib::ExtendSurfByLength(occ::handle<Geom_BoundedSurface>& Surface,
     }
   }
 
-  // recopie des noeuds plats sous forme de noeuds avec leurs multiplicites
-  // calcul des degres du resultat
+  // Copy flat knots as knots with their multiplicities.
+  // Compute the degrees of the result.
   int Usize = BS->NbUKnots(), Vsize = BS->NbVKnots(), UDeg, VDeg;
   if (InU)
+  {
     Usize++;
+  }
   else
+  {
     Vsize++;
+  }
   NCollection_Array1<double> UKnots(1, Usize);
   NCollection_Array1<double> VKnots(1, Vsize);
   NCollection_Array1<int>    UMults(1, Usize);
@@ -1889,7 +1933,9 @@ void GeomLib::ExtendSurfByLength(occ::handle<Geom_BoundedSurface>& Surface,
   NCollection_Array1<double> FKRes(1, NbKnots);
 
   for (ii = 1; ii <= NbKnots; ii++)
+  {
     FKRes(ii) = FK(ii);
+  }
 
   if (InU)
   {
@@ -1897,21 +1943,21 @@ void GeomLib::ExtendSurfByLength(occ::handle<Geom_BoundedSurface>& Surface,
     UDeg          = Cdeg;
     UMults(Usize) = UDeg + 1; // Petite verrue utile quand la continuite
                               // n'est pas ok.
-    BS->VKnots(VKnots);
-    BS->VMultiplicities(VMults);
-    VDeg = BS->VDegree();
+    VKnots = BS->VKnots();
+    VMults = BS->VMultiplicities();
+    VDeg   = BS->VDegree();
   }
   else
   {
     BSplCLib::Knots(FKRes, VKnots, VMults);
     VDeg          = Cdeg;
     VMults(Vsize) = VDeg + 1;
-    BS->UKnots(UKnots);
-    BS->UMultiplicities(UMults);
-    UDeg = BS->UDegree();
+    UKnots        = BS->UKnots();
+    UMults        = BS->UMultiplicities();
+    UDeg          = BS->UDegree();
   }
 
-  //  construction de la surface BSpline resultat
+  //  Construct the resulting BSpline surface
   occ::handle<Geom_BSplineSurface> Res = new (Geom_BSplineSurface)(NewPoles->Array2(),
                                                                    NewWeights->Array2(),
                                                                    UKnots,
@@ -1941,7 +1987,9 @@ void GeomLib::Inertia(const NCollection_Array1<gp_Pnt>& Points,
   int i, nb = Points.Length();
   GB.SetCoord(0., 0., 0.);
   for (i = 1; i <= nb; i++)
+  {
     GB += Points(i).XYZ();
+  }
 
   GB /= nb;
 
@@ -2072,12 +2120,7 @@ void GeomLib::AxeOfInertia(const NCollection_Array1<gp_Pnt>& Points,
   Axe = TheAxe;
 }
 
-//=======================================================================
-// function : CanBeTreated
-// purpose  : indicates if the surface can be treated(if the conditions are
-//           filled) and need to be treated(if the surface hasn't been yet
-//           treated or if the surface is rational and non periodic)
-//=======================================================================
+//=================================================================================================
 
 static bool CanBeTreated(occ::handle<Geom_BSplineSurface>& BSurf)
 
@@ -2087,18 +2130,23 @@ static bool CanBeTreated(occ::handle<Geom_BSplineSurface>& BSurf)
   bool   AlreadyTreated = true;
 
   if (!BSurf->IsURational() || (BSurf->IsUPeriodic()))
+  {
     return false;
+  }
   else
   {
     lambda = (BSurf->Weight(1, 1) / BSurf->Weight(BSurf->NbUPoles(), 1));
     // clang-format off
-   for (i=1;i<=BSurf->NbVPoles();i++)      //test of the proportionnality of the denominator on the boundaries
+   for (i=1;i<=BSurf->NbVPoles();i++) {      //test of the proportionnality of the denominator on the boundaries
       // clang-format on
       if ((BSurf->Weight(1, i) / (lambda * BSurf->Weight(BSurf->NbUPoles(), i))
            < (1 - Precision::Confusion()))
           || (BSurf->Weight(1, i) / (lambda * BSurf->Weight(BSurf->NbUPoles(), i))
               > (1 + Precision::Confusion())))
+      {
         return false;
+      }
+    }
     i = 1;
     while ((AlreadyTreated) && (i <= BSurf->NbVPoles()))
     { // tests if the surface has already been treated
@@ -2108,19 +2156,20 @@ static bool CanBeTreated(occ::handle<Geom_BSplineSurface>& BSurf)
               < (1 - Precision::Confusion()))
           || ((BSurf->Weight(BSurf->NbUPoles() - 1, i) / (BSurf->Weight(BSurf->NbUPoles(), i)))
               > (1 + Precision::Confusion())))
+      {
         AlreadyTreated = false;
+      }
       i++;
     }
     if (AlreadyTreated)
+    {
       return false;
+    }
   }
   return true;
 }
 
-//=======================================================================
-// class   : law_evaluator
-// purpose : useful to estimate the value of a function of 2 variables
-//=======================================================================
+//=================================================================================================
 
 class law_evaluator : public BSplSLib_EvaluatorFunction
 {
@@ -2152,27 +2201,24 @@ private:
   GeomLib_DenominatorMultiplierPtr myDenominator;
 };
 
-//=======================================================================
-// function : CheckIfKnotExists
-// purpose  : true if the knot already exists in the knot sequence
-//=======================================================================
+//=================================================================================================
 
 static bool CheckIfKnotExists(const NCollection_Array1<double>& surface_knots, const double knot)
 
 {
   int i;
   for (i = 1; i <= surface_knots.Length(); i++)
+  {
     if ((surface_knots(i) - Precision::Confusion() <= knot)
         && (surface_knots(i) + Precision::Confusion() >= knot))
+    {
       return true;
+    }
+  }
   return false;
 }
 
-//=======================================================================
-// function : AddAKnot
-// purpose  : add a knot and its multiplicity to the knot sequence. This knot
-//           will be C2 and the degree is increased of deltasurface_degree
-//=======================================================================
+//=================================================================================================
 
 static void AddAKnot(const NCollection_Array1<double>&         knots,
                      const NCollection_Array1<int>&            mults,
@@ -2205,10 +2251,7 @@ static void AddAKnot(const NCollection_Array1<double>&         knots,
   }
 }
 
-//=======================================================================
-// function : Sort
-// purpose  : give the new flat knots(u or v) of the surface
-//=======================================================================
+//=================================================================================================
 
 static void BuildFlatKnot(const NCollection_Array1<double>&         surface_knots,
                           const NCollection_Array1<int>&            surface_mults,
@@ -2235,6 +2278,7 @@ static void BuildFlatKnot(const NCollection_Array1<double>&         surface_knot
   else
   {
     if ((CheckIfKnotExists(surface_knots, knotmin)) && (!CheckIfKnotExists(surface_knots, knotmax)))
+    {
       AddAKnot(surface_knots,
                surface_mults,
                knotmax,
@@ -2242,10 +2286,12 @@ static void BuildFlatKnot(const NCollection_Array1<double>&         surface_knot
                finalsurface_degree,
                ResultKnots,
                ResultMults);
+    }
     else
     {
       if ((!CheckIfKnotExists(surface_knots, knotmin))
           && (CheckIfKnotExists(surface_knots, knotmax)))
+      {
         AddAKnot(surface_knots,
                  surface_mults,
                  knotmin,
@@ -2253,6 +2299,7 @@ static void BuildFlatKnot(const NCollection_Array1<double>&         surface_knot
                  finalsurface_degree,
                  ResultKnots,
                  ResultMults);
+      }
       else
       {
         if ((!CheckIfKnotExists(surface_knots, knotmin))
@@ -2290,33 +2337,22 @@ static void BuildFlatKnot(const NCollection_Array1<double>&         surface_knot
   }
 }
 
-//=======================================================================
-// function : FunctionMultiply
-// purpose  : multiply the surface BSurf by a(u,v) (law_evaluator) on its
-//           numerator and denominator
-//=======================================================================
+//=================================================================================================
 
 static void FunctionMultiply(occ::handle<Geom_BSplineSurface>& BSurf,
                              const double                      knotmin,
                              const double                      knotmax)
 
 {
-  NCollection_Array1<double> surface_u_knots(1, BSurf->NbUKnots());
-  NCollection_Array1<int>    surface_u_mults(1, BSurf->NbUKnots());
-  NCollection_Array1<double> surface_v_knots(1, BSurf->NbVKnots());
-  NCollection_Array1<int>    surface_v_mults(1, BSurf->NbVKnots());
-  NCollection_Array2<gp_Pnt> surface_poles(1, BSurf->NbUPoles(), 1, BSurf->NbVPoles());
-  NCollection_Array2<double> surface_weights(1, BSurf->NbUPoles(), 1, BSurf->NbVPoles());
-  int                        i, j, k, status, new_num_u_poles, new_num_v_poles, length = 0;
+  const NCollection_Array1<double>& surface_u_knots = BSurf->UKnots();
+  const NCollection_Array1<int>&    surface_u_mults = BSurf->UMultiplicities();
+  const NCollection_Array1<double>& surface_v_knots = BSurf->VKnots();
+  const NCollection_Array1<int>&    surface_v_mults = BSurf->VMultiplicities();
+  const NCollection_Array2<gp_Pnt>& surface_poles   = BSurf->Poles();
+  const NCollection_Array2<double>* surface_weights = BSurf->Weights();
+  int                               i, j, k, status, new_num_u_poles, new_num_v_poles, length = 0;
   occ::handle<NCollection_HArray1<double>> newuknots, newvknots;
   occ::handle<NCollection_HArray1<int>>    newumults, newvmults;
-
-  BSurf->UKnots(surface_u_knots);
-  BSurf->UMultiplicities(surface_u_mults);
-  BSurf->VKnots(surface_v_knots);
-  BSurf->VMultiplicities(surface_v_mults);
-  BSurf->Poles(surface_poles);
-  BSurf->Weights(surface_weights);
 
   NCollection_Array1<double>               Knots(1, 2);
   NCollection_Array1<int>                  Mults(1, 2);
@@ -2330,7 +2366,9 @@ static void FunctionMultiply(occ::handle<Geom_BSplineSurface>& BSurf,
   BuildFlatKnot(Knots, Mults, 0, 3, knotmin, knotmax, NewKnots, NewMults);
 
   for (i = 1; i <= NewMults->Length(); i++)
+  {
     length += NewMults->Value(i);
+  }
   NCollection_Array1<double> FlatKnots(1, length);
   BSplCLib::KnotSequence(NewKnots->ChangeArray1(), NewMults->ChangeArray1(), FlatKnots);
 
@@ -2354,12 +2392,16 @@ static void FunctionMultiply(occ::handle<Geom_BSplineSurface>& BSurf,
                 newvmults);
   length = 0;
   for (i = 1; i <= newumults->Length(); i++)
+  {
     length += newumults->Value(i);
+  }
   new_num_u_poles = (length - BSurf->UDegree() - 3 - 1);
   NCollection_Array1<double> newuflatknots(1, length);
   length = 0;
   for (i = 1; i <= newvmults->Length(); i++)
+  {
     length += newvmults->Value(i);
+  }
   new_num_v_poles = (length - 2 * BSurf->VDegree() - 1);
   NCollection_Array1<double> newvflatknots(1, length);
 
@@ -2368,7 +2410,7 @@ static void FunctionMultiply(occ::handle<Geom_BSplineSurface>& BSurf,
 
   BSplCLib::KnotSequence(newuknots->ChangeArray1(), newumults->ChangeArray1(), newuflatknots);
   BSplCLib::KnotSequence(newvknots->ChangeArray1(), newvmults->ChangeArray1(), newvflatknots);
-  // POP pour WNT
+  // POP for WNT
   law_evaluator ev(&aDenominator);
   // BSplSLib::FunctionMultiply(law_evaluator,               //multiplication
   BSplSLib::FunctionMultiply(ev, // multiplication
@@ -2379,7 +2421,7 @@ static void FunctionMultiply(occ::handle<Geom_BSplineSurface>& BSurf,
                              &surface_u_mults,
                              &surface_v_mults,
                              surface_poles,
-                             &surface_weights,
+                             surface_weights,
                              newuflatknots,
                              newvflatknots,
                              BSurf->UDegree() + 3,
@@ -2388,7 +2430,9 @@ static void FunctionMultiply(occ::handle<Geom_BSplineSurface>& BSurf,
                              NewDenominator,
                              status);
   if (status != 0)
+  {
     throw Standard_ConstructionError("GeomLib Multiplication Error");
+  }
   for (i = 1; i <= new_num_u_poles; i++)
   {
     for (j = 1; j <= new_num_v_poles; j++)
@@ -2409,31 +2453,27 @@ static void FunctionMultiply(occ::handle<Geom_BSplineSurface>& BSurf,
                                   2 * (BSurf->VDegree()));
 }
 
-//=======================================================================
-// function : CancelDenominatorDerivative1D
-// purpose  : cancel the denominator derivative in one direction
-//=======================================================================
+//=================================================================================================
 
 static void CancelDenominatorDerivative1D(occ::handle<Geom_BSplineSurface>& BSurf)
 
 {
-  int                        i, j;
-  double                     uknotmin = 1.0, uknotmax = 0.0, x, y, startu_value, endu_value;
-  NCollection_Array1<double> BSurf_u_knots(1, BSurf->NbUKnots());
+  int    i, j;
+  double uknotmin = 1.0, uknotmax = 0.0, x, y, startu_value, endu_value;
 
   startu_value = BSurf->UKnot(1);
   endu_value   = BSurf->UKnot(BSurf->NbUKnots());
-  BSurf->UKnots(BSurf_u_knots);
+  NCollection_Array1<double> BSurf_u_knots(BSurf->UKnots());
   BSplCLib::Reparametrize(0.0, 1.0, BSurf_u_knots);
   BSurf->SetUKnots(BSurf_u_knots); // reparametrisation of the surface
   occ::handle<Geom_BSplineCurve> BCurve;
   NCollection_Array1<double>     BCurveWeights(1, BSurf->NbUPoles());
   NCollection_Array1<gp_Pnt>     BCurvePoles(1, BSurf->NbUPoles());
-  NCollection_Array1<double>     BCurveKnots(1, BSurf->NbUKnots());
-  NCollection_Array1<int>        BCurveMults(1, BSurf->NbUKnots());
 
   if (CanBeTreated(BSurf))
   {
+    const NCollection_Array1<double>& BCurveKnots = BSurf->UKnots();
+    const NCollection_Array1<int>&    BCurveMults = BSurf->UMultiplicities();
     for (i = 1; i <= BSurf->NbVPoles(); i++)
     { // loop on each pole function
       x = 1.0;
@@ -2443,8 +2483,6 @@ static void CancelDenominatorDerivative1D(occ::handle<Geom_BSplineSurface>& BSur
         BCurveWeights(j) = BSurf->Weight(j, i);
         BCurvePoles(j)   = BSurf->Pole(j, i);
       }
-      BSurf->UKnots(BCurveKnots);
-      BSurf->UMultiplicities(BCurveMults);
       BCurve = new Geom_BSplineCurve(BCurvePoles, // building of a pole function
                                      BCurveWeights,
                                      BCurveKnots,
@@ -2452,18 +2490,26 @@ static void CancelDenominatorDerivative1D(occ::handle<Geom_BSplineSurface>& BSur
                                      BSurf->UDegree());
       Hermit::Solutionbis(BCurve, x, y, Precision::Confusion(), Precision::Confusion());
       if (x < uknotmin)
+      {
         uknotmin = x; // uknotmin,uknotmax:extremal knots
+      }
       if ((x != 1.0) && (x > uknotmax))
+      {
         uknotmax = x;
+      }
       if ((y != 0.0) && (y < uknotmin))
+      {
         uknotmin = y;
+      }
       if (y > uknotmax)
+      {
         uknotmax = y;
+      }
     }
 
     FunctionMultiply(BSurf, uknotmin, uknotmax); // multiplication
 
-    BSurf->UKnots(BSurf_u_knots);
+    BSurf_u_knots = BSurf->UKnots();
     BSplCLib::Reparametrize(startu_value, endu_value, BSurf_u_knots);
     BSurf->SetUKnots(BSurf_u_knots);
   }
@@ -2477,7 +2523,9 @@ void GeomLib::CancelDenominatorDerivative(occ::handle<Geom_BSplineSurface>& BSur
 
 {
   if (udirection && !vdirection)
+  {
     CancelDenominatorDerivative1D(BSurf);
+  }
   else
   {
     if (!udirection && vdirection)
@@ -2675,7 +2723,9 @@ void GeomLib::IsClosed(const occ::handle<Geom_Surface>& S,
       [[fallthrough]];
     case GeomAbs_Cylinder: {
       if (Precision::IsInfinite(v1))
+      {
         v1 = 0.;
+      }
       gp_Pnt p1 = aGAS.Value(u1, v1);
       gp_Pnt p2 = aGAS.Value(u2, v1);
       isUClosed = p1.SquareDistance(p2) <= Tol2;
@@ -2827,7 +2877,9 @@ bool GeomLib::IsBSplUClosed(const occ::handle<Geom_BSplineSurface>& S,
   occ::handle<Geom_Curve> aCUF = S->UIso(U1);
   occ::handle<Geom_Curve> aCUL = S->UIso(U2);
   if (aCUF.IsNull() || aCUL.IsNull())
+  {
     return false;
+  }
   double                            Tol2 = 2. * Tol;
   occ::handle<Geom_BSplineCurve>    aBsF = occ::down_cast<Geom_BSplineCurve>(aCUF);
   occ::handle<Geom_BSplineCurve>    aBsL = occ::down_cast<Geom_BSplineCurve>(aCUL);
@@ -2848,7 +2900,9 @@ bool GeomLib::IsBSplVClosed(const occ::handle<Geom_BSplineSurface>& S,
   occ::handle<Geom_Curve> aCVF = S->VIso(V1);
   occ::handle<Geom_Curve> aCVL = S->VIso(V2);
   if (aCVF.IsNull() || aCVL.IsNull())
+  {
     return false;
+  }
   double                            Tol2 = 2. * Tol;
   occ::handle<Geom_BSplineCurve>    aBsF = occ::down_cast<Geom_BSplineCurve>(aCVF);
   occ::handle<Geom_BSplineCurve>    aBsL = occ::down_cast<Geom_BSplineCurve>(aCVL);
@@ -2869,7 +2923,9 @@ bool GeomLib::IsBzUClosed(const occ::handle<Geom_BezierSurface>& S,
   occ::handle<Geom_Curve> aCUF = S->UIso(U1);
   occ::handle<Geom_Curve> aCUL = S->UIso(U2);
   if (aCUF.IsNull() || aCUL.IsNull())
+  {
     return false;
+  }
   double                            Tol2 = 2. * Tol;
   occ::handle<Geom_BezierCurve>     aBzF = occ::down_cast<Geom_BezierCurve>(aCUF);
   occ::handle<Geom_BezierCurve>     aBzL = occ::down_cast<Geom_BezierCurve>(aCUL);
@@ -2889,7 +2945,9 @@ bool GeomLib::IsBzVClosed(const occ::handle<Geom_BezierSurface>& S,
   occ::handle<Geom_Curve> aCVF = S->VIso(V1);
   occ::handle<Geom_Curve> aCVL = S->VIso(V2);
   if (aCVF.IsNull() || aCVL.IsNull())
+  {
     return false;
+  }
   double                            Tol2 = 2. * Tol;
   occ::handle<Geom_BezierCurve>     aBzF = occ::down_cast<Geom_BezierCurve>(aCVF);
   occ::handle<Geom_BezierCurve>     aBzL = occ::down_cast<Geom_BezierCurve>(aCVL);
@@ -2899,13 +2957,7 @@ bool GeomLib::IsBzVClosed(const occ::handle<Geom_BezierSurface>& S,
   return CompareWeightPoles(aPF, nullptr, aPL, nullptr, Tol2);
 }
 
-//=======================================================================
-// function : CompareWeightPoles
-// purpose  : Checks if thePoles1(i)*theW1(i) is equal to thePoles2(i)*theW2(i)
-//            with tolerance theTol.
-//           It is necessary for non-rational B-splines and Bezier curves
-//            to set theW1 and theW2 addresses to zero.
-//=======================================================================
+//=================================================================================================
 static bool CompareWeightPoles(const NCollection_Array1<gp_Pnt>&       thePoles1,
                                const NCollection_Array1<double>* const theW1,
                                const NCollection_Array1<gp_Pnt>&       thePoles2,
@@ -2926,7 +2978,9 @@ static bool CompareWeightPoles(const NCollection_Array1<gp_Pnt>&       thePoles1
     gp_XYZ aPole1 = thePoles1.Value(i).XYZ() * aW1;
     gp_XYZ aPole2 = thePoles2.Value(i).XYZ() * aW2;
     if (!aPole1.IsEqual(aPole2, theTol))
+    {
       return false;
+    }
   }
   //
   return true;
@@ -2957,14 +3011,18 @@ bool GeomLib::isIsoLine(const occ::handle<Adaptor2d_Curve2d>& theC2D,
   {
     occ::handle<Geom2d_BSplineCurve> aBSpline2d = theC2D->BSpline();
     if (aBSpline2d->Degree() != 1 || aBSpline2d->NbPoles() != 2)
+    {
       return false; // Not a line or uneven parameterization.
+    }
 
     aLoc2d = aBSpline2d->Pole(1);
 
     // Vector should be non-degenerated.
     gp_Vec2d aVec2d(aBSpline2d->Pole(1), aBSpline2d->Pole(2));
     if (aVec2d.SquareMagnitude() < Precision::Confusion())
+    {
       return false; // Degenerated spline.
+    }
     aDir2d = aVec2d;
 
     isAppropriateType = true;
@@ -2973,21 +3031,27 @@ bool GeomLib::isIsoLine(const occ::handle<Adaptor2d_Curve2d>& theC2D,
   {
     occ::handle<Geom2d_BezierCurve> aBezier2d = theC2D->Bezier();
     if (aBezier2d->Degree() != 1 || aBezier2d->NbPoles() != 2)
+    {
       return false; // Not a line or uneven parameterization.
+    }
 
     aLoc2d = aBezier2d->Pole(1);
 
     // Vector should be non-degenerated.
     gp_Vec2d aVec2d(aBezier2d->Pole(1), aBezier2d->Pole(2));
     if (aVec2d.SquareMagnitude() < Precision::Confusion())
+    {
       return false; // Degenerated spline.
+    }
     aDir2d = aVec2d;
 
     isAppropriateType = true;
   }
 
   if (!isAppropriateType)
+  {
     return false;
+  }
 
   // Check line to be vertical or horizontal.
   if (aDir2d.IsParallel(gp::DX2d(), Precision::Angular()))
@@ -3024,10 +3088,14 @@ occ::handle<Geom_Curve> GeomLib::buildC3dOnIsoLine(const occ::handle<Adaptor2d_C
   // Convert adapter to the appropriate type.
   occ::handle<GeomAdaptor_Surface> aGeomAdapter = occ::down_cast<GeomAdaptor_Surface>(theSurf);
   if (aGeomAdapter.IsNull())
+  {
     return occ::handle<Geom_Curve>();
+  }
 
   if (theSurf->GetType() == GeomAbs_Sphere)
+  {
     return occ::handle<Geom_Curve>();
+  }
 
   // Extract isoline
   occ::handle<Geom_Surface> aSurf = aGeomAdapter->Surface();
@@ -3068,7 +3136,9 @@ occ::handle<Geom_Curve> GeomLib::buildC3dOnIsoLine(const occ::handle<Adaptor2d_C
     }
     aC3d = aSurf->UIso(theParam);
     if (isToTrim)
+    {
       aC3d = new Geom_TrimmedCurve(aC3d, aV1Param, aV2Param);
+    }
   }
   else
   {
@@ -3098,14 +3168,18 @@ occ::handle<Geom_Curve> GeomLib::buildC3dOnIsoLine(const occ::handle<Adaptor2d_C
     }
     aC3d = aSurf->VIso(theParam);
     if (isToTrim)
+    {
       aC3d = new Geom_TrimmedCurve(aC3d, aU1Param, aU2Param);
+    }
   }
 
   // Convert arbitrary curve type to the b-spline.
   occ::handle<Geom_BSplineCurve> aCurve3d =
     GeomConvert::CurveToBSplineCurve(aC3d, Convert_QuasiAngular);
   if (!theIsForward)
+  {
     aCurve3d->Reverse();
+  }
 
   // Rebuild parameterization for the 3d curve to have the same parameterization with
   // a two-dimensional curve.
@@ -3139,7 +3213,9 @@ occ::handle<Geom_Curve> GeomLib::buildC3dOnIsoLine(const occ::handle<Adaptor2d_C
   // form of the result is entirely identical. In that case, it is better to utilize
   // a general-purpose approach.
   if (anError3d > theTolerance)
+  {
     return occ::handle<Geom_Curve>();
+  }
 
   return aCurve3d;
 }

@@ -24,17 +24,24 @@
 
 #import <TargetConditionals.h>
 
+// Suppress warnings from macOS system headers
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#pragma clang diagnostic ignored "-Wmissing-method-return-type"
+#pragma clang diagnostic ignored "-Wavailability"
 #if defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE
   #import <UIKit/UIKit.h>
 #else
   #import <Cocoa/Cocoa.h>
+#endif
+#pragma clang diagnostic pop
 
+#if !defined(TARGET_OS_IPHONE) || !TARGET_OS_IPHONE
 #if !defined(MAC_OS_X_VERSION_10_7) || (MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_7)
 @interface NSView (LionAPI)
 - (NSSize )convertSizeToBacking: (NSSize )theSize;
 @end
 #endif
-
 #endif
 
 #include <OpenGl_Window.hxx>
@@ -69,7 +76,7 @@ void OpenGl_Window::Init (const occ::handle<OpenGl_GraphicDriver>& theDriver,
                           const occ::handle<OpenGl_Context>& theShareCtx)
 {
   myGlContext = new OpenGl_Context (theCaps);
-  myOwnGContext = (theGContext == 0);
+  myOwnGContext = (theGContext == nullptr);
   myPlatformWindow = thePlatformWindow;
   mySizeWindow = theSizeWindow;
 #if defined(__APPLE__) && defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE
@@ -129,10 +136,10 @@ void OpenGl_Window::Init (const occ::handle<OpenGl_GraphicDriver>& theDriver,
   Cocoa_LocalPool aLocalPool;
 
   // all GL context within one OpenGl_GraphicDriver should be shared!
-  NSOpenGLContext* aGLCtxShare = theShareCtx.IsNull() ? NULL : theShareCtx->myGContext;
+  NSOpenGLContext* aGLCtxShare = theShareCtx.IsNull() ? nullptr : theShareCtx->myGContext;
   NSOpenGLContext* aGLContext  = theGContext;
   bool isCore = false;
-  if (aGLContext == NULL)
+  if (aGLContext == nullptr)
   {
     NSOpenGLPixelFormatAttribute anAttribs[32] = {};
     int aLastAttrib = 0;
@@ -188,19 +195,19 @@ void OpenGl_Window::Init (const occ::handle<OpenGl_GraphicDriver>& theDriver,
         NSOpenGLPixelFormat* aGLFormat = [[[NSOpenGLPixelFormat alloc] initWithAttributes: anAttribs] autorelease];
         aGLContext = [[NSOpenGLContext alloc] initWithFormat: aGLFormat
                                                 shareContext: aGLCtxShare];
-        if (aGLContext != NULL)
+        if (aGLContext != nullptr)
         {
           break;
         }
       }
 
-      if (aGLContext != NULL)
+      if (aGLContext != nullptr)
       {
         break;
       }
     }
 
-    if (aGLContext == NULL)
+    if (aGLContext == nullptr)
     {
       TCollection_AsciiString aMsg ("OpenGl_Window::CreateWindow: NSOpenGLContext creation failed");
       throw Aspect_GraphicDeviceDefinitionError(aMsg.ToCString());
@@ -395,7 +402,7 @@ void OpenGl_Window::init()
   const int aViewport[4] = { 0, 0, mySize.x(), mySize.y() };
   myGlContext->ResizeViewport (aViewport);
   myGlContext->SetDrawBuffer (GL_BACK);
-  if (myGlContext->core11ffp != NULL)
+  if (myGlContext->core11ffp != nullptr)
   {
     myGlContext->core11ffp->glMatrixMode (GL_MODELVIEW);
   }

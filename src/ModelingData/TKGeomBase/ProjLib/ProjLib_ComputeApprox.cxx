@@ -165,10 +165,14 @@ static gp_Pnt2d Function_Value(const double                          U,
         S = M_PI + S;
       }
       if (S > U1 || S < U2)
+      {
         S = ElCLib::InPeriod(S, U1, U2);
+      }
     }
     if (T < V1 || T > V2)
+    {
       T = ElCLib::InPeriod(T, V1, V2);
+    }
   }
 
   return gp_Pnt2d(S, T);
@@ -213,7 +217,9 @@ static bool Function_D1(const double                          U,
       double Nv = D1V.SquareMagnitude();
 
       if (Nu < Epsilon(1.) || Nv < Epsilon(1.))
+      {
         return false;
+      }
 
       dU /= Nu;
       dV /= Nv;
@@ -268,7 +274,7 @@ static void Function_SetUVBounds(double&                               myU1,
   W1 = myCurve->FirstParameter();
   W2 = myCurve->LastParameter();
   W  = 0.5 * (W1 + W2);
-  // on ouvre l`intervalle
+  // open the interval
   // W1 += 1.0e-9;
   // W2 -= 1.0e-9;
   P1 = myCurve->Value(W1);
@@ -350,7 +356,9 @@ static void Function_SetUVBounds(double&                               myU1,
           for (double par = W1 + Step; par <= W2; par += Step)
           {
             if (!isclandper)
+            {
               par += Step;
+            }
             P = myCurve->Value(par);
             ElSLib::Parameters(Cone, P, U, V);
             U += Delta;
@@ -360,16 +368,24 @@ static void Function_SetUVBounds(double&                               myU1,
               if (((IsEqual(U, (2 * M_PI), 1.e-10) && (U1 >= 0. && U1 <= M_PI))
                    && (IsEqual(U, Ul, 1.e-10) && !IsEqual(Uf, 0., 1.e-10)))
                   && isclandper)
+              {
                 U = 0.0;
+              }
               else
               {
                 // Protection against first-last point on seam.
                 if (isFirst)
+                {
                   U1 = 2 * M_PI;
+                }
                 else if (par + Step >= W2)
+                {
                   U = 0.0;
+                }
                 else
+                {
                   Delta -= 2 * M_PI;
+                }
               }
               U += Delta;
               d = U - U1;
@@ -379,16 +395,24 @@ static void Function_SetUVBounds(double&                               myU1,
               if (((IsEqual(U, 0., 1.e-10) && (U1 >= M_PI && U1 <= (2 * M_PI)))
                    && (IsEqual(U, Ul, 1.e-10) && !IsEqual(Uf, (2 * M_PI), 1.e-10)))
                   && isclandper)
+              {
                 U = 2 * M_PI;
+              }
               else
               {
                 // Protection against first-last point on seam.
                 if (isFirst)
+                {
                   U1 = 0.0;
+                }
                 else if (par + Step >= W2)
+                {
                   U = 2 * M_PI;
+                }
                 else
+                {
                   Delta += 2 * M_PI;
+                }
               }
               U += Delta;
               d = U - U1;
@@ -410,13 +434,19 @@ static void Function_SetUVBounds(double&                               myU1,
 
           if (std::abs(pmin - W1) > Precision::PConfusion()
               && std::abs(pmin - W2) > Precision::PConfusion())
+          {
             myU1 -= dmax * .5;
+          }
           if (std::abs(pmax - W1) > Precision::PConfusion()
               && std::abs(pmax - W2) > Precision::PConfusion())
+          {
             myU2 += dmax * .5;
+          }
 
           if ((myU1 >= 0. && myU1 <= 2 * M_PI) && (myU2 >= 0. && myU2 <= 2 * M_PI))
+          {
             UCouture = false;
+          }
           else
           {
             U        = (myU1 + myU2) / 2.;
@@ -536,10 +566,14 @@ static void Function_SetUVBounds(double&                               myU1,
 
         if (std::abs(pmin - W1) > Precision::PConfusion()
             && std::abs(pmin - W2) > Precision::PConfusion())
+        {
           myU1 -= dmax * .5;
+        }
         if (std::abs(pmax - W1) > Precision::PConfusion()
             && std::abs(pmax - W2) > Precision::PConfusion())
+        {
           myU2 += dmax * .5;
+        }
 
         if ((myU1 >= 0. && myU1 <= 2 * M_PI) && (myU2 >= 0. && myU2 <= 2 * M_PI))
         {
@@ -575,8 +609,8 @@ static void Function_SetUVBounds(double&                               myU1,
         // A x + B y + C z + D = 0    (2)
         // x > 0                      (3)
         // y = 0                      (4)
-        // REM : (1) (2)     : equation du cercle
-        //       (1) (3) (4) : equation de la couture.
+        // REM : (1) (2)     : equation of the circle
+        //       (1) (3) (4) : equation of the seam.
         int     NbSolutions = 0;
         double  A, B, C, D, R, Tol = 1.e-10;
         double  U1, U2, V1, V2;
@@ -597,11 +631,17 @@ static void Function_SetUVBounds(double&                               myU1,
             if ((D / A) < 0.)
             {
               if ((R - std::abs(D / A)) > Tol)
+              {
                 NbSolutions = 2;
+              }
               else if (std::abs(R - std::abs(D / A)) < Tol)
+              {
                 NbSolutions = 1;
+              }
               else
+              {
                 NbSolutions = 0;
+              }
             }
           }
         }
@@ -612,7 +652,9 @@ static void Function_SetUVBounds(double&                               myU1,
           if (std::abs(delta) < Tol * Tol)
           {
             if (A * D > 0.)
+            {
               NbSolutions = 1;
+            }
           }
           else if (delta > 0)
           {
@@ -621,11 +663,15 @@ static void Function_SetUVBounds(double&                               myU1,
             xx    = -A * D + delta;
             //
             if (xx > Tol)
+            {
               NbSolutions++;
+            }
             xx = -A * D - delta;
             //
             if (xx > Tol)
+            {
               NbSolutions++;
+            }
           }
         }
         //
@@ -689,7 +735,7 @@ static void Function_SetUVBounds(double&                               myU1,
         if (NbSolutions == 1)
         {
           if (std::abs(U1 - U2) > M_PI)
-          { // on traverse la couture
+          { // crossing the seam
             if (U1 > M_PI)
             {
               myU1 = U1;
@@ -702,7 +748,7 @@ static void Function_SetUVBounds(double&                               myU1,
             }
           }
           else
-          { // on ne traverse pas la couture
+          { // not crossing the seam
             if (U1 > U2)
             {
               myU2 = U1;
@@ -716,7 +762,7 @@ static void Function_SetUVBounds(double&                               myU1,
           }
         }
         else
-        { // 0 ou 2 solutions
+        { // 0 or 2 solutions
           gp_Pnt Center = Circle.Location();
           double U, V;
           ElSLib::SphereParameters(gp_Ax3(gp::XOY()), 1, Center, U, V);
@@ -813,10 +859,14 @@ static void Function_SetUVBounds(double&                               myU1,
 
         if (std::abs(pmin - W1) > Precision::PConfusion()
             && std::abs(pmin - W2) > Precision::PConfusion())
+        {
           myU1 -= dmax * .5;
+        }
         if (std::abs(pmax - W1) > Precision::PConfusion()
             && std::abs(pmax - W2) > Precision::PConfusion())
+        {
           myU2 += dmax * .5;
+        }
 
         if ((myU1 >= 0. && myU1 <= 2 * M_PI) && (myU2 >= 0. && myU2 <= 2 * M_PI))
         {
@@ -914,16 +964,24 @@ static void Function_SetUVBounds(double&                               myU1,
 
       if (std::abs(pminU - W1) > Precision::PConfusion()
           && std::abs(pminU - W2) > Precision::PConfusion())
+      {
         myU1 -= dmaxU * .5;
+      }
       if (std::abs(pmaxU - W1) > Precision::PConfusion()
           && std::abs(pmaxU - W2) > Precision::PConfusion())
+      {
         myU2 += dmaxU * .5;
+      }
       if (std::abs(pminV - W1) > Precision::PConfusion()
           && std::abs(pminV - W2) > Precision::PConfusion())
+      {
         myV1 -= dmaxV * .5;
+      }
       if (std::abs(pmaxV - W1) > Precision::PConfusion()
           && std::abs(pmaxV - W2) > Precision::PConfusion())
+      {
         myV2 += dmaxV * .5;
+      }
 
       if ((myU1 >= 0. && myU1 <= 2 * M_PI) && (myU2 >= 0. && myU2 <= 2 * M_PI))
       {
@@ -993,14 +1051,22 @@ public:
     myIsPeriodic[1] = mySurface->IsVPeriodic();
 
     if (myIsPeriodic[0])
+    {
       myPeriod[0] = mySurface->UPeriod();
+    }
     else
+    {
       myPeriod[0] = 0.0;
+    }
 
     if (myIsPeriodic[1])
+    {
       myPeriod[1] = mySurface->VPeriod();
+    }
     else
+    {
       myPeriod[1] = 0.0;
+    }
   }
 
   void PeriodInformation(const int theDimIdx, bool& IsPeriodic, double& thePeriod) const override
@@ -1132,14 +1198,10 @@ void ProjLib_ComputeApprox::Perform(const occ::handle<Adaptor3d_Curve>&   C,
   {
 
     // get the poles and eventually the weights
-    occ::handle<Geom_BSplineCurve> BS = C->BSpline();
-    NbPoles                           = BS->NbPoles();
-    NCollection_Array1<gp_Pnt>   P3d(1, NbPoles);
-    NCollection_Array1<gp_Pnt2d> Poles(1, NbPoles);
-    NCollection_Array1<double>   Weights(1, NbPoles);
-    if (BS->IsRational())
-      BS->Weights(Weights);
-    BS->Poles(P3d);
+    occ::handle<Geom_BSplineCurve> BS     = C->BSpline();
+    NbPoles                               = BS->NbPoles();
+    const NCollection_Array1<gp_Pnt>& P3d = BS->Poles();
+    NCollection_Array1<gp_Pnt2d>      Poles(1, NbPoles);
 
     // Project poles onto plane using optimized projector (avoids gp_Trsf per point)
     const PlaneProjector aProj(S->Plane().Position());
@@ -1147,16 +1209,17 @@ void ProjLib_ComputeApprox::Perform(const occ::handle<Adaptor3d_Curve>&   C,
     {
       Poles.SetValue(i, aProj.Project(P3d(i)));
     }
-    NbKnots = BS->NbKnots();
-    NCollection_Array1<double> Knots(1, NbKnots);
-    NCollection_Array1<int>    Mults(1, NbKnots);
-    BS->Knots(Knots);
-    BS->Multiplicities(Mults);
+    const NCollection_Array1<double>& Knots = BS->Knots();
+    const NCollection_Array1<int>&    Mults = BS->Multiplicities();
     // get the knots and mults if BSplineCurve
     if (BS->IsRational())
     {
-      myBSpline =
-        new Geom2d_BSplineCurve(Poles, Weights, Knots, Mults, BS->Degree(), BS->IsPeriodic());
+      myBSpline = new Geom2d_BSplineCurve(Poles,
+                                          BS->WeightsArray(),
+                                          Knots,
+                                          Mults,
+                                          BS->Degree(),
+                                          BS->IsPeriodic());
     }
     else
     {
@@ -1169,14 +1232,8 @@ void ProjLib_ComputeApprox::Perform(const occ::handle<Adaptor3d_Curve>&   C,
     // get the poles and eventually the weights
     occ::handle<Geom_BezierCurve> BezierCurvePtr = C->Bezier();
     NbPoles                                      = BezierCurvePtr->NbPoles();
-    NCollection_Array1<gp_Pnt>   P3d(1, NbPoles);
-    NCollection_Array1<gp_Pnt2d> Poles(1, NbPoles);
-    NCollection_Array1<double>   Weights(1, NbPoles);
-    if (BezierCurvePtr->IsRational())
-    {
-      BezierCurvePtr->Weights(Weights);
-    }
-    BezierCurvePtr->Poles(P3d);
+    const NCollection_Array1<gp_Pnt>& P3d        = BezierCurvePtr->Poles();
+    NCollection_Array1<gp_Pnt2d>      Poles(1, NbPoles);
 
     // Project poles onto plane using optimized projector (avoids gp_Trsf per point)
     const PlaneProjector aProj(S->Plane().Position());
@@ -1186,7 +1243,7 @@ void ProjLib_ComputeApprox::Perform(const occ::handle<Adaptor3d_Curve>&   C,
     }
     if (BezierCurvePtr->IsRational())
     {
-      myBezier = new Geom2d_BezierCurve(Poles, Weights);
+      myBezier = new Geom2d_BezierCurve(Poles, BezierCurvePtr->WeightsArray());
     }
     else
     {
@@ -1277,7 +1334,7 @@ void ProjLib_ComputeApprox::Perform(const occ::handle<Adaptor3d_Curve>&   C,
       int i;
       int NbCurves = Fit.NbMultiCurves();
 
-      // on essaie de rendre la courbe au moins C1
+      // try to make the curve at least C1
       Convert_CompBezierCurves2dToBSplineCurve2d Conv;
 
       double Tol3d, Tol2d;
@@ -1285,21 +1342,25 @@ void ProjLib_ComputeApprox::Perform(const occ::handle<Adaptor3d_Curve>&   C,
       {
         Fit.Error(i, Tol3d, Tol2d);
         aNewTol2d                       = std::max(aNewTol2d, Tol2d);
-        AppParCurves_MultiCurve      MC = Fit.Value(i);           // Charge la Ieme Curve
-        NCollection_Array1<gp_Pnt2d> Poles2d(1, MC.Degree() + 1); // Recupere les poles
+        AppParCurves_MultiCurve      MC = Fit.Value(i);           // Load the i-th Curve
+        NCollection_Array1<gp_Pnt2d> Poles2d(1, MC.Degree() + 1); // Retrieve the poles
         MC.Curve(1, Poles2d);
         Conv.AddCurve(Poles2d);
       }
 
-      // mise a jour des fields de ProjLib_Approx
+      // update the fields of ProjLib_Approx
       Conv.Perform();
       NbPoles = Conv.NbPoles();
       NbKnots = Conv.NbKnots();
 
       if (NbPoles <= 0 || NbPoles > 100000)
+      {
         return;
+      }
       if (NbKnots <= 0 || NbKnots > 100000)
+      {
         return;
+      }
 
       NCollection_Array1<gp_Pnt2d> NewPoles(1, NbPoles);
       NCollection_Array1<double>   NewKnots(1, NbKnots);
@@ -1314,11 +1375,11 @@ void ProjLib_ComputeApprox::Perform(const occ::handle<Adaptor3d_Curve>&   C,
       // to avoid problems if trim is used.
       NewKnots(NbKnots) = C->LastParameter();
 
-      // il faut recadrer les poles de debut et de fin:
-      // ( Car pour les problemes de couture, on a du ouvrir l`intervalle
-      // de definition de la courbe.)
-      // On choisit de calculer ces poles par prolongement de la courbe
-      // approximee.
+      // The start and end poles need to be adjusted:
+      // (Due to seam issues, we had to open the definition interval
+      // of the curve.)
+      // We choose to compute these poles by extending the approximated
+      // curve.
       myBSpline = new Geom2d_BSplineCurve(NewPoles, NewKnots, NewMults, Conv.Degree());
 
       if (aFistC == AppParCurves_PassPoint || aLastC == AppParCurves_PassPoint)
@@ -1418,7 +1479,9 @@ void ProjLib_ComputeApprox::Perform(const occ::handle<Adaptor3d_Curve>&   C,
     if (!myBSpline.IsNull())
     {
       if (du != 0. || dv != 0.)
+      {
         myBSpline->Translate(gp_Vec2d(du, dv));
+      }
       if (ToMirror)
       {
         gp_Ax2d Axe(gp_Pnt2d(0., 0.), gp_Dir2d(gp_Dir2d::D::X));

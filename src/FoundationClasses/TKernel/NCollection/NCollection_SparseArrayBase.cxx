@@ -14,7 +14,6 @@
 // commercial license or contractual agreement.
 
 #include <NCollection_SparseArrayBase.hxx>
-#include <Standard_ProgramError.hxx>
 #include <Standard.hxx>
 
 #include <algorithm>
@@ -25,17 +24,23 @@
 void NCollection_SparseArrayBase::allocData(const size_t iBlock)
 {
   if (iBlock < myNbBlocks)
+  {
     return;
+  }
 
   // the allocation of blocks starts from myBlockSize items
   // and then is multiplied by 2 every time reallocation is needed
   size_t newNbBlocks = (myNbBlocks ? myNbBlocks * 2 : myBlockSize);
   while (iBlock >= newNbBlocks)
+  {
     newNbBlocks *= 2;
+  }
 
   void** newData = (void**)Standard::AllocateOptimal(newNbBlocks * sizeof(void*));
   if (myNbBlocks > 0)
+  {
     memcpy(newData, myData, myNbBlocks * sizeof(void*));
+  }
   memset(newData + myNbBlocks, 0, (newNbBlocks - myNbBlocks) * sizeof(void*));
 
   Standard::Free(myData);
@@ -45,11 +50,13 @@ void NCollection_SparseArrayBase::allocData(const size_t iBlock)
 
 //=================================================================================================
 
-void NCollection_SparseArrayBase::freeBlock(const size_t iBlock)
+void NCollection_SparseArrayBase::freeBlock(const size_t iBlock, DestroyItemFunc theDestroyItem)
 {
   void*& anAddr = myData[iBlock];
   if (!anAddr)
+  {
     return;
+  }
 
   Block aBlock = getBlock(anAddr);
   // Destroy all items in the block
@@ -57,7 +64,7 @@ void NCollection_SparseArrayBase::freeBlock(const size_t iBlock)
   {
     if (aBlock.IsSet(anInd))
     {
-      destroyItem(getItem(aBlock, anInd));
+      theDestroyItem(getItem(aBlock, anInd));
       mySize--;
     }
   }
@@ -67,14 +74,14 @@ void NCollection_SparseArrayBase::freeBlock(const size_t iBlock)
 
 //=================================================================================================
 
-void NCollection_SparseArrayBase::Clear()
+void NCollection_SparseArrayBase::clearItems(DestroyItemFunc theDestroyItem)
 {
   // free block data
   for (size_t iBlock = 0; iBlock < myNbBlocks; iBlock++)
   {
     if (myData[iBlock])
     {
-      freeBlock(iBlock);
+      freeBlock(iBlock, theDestroyItem);
     }
   }
 
@@ -83,23 +90,25 @@ void NCollection_SparseArrayBase::Clear()
   myData     = nullptr;
   myNbBlocks = 0;
   mySize     = 0;
-
-  // consistency check
-  Standard_ProgramError_Raise_if(
-    mySize != 0,
-    "NCollection_SparseArrayBase: Implementation error: inconsistent items count")
 }
 
 //=================================================================================================
 
-void NCollection_SparseArrayBase::assign(const NCollection_SparseArrayBase& theOther)
+void NCollection_SparseArrayBase::assign(const NCollection_SparseArrayBase& theOther,
+                                         CreateItemFunc                     theCreateItem,
+                                         DestroyItemFunc                    theDestroyItem,
+                                         CopyItemFunc                       theCopyItem)
 {
   if (this == &theOther)
+  {
     return;
+  }
 
   // if block size is different, clear all data
   if (myBlockSize != theOther.myBlockSize)
-    Clear();
+  {
+    clearItems(theDestroyItem);
+  }
   myBlockSize = theOther.myBlockSize;
 
   // iterate by blocks in theOther
@@ -110,12 +119,16 @@ void NCollection_SparseArrayBase::assign(const NCollection_SparseArrayBase& theO
     {
       // if other block is empty, just make sure to empty that block in "this"
       if (iBlock < myNbBlocks && myData[iBlock])
-        freeBlock(iBlock);
+      {
+        freeBlock(iBlock, theDestroyItem);
+      }
       continue;
     }
 
     if (iBlock >= myNbBlocks)
+    {
       allocData(iBlock);
+    }
     Block anOtherBlock = getBlock(theOther.myData[iBlock]);
 
     // if block not yet allocated, just allocate and fill
@@ -127,14 +140,16 @@ void NCollection_SparseArrayBase::assign(const NCollection_SparseArrayBase& theO
       memset(anAddr, 0, aBlockSize);
       Block aBlock(getBlock(anAddr));
       for (size_t anInd = 0; anInd < myBlockSize; anInd++)
+      {
         if (anOtherBlock.IsSet(anInd))
         {
           void* anItem = getItem(aBlock, anInd);
           aBlock.Set(anInd);
           (*aBlock.Count)++;
           mySize++;
-          createItem(anItem, getItem(anOtherBlock, anInd));
+          theCreateItem(anItem, getItem(anOtherBlock, anInd));
         }
+      }
     }
     // else perform copying item-by-item
     else
@@ -148,14 +163,14 @@ void NCollection_SparseArrayBase::assign(const NCollection_SparseArrayBase& theO
           void* anOtherItem = getItem(anOtherBlock, anInd);
           if (aBlock.IsSet(anInd)) // copy
           {
-            copyItem(anItem, anOtherItem);
+            theCopyItem(anItem, anOtherItem);
           }
           else // create
           {
             aBlock.Set(anInd);
             (*aBlock.Count)++;
             mySize++;
-            createItem(anItem, getItem(anOtherBlock, anInd));
+            theCreateItem(anItem, getItem(anOtherBlock, anInd));
           }
         }
         else if (aBlock.IsSet(anInd)) // delete
@@ -163,7 +178,7 @@ void NCollection_SparseArrayBase::assign(const NCollection_SparseArrayBase& theO
           aBlock.Set(anInd);
           (*aBlock.Count)--;
           mySize--;
-          destroyItem(anItem);
+          theDestroyItem(anItem);
         }
       }
     }
@@ -171,13 +186,12 @@ void NCollection_SparseArrayBase::assign(const NCollection_SparseArrayBase& theO
 
   // clear any remaining blocks in this
   for (; iBlock < myNbBlocks; iBlock++)
+  {
     if (myData[iBlock])
-      freeBlock(iBlock);
-
-  // consistency check
-  Standard_ProgramError_Raise_if(
-    mySize != theOther.mySize,
-    "NCollection_SparseArrayBase: Implementation error: inconsistent items count")
+    {
+      freeBlock(iBlock, theDestroyItem);
+    }
+  }
 }
 
 //=================================================================================================
@@ -185,7 +199,9 @@ void NCollection_SparseArrayBase::assign(const NCollection_SparseArrayBase& theO
 void NCollection_SparseArrayBase::exchange(NCollection_SparseArrayBase& theOther) noexcept
 {
   if (this == &theOther)
+  {
     return;
+  }
 
   // swap fields of this and theOther using std::swap for better optimization
   std::swap(myItemSize, theOther.myItemSize);
@@ -193,17 +209,23 @@ void NCollection_SparseArrayBase::exchange(NCollection_SparseArrayBase& theOther
   std::swap(myNbBlocks, theOther.myNbBlocks);
   std::swap(mySize, theOther.mySize);
   std::swap(myData, theOther.myData);
+  std::swap(myDestroyItem, theOther.myDestroyItem);
 }
 
 //=================================================================================================
 
-void* NCollection_SparseArrayBase::setValue(const size_t theIndex, void* const theValue)
+void* NCollection_SparseArrayBase::setValue(const size_t   theIndex,
+                                            void* const    theValue,
+                                            CreateItemFunc theCreateItem,
+                                            CopyItemFunc   theCopyItem)
 {
   size_t iBlock = theIndex / myBlockSize;
 
   // resize blocks array if necessary
   if (iBlock >= myNbBlocks)
+  {
     allocData(iBlock);
+  }
 
   // allocate block if necessary
   void*& anAddr = myData[iBlock];
@@ -225,12 +247,12 @@ void* NCollection_SparseArrayBase::setValue(const size_t theIndex, void* const t
   {
     (*aBlock.Count)++;
     mySize++;
-    createItem(anItem, theValue);
+    theCreateItem(anItem, theValue);
   }
   else
   {
     // Item already exists, just copy the value
-    copyItem(anItem, theValue);
+    theCopyItem(anItem, theValue);
   }
 
   return anItem;
@@ -242,32 +264,40 @@ bool NCollection_SparseArrayBase::HasValue(const size_t theIndex) const
 {
   size_t iBlock = theIndex / myBlockSize;
   if (iBlock >= myNbBlocks || !myData[iBlock])
+  {
     return false;
+  }
   return getBlock(myData[iBlock]).IsSet(theIndex % myBlockSize) != 0;
 }
 
 //=================================================================================================
 
-bool NCollection_SparseArrayBase::UnsetValue(const size_t theIndex)
+bool NCollection_SparseArrayBase::unsetValue(const size_t theIndex, DestroyItemFunc theDestroyItem)
 {
   // check that the item is defined
   size_t iBlock = theIndex / myBlockSize;
   if (iBlock >= myNbBlocks || !myData[iBlock])
+  {
     return false;
+  }
 
   Block  aBlock(getBlock(myData[iBlock]));
   size_t anInd = theIndex % myBlockSize;
   if (!aBlock.Unset(anInd))
+  {
     return false;
+  }
 
   // destroy the item
-  destroyItem(getItem(aBlock, anInd));
+  theDestroyItem(getItem(aBlock, anInd));
   (*aBlock.Count)--;
   mySize--;
 
   // free block if it becomes empty
   if (!(*aBlock.Count))
-    freeBlock(iBlock);
+  {
+    freeBlock(iBlock, theDestroyItem);
+  }
 
   return true;
 }
@@ -289,7 +319,9 @@ NCollection_SparseArrayBase::Iterator::Iterator(const NCollection_SparseArrayBas
 void NCollection_SparseArrayBase::Iterator::Next()
 {
   if (!myArr || !myHasMore)
+  {
     return;
+  }
 
   // iterate by items and blocks
   for (myInd++;; myInd++)
@@ -314,7 +346,9 @@ void NCollection_SparseArrayBase::Iterator::Next()
     }
     // check if item is defined
     if (myBlock.IsSet(myInd))
+    {
       return;
+    }
   }
 }
 
@@ -331,12 +365,16 @@ void NCollection_SparseArrayBase::Iterator::init(const NCollection_SparseArrayBa
     for (myIBlock = 0; myIBlock < myArr->myNbBlocks; myIBlock++)
     {
       if (!myArr->myData[myIBlock])
+      {
         continue;
+      }
       myHasMore = true;
       myBlock   = Block(myArr->myData[myIBlock], myArr->myBlockSize, myArr->myItemSize);
       // if first item in the block is not set, advance to the next defined item
       if (!myBlock.IsSet(myInd))
+      {
         Next();
+      }
       return;
     }
   }

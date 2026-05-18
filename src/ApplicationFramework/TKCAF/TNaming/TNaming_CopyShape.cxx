@@ -19,10 +19,8 @@
 #include <TopoDS_Iterator.hxx>
 #include <TopoDS_Shape.hxx>
 
-//=======================================================================
-// function : CopyTool
-// purpose  : Tool to copy a set of shape(s), using the aMap
-//=======================================================================
+//=================================================================================================
+
 void TNaming_CopyShape::CopyTool(const TopoDS_Shape& aShape,
                                  NCollection_IndexedDataMap<occ::handle<Standard_Transient>,
                                                             occ::handle<Standard_Transient>>& aMap,
@@ -44,7 +42,9 @@ void TNaming_CopyShape::Translate(const TopoDS_Shape& aShape,
   aResult.Nullify();
 
   if (aShape.IsNull())
+  {
     return;
+  }
 
   if (aMap.Contains(aShape.TShape()))
   {
@@ -153,7 +153,9 @@ static occ::handle<TopLoc_Datum3D> TranslateDatum3D(
 {
   occ::handle<TopLoc_Datum3D> TD;
   if (aMap.Contains(D))
+  {
     TD = occ::down_cast<TopLoc_Datum3D>(aMap.FindFromKey(D));
+  }
   else
   {
     TD = new TopLoc_Datum3D(D->Transformation());

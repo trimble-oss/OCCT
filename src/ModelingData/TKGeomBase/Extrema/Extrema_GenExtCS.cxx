@@ -43,30 +43,50 @@ const double HyperbolaLimit = 23.; // ln(MaxParamVal)
 static bool IsQuadric(const GeomAbs_SurfaceType theSType)
 {
   if (theSType == GeomAbs_Plane)
+  {
     return true;
+  }
   if (theSType == GeomAbs_Cylinder)
+  {
     return true;
+  }
   if (theSType == GeomAbs_Cone)
+  {
     return true;
+  }
   if (theSType == GeomAbs_Sphere)
+  {
     return true;
+  }
   if (theSType == GeomAbs_Torus)
+  {
     return true;
+  }
   return false;
 }
 
 static bool IsConic(const GeomAbs_CurveType theCType)
 {
   if (theCType == GeomAbs_Line)
+  {
     return true;
+  }
   if (theCType == GeomAbs_Circle)
+  {
     return true;
+  }
   if (theCType == GeomAbs_Ellipse)
+  {
     return true;
+  }
   if (theCType == GeomAbs_Hyperbola)
+  {
     return true;
+  }
   if (theCType == GeomAbs_Parabola)
+  {
     return true;
+  }
   return false;
 }
 
@@ -86,7 +106,9 @@ static double GetCurvMaxParamVal(const Adaptor3d_Curve& theC)
       aBC = aTC->BasisCurve();
     }
     if (aBC->IsKind(STANDARD_TYPE(Geom_Hyperbola)))
+    {
       return HyperbolaLimit;
+    }
   }
   return MaxParamVal;
 }
@@ -249,8 +271,7 @@ void Extrema_GenExtCS::Initialize(const Adaptor3d_Surface& S,
   }
 
   // Use batch grid evaluation for optimized surface point computation
-  GeomGridEval_Surface anEvaluator;
-  anEvaluator.Initialize(*myS);
+  GeomGridEval_Surface anEvaluator(*myS);
 
   const NCollection_Array2<gp_Pnt> aGrid = anEvaluator.EvaluateGrid(aUParams, aVParams);
 
@@ -287,7 +308,7 @@ void Extrema_GenExtCS::Perform(const Adaptor3d_Curve& C,
   mytsup    = tsup;
   mytol1    = Tol1;
   mytsample = NbT;
-  // Modif de lvt pour trimer la surface non pas aux infinis mais  a +/- 10000
+  // Modification by lvt to trim the surface not to infinity but to +/- 10000
 
   double trimusup = myusup, trimumin = myumin, trimvsup = myvsup, trimvmin = myvmin;
   double aCMaxVal = GetCurvMaxParamVal(C);
@@ -448,7 +469,9 @@ void Extrema_GenExtCS::GlobMinGenCS(const Adaptor3d_Curve& theC,
 
   double aCU1 = aMinTUV(1);
   for (int aCUI = 0; aCUI <= aNewCsample; aCUI++, aCU1 += aStepCU)
+  {
     aCurvPnts.SetValue(aCUI, theC.Value(aCU1));
+  }
 
   PSO_Particle* aParticle = aParticles.GetWorstParticle();
   // Select specified number of particles from pre-computed set of samples
@@ -594,11 +617,15 @@ void Extrema_GenExtCS::GlobMinConicS(const Adaptor3d_Curve& theC,
   theC.D1(aCT, aPOnC, aDT);
   double aSqDist = aPOnC.SquareDistance(aPOnS);
   if (aSqDist <= Precision::SquareConfusion())
+  {
     return;
+  }
 
   gp_Vec aN = aDU.Crossed(aDV);
   if (aN.SquareMagnitude() < Precision::SquareConfusion())
+  {
     return;
+  }
 
   gp_Vec PcPs(aPOnC, aPOnS);
 

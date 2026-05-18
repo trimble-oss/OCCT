@@ -16,7 +16,6 @@
 #include <Message_Messenger.hxx>
 #include <NCollection_LocalArray.hxx>
 #include <Standard_Type.hxx>
-#include <TColStd_MapIteratorOfPackedMapOfInteger.hxx>
 #include <TColStd_PackedMapOfInteger.hxx>
 #include <TDataStd_IntPackedMap.hxx>
 #include <TDF_Attribute.hxx>
@@ -48,10 +47,8 @@ occ::handle<TDF_Attribute> XmlMDataStd_IntPackedMapDriver::NewEmpty() const
   return (new TDataStd_IntPackedMap());
 }
 
-//=======================================================================
-// function : Paste()
-// purpose  : persistent -> transient (retrieve)
-//=======================================================================
+//=================================================================================================
+
 bool XmlMDataStd_IntPackedMapDriver::Paste(const XmlObjMgt_Persistent&       theSource,
                                            const occ::handle<TDF_Attribute>& theTarget,
                                            XmlObjMgt_RRelocationTable&       theRelocTable) const
@@ -63,7 +60,9 @@ bool XmlMDataStd_IntPackedMapDriver::Paste(const XmlObjMgt_Persistent&       the
     const XmlObjMgt_Element& anElement = theSource;
     XmlObjMgt_DOMString      aSizeDStr = anElement.getAttribute(::IntPackedMapSize());
     if (aSizeDStr == nullptr)
+    {
       aSize = 0;
+    }
     else if (!aSizeDStr.GetInteger(aSize))
     {
       TCollection_ExtendedString aMessageString =
@@ -104,7 +103,9 @@ bool XmlMDataStd_IntPackedMapDriver::Paste(const XmlObjMgt_Persistent&       the
         return false;
       }
       if (aPackedMap->ChangeMap(aHMap))
+      {
         Ok = true;
+      }
     }
     if (Ok)
     {
@@ -124,7 +125,9 @@ bool XmlMDataStd_IntPackedMapDriver::Paste(const XmlObjMgt_Persistent&       the
           return false;
         }
         else
+        {
           aDelta = aDeltaValue != 0;
+        }
       }
       aPackedMap->SetDelta(aDelta);
       return true;
@@ -134,10 +137,8 @@ bool XmlMDataStd_IntPackedMapDriver::Paste(const XmlObjMgt_Persistent&       the
   return false;
 }
 
-//=======================================================================
-// function : Paste()
-// purpose  : transient -> persistent (store)
-//=======================================================================
+//=================================================================================================
+
 void XmlMDataStd_IntPackedMapDriver::Paste(const occ::handle<TDF_Attribute>& theSource,
                                            XmlObjMgt_Persistent&             theTarget,
                                            XmlObjMgt_SRelocationTable&) const
@@ -160,7 +161,7 @@ void XmlMDataStd_IntPackedMapDriver::Paste(const occ::handle<TDF_Attribute>& the
     int                          iChar = 0;
     NCollection_LocalArray<char> str(12 * aSize + 1);
 
-    TColStd_MapIteratorOfPackedMapOfInteger anIt(aS->GetMap());
+    TColStd_PackedMapOfInteger::Iterator anIt(aS->GetMap());
     for (; anIt.More(); anIt.Next())
     {
       const int intValue = anIt.Key();
@@ -168,6 +169,6 @@ void XmlMDataStd_IntPackedMapDriver::Paste(const occ::handle<TDF_Attribute>& the
     }
 
     // No occurrence of '&', '<' and other irregular XML characters
-    XmlObjMgt::SetStringValue(theTarget, (char*)str, true);
+    XmlObjMgt::SetStringValue(theTarget, static_cast<char*>(str), true);
   }
 }

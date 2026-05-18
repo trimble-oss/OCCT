@@ -37,10 +37,7 @@ TFunction_Iterator::TFunction_Iterator(const TDF_Label& Access)
   Init(Access);
 }
 
-//=======================================================================
-// function : Init
-// purpose  : Initializes the Iterator.
-//=======================================================================
+//=================================================================================================
 
 void TFunction_Iterator::Init(const TDF_Label& Access)
 {
@@ -62,44 +59,41 @@ void TFunction_Iterator::Init(const TDF_Label& Access)
 
     // Check whether the function is a root function
     if (!graphNode->GetPrevious().IsEmpty())
+    {
       continue;
+    }
 
     // In execution mode we consider only "not executed" functions.
     if (myUsageOfExecutionStatus && status != TFunction_ES_NotExecuted)
+    {
       continue;
+    }
 
     myCurrent.Append(L);
 
     // Register already passed functions
     if (!myUsageOfExecutionStatus)
+    {
       myPassedFunctions.Add(L);
+    }
   }
 }
 
-//=======================================================================
-// function : SetUsageOfExecutionStatus
-// purpose  : Defines usage of execution status
-//=======================================================================
+//=================================================================================================
 
 void TFunction_Iterator::SetUsageOfExecutionStatus(const bool usage)
 {
   myUsageOfExecutionStatus = usage;
 }
 
-//=======================================================================
-// function : GetUsageOfExecutionStatus
-// purpose  : Returns usage of execution status
-//=======================================================================
+//=================================================================================================
 
 bool TFunction_Iterator::GetUsageOfExecutionStatus() const
 {
   return myUsageOfExecutionStatus;
 }
 
-//=======================================================================
-// function : GetMaxNbThreads
-// purpose  : Defines the maximum number of threads
-//=======================================================================
+//=================================================================================================
 
 int TFunction_Iterator::GetMaxNbThreads() const
 {
@@ -119,27 +113,23 @@ int TFunction_Iterator::GetMaxNbThreads() const
   {
     const NCollection_List<TDF_Label>& current = fIterator.Current();
     if (nb_threads < current.Extent())
+    {
       nb_threads = current.Extent();
+    }
     fIterator.Next();
   }
 
   return nb_threads;
 }
 
-//=======================================================================
-// function : Current
-// purpose  : Returns the current list of functions
-//=======================================================================
+//=================================================================================================
 
 const NCollection_List<TDF_Label>& TFunction_Iterator::Current() const
 {
   return myCurrent;
 }
 
-//=======================================================================
-// function : More
-// purpose  : Returns true if the iteration is ended
-//=======================================================================
+//=================================================================================================
 
 bool TFunction_Iterator::More() const
 {
@@ -150,17 +140,16 @@ bool TFunction_Iterator::More() const
     {
       const TDF_Label& L = itrm.Key2();
       if (GetStatus(L) == TFunction_ES_NotExecuted)
+      {
         return true;
+      }
     }
     return false;
   }
   return !myCurrent.IsEmpty();
 }
 
-//=======================================================================
-// function : Next
-// purpose  : Switches the iterator to the next functions
-//=======================================================================
+//=================================================================================================
 
 void TFunction_Iterator::Next()
 {
@@ -237,13 +226,17 @@ void TFunction_Iterator::Next()
 
       // Ignore already passed functions (for the mode of ignoring the execution status).
       if (!myUsageOfExecutionStatus && myPassedFunctions.Contains(Lnext))
+      {
         continue;
+      }
 
       next_current.Add(Lnext);
 
       // Register already passed functions
       if (!myUsageOfExecutionStatus)
+      {
         myPassedFunctions.Add(Lnext);
+      }
     }
   }
 
@@ -255,10 +248,7 @@ void TFunction_Iterator::Next()
   }
 }
 
-//=======================================================================
-// function : GetStatus
-// purpose  : Returns the execution status of the function
-//=======================================================================
+//=================================================================================================
 
 TFunction_ExecutionStatus TFunction_Iterator::GetStatus(const TDF_Label& func) const
 {
@@ -266,10 +256,7 @@ TFunction_ExecutionStatus TFunction_Iterator::GetStatus(const TDF_Label& func) c
   return iFunction.GetGraphNode()->GetStatus();
 }
 
-//=======================================================================
-// function : SetStatus
-// purpose  : Defines an execution status for a function
-//=======================================================================
+//=================================================================================================
 
 void TFunction_Iterator::SetStatus(const TDF_Label&                func,
                                    const TFunction_ExecutionStatus status) const
@@ -282,10 +269,12 @@ void TFunction_Iterator::SetStatus(const TDF_Label&                func,
 
 Standard_OStream& TFunction_Iterator::Dump(Standard_OStream& anOS) const
 {
-  anOS << "Functions:" << std::endl;
+  anOS << "Functions:" << '\n';
 
   if (myCurrent.IsEmpty())
+  {
     return anOS;
+  }
 
   // Memorize the status of each function
   // in order to recover it after iteration.
@@ -333,7 +322,7 @@ Standard_OStream& TFunction_Iterator::Dump(Standard_OStream& anOS) const
 
     fIterator.Next();
 
-    anOS << std::endl;
+    anOS << '\n';
   }
 
   // Recover the status of functions

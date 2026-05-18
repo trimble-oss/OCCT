@@ -45,10 +45,8 @@ occ::handle<TDF_Attribute> XmlMDataStd_ExtStringListDriver::NewEmpty() const
   return new TDataStd_ExtStringList();
 }
 
-//=======================================================================
-// function : Paste
-// purpose  : persistent -> transient (retrieve)
-//=======================================================================
+//=================================================================================================
+
 bool XmlMDataStd_ExtStringListDriver::Paste(const XmlObjMgt_Persistent&       theSource,
                                             const occ::handle<TDF_Attribute>& theTarget,
                                             XmlObjMgt_RRelocationTable&) const
@@ -59,7 +57,9 @@ bool XmlMDataStd_ExtStringListDriver::Paste(const XmlObjMgt_Persistent&       th
   // Read the FirstIndex; if the attribute is absent initialize to 1
   XmlObjMgt_DOMString aFirstIndex = anElement.getAttribute(::FirstIndexString());
   if (aFirstIndex == nullptr)
+  {
     aFirstInd = 1;
+  }
   else if (!aFirstIndex.GetInteger(aFirstInd))
   {
     TCollection_ExtendedString aMessageString =
@@ -87,9 +87,13 @@ bool XmlMDataStd_ExtStringListDriver::Paste(const XmlObjMgt_Persistent&       th
   Standard_GUID       aGUID;
   XmlObjMgt_DOMString aGUIDStr = anElement.getAttribute(::AttributeIDString());
   if (aGUIDStr.Type() == XmlObjMgt_DOMString::LDOM_NULL)
+  {
     aGUID = TDataStd_ExtStringList::GetID(); // default case
+  }
   else
+  {
     aGUID = Standard_GUID(static_cast<const char*>(aGUIDStr.GetString())); // user defined case
+  }
 
   anExtStringList->SetID(aGUID);
 
@@ -103,14 +107,14 @@ bool XmlMDataStd_ExtStringListDriver::Paste(const XmlObjMgt_Persistent&       th
     }
 
     LDOM_Node                  aCurNode    = anElement.getFirstChild();
-    LDOM_Element*              aCurElement = (LDOM_Element*)&aCurNode;
+    const LDOM_Element*        aCurElement = static_cast<const LDOM_Element*>(&aCurNode);
     TCollection_ExtendedString aValueStr;
     while (*aCurElement != anElement.getLastChild())
     {
       XmlObjMgt::GetExtendedString(*aCurElement, aValueStr);
       anExtStringList->Append(aValueStr);
       aCurNode    = aCurElement->getNextSibling();
-      aCurElement = (LDOM_Element*)&aCurNode;
+      aCurElement = static_cast<const LDOM_Element*>(&aCurNode);
     }
 
     XmlObjMgt::GetExtendedString(*aCurElement, aValueStr);
@@ -120,10 +124,8 @@ bool XmlMDataStd_ExtStringListDriver::Paste(const XmlObjMgt_Persistent&       th
   return true;
 }
 
-//=======================================================================
-// function : Paste
-// purpose  : transient -> persistent (store)
-//=======================================================================
+//=================================================================================================
+
 void XmlMDataStd_ExtStringListDriver::Paste(const occ::handle<TDF_Attribute>& theSource,
                                             XmlObjMgt_Persistent&             theTarget,
                                             XmlObjMgt_SRelocationTable&) const

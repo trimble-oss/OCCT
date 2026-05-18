@@ -99,7 +99,9 @@ void BinLDrivers_DocumentSection::WriteTOC(Standard_OStream&           theStream
     const size_t aLen     = strlen(&aBuf[sizeof(int)]);
     size_t       aBufSize = (aLen / sizeof(int)) * sizeof(int);
     if (aBufSize < aLen)
+    {
       aBufSize += sizeof(int);
+    }
 
     // Write the buffer: size + string
 #ifdef DO_INVERSE
@@ -136,15 +138,17 @@ void BinLDrivers_DocumentSection::Write(Standard_OStream&           theStream,
                                         const TDocStd_FormatVersion theDocFormatVersion)
 {
   const uint64_t aSectionEnd = (uint64_t)theStream.tellp();
-  theStream.seekp((std::streamsize)myValue[0]);
+  theStream.seekp(static_cast<std::streamsize>(myValue[0]));
   myValue[0] = theOffset;
   myValue[1] = aSectionEnd - theOffset;
   if (theDocFormatVersion <= TDocStd_FormatVersion_VERSION_9)
   {
     // Check the limits for a 4-bytes integer.
     if (myValue[0] > INT_MAX || myValue[1] > INT_MAX)
+    {
       throw Standard_OutOfRange(
         "BinLDrivers_DocumentSection::Write : file size is too big, needs int64.");
+    }
 
     // Old documents stored file position as 4-bytes values.
     int32_t aValInt[3] = {int32_t(myValue[0]), int32_t(myValue[1]), int32_t(myIsPostRead ? 1 : 0)};
@@ -153,7 +157,7 @@ void BinLDrivers_DocumentSection::Write(Standard_OStream&           theStream,
     aValInt[1] = InverseInt(aValInt[1]);
     aValInt[2] = InverseInt(aValInt[2]);
 #endif
-    theStream.write((char*)&aValInt[0], 3 * sizeof(int32_t));
+    theStream.write(reinterpret_cast<char*>(&aValInt[0]), 3 * sizeof(int32_t));
   }
   else
   {
@@ -163,10 +167,10 @@ void BinLDrivers_DocumentSection::Write(Standard_OStream&           theStream,
     aVal[1] = InverseUint64(aVal[1]);
     aVal[2] = InverseUint64(aVal[2]);
 #endif
-    theStream.write((char*)&aVal[0], 3 * sizeof(uint64_t));
+    theStream.write(reinterpret_cast<char*>(&aVal[0]), 3 * sizeof(uint64_t));
   }
 
-  theStream.seekp((std::streamsize)aSectionEnd);
+  theStream.seekp(static_cast<std::streamsize>(aSectionEnd));
 }
 
 //=================================================================================================
@@ -178,24 +182,26 @@ bool BinLDrivers_DocumentSection::ReadTOC(BinLDrivers_DocumentSection& theSectio
   static const int THE_BUF_SIZE = 512;
   char             aBuf[THE_BUF_SIZE];
   int              aNameBufferSize;
-  theStream.read((char*)&aNameBufferSize, sizeof(int));
+  theStream.read(reinterpret_cast<char*>(&aNameBufferSize), sizeof(int));
   if (theStream.eof() || aNameBufferSize > THE_BUF_SIZE)
+  {
     return false;
+  }
 #ifdef DO_INVERSE
   aNameBufferSize = InverseSize(aNameBufferSize);
 #endif
   if (aNameBufferSize > 0)
   {
-    theStream.read((char*)&aBuf[0], (size_t)aNameBufferSize);
+    theStream.read(&aBuf[0], static_cast<size_t>(aNameBufferSize));
     aBuf[aNameBufferSize] = '\0';
-    theSection.myName     = (const char*)&aBuf[0];
+    theSection.myName     = &aBuf[0];
 
     uint64_t aValue[3];
     if (theDocFormatVersion <= TDocStd_FormatVersion_VERSION_9)
     {
       // Old documents stored file position as 4-bytes values.
       int32_t aValInt[3];
-      theStream.read((char*)&aValInt[0], 3 * sizeof(int32_t));
+      theStream.read(reinterpret_cast<char*>(&aValInt[0]), 3 * sizeof(int32_t));
 #ifdef DO_INVERSE
       aValue[0] = InverseInt(aValInt[0]);
       aValue[1] = InverseInt(aValInt[1]);
@@ -208,7 +214,7 @@ bool BinLDrivers_DocumentSection::ReadTOC(BinLDrivers_DocumentSection& theSectio
     }
     else
     {
-      theStream.read((char*)&aValue[0], 3 * sizeof(uint64_t));
+      theStream.read(reinterpret_cast<char*>(&aValue[0]), 3 * sizeof(uint64_t));
 #ifdef DO_INVERSE
       aValue[0] = InverseUint64(aValue[0]);
       aValue[1] = InverseUint64(aValue[1]);

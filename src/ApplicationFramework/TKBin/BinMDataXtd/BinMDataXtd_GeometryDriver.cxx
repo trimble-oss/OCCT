@@ -39,10 +39,8 @@ occ::handle<TDF_Attribute> BinMDataXtd_GeometryDriver::NewEmpty() const
   return (new TDataXtd_Geometry());
 }
 
-//=======================================================================
-// function : Paste
-// purpose  : P -> T
-//=======================================================================
+//=================================================================================================
+
 bool BinMDataXtd_GeometryDriver::Paste(const BinObjMgt_Persistent&       theSource,
                                        const occ::handle<TDF_Attribute>& theTarget,
                                        BinObjMgt_RRelocationTable&) const
@@ -52,15 +50,15 @@ bool BinMDataXtd_GeometryDriver::Paste(const BinObjMgt_Persistent&       theSour
   int  aType;
   bool ok = theSource >> aType;
   if (ok)
+  {
     aT->SetType((TDataXtd_GeometryEnum)aType);
+  }
 
   return ok;
 }
 
-//=======================================================================
-// function : Paste
-// purpose  : T -> P
-//=======================================================================
+//=================================================================================================
+
 void BinMDataXtd_GeometryDriver::Paste(
   const occ::handle<TDF_Attribute>& theSource,
   BinObjMgt_Persistent&             theTarget,

@@ -19,7 +19,7 @@
 #include <TopOpeBRepDS_DataStructure.hxx>
 
 #define MYDS (*((TopOpeBRepDS_DataStructure*)myDS))
-static TopOpeBRepDS_Curve* CEX_PEMPTY = nullptr;
+static thread_local TopOpeBRepDS_Curve* CEX_PEMPTY = nullptr;
 
 //=================================================================================================
 
@@ -67,9 +67,13 @@ void TopOpeBRepDS_CurveExplorer::Find()
       myFound = IsCurve(myIndex);
     }
     if (myFound)
+    {
       break;
+    }
     else
+    {
       myIndex++;
+    }
   }
 }
 
@@ -120,7 +124,9 @@ bool TopOpeBRepDS_CurveExplorer::IsCurveKeep(const int I) const
 {
   bool b = MYDS.myCurves.IsBound(I);
   if (b)
+  {
     b = MYDS.Curve(I).Keep();
+  }
   return b;
 }
 
@@ -150,7 +156,9 @@ int TopOpeBRepDS_CurveExplorer::NbCurve()
   Find();
   int n = 0;
   for (; More(); Next())
+  {
     n++;
+  }
   return n;
 }
 

@@ -23,8 +23,8 @@ IMPLEMENT_STANDARD_RTTIEXT(Units_ShiftedToken, Units_Token)
 
 //=================================================================================================
 
-Units_ShiftedToken::Units_ShiftedToken(const char*                          aword,
-                                       const char*                          amean,
+Units_ShiftedToken::Units_ShiftedToken(const char* const                    aword,
+                                       const char* const                    amean,
                                        const double                         avalue,
                                        const double                         amove,
                                        const occ::handle<Units_Dimensions>& adimensions)
@@ -69,6 +69,8 @@ void Units_ShiftedToken::Dump(const int ashift, const int alevel) const
 {
   Units_Token::Dump(ashift, alevel);
   for (int i = 0; i < ashift; i++)
+  {
     std::cout << "  ";
-  std::cout << "  move  : " << themove << std::endl;
+  }
+  std::cout << "  move  : " << themove << '\n';
 }

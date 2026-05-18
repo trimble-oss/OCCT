@@ -107,7 +107,9 @@ void TDF_Attribute::Forget(const int aTransaction)
   myFlags            = (myFlags | TDF_AttributeForgottenMsk);
 #ifdef TDF_DATA_COMMIT_OPTIMIZED
   if (myLabelNode)
+  {
     myLabelNode->AttributesModified(true);
+  }
 #endif
   Validate(false);
 }
@@ -127,11 +129,17 @@ void TDF_Attribute::Resume()
 int TDF_Attribute::UntilTransaction() const
 {
   if (IsForgotten())
+  {
     return myTransaction;
+  }
   else if (IsBackuped())
+  {
     return myNext->myTransaction - 1;
+  }
   else if (IsValid())
+  {
     return myLabelNode->Data()->Transaction();
+  }
   throw Standard_DomainError("The attribute structure is wrong.");
 }
 
@@ -151,10 +159,7 @@ void TDF_Attribute::BeforeForget() {}
 
 void TDF_Attribute::AfterResume() {}
 
-//=======================================================================
-// function : BeforeUndo
-// purpose  : Before application of a TDF_Delta.
-//=======================================================================
+//=================================================================================================
 
 bool TDF_Attribute::BeforeUndo(const occ::handle<TDF_AttributeDelta>& /*anAttDelta*/,
                                const bool /*forceIt*/)
@@ -162,10 +167,7 @@ bool TDF_Attribute::BeforeUndo(const occ::handle<TDF_AttributeDelta>& /*anAttDel
   return true;
 }
 
-//=======================================================================
-// function : AfterUndo
-// purpose  : After application of a TDF_Delta.
-//=======================================================================
+//=================================================================================================
 
 bool TDF_Attribute::AfterUndo(const occ::handle<TDF_AttributeDelta>& /*anAttDelta*/,
                               const bool /*forceIt*/)
@@ -184,10 +186,7 @@ bool TDF_Attribute::AfterRetrieval(const bool /*forceIt*/)
 
 void TDF_Attribute::BeforeCommitTransaction() {}
 
-//=======================================================================
-// function : Backup
-// purpose  : Backups the attribute.
-//=======================================================================
+//=================================================================================================
 
 void TDF_Attribute::Backup()
 {
@@ -225,10 +224,7 @@ void TDF_Attribute::Backup()
   }
 }
 
-//=======================================================================
-// function : BackupCopy
-// purpose  : Standard implementation of BackupCopy.
-//=======================================================================
+//=================================================================================================
 
 occ::handle<TDF_Attribute> TDF_Attribute::BackupCopy() const
 {
@@ -250,13 +246,12 @@ void TDF_Attribute::RemoveBackup()
   myBackup->myNext.Nullify();      // Absolutely necessary!
   myBackup = myBackup->myBackup;
   if (!myBackup.IsNull())
+  {
     myBackup->myNext = this; // New back reference.
+  }
 }
 
-//=======================================================================
-// function : References
-// purpose  : Adds the referenced attributes or labels.
-//=======================================================================
+//=================================================================================================
 
 void TDF_Attribute::References(const occ::handle<TDF_DataSet>& /*aDataSet*/) const {}
 
@@ -304,26 +299,29 @@ occ::handle<TDF_DeltaOnRemoval> TDF_Attribute::DeltaOnRemoval() const
   return new TDF_DefaultDeltaOnRemoval(this);
 } // myBackup
 
-//=======================================================================
-// function : Dump
-// purpose  : This method is equivalent to operator <<
-//=======================================================================
+//=================================================================================================
 
 Standard_OStream& TDF_Attribute::Dump(Standard_OStream& anOS) const
 {
   anOS << "\t" << DynamicType()->Name() << "\tTrans. " << myTransaction << ";";
   if (IsValid())
+  {
     anOS << " Valid";
+  }
   if (IsBackuped())
+  {
     anOS << " Backuped";
+  }
   if (IsForgotten())
+  {
     anOS << " Forgotten";
+  }
   char                toto[45];
   Standard_PCharacter pStr;
   //
   pStr = toto;
   ID().ToCString(pStr);
-  anOS << ";\tID = " << toto << std::endl;
+  anOS << ";\tID = " << toto << '\n';
   return anOS;
 }
 

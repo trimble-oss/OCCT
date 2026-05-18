@@ -36,11 +36,7 @@ GeomConvert_BSplineCurveToBezierCurve::GeomConvert_BSplineCurveToBezierCurve(
                                 myCurve->Degree());
 }
 
-//=======================================================================
-// function : GeomConvert_BSplineCurveToBezierCurve
-// purpose  :
-// 01/12/1997 PMN: On elimine d'eventuelles micro-courbe PRO11516
-//=======================================================================Real I
+//=================================================================================================
 
 GeomConvert_BSplineCurveToBezierCurve::GeomConvert_BSplineCurveToBezierCurve(
   const occ::handle<Geom_BSplineCurve>& BasisCurve,
@@ -49,7 +45,9 @@ GeomConvert_BSplineCurveToBezierCurve::GeomConvert_BSplineCurveToBezierCurve(
   const double                          ParametricTolerance)
 {
   if (U2 - U1 < ParametricTolerance)
+  {
     throw Standard_DomainError("GeomConvert_BSplineCurveToBezierSurface");
+  }
 
   double Uf = U1, Ul = U2;
   double PTol = ParametricTolerance / 2;
@@ -59,16 +57,20 @@ GeomConvert_BSplineCurveToBezierCurve::GeomConvert_BSplineCurveToBezierCurve(
 
   myCurve->LocateU(U1, PTol, I1, I2);
   if (I1 == I2)
-  { // On est sur le noeud
+  { // We are on the knot
     if (myCurve->Knot(I1) > U1)
+    {
       Uf = myCurve->Knot(I1);
+    }
   }
 
   myCurve->LocateU(U2, PTol, I1, I2);
   if (I1 == I2)
-  { // On est sur le noeud
+  { // We are on the knot
     if (myCurve->Knot(I1) < U2)
+    {
       Ul = myCurve->Knot(I1);
+    }
   }
 
   myCurve->Segment(Uf, Ul);
@@ -129,7 +131,9 @@ void GeomConvert_BSplineCurveToBezierCurve::Knots(NCollection_Array1<double>& TK
 {
   int ii, kk;
   for (ii = 1, kk = TKnots.Lower(); ii <= myCurve->NbKnots(); ii++, kk++)
+  {
     TKnots(kk) = myCurve->Knot(ii);
+  }
 }
 
 //=================================================================================================

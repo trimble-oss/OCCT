@@ -28,11 +28,13 @@
 #include <Units_ShiftedToken.hxx>
 #include <Standard_NoSuchObject.hxx>
 #include <TCollection_HAsciiString.hxx>
+#include <Message.hxx>
 #include <NCollection_Sequence.hxx>
 #include <NCollection_HSequence.hxx>
 #include <Units_Operators.hxx>
 
 #include <cstdlib>
+#include <mutex>
 
 static occ::handle<Units_Dimensions>      nulldimensions;
 static occ::handle<Units_UnitsLexicon>    lexiconunits;
@@ -46,17 +48,21 @@ static TCollection_AsciiString       lastunit;
 static occ::handle<Units_Dimensions> lastdimension;
 static double                        lastvalue, lastmove;
 
+static std::recursive_mutex THE_UNITS_MUTEX;
+
 //=================================================================================================
 
-void Units::UnitsFile(const char* afile)
+void Units::UnitsFile(const char* const afile)
 {
+  std::lock_guard<std::recursive_mutex> aLock(THE_UNITS_MUTEX);
   unitsfile = TCollection_AsciiString(afile);
 }
 
 //=================================================================================================
 
-void Units::LexiconFile(const char* afile)
+void Units::LexiconFile(const char* const afile)
 {
+  std::lock_guard<std::recursive_mutex> aLock(THE_UNITS_MUTEX);
   lexiconfile = TCollection_AsciiString(afile);
 }
 
@@ -64,16 +70,14 @@ void Units::LexiconFile(const char* afile)
 
 occ::handle<Units_UnitsDictionary> Units::DictionaryOfUnits(const bool amode)
 {
+  std::lock_guard<std::recursive_mutex> aLock(THE_UNITS_MUTEX);
   if (unitsdictionary.IsNull())
   {
-    //      std::cout<<"Allocation du dictionnaire"<<std::endl;
     unitsdictionary = new Units_UnitsDictionary();
-    //      std::cout<<"Creation du dictionnaire"<<std::endl;
     unitsdictionary->Creates();
   }
   else if (amode)
   {
-    //      std::cout<<"Creation du dictionnaire"<<std::endl;
     unitsdictionary->Creates();
   }
   return unitsdictionary;
@@ -81,8 +85,9 @@ occ::handle<Units_UnitsDictionary> Units::DictionaryOfUnits(const bool amode)
 
 //=================================================================================================
 
-occ::handle<Units_Quantity> Units::Quantity(const char* aquantity)
+occ::handle<Units_Quantity> Units::Quantity(const char* const aquantity)
 {
+  std::lock_guard<std::recursive_mutex>                           aLock(THE_UNITS_MUTEX);
   int                                                             index;
   occ::handle<Units_Quantity>                                     quantity;
   occ::handle<Units_Quantity>                                     nullquantity;
@@ -93,13 +98,10 @@ occ::handle<Units_Quantity> Units::Quantity(const char* aquantity)
   {
     quantity = quantitiessequence->Value(index);
     if (quantity->Name() == aquantity)
+    {
       return quantity;
+    }
   }
-
-#ifdef OCCT_DEBUG
-  std::cout << "Warning: BAD Quantity = Units::Quantity(quantity('" << aquantity << "'))"
-            << std::endl;
-#endif
   return nullquantity;
 }
 
@@ -107,8 +109,9 @@ occ::handle<Units_Quantity> Units::Quantity(const char* aquantity)
 
 static TCollection_AsciiString symbol_string, quantity_string;
 
-const char* Units::FirstQuantity(const char* aunit)
+const char* Units::FirstQuantity(const char* const aunit)
 {
+  std::lock_guard<std::recursive_mutex>                                     aLock(THE_UNITS_MUTEX);
   int                                                                       i, j, k;
   occ::handle<Units_Quantity>                                               thequantity;
   occ::handle<NCollection_HSequence<occ::handle<Units_Quantity>>>           quantitiessequence;
@@ -118,7 +121,9 @@ const char* Units::FirstQuantity(const char* aunit)
   TCollection_AsciiString                                                   symbol(aunit);
 
   if (symbol == symbol_string)
+  {
     return quantity_string.ToCString();
+  }
 
   quantitiessequence = Units::DictionaryOfUnits()->Sequence();
   for (i = 1; i <= quantitiessequence->Length(); i++)
@@ -140,10 +145,6 @@ const char* Units::FirstQuantity(const char* aunit)
       }
     }
   }
-
-#ifdef OCCT_DEBUG
-  std::cout << "Warning: BAD Quantity = Units::Quantity(unit('" << symbol << "'))" << std::endl;
-#endif
   return nullptr;
 }
 
@@ -151,11 +152,10 @@ const char* Units::FirstQuantity(const char* aunit)
 
 occ::handle<Units_Lexicon> Units::LexiconUnits(const bool amode)
 {
+  std::lock_guard<std::recursive_mutex> aLock(THE_UNITS_MUTEX);
   if (lexiconunits.IsNull())
   {
-    //      std::cout<<"Allocation du lexique d'unites"<<std::endl;
     lexiconunits = new Units_UnitsLexicon();
-    //      std::cout<<"Creation du lexique d'unites"<<std::endl;
     lexiconunits->Creates(amode);
   }
   return lexiconunits;
@@ -165,11 +165,10 @@ occ::handle<Units_Lexicon> Units::LexiconUnits(const bool amode)
 
 occ::handle<Units_Lexicon> Units::LexiconFormula()
 {
+  std::lock_guard<std::recursive_mutex> aLock(THE_UNITS_MUTEX);
   if (lexiconformula.IsNull())
   {
-    //      std::cout<<"Allocation du lexique d'expression"<<std::endl;
     lexiconformula = new Units_Lexicon();
-    //      std::cout<<"Creation du lexique d'expression"<<std::endl;
     lexiconformula->Creates();
   }
   return lexiconformula;
@@ -179,41 +178,53 @@ occ::handle<Units_Lexicon> Units::LexiconFormula()
 
 occ::handle<Units_Dimensions> Units::NullDimensions()
 {
+  std::lock_guard<std::recursive_mutex> aLock(THE_UNITS_MUTEX);
   if (nulldimensions.IsNull())
+  {
     nulldimensions = new Units_Dimensions(0., 0., 0., 0., 0., 0., 0., 0., 0.);
+  }
   return nulldimensions;
 }
 
 //=================================================================================================
 
-double Units::Convert(const double avalue, const char* afirstunit, const char* asecondunit)
+double Units::Convert(const double      avalue,
+                      const char* const afirstunit,
+                      const char* const asecondunit)
 {
-  Units_Measurement measurement(avalue, afirstunit);
+  std::lock_guard<std::recursive_mutex> aLock(THE_UNITS_MUTEX);
+  Units_Measurement                     measurement(avalue, afirstunit);
+  if (!measurement.HasToken())
+  {
+    // No token means that the unit is not correct, so we can not convert. We return the value
+    // without conversion to preserve the original behavior, and print a warning.
+    Message::SendWarning() << "Units::Convert: can not convert - incorrect unit '" << afirstunit
+                           << "' => result is not correct";
+    return avalue;
+  }
   measurement.Convert(asecondunit);
   return measurement.Measurement();
 }
 
 //=================================================================================================
 
-double Units::ToSI(const double aData, const char* aUnit)
+double Units::ToSI(const double aData, const char* const aUnit)
 {
-
-  occ::handle<Units_Dimensions> aDimBid;
+  std::lock_guard<std::recursive_mutex> aLock(THE_UNITS_MUTEX);
+  occ::handle<Units_Dimensions>         aDimBid;
   return Units::ToSI(aData, aUnit, aDimBid);
 }
 
 //=================================================================================================
 
-double Units::ToSI(const double aData, const char* aUnit, occ::handle<Units_Dimensions>& dim)
+double Units::ToSI(const double aData, const char* const aUnit, occ::handle<Units_Dimensions>& dim)
 {
+  std::lock_guard<std::recursive_mutex> aLock(THE_UNITS_MUTEX);
   if (lastunit != aUnit)
   {
     Units_UnitSentence unitsentence(aUnit);
     if (!unitsentence.IsDone())
     {
-#ifdef OCCT_DEBUG
-      std::cout << "can not convert - incorrect unit => return 0.0" << std::endl;
-#endif
       return 0.0;
     }
     occ::handle<Units_Token> token = unitsentence.Evaluate();
@@ -233,24 +244,25 @@ double Units::ToSI(const double aData, const char* aUnit, occ::handle<Units_Dime
 
 //=================================================================================================
 
-double Units::FromSI(const double aData, const char* aUnit)
+double Units::FromSI(const double aData, const char* const aUnit)
 {
-  occ::handle<Units_Dimensions> aDimBid;
+  std::lock_guard<std::recursive_mutex> aLock(THE_UNITS_MUTEX);
+  occ::handle<Units_Dimensions>         aDimBid;
   return Units::FromSI(aData, aUnit, aDimBid);
 }
 
 //=================================================================================================
 
-double Units::FromSI(const double aData, const char* aUnit, occ::handle<Units_Dimensions>& dim)
+double Units::FromSI(const double                   aData,
+                     const char* const              aUnit,
+                     occ::handle<Units_Dimensions>& dim)
 {
+  std::lock_guard<std::recursive_mutex> aLock(THE_UNITS_MUTEX);
   if (lastunit != aUnit)
   {
     Units_UnitSentence unitsentence(aUnit);
     if (!unitsentence.IsDone())
     {
-#ifdef OCCT_DEBUG
-      std::cout << "Warning: can not convert - incorrect unit => return 0.0" << std::endl;
-#endif
       return 0.0;
     }
     occ::handle<Units_Token> token = unitsentence.Evaluate();
@@ -270,8 +282,9 @@ double Units::FromSI(const double aData, const char* aUnit, occ::handle<Units_Di
 
 //=================================================================================================
 
-occ::handle<Units_Dimensions> Units::Dimensions(const char* aType)
+occ::handle<Units_Dimensions> Units::Dimensions(const char* const aType)
 {
+  std::lock_guard<std::recursive_mutex> aLock(THE_UNITS_MUTEX);
   if (aType)
   {
     occ::handle<Units_UnitsDictionary> dico = Units::DictionaryOfUnits(false);

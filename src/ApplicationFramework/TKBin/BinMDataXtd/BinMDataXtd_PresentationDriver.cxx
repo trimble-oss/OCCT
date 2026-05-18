@@ -37,10 +37,7 @@ occ::handle<TDF_Attribute> BinMDataXtd_PresentationDriver::NewEmpty() const
   return new TDataXtd_Presentation();
 }
 
-//=======================================================================
-// function : Paste
-// purpose  : persistent -> transient (retrieve)
-//=======================================================================
+//=================================================================================================
 
 bool BinMDataXtd_PresentationDriver::Paste(const BinObjMgt_Persistent&       theSource,
                                            const occ::handle<TDF_Attribute>& theTarget,
@@ -53,20 +50,26 @@ bool BinMDataXtd_PresentationDriver::Paste(const BinObjMgt_Persistent&       the
   int aValue;
   ok = theSource >> aValue;
   if (!ok)
+  {
     return ok;
+  }
   anAttribute->SetDisplayed(aValue != 0);
 
   // GUID
   Standard_GUID aGUID;
   ok = theSource >> aGUID;
   if (!ok)
+  {
     return ok;
+  }
   anAttribute->SetDriverGUID(aGUID);
 
   // Color
   ok = theSource >> aValue;
   if (!ok)
+  {
     return ok;
+  }
   if (aValue != -1)
   {
     Quantity_NameOfColor aNameOfColor = TDataXtd_Presentation::getColorNameFromOldEnum(aValue);
@@ -83,47 +86,68 @@ bool BinMDataXtd_PresentationDriver::Paste(const BinObjMgt_Persistent&       the
   // Material
   ok = theSource >> aValue;
   if (!ok)
+  {
     return ok;
+  }
   if (aValue != -1)
+  {
     anAttribute->SetMaterialIndex(aValue);
+  }
   else
+  {
     anAttribute->UnsetMaterial();
+  }
 
   // Transparency
   double aRValue;
   ok = theSource >> aRValue;
   if (!ok)
+  {
     return ok;
+  }
   if (aRValue != -1.)
+  {
     anAttribute->SetTransparency(aRValue);
+  }
   else
+  {
     anAttribute->UnsetTransparency();
+  }
 
   // Width
   ok = theSource >> aRValue;
   if (!ok)
+  {
     return ok;
+  }
   if (aRValue != -1.)
+  {
     anAttribute->SetWidth(aRValue);
+  }
   else
+  {
     anAttribute->UnsetWidth();
+  }
 
   // Mode
   ok = theSource >> aValue;
   if (!ok)
+  {
     return ok;
+  }
   if (aValue != -1)
+  {
     anAttribute->SetMode(aValue);
+  }
   else
+  {
     anAttribute->UnsetMode();
+  }
 
   return true;
 }
 
-//=======================================================================
-// function : Paste
-// purpose  : transient -> persistent (store)
-//=======================================================================
+//=================================================================================================
 
 void BinMDataXtd_PresentationDriver::Paste(
   const occ::handle<TDF_Attribute>& theSource,
@@ -151,25 +175,41 @@ void BinMDataXtd_PresentationDriver::Paste(
 
   // Material
   if (anAttribute->HasOwnMaterial())
+  {
     theTarget.PutInteger(anAttribute->MaterialIndex());
+  }
   else
+  {
     theTarget.PutInteger(-1);
+  }
 
   // Transparency
   if (anAttribute->HasOwnTransparency())
+  {
     theTarget.PutReal(anAttribute->Transparency());
+  }
   else
+  {
     theTarget.PutReal(-1.);
+  }
 
   // Width
   if (anAttribute->HasOwnWidth())
+  {
     theTarget.PutReal(anAttribute->Width());
+  }
   else
+  {
     theTarget.PutReal(-1.);
+  }
 
   // Mode
   if (anAttribute->HasOwnMode())
+  {
     theTarget.PutInteger(anAttribute->Mode());
+  }
   else
+  {
     theTarget.PutInteger(-1);
+  }
 }

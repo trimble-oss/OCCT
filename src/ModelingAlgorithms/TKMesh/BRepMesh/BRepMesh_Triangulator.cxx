@@ -73,7 +73,7 @@ occ::handle<Poly_Triangulation> BRepMesh_Triangulator::ToPolyTriangulation(
 //=================================================================================================
 
 BRepMesh_Triangulator::BRepMesh_Triangulator(
-  const NCollection_Vector<gp_XYZ>&                  theXYZs,
+  const NCollection_DynamicArray<gp_XYZ>&            theXYZs,
   const NCollection_List<NCollection_Sequence<int>>& theWires,
   const gp_Dir&                                      theNorm)
     : myXYZs(theXYZs),
@@ -166,10 +166,8 @@ void BRepMesh_Triangulator::addTriange34(const NCollection_Sequence<int>& theW,
   }
 }
 
-//=======================================================================
-// function : checkCondition
-// purpose  : auxiliary for addTriange34
-//=======================================================================
+//=================================================================================================
+
 bool BRepMesh_Triangulator::checkCondition(const int (&theNodes)[4],
                                            const NCollection_Sequence<int>& theW)
 {

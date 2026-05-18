@@ -37,17 +37,11 @@ static occ::handle<TopOpeBRepDS_HDataStructure>* Ghds;
 
 void FDSSDM_Close()
 {
-  if (Gps1)
-  {
-    delete Gps1;
-    Gps1 = nullptr;
-  }
+  delete Gps1;
+  Gps1 = nullptr;
   //
-  if (Gps2)
-  {
-    delete Gps2;
-    Gps2 = nullptr;
-  }
+  delete Gps2;
+  Gps2 = nullptr;
 }
 
 // modified by NIZNHY-PKV Sun Dec 15 17:56:02 2002 t
@@ -86,12 +80,18 @@ Standard_EXPORT void FDSSDM_prepare(const occ::handle<TopOpeBRepDS_HDataStructur
     const TopoDS_Shape& s   = HDS->Shape(i);
     bool                hsd = HDS->HasSameDomain(s);
     if (!hsd)
+    {
       continue;
+    }
     NCollection_List<TopoDS_Shape> thelist, thelist1;
     if (!Gps1->Contains(s))
+    {
       Gps1->Add(s, thelist);
+    }
     if (!Gps2->Contains(s))
+    {
       Gps2->Add(s, thelist1);
+    }
     NCollection_List<TopoDS_Shape>& LS1 = Gps1->ChangeFromKey(s);
     NCollection_List<TopoDS_Shape>& LS2 = Gps2->ChangeFromKey(s);
     FDSSDM_makes1s2(s, LS1, LS2);
@@ -174,7 +174,9 @@ Standard_EXPORT void FDSSDM_s1s2makesordor(const NCollection_List<TopoDS_Shape>&
   // modified by NIZNHY-PKV Sun Dec 15 17:59:43 2002 t
   NCollection_List<TopoDS_Shape>::Iterator it(LS1);
   if (!it.More())
+  {
     return;
+  }
   const TopoDS_Shape& sref = it.Value();
   HDS->SameDomainReference(sref);
   TopOpeBRepDS_Config oref = HDS->SameDomainOrientation(sref);
@@ -185,9 +187,13 @@ Standard_EXPORT void FDSSDM_s1s2makesordor(const NCollection_List<TopoDS_Shape>&
     TopOpeBRepDS_Config o = HDS->SameDomainOrientation(s);
     //  HDS->Shape(s);
     if (o == oref && !FDSSDM_contains(s, LSO))
+    {
       LSO.Append(s);
+    }
     else if (o != oref && !FDSSDM_contains(s, LDO))
+    {
       LDO.Append(s);
+    }
   }
 
   for (it.Initialize(LS2); it.More(); it.Next())
@@ -196,9 +202,13 @@ Standard_EXPORT void FDSSDM_s1s2makesordor(const NCollection_List<TopoDS_Shape>&
     TopOpeBRepDS_Config o = HDS->SameDomainOrientation(s);
     //             HDS->Shape(s);
     if (o == oref && !FDSSDM_contains(s, LSO))
+    {
       LSO.Append(s);
+    }
     else if (o != oref && !FDSSDM_contains(s, LDO))
+    {
       LDO.Append(s);
+    }
   }
 } // s1s2makesordor
 
@@ -247,7 +257,9 @@ Standard_EXPORT bool FDSSDM_contains(const TopoDS_Shape& S, const NCollection_Li
     const TopoDS_Shape& SL     = it.Value();
     bool                issame = SL.IsSame(S);
     if (issame)
+    {
       return true;
+    }
   }
   return false;
 } // contains

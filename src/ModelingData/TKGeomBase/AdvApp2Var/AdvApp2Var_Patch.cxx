@@ -20,7 +20,7 @@
 //                              CritValue, SetCritValue
 // Modified:	Tue May 19 10:22:44 1998
 //   by:	Joelle CHAUVET / Jean-Marc LACHAUME
-//		Initialisation de myCritValue pour OSF
+//		Initialization of myCritValue for OSF
 
 #include <AdvApp2Var_ApproxF2var.hxx>
 #include <AdvApp2Var_Context.hxx>
@@ -113,12 +113,16 @@ void AdvApp2Var_Patch::Discretise(const AdvApp2Var_Context&           Conditions
   UROOT  = (double*)&HUROOT->ChangeArray1()(HUROOT->Lower());
   NBPNTU = (Conditions.URoots())->Length();
   if (myOrdInU > -1)
+  {
     NBPNTU -= 2;
+  }
   double* VROOT;
   VROOT  = (double*)&HVROOT->ChangeArray1()(HVROOT->Lower());
   NBPNTV = (Conditions.VRoots())->Length();
   if (myOrdInV > -1)
+  {
     NBPNTV -= 2;
+  }
 
   // data stored in the Framework Constraints cad Nodes and Isos
   // C1, C2, C3 and C4 are dimensionnes in FORTRAN with (NDIMEN,IORDRU+2,IORDRV+2)
@@ -771,10 +775,14 @@ void AdvApp2Var_Patch::MakeApprox(const AdvApp2Var_Context&   Conditions,
   NDIMSE = 3;
   NBPNTU = (Conditions.URoots())->Length();
   if (myOrdInU > -1)
+  {
     NBPNTU -= 2;
+  }
   NBPNTV = (Conditions.VRoots())->Length();
   if (myOrdInV > -1)
+  {
     NBPNTV -= 2;
+  }
   NCFLMU = Conditions.ULimit();
   NCFLMV = Conditions.VLimit();
   NDegU  = NCFLMU - 1;
@@ -844,7 +852,7 @@ void AdvApp2Var_Patch::MakeApprox(const AdvApp2Var_Context&   Conditions,
   int iun = 1, itrois = 3;
   NCOEFU = 0;
   NCOEFV = 0;
-  AdvApp2Var_ApproxF2var::mma2ce1_((integer*)&NumDec,
+  AdvApp2Var_ApproxF2var::mma2ce1_((int*)&NumDec,
                                    &NDIMEN,
                                    &NBSESP,
                                    &NDIMSE,
@@ -965,10 +973,7 @@ void AdvApp2Var_Patch::ChangeDomain(const double a, const double b, const double
   myV1 = d;
 }
 
-//============================================================================
-// function : ResetApprox
-// purpose  : allows removing a result when it is necessary to cut
-//============================================================================
+//=================================================================================================
 
 void AdvApp2Var_Patch::ResetApprox()
 {
@@ -976,15 +981,14 @@ void AdvApp2Var_Patch::ResetApprox()
   myHasResult  = false;
 }
 
-//============================================================================
-// function : OverwriteApprox
-// purpose  : allows preserving a result even if the precision is not satisfactory
-//============================================================================
+//=================================================================================================
 
 void AdvApp2Var_Patch::OverwriteApprox()
 {
   if (myHasResult)
+  {
     myApprIsDone = true;
+  }
 }
 
 //=================================================================================================
@@ -1029,22 +1033,14 @@ int AdvApp2Var_Patch::VOrder() const
   return myOrdInV;
 }
 
-//============================================================================
-// function : CutSense without Critere
-// purpose  : 0 : OK; 1 : required cut by U;
-//           2 : required cut by V; 3 : required cut by U and by V
-//============================================================================
+//=================================================================================================
 
 int AdvApp2Var_Patch::CutSense() const
 {
   return myCutSense;
 }
 
-//============================================================================
-// function : CutSense with critere
-// purpose  : 0 : OK; 1 : required cut by U;
-//           2 : required cut by V; 3 : required cut by U and by V
-//============================================================================
+//=================================================================================================
 
 int AdvApp2Var_Patch::CutSense(const AdvApp2Var_Criterion& Crit, const int NumDec) const
 {
@@ -1080,53 +1076,42 @@ int AdvApp2Var_Patch::NbCoeffInV() const
   return myNbCoeffInV;
 }
 
-//============================================================================
-// function : ChangeNbCoeff
-// purpose  : allows increasing the nb of coeff (cf Network)
-//============================================================================
+//=================================================================================================
 
 void AdvApp2Var_Patch::ChangeNbCoeff(const int NbCoeffU, const int NbCoeffV)
 {
   if (myNbCoeffInU < NbCoeffU)
+  {
     myNbCoeffInU = NbCoeffU;
+  }
   if (myNbCoeffInV < NbCoeffV)
+  {
     myNbCoeffInV = NbCoeffV;
+  }
 }
 
-//============================================================================
-// function : MaxErrors
-// purpose  : returns max errors of polynomial approximation
-//============================================================================
+//=================================================================================================
 
 occ::handle<NCollection_HArray1<double>> AdvApp2Var_Patch::MaxErrors() const
 {
   return myMaxErrors;
 }
 
-//============================================================================
-// function : AverageErrors
-// purpose  : returns average errors of polynomial approximation
-//============================================================================
+//=================================================================================================
 
 occ::handle<NCollection_HArray1<double>> AdvApp2Var_Patch::AverageErrors() const
 {
   return myMoyErrors;
 }
 
-//============================================================================
-// function : IsoErrors
-// purpose  : returns max errors on borders of polynomial approximation
-//============================================================================
+//=================================================================================================
 
 occ::handle<NCollection_HArray2<double>> AdvApp2Var_Patch::IsoErrors() const
 {
   return myIsoErrors;
 }
 
-//============================================================================
-// function : Poles
-// purpose  : returns poles of the polynomial approximation
-//============================================================================
+//=================================================================================================
 
 occ::handle<NCollection_HArray2<gp_Pnt>> AdvApp2Var_Patch::Poles(
   const int                 SSPIndex,
@@ -1157,13 +1142,10 @@ occ::handle<NCollection_HArray2<gp_Pnt>> AdvApp2Var_Patch::Poles(
                                      Intervalle,
                                      Intervalle);
 
-  return Conv.Poles();
+  return new NCollection_HArray2<gp_Pnt>(Conv.Poles());
 }
 
-//============================================================================
-// function : Coefficients
-// purpose  : returns coeff. of the equation of polynomial approximation
-//============================================================================
+//=================================================================================================
 
 occ::handle<NCollection_HArray1<double>> AdvApp2Var_Patch::Coefficients(
   const int                 SSPIndex,

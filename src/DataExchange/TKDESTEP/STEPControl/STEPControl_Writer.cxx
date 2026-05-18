@@ -71,7 +71,9 @@ occ::handle<StepData_StepModel> STEPControl_Writer::Model(const bool newone)
 {
   DeclareAndCast(StepData_StepModel, model, thesession->Model());
   if (newone || model.IsNull())
+  {
     model = GetCasted(StepData_StepModel, thesession->NewModel());
+  }
   return model;
 }
 
@@ -81,7 +83,9 @@ void STEPControl_Writer::SetTolerance(const double Tol)
 {
   DeclareAndCast(STEPControl_ActorWrite, act, WS()->NormAdaptor()->ActorWrite());
   if (!act.IsNull())
+  {
     act->SetTolerance(Tol);
+  }
 }
 
 //=================================================================================================
@@ -135,7 +139,9 @@ IFSelect_ReturnStatus STEPControl_Writer::Transfer(const TopoDS_Shape&          
       break;
   }
   if (mws < 0)
+  {
     return IFSelect_RetError; // cas non reconnu
+  }
   thesession->TransferWriter()->SetTransferMode(mws);
   if (!Model()->IsInitializedUnit())
   {
@@ -149,13 +155,12 @@ IFSelect_ReturnStatus STEPControl_Writer::Transfer(const TopoDS_Shape&          
     occ::down_cast<STEPControl_ActorWrite>(WS()->NormAdaptor()->ActorWrite());
   ActWrite->SetGroupMode(
     occ::down_cast<StepData_StepModel>(thesession->Model())->InternalParameters.WriteAssembly);
-  InitializeMissingParameters();
   return thesession->TransferWriteShape(sh, compgraph, theProgress);
 }
 
 //=================================================================================================
 
-IFSelect_ReturnStatus STEPControl_Writer::Write(const char* theFileName)
+IFSelect_ReturnStatus STEPControl_Writer::Write(const char* const theFileName)
 {
   occ::handle<StepData_StepModel> aModel = Model();
   if (aModel.IsNull())
@@ -223,6 +228,17 @@ void STEPControl_Writer::SetShapeFixParameters(XSAlgo_ShapeProcessor::ParameterM
   if (occ::handle<Transfer_ActorOfFinderProcess> anActor = GetActor())
   {
     anActor->SetShapeFixParameters(std::move(theParameters));
+  }
+}
+
+//=============================================================================
+
+void STEPControl_Writer::SetShapeFixParameters(const DE_ShapeFixParameters& theParameters)
+{
+  XSAlgo_ShapeProcessor::ParameterMap anAdditionalParameters;
+  if (occ::handle<Transfer_ActorOfFinderProcess> anActor = GetActor())
+  {
+    anActor->SetShapeFixParameters(theParameters, anAdditionalParameters);
   }
 }
 

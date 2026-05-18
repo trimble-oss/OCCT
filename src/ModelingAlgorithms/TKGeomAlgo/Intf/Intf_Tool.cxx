@@ -39,6 +39,7 @@ Intf_Tool::Intf_Tool()
     : nbSeg(0)
 {
   memset(beginOnCurve, 0, sizeof(beginOnCurve));
+  memset(endOnCurve, 0, sizeof(endOnCurve));
   memset(bord, 0, sizeof(bord));
   memset(xint, 0, sizeof(xint));
   memset(yint, 0, sizeof(yint));
@@ -62,7 +63,9 @@ void Intf_Tool::Lin2dBox(const gp_Lin2d& L2d, const Bnd_Box2d& domain, Bnd_Box2d
     return;
   }
   else if (domain.IsVoid())
+  {
     return;
+  }
 
   double xmin, xmax, ymin, ymax;
   double Xmin = 0, Xmax = 0, Ymin = 0, Ymax = 0;
@@ -76,31 +79,49 @@ void Intf_Tool::Lin2dBox(const gp_Lin2d& L2d, const Bnd_Box2d& domain, Bnd_Box2d
   if (L2d.Direction().XY().X() > 0.)
   {
     if (domain.IsOpenXmin())
+    {
       parmin = -Precision::Infinite();
+    }
     else
+    {
       parmin = (xmin - L2d.Location().XY().X()) / L2d.Direction().XY().X();
+    }
     if (domain.IsOpenXmax())
+    {
       parmax = Precision::Infinite();
+    }
     else
+    {
       parmax = (xmax - L2d.Location().XY().X()) / L2d.Direction().XY().X();
+    }
     xToSet = true;
   }
   else if (L2d.Direction().XY().X() < 0.)
   {
     if (domain.IsOpenXmax())
+    {
       parmin = -Precision::Infinite();
+    }
     else
+    {
       parmin = (xmax - L2d.Location().XY().X()) / L2d.Direction().XY().X();
+    }
     if (domain.IsOpenXmin())
+    {
       parmax = Precision::Infinite();
+    }
     else
+    {
       parmax = (xmin - L2d.Location().XY().X()) / L2d.Direction().XY().X();
+    }
     xToSet = true;
   }
   else
   { // Parallel to axis  X
     if (L2d.Location().XY().X() < xmin || xmax < L2d.Location().XY().X())
+    {
       return;
+    }
     Xmin   = L2d.Location().XY().X();
     Xmax   = L2d.Location().XY().X();
     xToSet = false;
@@ -109,35 +130,53 @@ void Intf_Tool::Lin2dBox(const gp_Lin2d& L2d, const Bnd_Box2d& domain, Bnd_Box2d
   if (L2d.Direction().XY().Y() > 0.)
   {
     if (domain.IsOpenYmin())
+    {
       parcur = -Precision::Infinite();
+    }
     else
+    {
       parcur = (ymin - L2d.Location().XY().Y()) / L2d.Direction().XY().Y();
+    }
     parmin = std::max(parmin, parcur);
     if (domain.IsOpenYmax())
+    {
       parcur = Precision::Infinite();
+    }
     else
+    {
       parcur = (ymax - L2d.Location().XY().Y()) / L2d.Direction().XY().Y();
+    }
     parmax = std::min(parmax, parcur);
     yToSet = true;
   }
   else if (L2d.Direction().XY().Y() < 0.)
   {
     if (domain.IsOpenYmax())
+    {
       parcur = -Precision::Infinite();
+    }
     else
+    {
       parcur = (ymax - L2d.Location().XY().Y()) / L2d.Direction().XY().Y();
+    }
     parmin = std::max(parmin, parcur);
     if (domain.IsOpenYmin())
+    {
       parcur = Precision::Infinite();
+    }
     else
+    {
       parcur = (ymin - L2d.Location().XY().Y()) / L2d.Direction().XY().Y();
+    }
     parmax = std::min(parmax, parcur);
     yToSet = true;
   }
   else
   { // Parallel to axis  Y
     if (L2d.Location().XY().Y() < ymin || ymax < L2d.Location().XY().Y())
+    {
       return;
+    }
     Ymin   = L2d.Location().XY().Y();
     Ymax   = L2d.Location().XY().Y();
     yToSet = false;
@@ -181,7 +220,9 @@ void Intf_Tool::Hypr2dBox(const gp_Hypr2d& theHypr2d, const Bnd_Box2d& domain, B
     return;
   }
   else if (domain.IsVoid())
+  {
     return;
+  }
 
   int nbPi = Inters2d(theHypr2d, domain);
 
@@ -189,7 +230,7 @@ void Intf_Tool::Hypr2dBox(const gp_Hypr2d& theHypr2d, const Bnd_Box2d& domain, B
   {
     double Xmin, Xmax, Ymin, Ymax;
 
-    domain.Get(Xmax, Ymax, Xmin, Ymin);
+    domain.Get(Xmin, Ymin, Xmax, Ymax);
 
     int npi;
     for (npi = 0; npi < nbPi; npi++)
@@ -207,8 +248,12 @@ void Intf_Tool::Hypr2dBox(const gp_Hypr2d& theHypr2d, const Bnd_Box2d& domain, B
     {
       npk = npi;
       for (npj = npi + 1; npj < nbPi; npj++)
+      {
         if (parint[npj] < parint[npk])
+        {
           npk = npj;
+        }
+      }
       if (npk != npi)
       {
         parmin      = parint[npk];
@@ -247,31 +292,45 @@ void Intf_Tool::Hypr2dBox(const gp_Hypr2d& theHypr2d, const Bnd_Box2d& domain, B
       {
         if (sinan > 0.)
         {
-          out                 = false;
-          beginOnCurve[nbSeg] = parint[npi];
-          nbSeg++;
+          if (nbSeg < 6)
+          {
+            out                 = false;
+            beginOnCurve[nbSeg] = parint[npi];
+            nbSeg++;
+          }
         }
         else
         {
-          if (out)
+          if (out && nbSeg < 6)
           {
             beginOnCurve[nbSeg] = -Precision::Infinite();
             nbSeg++;
           }
-          endOnCurve[nbSeg - 1] = parint[npi];
-          out                   = true;
+          if (nbSeg > 0)
+          {
+            endOnCurve[nbSeg - 1] = parint[npi];
+          }
+          out = true;
 
           int ipmin;
           if (beginOnCurve[nbSeg - 1] < -10.)
+          {
             ipmin = -10;
+          }
           else
+          {
             ipmin = (int)(beginOnCurve[nbSeg - 1]);
+          }
 
           int ipmax;
           if (endOnCurve[nbSeg - 1] > 10.)
+          {
             ipmax = 10;
+          }
           else
+          {
             ipmax = (int)(endOnCurve[nbSeg - 1]);
+          }
 
           // int ipmin=Max((int)(beginOnCurve[nbSeg-1]),
           //		     -10);
@@ -284,12 +343,20 @@ void Intf_Tool::Hypr2dBox(const gp_Hypr2d& theHypr2d, const Bnd_Box2d& domain, B
           {
             boxHypr2d.Add(ElCLib::Value(double(ip) / 10., theHypr2d));
             if (std::abs(ip) <= 10)
+            {
               pas = 1;
+            }
             else
+            {
               pas = 10;
+            }
           }
         }
       }
+    }
+    if (!out && nbSeg > 0)
+    {
+      endOnCurve[nbSeg - 1] = Precision::Infinite();
     }
   }
   else if (!domain.IsOut(ElCLib::Value(0., theHypr2d)))
@@ -422,7 +489,9 @@ void Intf_Tool::Parab2dBox(const gp_Parab2d& theParab2d,
     return;
   }
   else if (domain.IsVoid())
+  {
     return;
+  }
 
   int nbPi = Inters2d(theParab2d, domain);
 
@@ -430,7 +499,7 @@ void Intf_Tool::Parab2dBox(const gp_Parab2d& theParab2d,
   {
     double Xmin, Xmax, Ymin, Ymax;
 
-    domain.Get(Xmax, Ymax, Xmin, Ymin);
+    domain.Get(Xmin, Ymin, Xmax, Ymax);
 
     int npi;
     for (npi = 0; npi < nbPi; npi++)
@@ -448,8 +517,12 @@ void Intf_Tool::Parab2dBox(const gp_Parab2d& theParab2d,
     {
       npk = npi;
       for (npj = npi + 1; npj < nbPi; npj++)
+      {
         if (parint[npj] < parint[npk])
+        {
           npk = npj;
+        }
+      }
       if (npk != npi)
       {
         parmin      = parint[npk];
@@ -488,31 +561,45 @@ void Intf_Tool::Parab2dBox(const gp_Parab2d& theParab2d,
       {
         if (sinan > 0.)
         {
-          out                 = false;
-          beginOnCurve[nbSeg] = parint[npi];
-          nbSeg++;
+          if (nbSeg < 6)
+          {
+            out                 = false;
+            beginOnCurve[nbSeg] = parint[npi];
+            nbSeg++;
+          }
         }
         else
         {
-          if (out)
+          if (out && nbSeg < 6)
           {
             beginOnCurve[nbSeg] = -Precision::Infinite();
             nbSeg++;
           }
-          endOnCurve[nbSeg - 1] = parint[npi];
-          out                   = true;
+          if (nbSeg > 0)
+          {
+            endOnCurve[nbSeg - 1] = parint[npi];
+          }
+          out = true;
 
           int ipmin;
           if (beginOnCurve[nbSeg - 1] < -10.)
+          {
             ipmin = -10;
+          }
           else
+          {
             ipmin = (int)(beginOnCurve[nbSeg - 1]);
+          }
 
           int ipmax;
           if (endOnCurve[nbSeg - 1] > 10.)
+          {
             ipmax = 10;
+          }
           else
+          {
             ipmax = (int)(endOnCurve[nbSeg - 1]);
+          }
 
           // int ipmin=Max((int)(beginOnCurve[nbSeg-1]),
           //		     -10);
@@ -525,12 +612,20 @@ void Intf_Tool::Parab2dBox(const gp_Parab2d& theParab2d,
           {
             boxParab2d.Add(ElCLib::Value(double(ip) / 10., theParab2d));
             if (std::abs(ip) <= 10)
+            {
               pas = 1;
+            }
             else
+            {
               pas = 10;
+            }
           }
         }
       }
+    }
+    if (!out && nbSeg > 0)
+    {
+      endOnCurve[nbSeg - 1] = Precision::Infinite();
     }
   }
   else if (!domain.IsOut(ElCLib::Value(0., theParab2d)))
@@ -662,7 +757,9 @@ void Intf_Tool::LinBox(const gp_Lin& L, const Bnd_Box& domain, Bnd_Box& boxLin)
     return;
   }
   else if (domain.IsVoid())
+  {
     return;
+  }
 
   double xmin, xmax, ymin, ymax, zmin, zmax;
   double Xmin = 0, Xmax = 0, Ymin = 0, Ymax = 0, Zmin = 0, Zmax = 0;
@@ -676,31 +773,49 @@ void Intf_Tool::LinBox(const gp_Lin& L, const Bnd_Box& domain, Bnd_Box& boxLin)
   if (L.Direction().XYZ().X() > 0.)
   {
     if (domain.IsOpenXmin())
+    {
       parmin = -Precision::Infinite();
+    }
     else
+    {
       parmin = (xmin - L.Location().XYZ().X()) / L.Direction().XYZ().X();
+    }
     if (domain.IsOpenXmax())
+    {
       parmax = Precision::Infinite();
+    }
     else
+    {
       parmax = (xmax - L.Location().XYZ().X()) / L.Direction().XYZ().X();
+    }
     xToSet = true;
   }
   else if (L.Direction().XYZ().X() < 0.)
   {
     if (domain.IsOpenXmax())
+    {
       parmin = -Precision::Infinite();
+    }
     else
+    {
       parmin = (xmax - L.Location().XYZ().X()) / L.Direction().XYZ().X();
+    }
     if (domain.IsOpenXmin())
+    {
       parmax = Precision::Infinite();
+    }
     else
+    {
       parmax = (xmin - L.Location().XYZ().X()) / L.Direction().XYZ().X();
+    }
     xToSet = true;
   }
   else
   { // Perpendiculaire a l axe  X
     if (L.Location().XYZ().X() < xmin || xmax < L.Location().XYZ().X())
+    {
       return;
+    }
     Xmin   = L.Location().XYZ().X();
     Xmax   = L.Location().XYZ().X();
     xToSet = false;
@@ -709,35 +824,53 @@ void Intf_Tool::LinBox(const gp_Lin& L, const Bnd_Box& domain, Bnd_Box& boxLin)
   if (L.Direction().XYZ().Y() > 0.)
   {
     if (domain.IsOpenYmin())
+    {
       parcur = -Precision::Infinite();
+    }
     else
+    {
       parcur = (ymin - L.Location().XYZ().Y()) / L.Direction().XYZ().Y();
+    }
     parmin = std::max(parmin, parcur);
     if (domain.IsOpenYmax())
+    {
       parcur = Precision::Infinite();
+    }
     else
+    {
       parcur = (ymax - L.Location().XYZ().Y()) / L.Direction().XYZ().Y();
+    }
     parmax = std::min(parmax, parcur);
     yToSet = true;
   }
   else if (L.Direction().XYZ().Y() < 0.)
   {
     if (domain.IsOpenYmax())
+    {
       parcur = -Precision::Infinite();
+    }
     else
+    {
       parcur = (ymax - L.Location().XYZ().Y()) / L.Direction().XYZ().Y();
+    }
     parmin = std::max(parmin, parcur);
     if (domain.IsOpenYmin())
+    {
       parcur = Precision::Infinite();
+    }
     else
+    {
       parcur = (ymin - L.Location().XYZ().Y()) / L.Direction().XYZ().Y();
+    }
     parmax = std::min(parmax, parcur);
     yToSet = true;
   }
   else
   { // Perpendiculaire a l axe  Y
     if (L.Location().XYZ().Y() < ymin || ymax < L.Location().XYZ().Y())
+    {
       return;
+    }
     Ymin   = L.Location().XYZ().Y();
     Ymax   = L.Location().XYZ().Y();
     yToSet = false;
@@ -746,35 +879,53 @@ void Intf_Tool::LinBox(const gp_Lin& L, const Bnd_Box& domain, Bnd_Box& boxLin)
   if (L.Direction().XYZ().Z() > 0.)
   {
     if (domain.IsOpenZmin())
+    {
       parcur = -Precision::Infinite();
+    }
     else
+    {
       parcur = (zmin - L.Location().XYZ().Z()) / L.Direction().XYZ().Z();
+    }
     parmin = std::max(parmin, parcur);
     if (domain.IsOpenZmax())
+    {
       parcur = Precision::Infinite();
+    }
     else
+    {
       parcur = (zmax - L.Location().XYZ().Z()) / L.Direction().XYZ().Z();
+    }
     parmax = std::min(parmax, parcur);
     zToSet = true;
   }
   else if (L.Direction().XYZ().Z() < 0.)
   {
     if (domain.IsOpenZmax())
+    {
       parcur = -Precision::Infinite();
+    }
     else
+    {
       parcur = (zmax - L.Location().XYZ().Z()) / L.Direction().XYZ().Z();
+    }
     parmin = std::max(parmin, parcur);
     if (domain.IsOpenZmin())
+    {
       parcur = Precision::Infinite();
+    }
     else
+    {
       parcur = (zmin - L.Location().XYZ().Z()) / L.Direction().XYZ().Z();
+    }
     parmax = std::min(parmax, parcur);
     zToSet = true;
   }
   else
   { // Perpendicular to axis Z
     if (L.Location().XYZ().Z() < zmin || zmax < L.Location().XYZ().Z())
+    {
       return;
+    }
     Zmin   = L.Location().XYZ().Z();
     Zmax   = L.Location().XYZ().Z();
     zToSet = false;
@@ -850,7 +1001,7 @@ void Intf_Tool::HyprBox(const gp_Hypr& theHypr, const Bnd_Box& domain, Bnd_Box& 
       Ymin = std::min(Ymin, yint[npi]);
       Ymax = std::max(Ymax, yint[npi]);
       Zmin = std::min(Zmin, zint[npi]);
-      Zmax = std::max(Zmax, yint[npi]);
+      Zmax = std::max(Zmax, zint[npi]);
     }
     boxHypr.Update(Xmin, Ymin, Zmin, Xmax, Ymax, Zmax);
     //
@@ -1348,7 +1499,9 @@ void Intf_Tool::ParabBox(const gp_Parab& theParab, const Bnd_Box& domain, Bnd_Bo
     return;
   }
   else if (domain.IsVoid())
+  {
     return;
+  }
 
   int nbPi = Inters3d(theParab, domain);
 
@@ -1366,7 +1519,7 @@ void Intf_Tool::ParabBox(const gp_Parab& theParab, const Bnd_Box& domain, Bnd_Bo
       Ymin = std::min(Ymin, yint[npi]);
       Ymax = std::max(Ymax, yint[npi]);
       Zmin = std::min(Zmin, zint[npi]);
-      Zmax = std::max(Zmax, yint[npi]);
+      Zmax = std::max(Zmax, zint[npi]);
     }
 
     boxParab.Update(Xmin, Ymin, Zmin, Xmax, Ymax, Zmax);
@@ -1404,31 +1557,45 @@ void Intf_Tool::ParabBox(const gp_Parab& theParab, const Bnd_Box& domain, Bnd_Bo
       {
         if (sinan > 0.)
         {
-          out                 = false;
-          beginOnCurve[nbSeg] = parint[npi];
-          nbSeg++;
+          if (nbSeg < 6)
+          {
+            out                 = false;
+            beginOnCurve[nbSeg] = parint[npi];
+            nbSeg++;
+          }
         }
         else
         {
-          if (out)
+          if (out && nbSeg < 6)
           {
             beginOnCurve[nbSeg] = -Precision::Infinite();
             nbSeg++;
           }
-          endOnCurve[nbSeg - 1] = parint[npi];
-          out                   = true;
+          if (nbSeg > 0)
+          {
+            endOnCurve[nbSeg - 1] = parint[npi];
+          }
+          out = true;
 
           int ipmin;
           if (beginOnCurve[nbSeg - 1] < -10.)
+          {
             ipmin = -10;
+          }
           else
+          {
             ipmin = (int)(beginOnCurve[nbSeg - 1]);
+          }
 
           int ipmax;
           if (endOnCurve[nbSeg - 1] > 10.)
+          {
             ipmax = 10;
+          }
           else
+          {
             ipmax = (int)(endOnCurve[nbSeg - 1]);
+          }
 
           ipmin = ipmin * 10 + 1;
           ipmax = ipmax * 10 - 1;
@@ -1437,12 +1604,20 @@ void Intf_Tool::ParabBox(const gp_Parab& theParab, const Bnd_Box& domain, Bnd_Bo
           {
             boxParab.Add(ElCLib::Value(double(ip) / 10., theParab));
             if (std::abs(ip) <= 10)
+            {
               pas = 1;
+            }
             else
+            {
               pas = 10;
+            }
           }
         }
       }
+    }
+    if (!out && nbSeg > 0)
+    {
+      endOnCurve[nbSeg - 1] = Precision::Infinite();
     }
   }
   else if (!domain.IsOut(ElCLib::Value(0., theParab)))

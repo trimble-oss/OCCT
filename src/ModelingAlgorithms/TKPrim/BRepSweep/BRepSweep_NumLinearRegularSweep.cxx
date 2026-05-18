@@ -27,10 +27,8 @@
 #include <TopoDS_Shape.hxx>
 #include <NCollection_Sequence.hxx>
 
-//=======================================================================
-// function : BRepSweep_NumLinearRegularSweep
-// purpose  : Create a Regular Sweep.
-//=======================================================================
+//=================================================================================================
+
 BRepSweep_NumLinearRegularSweep::BRepSweep_NumLinearRegularSweep(const BRepSweep_Builder& aBuilder,
                                                                  const TopoDS_Shape&      aGenShape,
                                                                  const Sweep_NumShape&    aDirShape)
@@ -59,15 +57,14 @@ BRepSweep_NumLinearRegularSweep::BRepSweep_NumLinearRegularSweep(const BRepSweep
 
 BRepSweep_NumLinearRegularSweep::~BRepSweep_NumLinearRegularSweep() = default;
 
-//=======================================================================
-// function : Shape
-// purpose  : Returns the global Shape.
-//=======================================================================
+//=================================================================================================
 
 TopoDS_Shape BRepSweep_NumLinearRegularSweep::Shape()
 {
   if (HasShape(myGenShape, myDirWire))
+  {
     return Shape(myGenShape, myDirWire);
+  }
   else
   {
     TopoDS_Shape bidon;
@@ -83,7 +80,9 @@ TopoDS_Shape BRepSweep_NumLinearRegularSweep::Shape()
 TopoDS_Shape BRepSweep_NumLinearRegularSweep::Shape(const TopoDS_Shape& aGenS)
 {
   if (myGenShapeTool.Index(aGenS) != 0 && HasShape(aGenS, myDirWire))
+  {
     return Shape(aGenS, myDirWire);
+  }
   else
   {
     TopoDS_Shape bidon;
@@ -385,7 +384,9 @@ TopoDS_Shape BRepSweep_NumLinearRegularSweep::Shape(const TopoDS_Shape&   aGenS,
         TopAbs_Orientation ShellOri = DirectSolid(aGenS, aDirS);
         Lt.Init(temp);
         if (Lt.More())
+        {
           Lt.Next();
+        }
         if (Lt.More())
         {
           for (Lt.Init(temp); Lt.More(); Lt.Next())
@@ -394,7 +395,9 @@ TopoDS_Shape BRepSweep_NumLinearRegularSweep::Shape(const TopoDS_Shape&   aGenS,
           }
         }
         else
+        {
           myBuilder.Add(myShapes(iGenS, iDirS), newShell, ShellOri);
+        }
       }
     }
     else if (myDirShapeTool.Type(aDirS) == TopAbs_WIRE)
@@ -450,7 +453,9 @@ TopoDS_Shape BRepSweep_NumLinearRegularSweep::Shape(const TopoDS_Shape&   aGenS,
   // Change the "Closed" flag only for Wires and Shells
   if (myShapes(iGenS, iDirS).ShapeType() == TopAbs_WIRE
       || myShapes(iGenS, iDirS).ShapeType() == TopAbs_SHELL)
+  {
     myShapes(iGenS, iDirS).Closed(BRep_Tool::IsClosed(myShapes(iGenS, iDirS)));
+  }
   return myShapes(iGenS, iDirS);
 }
 
@@ -465,7 +470,9 @@ TopoDS_Shape BRepSweep_NumLinearRegularSweep::FirstShape()
   if (myDirShapeTool.HasFirstVertex())
   {
     if (HasShape(myGenShape, myDirShapeTool.FirstVertex()))
+    {
       result = Shape(myGenShape, myDirShapeTool.FirstVertex());
+    }
   }
   return result;
 }
@@ -481,7 +488,9 @@ TopoDS_Shape BRepSweep_NumLinearRegularSweep::LastShape()
   if (myDirShapeTool.HasLastVertex())
   {
     if (HasShape(myGenShape, myDirShapeTool.LastVertex()))
+    {
       result = Shape(myGenShape, myDirShapeTool.LastVertex());
+    }
   }
   return result;
 }
@@ -497,7 +506,9 @@ TopoDS_Shape BRepSweep_NumLinearRegularSweep::FirstShape(const TopoDS_Shape& aGe
   if (myDirShapeTool.HasFirstVertex())
   {
     if (HasShape(aGenS, myDirShapeTool.FirstVertex()))
+    {
       result = Shape(aGenS, myDirShapeTool.FirstVertex());
+    }
   }
   return result;
 }
@@ -513,7 +524,9 @@ TopoDS_Shape BRepSweep_NumLinearRegularSweep::LastShape(const TopoDS_Shape& aGen
   if (myDirShapeTool.HasLastVertex())
   {
     if (HasShape(aGenS, myDirShapeTool.LastVertex()))
+    {
       result = Shape(aGenS, myDirShapeTool.LastVertex());
+    }
   }
   return result;
 }

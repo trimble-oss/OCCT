@@ -60,14 +60,13 @@ static void printtolblend(Draw_Interpretor& di)
 
 static int VBLEND(Draw_Interpretor& di, int narg, const char** a)
 {
-  if (Rakk != nullptr)
-  {
-    delete Rakk;
-    Rakk = nullptr;
-  }
+  delete Rakk;
+  Rakk = nullptr;
   printtolblend(di);
   if (narg < 5)
+  {
     return 1;
+  }
 
   int                                            NbToPick = (narg - 4) / 2;
   occ::handle<NCollection_HArray1<TopoDS_Shape>> arr =
@@ -86,7 +85,9 @@ static int VBLEND(Draw_Interpretor& di, int narg, const char** a)
 
   TopoDS_Shape V = DBRep::Get(a[2]);
   if (V.IsNull())
+  {
     return 1;
+  }
   ChFi3d_FilletShape FSh = ChFi3d_Rational;
   if (narg % 2 == 0)
   {
@@ -118,10 +119,14 @@ static int VBLEND(Draw_Interpretor& di, int narg, const char** a)
     }
   }
   if (!nbedge)
+  {
     return 1;
+  }
   Rakk->Build();
   if (!Rakk->IsDone())
+  {
     return 1;
+  }
   TopoDS_Shape res = Rakk->Shape();
   DBRep::Set(a[1], res);
 

@@ -25,7 +25,9 @@ StepData_ECDescr::StepData_ECDescr() = default;
 void StepData_ECDescr::Add(const occ::handle<StepData_ESDescr>& member)
 {
   if (member.IsNull())
+  {
     return;
+  }
   const char*             name = member->TypeName();
   TCollection_AsciiString nam(name);
   for (int i = NbMembers(); i > 0; i--)
@@ -63,14 +65,16 @@ occ::handle<NCollection_HSequence<TCollection_AsciiString>> StepData_ECDescr::Ty
   return tl;
 }
 
-bool StepData_ECDescr::Matches(const char* name) const
+bool StepData_ECDescr::Matches(const char* const name) const
 {
   int i, nb = NbMembers();
   for (i = 1; i <= nb; i++)
   {
     occ::handle<StepData_ESDescr> member = Member(i);
     if (member->Matches(name))
+    {
       return true;
+    }
   }
   return false;
 }
@@ -89,7 +93,9 @@ occ::handle<StepData_Described> StepData_ECDescr::NewEntity() const
     occ::handle<StepData_ESDescr> member = Member(i);
     occ::handle<StepData_Simple>  mem    = occ::down_cast<StepData_Simple>(member->NewEntity());
     if (!mem.IsNull())
+    {
       ent->Add(mem);
+    }
   }
   return ent;
 }

@@ -64,10 +64,14 @@ static DrawingMode CurrentMode = DRAW;
 Draw_Viewer::Draw_Viewer()
 {
   if (Draw_Batch)
+  {
     return;
+  }
   int i;
   for (i = 0; i < MAXVIEW; i++)
+  {
     myViews[i] = nullptr;
+  }
   for (i = 0; i < MAXCOLOR; i++)
   {
     ps_width[i] = 1;
@@ -80,7 +84,9 @@ Draw_Viewer::Draw_Viewer()
 bool Draw_Viewer::DefineColor(const int i, const char* colname)
 {
   if (Draw_Batch)
+  {
     return true;
+  }
   return Draw_Window::DefineColor(i, colname);
 }
 
@@ -94,7 +100,9 @@ void Draw_Viewer::MakeView(const int   id,
                            const int   H)
 {
   if (Draw_Batch)
+  {
     return;
+  }
   if (id < MAXVIEW)
   {
 
@@ -106,7 +114,9 @@ void Draw_Viewer::MakeView(const int   id,
     myViews[id]->SetDy(-H / 2);
 
     if (!myViews[id]->Init(typ))
+    {
       DeleteView(id);
+    }
 
     RepaintView(id);
   }
@@ -149,7 +159,9 @@ void Draw_Viewer::MakeView(const int   id,
 void Draw_Viewer::MakeView(const int id, const char* typ, const char* window)
 {
   if (Draw_Batch)
+  {
     return;
+  }
   if (id < MAXVIEW)
   {
 
@@ -160,7 +172,9 @@ void Draw_Viewer::MakeView(const int id, const char* typ, const char* window)
     myViews[id]->SetDy(-myViews[id]->HeightWin() / 2);
 
     if (!myViews[id]->Init(typ))
+    {
       DeleteView(id);
+    }
 
     RepaintView(id);
   }
@@ -171,20 +185,23 @@ void Draw_Viewer::MakeView(const int id, const char* typ, const char* window)
 void Draw_Viewer::SetTitle(const int id, const char* name)
 {
   if (Draw_Batch)
+  {
     return;
+  }
   if (myViews[id])
+  {
     myViews[id]->SetTitle(name);
+  }
 }
 
-//=======================================================================
-// function : ResetView
-// purpose  : reset view zoom and axes
-//=======================================================================
+//=================================================================================================
 
 void Draw_Viewer::ResetView(const int id)
 {
   if (Draw_Batch)
+  {
     return;
+  }
   if (myViews[id])
   {
     myViews[id]->Init(myViews[id]->Type());
@@ -197,7 +214,9 @@ void Draw_Viewer::ResetView(const int id)
 void Draw_Viewer::SetZoom(const int id, const double z)
 {
   if (Draw_Batch)
+  {
     return;
+  }
 
   Draw_View* aView = myViews[id];
   if (aView)
@@ -223,7 +242,9 @@ void Draw_Viewer::SetZoom(const int id, const double z)
 void Draw_Viewer::RotateView(const int id, const gp_Dir2d& D, const double A)
 {
   if (Draw_Batch)
+  {
     return;
+  }
   if (myViews[id])
   {
     gp_Trsf T = myViews[id]->GetMatrix();
@@ -242,7 +263,9 @@ void Draw_Viewer::RotateView(const int id, const gp_Dir2d& D, const double A)
 void Draw_Viewer::RotateView(const int id, const gp_Pnt& P, const gp_Dir& D, const double A)
 {
   if (Draw_Batch)
+  {
     return;
+  }
   if (myViews[id])
   {
     gp_Trsf T;
@@ -256,9 +279,13 @@ void Draw_Viewer::RotateView(const int id, const gp_Pnt& P, const gp_Dir& D, con
 void Draw_Viewer::SetFocal(const int id, const double F)
 {
   if (Draw_Batch)
+  {
     return;
+  }
   if (myViews[id])
+  {
     myViews[id]->SetFocalDistance(F);
+  }
 }
 
 //=================================================================================================
@@ -266,11 +293,17 @@ void Draw_Viewer::SetFocal(const int id, const double F)
 char* Draw_Viewer::GetType(const int id) const
 {
   if (Draw_Batch)
+  {
     return blank;
+  }
   if (myViews[id])
+  {
     return const_cast<char*>(myViews[id]->Type());
+  }
   else
+  {
     return blank;
+  }
 }
 
 //=================================================================================================
@@ -278,11 +311,17 @@ char* Draw_Viewer::GetType(const int id) const
 double Draw_Viewer::Zoom(const int id) const
 {
   if (Draw_Batch)
+  {
     return false;
+  }
   if (myViews[id])
+  {
     return myViews[id]->GetZoom();
+  }
   else
+  {
     return 0.0;
+  }
 }
 
 //=================================================================================================
@@ -290,11 +329,17 @@ double Draw_Viewer::Zoom(const int id) const
 double Draw_Viewer::Focal(const int id) const
 {
   if (Draw_Batch)
+  {
     return 1.;
+  }
   if (myViews[id])
+  {
     return myViews[id]->GetFocalDistance();
+  }
   else
+  {
     return 0;
+  }
 }
 
 //=================================================================================================
@@ -302,9 +347,13 @@ double Draw_Viewer::Focal(const int id) const
 void Draw_Viewer::GetTrsf(const int id, gp_Trsf& T) const
 {
   if (Draw_Batch)
+  {
     return;
+  }
   if (myViews[id])
+  {
     T = myViews[id]->GetMatrix();
+  }
 }
 
 //=================================================================================================
@@ -312,11 +361,17 @@ void Draw_Viewer::GetTrsf(const int id, gp_Trsf& T) const
 bool Draw_Viewer::Is3D(const int id) const
 {
   if (Draw_Batch)
+  {
     return false;
+  }
   if (myViews[id])
+  {
     return !myViews[id]->Is2D();
+  }
   else
+  {
     return false;
+  }
 }
 
 //=================================================================================================
@@ -324,9 +379,13 @@ bool Draw_Viewer::Is3D(const int id) const
 void Draw_Viewer::SetTrsf(const int id, gp_Trsf& T)
 {
   if (Draw_Batch)
+  {
     return;
+  }
   if (myViews[id])
+  {
     myViews[id]->SetMatrix(T);
+  }
 }
 
 //=================================================================================================
@@ -334,7 +393,9 @@ void Draw_Viewer::SetTrsf(const int id, gp_Trsf& T)
 void Draw_Viewer::GetPosSize(const int id, int& X, int& Y, int& W, int& H)
 {
   if (Draw_Batch)
+  {
     return;
+  }
   if (myViews[id] != nullptr)
   {
     myViews[id]->GetPosition(X, Y);
@@ -348,7 +409,9 @@ void Draw_Viewer::GetPosSize(const int id, int& X, int& Y, int& W, int& H)
 void Draw_Viewer::GetFrame(const int id, int& xminf, int& yminf, int& xmaxf, int& ymaxf)
 {
   if (Draw_Batch)
+  {
     return;
+  }
   if (myViews[id])
   {
     int X, Y, H, W;
@@ -365,7 +428,9 @@ void Draw_Viewer::GetFrame(const int id, int& xminf, int& yminf, int& xmaxf, int
 void Draw_Viewer::FitView(const int id, const int frame)
 {
   if (Draw_Batch)
+  {
     return;
+  }
   if (myViews[id])
   {
 
@@ -377,7 +442,9 @@ void Draw_Viewer::FitView(const int id, const int frame)
       if (myViews[i])
       {
         if (myViews[i]->Is2D() == is2d)
+        {
           ++nbviews;
+        }
       }
     }
     bool only = (nbviews == 1);
@@ -387,7 +454,9 @@ void Draw_Viewer::FitView(const int id, const int frame)
     // compute the min max
     int n = myDrawables.Length();
     if (n == 0)
+    {
       return;
+    }
     //    Draw_Display DF;
     curview = myViews[id];
     double umin, umax, vmin, vmax;
@@ -402,16 +471,26 @@ void Draw_Viewer::FitView(const int id, const int frame)
       {
         // if this is not the only view recompute...
         if (!only)
+        {
           DrawOnView(id, myDrawables(i));
+        }
         myDrawables(i)->Bounds(u1, u2, v1, v2);
         if (u1 < umin)
+        {
           umin = u1;
+        }
         if (u2 > umax)
+        {
           umax = u2;
+        }
         if (v1 < vmin)
+        {
           vmin = v1;
+        }
         if (v2 > vmax)
+        {
           vmax = v2;
+        }
       }
     }
     double z;
@@ -422,9 +501,13 @@ void Draw_Viewer::FitView(const int id, const int frame)
     if ((umax - umin) < 1.e-6)
     {
       if ((vmax - vmin) < 1.e-6)
+      {
         return;
+      }
       else
+      {
         z = ((double)(H - 2 * frame)) / (vmax - vmin);
+      }
     }
     else
     {
@@ -433,7 +516,9 @@ void Draw_Viewer::FitView(const int id, const int frame)
       {
         double z2 = ((double)(H - 2 * frame)) / (vmax - vmin);
         if (z2 < z)
+        {
           z = z2;
+        }
       }
     }
     curview->SetZoom(z);
@@ -447,7 +532,9 @@ void Draw_Viewer::FitView(const int id, const int frame)
 void Draw_Viewer::PanView(const int id, const int DX, const int DY)
 {
   if (Draw_Batch)
+  {
     return;
+  }
   if (myViews[id])
   {
     myViews[id]->SetDx(myViews[id]->GetDx() + DX);
@@ -460,7 +547,9 @@ void Draw_Viewer::PanView(const int id, const int DX, const int DY)
 void Draw_Viewer::SetPan(const int id, const int DX, const int DY)
 {
   if (Draw_Batch)
+  {
     return;
+  }
   if (myViews[id])
   {
     myViews[id]->SetDx(DX);
@@ -473,7 +562,9 @@ void Draw_Viewer::SetPan(const int id, const int DX, const int DY)
 void Draw_Viewer::GetPan(const int id, int& DX, int& DY)
 {
   if (Draw_Batch)
+  {
     return;
+  }
   if (myViews[id])
   {
     DX = myViews[id]->GetDx();
@@ -486,9 +577,13 @@ void Draw_Viewer::GetPan(const int id, int& DX, int& DY)
 bool Draw_Viewer::HasView(const int id) const
 {
   if (Draw_Batch)
+  {
     return false;
+  }
   if ((id < 0) || id >= MAXVIEW)
+  {
     return false;
+  }
   return myViews[id] != nullptr;
 }
 
@@ -497,9 +592,13 @@ bool Draw_Viewer::HasView(const int id) const
 void Draw_Viewer::DisplayView(const int id) const
 {
   if (Draw_Batch)
+  {
     return;
+  }
   if (myViews[id])
+  {
     myViews[id]->DisplayWindow();
+  }
 }
 
 //=================================================================================================
@@ -507,7 +606,9 @@ void Draw_Viewer::DisplayView(const int id) const
 void Draw_Viewer::HideView(const int id) const
 {
   if (Draw_Batch)
+  {
     return;
+  }
   if (myViews[id])
   {
     //
@@ -519,9 +620,13 @@ void Draw_Viewer::HideView(const int id) const
 void Draw_Viewer::ClearView(const int id) const
 {
   if (Draw_Batch)
+  {
     return;
+  }
   if (myViews[id])
+  {
     myViews[id]->Clear();
+  }
 }
 
 //=================================================================================================
@@ -529,12 +634,11 @@ void Draw_Viewer::ClearView(const int id) const
 void Draw_Viewer::RemoveView(const int id)
 {
   if (Draw_Batch)
-    return;
-  if (myViews[id])
   {
-    delete myViews[id];
-    myViews[id] = nullptr;
+    return;
   }
+  delete myViews[id];
+  myViews[id] = nullptr;
 }
 
 //=================================================================================================
@@ -542,21 +646,23 @@ void Draw_Viewer::RemoveView(const int id)
 void Draw_Viewer::RepaintView(const int id) const
 {
   if (Draw_Batch)
+  {
     return;
+  }
   if (myViews[id])
   {
     ClearView(id);
     int n = myDrawables.Length();
     for (int i = 1; i <= n; i++)
+    {
       DrawOnView(id, myDrawables(i));
+    }
   }
 }
 
 #ifdef _WIN32
-//=======================================================================
-// function : ResizeView
-// purpose  : WNT re-drawing optimization
-//=======================================================================
+//=================================================================================================
+
 void Draw_Viewer::ResizeView(const int id) const
 {
   if (Draw_Batch)
@@ -568,10 +674,8 @@ void Draw_Viewer::ResizeView(const int id) const
   }
 }
 
-//=======================================================================
-// function : UpdateView
-// purpose  : WNT re-drawing optimization
-//=======================================================================
+//=================================================================================================
+
 void Draw_Viewer::UpdateView(const int id, const bool forced) const
 {
   if (Draw_Batch)
@@ -594,7 +698,9 @@ void Draw_Viewer::UpdateView(const int id, const bool forced) const
 void Draw_Viewer::ConfigView(const int id) const
 {
   if (Draw_Batch)
+  {
     return;
+  }
   if (myViews[id])
   {
     myViews[id]->SetDx(myViews[id]->WidthWin() / 2);
@@ -616,7 +722,9 @@ void Draw_Viewer::PostScriptView(const int     id,
                                  std::ostream& sortie) const
 {
   if (Draw_Batch)
+  {
     return;
+  }
   if (myViews[id])
   {
     ps_vx     = VXmin;
@@ -628,21 +736,29 @@ void Draw_Viewer::PostScriptView(const int     id,
     ps_stream = &sortie;
     int n     = myDrawables.Length();
     if (n == 0)
+    {
       return;
+    }
     CurrentMode         = POSTSCRIPT;
     Draw_Display DF     = MakeDisplay(id);
     bool         view2d = myViews[id]->Is2D();
     for (int i = 1; i <= n; i++)
+    {
       if (myDrawables(i)->Is3D())
       {
         if (!view2d)
+        {
           myDrawables(i)->DrawOn(DF);
+        }
       }
       else
       {
         if (view2d)
+        {
           myDrawables(i)->DrawOn(DF);
+        }
       }
+    }
     sortie << "stroke\n";
     CurrentMode = DRAW;
   }
@@ -653,9 +769,13 @@ void Draw_Viewer::PostScriptView(const int     id,
 void Draw_Viewer::PostColor(const int icol, const int width, const double gray)
 {
   if (Draw_Batch)
+  {
     return;
+  }
   if ((icol < 0) || (icol >= MAXCOLOR))
+  {
     return;
+  }
   ps_width[icol] = width;
   ps_gray[icol]  = gray;
 }
@@ -685,9 +805,13 @@ bool Draw_Viewer::SaveView(const int id, const char* filename)
 void Draw_Viewer::RepaintAll() const
 {
   if (Draw_Batch)
+  {
     return;
+  }
   for (int id = 0; id < MAXVIEW; id++)
+  {
     RepaintView(id);
+  }
 }
 
 //=================================================================================================
@@ -695,13 +819,19 @@ void Draw_Viewer::RepaintAll() const
 void Draw_Viewer::Repaint2D() const
 {
   if (Draw_Batch)
+  {
     return;
+  }
   for (int id = 0; id < MAXVIEW; id++)
+  {
     if (myViews[id])
     {
       if (myViews[id]->Is2D())
+      {
         RepaintView(id);
+      }
     }
+  }
 }
 
 //=================================================================================================
@@ -709,13 +839,19 @@ void Draw_Viewer::Repaint2D() const
 void Draw_Viewer::Repaint3D() const
 {
   if (Draw_Batch)
+  {
     return;
+  }
   for (int id = 0; id < MAXVIEW; id++)
+  {
     if (myViews[id])
     {
       if (!myViews[id]->Is2D())
+      {
         RepaintView(id);
+      }
     }
+  }
 }
 
 //=================================================================================================
@@ -723,12 +859,11 @@ void Draw_Viewer::Repaint3D() const
 void Draw_Viewer::DeleteView(const int id)
 {
   if (Draw_Batch)
-    return;
-  if (myViews[id] != nullptr)
   {
-    delete myViews[id];
-    myViews[id] = nullptr;
+    return;
   }
+  delete myViews[id];
+  myViews[id] = nullptr;
 }
 
 //=================================================================================================
@@ -736,12 +871,18 @@ void Draw_Viewer::DeleteView(const int id)
 void Draw_Viewer::Clear()
 {
   if (Draw_Batch)
+  {
     return;
+  }
   for (int i = 1; i <= myDrawables.Length(); i++)
+  {
     myDrawables(i)->Visible(false);
+  }
   myDrawables.Clear();
   for (int id = 0; id < MAXVIEW; id++)
+  {
     ClearView(id);
+  }
 }
 
 //=================================================================================================
@@ -749,12 +890,16 @@ void Draw_Viewer::Clear()
 void Draw_Viewer::Clear2D()
 {
   if (Draw_Batch)
+  {
     return;
+  }
   int i = 1;
   while (i <= myDrawables.Length())
   {
     if (myDrawables(i)->Is3D())
+    {
       i++;
+    }
     else
     {
       myDrawables(i)->Visible(false);
@@ -766,7 +911,9 @@ void Draw_Viewer::Clear2D()
     if (myViews[id])
     {
       if (myViews[id]->Is2D())
+      {
         ClearView(id);
+      }
     }
   }
 }
@@ -776,7 +923,9 @@ void Draw_Viewer::Clear2D()
 void Draw_Viewer::Clear3D()
 {
   if (Draw_Batch)
+  {
     return;
+  }
   int i = 1;
   while (i <= myDrawables.Length())
   {
@@ -786,14 +935,18 @@ void Draw_Viewer::Clear3D()
       myDrawables.Remove(i);
     }
     else
+    {
       i++;
+    }
   }
   for (int id = 0; id < MAXVIEW; id++)
   {
     if (myViews[id])
     {
       if (!myViews[id]->Is2D())
+      {
         ClearView(id);
+      }
     }
   }
 }
@@ -803,7 +956,9 @@ void Draw_Viewer::Clear3D()
 void Draw_Viewer::Flush()
 {
   if (Draw_Batch)
+  {
     return;
+  }
   Draw_Window::Flush();
 }
 
@@ -812,7 +967,9 @@ void Draw_Viewer::Flush()
 void Draw_Viewer::DrawOnView(const int id, const occ::handle<Draw_Drawable3D>& D) const
 {
   if (Draw_Batch)
+  {
     return;
+  }
   if (myViews[id])
   {
     Draw_Display d = MakeDisplay(id);
@@ -825,7 +982,9 @@ void Draw_Viewer::DrawOnView(const int id, const occ::handle<Draw_Drawable3D>& D
     {
       D->DrawOn(d);
       if (CurrentMode == DRAW)
+      {
         D->SetBounds(xmin, xmax, ymin, ymax);
+      }
       d.Flush();
     }
   }
@@ -838,7 +997,9 @@ void Draw_Viewer::HighlightOnView(const int                           id,
                                   const Draw_ColorKind                C) const
 {
   if (Draw_Batch)
+  {
     return;
+  }
   highlight    = true;
   highlightcol = C;
   DrawOnView(id, D);
@@ -850,7 +1011,9 @@ void Draw_Viewer::HighlightOnView(const int                           id,
 void Draw_Viewer::AddDrawable(const occ::handle<Draw_Drawable3D>& D)
 {
   if (Draw_Batch)
+  {
     return;
+  }
   if (!D.IsNull() && !D->Visible())
   {
     myDrawables.Append(D);
@@ -863,7 +1026,9 @@ void Draw_Viewer::AddDrawable(const occ::handle<Draw_Drawable3D>& D)
 void Draw_Viewer::RemoveDrawable(const occ::handle<Draw_Drawable3D>& D)
 {
   if (Draw_Batch)
+  {
     return;
+  }
   if (!D.IsNull() && D->Visible())
   {
     int index;
@@ -879,10 +1044,7 @@ void Draw_Viewer::RemoveDrawable(const occ::handle<Draw_Drawable3D>& D)
   }
 }
 
-//=======================================================================
-// function : MakeDisplay
-// purpose  : return a display on the view
-//=======================================================================
+//=================================================================================================
 
 Draw_Display Draw_Viewer::MakeDisplay(const int id) const
 {
@@ -1072,9 +1234,13 @@ int Draw_Viewer::Pick(const int                     id,
                       const int                     first) const
 {
   if (Draw_Batch)
+  {
     return 0;
+  }
   if (myViews[id] == nullptr)
+  {
     return 0;
+  }
 
   // is this the only view in its category
   bool is2d = myViews[id]->Is2D();
@@ -1082,8 +1248,12 @@ int Draw_Viewer::Pick(const int                     id,
   for (i = 0; i < MAXVIEW; i++)
   {
     if (myViews[i])
+    {
       if (myViews[i]->Is2D() == is2d)
+      {
         ++nbviews;
+      }
+    }
   }
   bool only = (nbviews == 1);
 
@@ -1101,21 +1271,29 @@ int Draw_Viewer::Pick(const int                     id,
     {
       myDrawables(i)->Bounds(x1, x2, y1, y2);
       if ((xpick + Prec < x1) || (xpick - Prec > x2) || (ypick + Prec < y1) || (ypick - Prec > y2))
+      {
         reject = true;
+      }
     }
     if (!reject)
     {
       DrawOnView(id, myDrawables(i));
       if (found)
+      {
         break;
+      }
     }
   }
   CurrentMode = DRAW;
   found       = false;
   if (i <= myDrawables.Length())
+  {
     D = myDrawables(i);
+  }
   else
+  {
     i = 0;
+  }
   return i;
 }
 
@@ -1124,7 +1302,9 @@ int Draw_Viewer::Pick(const int                     id,
 void Draw_Viewer::LastPick(gp_Pnt& P1, gp_Pnt& P2, double& Param)
 {
   if (Draw_Batch)
+  {
     return;
+  }
   P1    = lastPickP1;
   P2    = lastPickP2;
   Param = lastPickParam;
@@ -1135,25 +1315,30 @@ void Draw_Viewer::LastPick(gp_Pnt& P1, gp_Pnt& P2, double& Param)
 Draw_Viewer::~Draw_Viewer()
 {
   if (Draw_Batch)
+  {
     return;
+  }
   for (int id = 0; id < MAXVIEW; id++)
+  {
     DeleteView(id);
+  }
 }
 
-//=======================================================================
-// function : operator<<
-// purpose  :
-//=======================================================================
+//=================================================================================================
 
 Draw_Viewer& Draw_Viewer::operator<<(const occ::handle<Draw_Drawable3D>& d3d)
 {
   if (Draw_Batch)
+  {
     return *this;
+  }
   if (!d3d.IsNull())
   {
     AddDrawable(d3d);
     for (int id = 0; id < MAXVIEW; id++)
+    {
       DrawOnView(id, d3d);
+    }
   }
   return *this;
 }
@@ -1172,9 +1357,13 @@ const NCollection_Sequence<occ::handle<Draw_Drawable3D>>& Draw_Viewer::GetDrawab
 void Draw_Flush()
 {
   if (Draw_Batch)
+  {
     return;
+  }
   if (highlight)
+  {
     curview->SetColor(highlightcol.ID());
+  }
   curview->DrawSegments(segm, nbseg);
   nbseg = 0;
 }
@@ -1184,9 +1373,13 @@ void Draw_Flush()
 void Draw_Display::SetColor(const Draw_Color& col) const
 {
   if (Draw_Batch)
+  {
     return;
+  }
   if (col.ID() == currentcolor.ID())
+  {
     return;
+  }
 
   currentcolor = col;
   switch (CurrentMode)
@@ -1212,7 +1405,9 @@ void Draw_Display::SetColor(const Draw_Color& col) const
 void Draw_Display::SetMode(const int M) const
 {
   if (Draw_Batch)
+  {
     return;
+  }
   switch (CurrentMode)
   {
 
@@ -1232,7 +1427,9 @@ void Draw_Display::SetMode(const int M) const
 double Draw_Display::Zoom() const
 {
   if (Draw_Batch)
+  {
     return 1.;
+  }
   return curview->GetZoom();
 }
 
@@ -1241,30 +1438,42 @@ double Draw_Display::Zoom() const
 void Draw_Display::Flush() const
 {
   if (Draw_Batch)
+  {
     return;
+  }
   Draw_Flush();
 }
 
 //=================================================================================================
 
-void Draw_Display::DrawString(const gp_Pnt2d& ppt,
-                              const char*     S,
-                              const double    moveX,
-                              const double    moveY)
+void Draw_Display::DrawString(const gp_Pnt2d&   ppt,
+                              const char* const S,
+                              const double      moveX,
+                              const double      moveY)
 {
   if (Draw_Batch)
+  {
     return;
+  }
   if (ppt.X() > 1.e09 || ppt.X() < -1.e09)
+  {
     return;
+  }
   if (ppt.Y() > 1.e09 || ppt.Y() < -1.e09)
+  {
     return;
+  }
 
   gp_Pnt2d pt(ppt.X() * curview->GetZoom(), ppt.Y() * curview->GetZoom());
 
   if (pt.X() > 1.e09 || pt.X() < -1.e09)
+  {
     return;
+  }
   if (pt.Y() > 1.e09 || pt.Y() < -1.e09)
+  {
     return;
+  }
 
   switch (CurrentMode)
   {
@@ -1276,13 +1485,21 @@ void Draw_Display::DrawString(const gp_Pnt2d& ppt,
       if (Draw_Bounds)
       {
         if (pt.X() + moveX > xmax)
+        {
           xmax = pt.X();
+        }
         if (pt.X() + moveX < xmin)
+        {
           xmin = pt.X();
+        }
         if (-pt.Y() - moveY > ymax)
+        {
           ymax = -pt.Y();
+        }
         if (-pt.Y() - moveY < ymin)
+        {
           ymin = -pt.Y();
+        }
       }
     }
     break;
@@ -1303,31 +1520,37 @@ void Draw_Display::DrawString(const gp_Pnt2d& ppt,
 
 //=================================================================================================
 
-void Draw_Display::DrawString(const gp_Pnt2d& ppt, const char* S)
+void Draw_Display::DrawString(const gp_Pnt2d& ppt, const char* const S)
 {
   if (Draw_Batch)
+  {
     return;
+  }
   DrawString(ppt, S, 0.0, 0.0);
 }
 
 //=================================================================================================
 
-void Draw_Display::DrawString(const gp_Pnt& pt,
-                              const char*   S,
-                              const double  moveX,
-                              const double  moveY)
+void Draw_Display::DrawString(const gp_Pnt&     pt,
+                              const char* const S,
+                              const double      moveX,
+                              const double      moveY)
 {
   if (Draw_Batch)
+  {
     return;
+  }
   DrawString(Project(pt), S, moveX, moveY);
 }
 
 //=================================================================================================
 
-void Draw_Display::DrawString(const gp_Pnt& pt, const char* S)
+void Draw_Display::DrawString(const gp_Pnt& pt, const char* const S)
 {
   if (Draw_Batch)
+  {
     return;
+  }
   DrawString(Project(pt), S, 0.0, 0.0);
 }
 
@@ -1342,7 +1565,9 @@ static gp_Pnt   PtPers; // current 3D point for Pers
 void Draw_Display::Project(const gp_Pnt& p, gp_Pnt2d& p2d) const
 {
   if (Draw_Batch)
+  {
     return;
+  }
   gp_Pnt pt = p;
   pt.Transform(curview->GetMatrix());
   double xp, yp, zp;
@@ -1361,7 +1586,9 @@ void Draw_Display::Project(const gp_Pnt& p, gp_Pnt2d& p2d) const
 Draw_Display::Draw_Display()
 {
   if (Draw_Batch)
+  {
     return;
+  }
   if (curview)
   {
     PtPers.SetCoord(0., 0., 0.);
@@ -1375,7 +1602,9 @@ Draw_Display::Draw_Display()
 void Draw_Display::MoveTo(const gp_Pnt2d& pp)
 {
   if (Draw_Batch)
+  {
     return;
+  }
   const double aZoom = curview->GetZoom();
   gp_Pnt2d     pt(pp.X() * aZoom, pp.Y() * aZoom);
   switch (CurrentMode)
@@ -1386,13 +1615,21 @@ void Draw_Display::MoveTo(const gp_Pnt2d& pp)
       if (Draw_Bounds)
       {
         if (pt.X() > xmax)
+        {
           xmax = pt.X();
+        }
         if (pt.X() < xmin)
+        {
           xmin = pt.X();
+        }
         if (pt.Y() > ymax)
+        {
           ymax = pt.Y();
+        }
         if (pt.Y() < ymin)
+        {
           ymin = pt.Y();
+        }
       }
       break;
 
@@ -1461,7 +1698,9 @@ bool Trim(gp_Pnt2d& P1, gp_Pnt2d& P2, double x0, double y0, double x1, double y1
     double dy  = yb - ya;
     double dab = sqrt(dx * dx + dy * dy);
     if (dab < 1e-10)
+    {
       return (false);
+    }
     dx /= dab;
     dy /= dab;
 
@@ -1479,7 +1718,9 @@ bool Trim(gp_Pnt2d& P1, gp_Pnt2d& P2, double x0, double y0, double x1, double y1
 
     gp_Pnt2d MFen(mfenx, mfeny);
     if (MFen.SquareDistance(Pm) > d * d)
+    {
       return (false);
+    }
 
     double PmDistP1 = Pm.Distance(P1);
     double PmDistP2 = Pm.Distance(P2);
@@ -1514,30 +1755,46 @@ bool Trim(gp_Pnt2d& P1, gp_Pnt2d& P2, double x0, double y0, double x1, double y1
     return (true);
   }
   else
+  {
     return (false);
+  }
 }
 
 void Draw_Display::DrawTo(const gp_Pnt2d& pp2)
 {
   if (Draw_Batch)
+  {
     return;
+  }
   if (pp2.X() > 1.e09 || pp2.X() < -1.e09)
+  {
     return;
+  }
   if (pp2.Y() > 1.e09 || pp2.Y() < -1.e09)
+  {
     return;
+  }
 
   gp_Pnt2d p2(pp2.X() * curview->GetZoom(), pp2.Y() * curview->GetZoom());
 
   if (p2.X() > 1.e09 || p2.X() < -1.e09)
+  {
     return;
+  }
   if (p2.Y() > 1.e09 || p2.Y() < -1.e09)
+  {
     return;
+  }
 
   gp_Pnt2d p1 = PtCur;
   if (p1.X() > 1.e09 || p1.X() < -1.e09)
+  {
     return;
+  }
   if (p1.Y() > 1.e09 || p1.Y() < -1.e09)
+  {
     return;
+  }
 
   PtCur = p2;
 
@@ -1581,13 +1838,21 @@ void Draw_Display::DrawTo(const gp_Pnt2d& pp2)
       if (Draw_Bounds)
       {
         if (p2.X() > xmax)
+        {
           xmax = p2.X();
+        }
         if (p2.X() < xmin)
+        {
           xmin = p2.X();
+        }
         if (p2.Y() > ymax)
+        {
           ymax = p2.Y();
+        }
         if (p2.Y() < ymin)
+        {
           ymin = p2.Y();
+        }
       }
     }
     break;
@@ -1600,13 +1865,21 @@ void Draw_Display::DrawTo(const gp_Pnt2d& pp2)
         int x2 = (int)p2.X();
         int y2 = (int)p2.Y();
         if ((x1 >= xpick + precpick) && (x2 >= xpick + precpick))
+        {
           break;
+        }
         if ((x1 <= xpick - precpick) && (x2 <= xpick - precpick))
+        {
           break;
+        }
         if ((y1 >= ypick + precpick) && (y2 >= ypick + precpick))
+        {
           break;
+        }
         if ((y1 <= ypick - precpick) && (y2 <= ypick - precpick))
+        {
           break;
+        }
 
         bool inside = true;
         if ((x1 > xpick + precpick) || (x2 > xpick + precpick))
@@ -1620,7 +1893,9 @@ void Draw_Display::DrawTo(const gp_Pnt2d& pp2)
             break;
           }
           else
+          {
             inside = false;
+          }
         }
 
         if ((x1 < xpick - precpick) || (x2 < xpick - precpick))
@@ -1634,7 +1909,9 @@ void Draw_Display::DrawTo(const gp_Pnt2d& pp2)
             break;
           }
           else
+          {
             inside = false;
+          }
         }
 
         if ((y1 > ypick + precpick) || (y2 > ypick + precpick))
@@ -1648,7 +1925,9 @@ void Draw_Display::DrawTo(const gp_Pnt2d& pp2)
             break;
           }
           else
+          {
             inside = false;
+          }
         }
 
         if ((y1 < ypick - precpick) || (y2 < ypick - precpick))
@@ -1662,7 +1941,9 @@ void Draw_Display::DrawTo(const gp_Pnt2d& pp2)
             break;
           }
           else
+          {
             inside = false;
+          }
         }
         found = found || inside;
         if (found)
@@ -1670,16 +1951,24 @@ void Draw_Display::DrawTo(const gp_Pnt2d& pp2)
           if (std::abs(x2 - x1) > std::abs(y2 - y1))
           {
             if (std::abs(x2 - x1) < 1e-5)
+            {
               lastPickParam = 0;
+            }
             else
+            {
               lastPickParam = (double)(xpick - x1) / (double)(x2 - x1);
+            }
           }
           else
           {
             if (std::abs(y2 - y1) < 1e-5)
+            {
               lastPickParam = 0;
+            }
             else
+            {
               lastPickParam = (double)(ypick - y1) / (double)(y2 - y1);
+            }
           }
         }
       }
@@ -1699,13 +1988,19 @@ void Draw_Display::DrawTo(const gp_Pnt2d& pp2)
 void Draw_Display::MoveTo(const gp_Pnt& pt)
 {
   if (Draw_Batch)
+  {
     return;
+  }
   if (CurrentMode == PICK)
   {
     if (!found)
+    {
       lastPickP1 = pt;
+    }
     else
+    {
       return;
+    }
   }
   PtPers = pt;
   PtPers.Transform(curview->GetMatrix());
@@ -1729,9 +2024,13 @@ void Draw_Display::MoveTo(const gp_Pnt& pt)
 void Draw_Display::DrawTo(const gp_Pnt& pt)
 {
   if (Draw_Batch)
+  {
     return;
+  }
   if ((CurrentMode == PICK) && found)
+  {
     return;
+  }
 
   gp_Pnt pt2 = pt.Transformed(curview->GetMatrix());
   double xp2 = pt2.X();
@@ -1773,9 +2072,13 @@ void Draw_Display::DrawTo(const gp_Pnt& pt)
   if (CurrentMode == PICK)
   {
     if (!found)
+    {
       lastPickP1 = pt;
+    }
     else
+    {
       lastPickP2 = pt;
+    }
   }
 }
 
@@ -1784,7 +2087,9 @@ void Draw_Display::DrawTo(const gp_Pnt& pt)
 void Draw_Display::Draw(const gp_Pnt& p1, const gp_Pnt& p2)
 {
   if (Draw_Batch)
+  {
     return;
+  }
   MoveTo(p1);
   DrawTo(p2);
 }
@@ -1794,7 +2099,9 @@ void Draw_Display::Draw(const gp_Pnt& p1, const gp_Pnt& p2)
 void Draw_Display::Draw(const gp_Pnt2d& p1, const gp_Pnt2d& p2)
 {
   if (Draw_Batch)
+  {
     return;
+  }
   MoveTo(p1);
   DrawTo(p2);
 }
@@ -1804,7 +2111,9 @@ void Draw_Display::Draw(const gp_Pnt2d& p1, const gp_Pnt2d& p2)
 int Draw_Display::ViewId() const
 {
   if (Draw_Batch)
+  {
     return 0;
+  }
   return curviewId;
 }
 
@@ -1813,6 +2122,8 @@ int Draw_Display::ViewId() const
 bool Draw_Display::HasPicked() const
 {
   if (Draw_Batch)
+  {
     return false;
+  }
   return found;
 }

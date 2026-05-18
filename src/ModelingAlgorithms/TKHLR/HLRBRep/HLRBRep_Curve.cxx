@@ -123,11 +123,13 @@ double HLRBRep_Curve::Update(double TotMin[16], double TotMax[16])
         gp_Dir D1 = HLRBRep_BCurveTool::Circle(myCurve).Axis().Direction();
         D1.Transform(((HLRAlgo_Projector*)myProj)->Transformation());
         if (D1.IsParallel(gp::DZ(), Precision::Angular()))
+        {
           myType = GeomAbs_Circle;
-        else if (std::abs(D1.Dot(gp::DZ()))
-                 < Precision::Angular()
-                     * 10) //*10: The minor radius of ellipse should not be too small.
+        }
+        else if (std::abs(D1.Dot(gp::DZ())) < Precision::Angular() * 10)
+        { //*10: The minor radius of ellipse should not be too small.
           myType = GeomAbs_OtherCurve;
+        }
         else
         {
           myType = GeomAbs_Ellipse;
@@ -155,14 +157,20 @@ double HLRBRep_Curve::Update(double TotMin[16], double TotMax[16])
 
     case GeomAbs_BezierCurve:
       if (HLRBRep_BCurveTool::Degree(myCurve) == 1)
+      {
         myType = GeomAbs_Line;
+      }
       else if (!((HLRAlgo_Projector*)myProj)->Perspective())
+      {
         myType = typ;
+      }
       break;
 
     case GeomAbs_BSplineCurve:
       if (!((HLRAlgo_Projector*)myProj)->Perspective())
+      {
         myType = typ;
+      }
       break;
 
     default:
@@ -208,7 +216,9 @@ double HLRBRep_Curve::Update(double TotMin[16], double TotMax[16])
       myOZ = VFZ * gp_Vec(P.X() - F.X(), P.Y() - F.Y(), P.Z());
     }
     else
+    {
       myVX = std::sqrt(V.X() * V.X() + V.Y() * V.Y()) * l3d;
+    }
   }
   return (UpdateMinMax(TotMin, TotMax));
 }
@@ -263,7 +273,9 @@ double HLRBRep_Curve::UpdateMinMax(double TotMin[16], double TotMax[16])
             dz1      = za + p * dz1 - zb;
             dd1      = sqrt(dx1 * dx1 + dy1 * dy1 + dz1 * dz1);
             if (dd1 > tolMinMax)
+            {
               tolMinMax = dd1;
+            }
           }
         }
       }
@@ -440,7 +452,9 @@ gp_Elips2d HLRBRep_Curve::Ellipse() const
   gp_Pnt2d      p(C.Location().X(), C.Location().Y());
   gp_Elips2d    El(gp_Ax2d(p, d), C.Radius(), C.Radius() * rap);
   if (D1.Z() < 0)
+  {
     El.Reverse();
+  }
   return El;
 }
 
@@ -468,11 +482,21 @@ void HLRBRep_Curve::Poles(NCollection_Array1<gp_Pnt2d>& TP) const
   //-- HLRBRep_BCurveTool::Poles(myCurve,TP3);
   if (HLRBRep_BCurveTool::GetType(myCurve) == GeomAbs_BSplineCurve)
   {
-    (HLRBRep_BCurveTool::BSpline(myCurve))->Poles(TP3);
+    occ::handle<Geom_BSplineCurve>    aBSpl     = HLRBRep_BCurveTool::BSpline(myCurve);
+    const NCollection_Array1<gp_Pnt>& aSrcPoles = aBSpl->Poles();
+    for (int i = i1; i <= i2; i++)
+    {
+      TP3(i) = aSrcPoles(i);
+    }
   }
   else
   {
-    (HLRBRep_BCurveTool::Bezier(myCurve))->Poles(TP3);
+    occ::handle<Geom_BezierCurve>     aBez      = HLRBRep_BCurveTool::Bezier(myCurve);
+    const NCollection_Array1<gp_Pnt>& aSrcPoles = aBez->Poles();
+    for (int i = i1; i <= i2; i++)
+    {
+      TP3(i) = aSrcPoles(i);
+    }
   }
   for (int i = i1; i <= i2; i++)
   {
@@ -490,7 +514,11 @@ void HLRBRep_Curve::Poles(const occ::handle<Geom_BSplineCurve>& aCurve,
   int                        i2 = TP.Upper();
   NCollection_Array1<gp_Pnt> TP3(i1, i2);
   //-- HLRBRep_BCurveTool::Poles(myCurve,TP3);
-  aCurve->Poles(TP3);
+  const NCollection_Array1<gp_Pnt>& aSrcPoles = aCurve->Poles();
+  for (int i = i1; i <= i2; i++)
+  {
+    TP3(i) = aSrcPoles(i);
+  }
 
   for (int i = i1; i <= i2; i++)
   {
@@ -511,17 +539,31 @@ void HLRBRep_Curve::PolesAndWeights(NCollection_Array1<gp_Pnt2d>& TP,
 
   if (HLRBRep_BCurveTool::GetType(myCurve) == GeomAbs_BSplineCurve)
   {
-    occ::handle<Geom_BSplineCurve> HB = (HLRBRep_BCurveTool::BSpline(myCurve));
-    HB->Poles(TP3);
-    HB->Weights(TW);
-    //-- (HLRBRep_BCurveTool::BSpline(myCurve))->PolesAndWeights(TP3,TW);
+    occ::handle<Geom_BSplineCurve>    HB          = (HLRBRep_BCurveTool::BSpline(myCurve));
+    const NCollection_Array1<gp_Pnt>& aSrcPoles   = HB->Poles();
+    const NCollection_Array1<double>& aSrcWeights = HB->WeightsArray();
+    for (int i = i1; i <= i2; i++)
+    {
+      TP3(i) = aSrcPoles(i);
+    }
+    for (int i = i1; i <= i2; i++)
+    {
+      TW(i) = aSrcWeights(i);
+    }
   }
   else
   {
-    occ::handle<Geom_BezierCurve> HB = (HLRBRep_BCurveTool::Bezier(myCurve));
-    HB->Poles(TP3);
-    HB->Weights(TW);
-    //-- (HLRBRep_BCurveTool::Bezier(myCurve))->PolesAndWeights(TP3,TW);
+    occ::handle<Geom_BezierCurve>     HB          = (HLRBRep_BCurveTool::Bezier(myCurve));
+    const NCollection_Array1<gp_Pnt>& aSrcPoles   = HB->Poles();
+    const NCollection_Array1<double>& aSrcWeights = HB->WeightsArray();
+    for (int i = i1; i <= i2; i++)
+    {
+      TP3(i) = aSrcPoles(i);
+    }
+    for (int i = i1; i <= i2; i++)
+    {
+      TW(i) = aSrcWeights(i);
+    }
   }
   for (int i = i1; i <= i2; i++)
   {
@@ -541,9 +583,16 @@ void HLRBRep_Curve::PolesAndWeights(const occ::handle<Geom_BSplineCurve>& aCurve
   NCollection_Array1<gp_Pnt> TP3(i1, i2);
   //-- HLRBRep_BCurveTool::PolesAndWeights(myCurve,TP3,TW);
 
-  aCurve->Poles(TP3);
-  aCurve->Weights(TW);
-  //-- (HLRBRep_BCurveTool::BSpline(myCurve))->PolesAndWeights(TP3,TW);
+  const NCollection_Array1<gp_Pnt>& aSrcPoles   = aCurve->Poles();
+  const NCollection_Array1<double>& aSrcWeights = aCurve->WeightsArray();
+  for (int i = i1; i <= i2; i++)
+  {
+    TP3(i) = aSrcPoles(i);
+  }
+  for (int i = i1; i <= i2; i++)
+  {
+    TW(i) = aSrcWeights(i);
+  }
 
   for (int i = i1; i <= i2; i++)
   {
@@ -558,8 +607,12 @@ void HLRBRep_Curve::Knots(NCollection_Array1<double>& kn) const
 {
   if (HLRBRep_BCurveTool::GetType(myCurve) == GeomAbs_BSplineCurve)
   {
-    occ::handle<Geom_BSplineCurve> HB = (HLRBRep_BCurveTool::BSpline(myCurve));
-    HB->Knots(kn);
+    occ::handle<Geom_BSplineCurve>    aBSpl     = HLRBRep_BCurveTool::BSpline(myCurve);
+    const NCollection_Array1<double>& aSrcKnots = aBSpl->Knots();
+    for (int i = kn.Lower(); i <= kn.Upper(); i++)
+    {
+      kn(i) = aSrcKnots(i);
+    }
   }
 }
 
@@ -569,7 +622,11 @@ void HLRBRep_Curve::Multiplicities(NCollection_Array1<int>& mu) const
 {
   if (HLRBRep_BCurveTool::GetType(myCurve) == GeomAbs_BSplineCurve)
   {
-    occ::handle<Geom_BSplineCurve> HB = (HLRBRep_BCurveTool::BSpline(myCurve));
-    HB->Multiplicities(mu);
+    occ::handle<Geom_BSplineCurve> aBSpl     = HLRBRep_BCurveTool::BSpline(myCurve);
+    const NCollection_Array1<int>& aSrcMults = aBSpl->Multiplicities();
+    for (int i = mu.Lower(); i <= mu.Upper(); i++)
+    {
+      mu(i) = aSrcMults(i);
+    }
   }
 }

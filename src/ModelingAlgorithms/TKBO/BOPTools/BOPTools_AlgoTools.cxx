@@ -142,7 +142,9 @@ void BOPTools_AlgoTools::MakeConnexityBlocks(
         {
           const TopoDS_Shape& aS2 = aItLS.Value();
           if (aMFence.Add(aS2))
+          {
             aLBlock.Append(aS2);
+          }
         }
       }
     }
@@ -172,7 +174,9 @@ void BOPTools_AlgoTools::MakeConnexityBlocks(const TopoDS_Shape&             the
     TopoDS_Compound aBlock;
     BRep_Builder().MakeCompound(aBlock);
     for (NCollection_List<TopoDS_Shape>::Iterator it(aLB); it.More(); it.Next())
+    {
       BRep_Builder().Add(aBlock, it.Value());
+    }
 
     theLCB.Append(aBlock);
   }
@@ -197,9 +201,13 @@ void BOPTools_AlgoTools::MakeConnexityBlocks(const NCollection_List<TopoDS_Shape
   {
     const TopoDS_Shape& aS = aItL.Value();
     if (aMFence.Add(aS))
+    {
       aBB.Add(aCStart, aS);
+    }
     else
+    {
       aMNRegular.Add(aS);
+    }
   }
 
   NCollection_List<NCollection_List<TopoDS_Shape>> aLCB;
@@ -235,7 +243,9 @@ void BOPTools_AlgoTools::MakeConnexityBlocks(const NCollection_List<TopoDS_Shape
         {
           // Check if there are no multi-connected shapes
           for (TopExp_Explorer ex(aS, theConnectionType); ex.More() && bRegular; ex.Next())
+          {
             bRegular = (aCMap.FindFromKey(ex.Current()).Extent() == 2);
+          }
         }
       }
     }
@@ -516,10 +526,8 @@ TopAbs_Orientation Orientation(const TopoDS_Edge& anE, const TopoDS_Face& aF)
   return anOr;
 }
 
-//=======================================================================
-// function: MakeConnexityBlock.
-// purpose:
-//=======================================================================
+//=================================================================================================
+
 void BOPTools_AlgoTools::MakeConnexityBlock(
   NCollection_List<TopoDS_Shape>&                                theLFIn,
   NCollection_IndexedMap<TopoDS_Shape, TopTools_ShapeMapHasher>& theMEAvoid,
@@ -638,7 +646,9 @@ TopAbs_State BOPTools_AlgoTools::ComputeStateByOnePoint(
     default: {
       TopoDS_Iterator it(theS);
       if (it.More())
+      {
         ComputeStateByOnePoint(it.Value(), theRef, theTol, theContext);
+      }
       break;
     }
   }
@@ -664,7 +674,9 @@ TopAbs_State BOPTools_AlgoTools::ComputeState(
   {
     const TopoDS_Edge& aSE = (*(TopoDS_Edge*)(&aExp.Current()));
     if (BRep_Tool::Degenerated(aSE))
+    {
       continue;
+    }
 
     if (!theBounds.Contains(aSE))
     {
@@ -686,14 +698,18 @@ TopAbs_State BOPTools_AlgoTools::ComputeState(
     {
       const TopoDS_Edge& aSE = TopoDS::Edge(aExp.Current());
       if (BRep_Tool::Degenerated(aSE))
+      {
         continue;
+      }
 
       iErr = BOPTools_AlgoTools3D::PointNearEdge(aSE, theF, aP2D, aP3D, theContext);
     }
   }
 
   if (iErr == 0)
+  {
     aState = BOPTools_AlgoTools::ComputeState(aP3D, theRef, theTol, theContext);
+  }
 
   return aState;
 }
@@ -851,7 +867,9 @@ bool BOPTools_AlgoTools::IsInternalFace(
       const TopoDS_Face& aF2 = (*(TopoDS_Face*)(&aLF.Last()));
       iRet = BOPTools_AlgoTools::IsInternalFace(theFace, aE, aF1, aF2, theContext);
       if (iRet != 2)
+      {
         break;
+      }
     }
   } // for(; aExp.More(); aExp.Next()) {
   //
@@ -958,11 +976,15 @@ int BOPTools_AlgoTools::IsInternalFace(const TopoDS_Face&                   theF
   int  iRet   = 0; // theFace is not internal
   bool isDone = GetFaceOff(aE1, theFace1, theLCSOff, aFOff, theContext);
   if (!isDone)
+  {
     // error, unable to classify face by this edge
     iRet = 2;
+  }
   else if (theFace.IsEqual(aFOff))
+  {
     // theFace is internal
     iRet = 1;
+  }
 
   return iRet;
 }
@@ -1150,13 +1172,19 @@ bool BOPTools_AlgoTools::AreFacesSameDomain(const TopoDS_Face&                  
       {
         double aTolE = BRep_Tool::Tolerance(aE);
         if (aTolE > aTolEMax)
+        {
           aTolEMax = aTolE;
+        }
       }
     }
     if (aTolEMax > aTolF1)
+    {
       aTolF1 = aTolEMax;
+    }
     if (aTolEMax > aTolF2)
+    {
       aTolF2 = aTolEMax;
+    }
   }
 
   // Checking criteria
@@ -1253,7 +1281,9 @@ bool BOPTools_AlgoTools::IsSplitToReverse(const TopoDS_Shape&                  t
       //
     default:
       if (theError)
+      {
         *theError = 100;
+      }
       break;
   }
   return bRet;
@@ -1290,7 +1320,9 @@ bool BOPTools_AlgoTools::IsSplitToReverse(const TopoDS_Face&                   t
 {
   // Set OK error status
   if (theError)
+  {
     *theError = 0;
+  }
 
   // Compare surfaces
   occ::handle<Geom_Surface> aSFSp = BRep_Tool::Surface(theFSp);
@@ -1331,7 +1363,9 @@ bool BOPTools_AlgoTools::IsSplitToReverse(const TopoDS_Face&                   t
     if (!anExp.More())
     {
       if (theError)
+      {
         *theError = 1;
+      }
       // The point has not been found.
       return bDone;
     }
@@ -1343,7 +1377,9 @@ bool BOPTools_AlgoTools::IsSplitToReverse(const TopoDS_Face&                   t
   if (!bDone)
   {
     if (theError)
+    {
       *theError = 2;
+    }
     return bDone;
   }
   //
@@ -1360,7 +1396,9 @@ bool BOPTools_AlgoTools::IsSplitToReverse(const TopoDS_Face&                   t
   if (!bDone)
   {
     if (theError)
+    {
       *theError = 3;
+    }
     return bDone;
   }
   // UV coordinates of the point on the original face
@@ -1373,7 +1411,9 @@ bool BOPTools_AlgoTools::IsSplitToReverse(const TopoDS_Face&                   t
   if (!bDone)
   {
     if (theError)
+    {
       *theError = 4;
+    }
     return bDone;
   }
   //
@@ -1401,13 +1441,17 @@ bool BOPTools_AlgoTools::IsSplitToReverse(const TopoDS_Edge&                   t
   if (BRep_Tool::Degenerated(theESp) || BRep_Tool::Degenerated(theEOr))
   {
     if (theError)
+    {
       *theError = 1;
+    }
     return false;
   }
 
   // Set OK error status
   if (theError)
+  {
     *theError = 0;
+  }
 
   // Get the curves from the edges
   double                  f, l;
@@ -1416,12 +1460,16 @@ bool BOPTools_AlgoTools::IsSplitToReverse(const TopoDS_Edge&                   t
 
   // If the curves are the same, compare orientations only
   if (aCSp == aCOr)
+  {
     return theESp.Orientation() != theEOr.Orientation();
+  }
 
   // Find valid range of the split edge, to ensure that the point for computing
   // tangent vectors will be inside both edges.
   if (!BRepLib::FindValidRange(theESp, f, l))
+  {
     BRep_Tool::Range(theESp, f, l);
+  }
 
   // Error code
   int anErr = 0;
@@ -1467,7 +1515,9 @@ bool BOPTools_AlgoTools::IsSplitToReverse(const TopoDS_Edge&                   t
   }
 
   if (theError)
+  {
     *theError = anErr;
+  }
 
   return false;
 }
@@ -1741,7 +1791,9 @@ void BOPTools_AlgoTools::MakeVertex(const NCollection_List<TopoDS_Shape>& aLV, T
 {
   int aNb = aLV.Extent();
   if (aNb == 1)
+  {
     aVnew = *((TopoDS_Vertex*)(&aLV.First()));
+  }
   else if (aNb > 1)
   {
     double aNTol;

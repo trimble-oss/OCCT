@@ -69,15 +69,15 @@ TDF_Label StdLPersistent_HString::instance<StringClass, CharType>::Label(
   TDF_Label aLabel;
 
   if (!myValue.IsNull())
+  {
     TDF_Tool::Label(theDF, myValue->String(), aLabel, true);
+  }
 
   return aLabel;
 }
 
-//=======================================================================
-// function : AsciiString
-// purpose  : Get referenced ASCII string
-//=======================================================================
+//=================================================================================================
+
 occ::handle<TCollection_HAsciiString> StdLPersistent_HString::Ascii::AsciiString() const
 {
   return myValue;

@@ -20,7 +20,8 @@
 IntCurveSurface_IntersectionPoint::IntCurveSurface_IntersectionPoint()
     : myUSurf(0.0),
       myVSurf(0.0),
-      myUCurv(0.0)
+      myUCurv(0.0),
+      myTrOnCurv(IntCurveSurface_Tangent)
 {
 }
 
@@ -71,9 +72,9 @@ void IntCurveSurface_IntersectionPoint::Values(gp_Pnt&                          
 void IntCurveSurface_IntersectionPoint::Dump() const
 {
   std::cout << "IntersectionPoint: P(" << myP.X() << "," << myP.Y() << "," << myP.Z() << ")"
-            << std::endl;
+            << '\n';
   std::cout << "                 : USurf(" << myUSurf << ")  VSurf(" << myVSurf << ")   UCurve("
-            << myUCurv << ")" << std::endl;
+            << myUCurv << ")" << '\n';
   std::cout << "                 : TransitionOnSurf ";
 
   switch (myTrOnCurv)
@@ -91,5 +92,5 @@ void IntCurveSurface_IntersectionPoint::Dump() const
     default:
       std::cout << " XXXXX ";
   }
-  std::cout << std::endl;
+  std::cout << '\n';
 }

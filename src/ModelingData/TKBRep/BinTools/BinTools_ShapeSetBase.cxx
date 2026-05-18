@@ -15,17 +15,17 @@
 #include <BinTools_ShapeSetBase.hxx>
 #include <TopoDS_Shape.hxx>
 
-const char* BinTools_ShapeSetBase::THE_ASCII_VERSIONS[BinTools_FormatVersion_UPPER + 1] = {
+const char* const BinTools_ShapeSetBase::THE_ASCII_VERSIONS[BinTools_FormatVersion_UPPER + 1] = {
   "",
   "Open CASCADE Topology V1 (c)",
   "Open CASCADE Topology V2 (c)",
   "Open CASCADE Topology V3 (c)",
   "Open CASCADE Topology V4, (c) Open Cascade"};
 
-//=======================================================================
+//=================================================================================================
 // function : operator << (gp_Pnt)
 // purpose  :
-//=======================================================================
+//=================================================================================================
 Standard_OStream& operator<<(Standard_OStream& OS, const gp_Pnt& P)
 {
   BinTools::PutReal(OS, P.X());

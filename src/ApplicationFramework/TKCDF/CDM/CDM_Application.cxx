@@ -58,7 +58,7 @@ occ::handle<Message_Messenger> CDM_Application::MessageDriver()
 
 //=================================================================================================
 
-void CDM_Application::Write(const char16_t* aString)
+void CDM_Application::Write(const char16_t* const aString)
 {
   MessageDriver()->Send(aString);
 }
@@ -80,18 +80,19 @@ void CDM_Application::EndOfUpdate(const occ::handle<CDM_Document>& /*aDocument*/
 {
   TCollection_ExtendedString message;
   if (theStatus)
+  {
     message = "Updated: ";
+  }
   else
+  {
     message = "Error during updating: ";
+  }
 
   message += "Document";
   Write(message.ToExtString());
 }
 
-//=======================================================================
-// function : Name
-// purpose  : returns the application name
-//=======================================================================
+//=================================================================================================
 
 TCollection_ExtendedString CDM_Application::Name() const
 {
@@ -99,10 +100,7 @@ TCollection_ExtendedString CDM_Application::Name() const
   return TCollection_ExtendedString();
 }
 
-//=======================================================================
-// function : Version
-// purpose  : returns the application version
-//=======================================================================
+//=================================================================================================
 
 TCollection_AsciiString CDM_Application::Version() const
 {
@@ -110,10 +108,8 @@ TCollection_AsciiString CDM_Application::Version() const
   return TCollection_AsciiString();
 }
 
-//=======================================================================
-// function : MetaDataLookUpTable
-// purpose  : returns the MetaData LookUpTable
-//=======================================================================
+//=================================================================================================
+
 NCollection_DataMap<TCollection_ExtendedString, occ::handle<CDM_MetaData>>& CDM_Application::
   MetaDataLookUpTable()
 {

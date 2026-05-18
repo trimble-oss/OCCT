@@ -58,10 +58,8 @@ const Standard_GUID& TDataStd_BooleanArray::GetID()
   return TDataStd_BooleanArrayID;
 }
 
-//=======================================================================
-// function : SetAttr
-// purpose  : Implements Set functionality
-//=======================================================================
+//=================================================================================================
+
 static occ::handle<TDataStd_BooleanArray> SetAttr(const TDF_Label&     label,
                                                   const int            lower,
                                                   const int            upper,
@@ -109,10 +107,8 @@ occ::handle<TDataStd_BooleanArray> TDataStd_BooleanArray::Set(const TDF_Label& l
   return SetAttr(label, lower, upper, GetID());
 }
 
-//=======================================================================
-// function : Set
-// purpose  : Set user defined attribute with specific ID
-//=======================================================================
+//=================================================================================================
+
 occ::handle<TDataStd_BooleanArray> TDataStd_BooleanArray::Set(const TDF_Label&     label,
                                                               const Standard_GUID& theGuid,
                                                               const int            lower,
@@ -127,13 +123,17 @@ void TDataStd_BooleanArray::SetValue(const int index, const bool value)
 {
 
   if (myValues.IsNull())
+  {
     return;
+  }
   int byte_index = (index - myLower) >> 3;
   int degree     = index - (byte_index << 3) - myLower;
   int byte_value = DegreeOf2(degree);
 
   if ((value != 0) == ((myValues->Value(byte_index) & byte_value) > 0))
+  {
     return;
+  }
 
   Backup();
 
@@ -152,9 +152,13 @@ void TDataStd_BooleanArray::SetValue(const int index, const bool value)
 bool TDataStd_BooleanArray::Value(const int index) const
 {
   if (myValues.IsNull())
+  {
     return false;
+  }
   if (index < myLower || index > myUpper)
+  {
     return false;
+  }
 
   int byte_index = (index - myLower) >> 3;
   int degree     = index - (byte_index << 3) - myLower;
@@ -211,7 +215,9 @@ const Standard_GUID& TDataStd_BooleanArray::ID() const
 void TDataStd_BooleanArray::SetID(const Standard_GUID& theGuid)
 {
   if (myID == theGuid)
+  {
     return;
+  }
   Backup();
   myID = theGuid;
 }
@@ -283,7 +289,7 @@ Standard_OStream& TDataStd_BooleanArray::Dump(Standard_OStream& anOS) const
   char sguid[Standard_GUID_SIZE_ALLOC];
   myID.ToCString(sguid);
   anOS << sguid;
-  anOS << std::endl;
+  anOS << '\n';
   return anOS;
 }
 

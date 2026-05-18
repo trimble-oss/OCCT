@@ -88,7 +88,7 @@ uint64_t BinTools_IStream::ReadReference()
   if (aDelta == 0)
   {
     Standard_SStream aMsg;
-    aMsg << "BinTools_IStream::ReadReference: invalid reference " << (char)myLastType << std::endl;
+    aMsg << "BinTools_IStream::ReadReference: invalid reference " << (char)myLastType << '\n';
     throw Standard_Failure(aMsg.str().c_str());
   }
   return aCurrentPos - aDelta - 1; // add a type-byte
@@ -127,14 +127,14 @@ BinTools_IStream::operator bool() const
   return static_cast<bool>(*myStream);
 }
 
-//=======================================================================
-// function : operator <<
-// purpose  :
-//=======================================================================
+//=================================================================================================
+
 BinTools_IStream& BinTools_IStream::operator>>(double& theValue)
 {
   if (!myStream->read((char*)&theValue, sizeof(double)))
+  {
     throw Storage_StreamTypeMismatchError();
+  }
   myPosition += sizeof(double);
 #if DO_INVERSE
   theValue = InverseReal(theValue);
@@ -142,14 +142,14 @@ BinTools_IStream& BinTools_IStream::operator>>(double& theValue)
   return *this;
 }
 
-//=======================================================================
-// function : operator <<
-// purpose  :
-//=======================================================================
+//=================================================================================================
+
 BinTools_IStream& BinTools_IStream::operator>>(int& theValue)
 {
   if (!myStream->read((char*)&theValue, sizeof(int)))
+  {
     throw Storage_StreamTypeMismatchError();
+  }
   myPosition += sizeof(int);
 #if DO_INVERSE
   theValue = InverseInt(theValue);
@@ -157,17 +157,17 @@ BinTools_IStream& BinTools_IStream::operator>>(int& theValue)
   return *this;
 }
 
-//=======================================================================
-// function : operator <<
-// purpose  :
-//=======================================================================
+//=================================================================================================
+
 BinTools_IStream& BinTools_IStream::operator>>(gp_Pnt& theValue)
 {
   double aValue;
   for (int aCoord = 1; aCoord <= 3; aCoord++)
   {
     if (!myStream->read((char*)&aValue, sizeof(double)))
+    {
       throw Storage_StreamTypeMismatchError();
+    }
 #if DO_INVERSE
     aValue = InverseReal(aValue);
 #endif
@@ -177,10 +177,8 @@ BinTools_IStream& BinTools_IStream::operator>>(gp_Pnt& theValue)
   return *this;
 }
 
-//=======================================================================
-// function : operator <<
-// purpose  :
-//=======================================================================
+//=================================================================================================
+
 BinTools_IStream& BinTools_IStream::operator>>(uint8_t& theValue)
 {
   myStream->read((char*)&theValue, sizeof(uint8_t));
@@ -188,10 +186,8 @@ BinTools_IStream& BinTools_IStream::operator>>(uint8_t& theValue)
   return *this;
 }
 
-//=======================================================================
-// function : operator <<
-// purpose  :
-//=======================================================================
+//=================================================================================================
+
 BinTools_IStream& BinTools_IStream::operator>>(float& theValue)
 {
   myStream->read((char*)&theValue, sizeof(float));
@@ -199,10 +195,8 @@ BinTools_IStream& BinTools_IStream::operator>>(float& theValue)
   return *this;
 }
 
-//=======================================================================
-// function : operator <<
-// purpose  :
-//=======================================================================
+//=================================================================================================
+
 BinTools_IStream& BinTools_IStream::operator>>(gp_Trsf& theValue)
 {
   double aV1[3], aV2[3], aV3[3], aV[3];

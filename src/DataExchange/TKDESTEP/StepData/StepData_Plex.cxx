@@ -44,18 +44,20 @@ bool StepData_Plex::IsComplex() const
   return true;
 }
 
-bool StepData_Plex::Matches(const char* steptype) const
+bool StepData_Plex::Matches(const char* const steptype) const
 {
   int i, nb = NbMembers();
   for (i = 1; i <= nb; i++)
   {
     if (Member(i)->Matches(steptype))
+    {
       return true;
+    }
   }
   return false;
 }
 
-occ::handle<StepData_Simple> StepData_Plex::As(const char* steptype) const
+occ::handle<StepData_Simple> StepData_Plex::As(const char* const steptype) const
 {
   occ::handle<StepData_Simple> ent;
   int                          i, nb = NbMembers();
@@ -63,24 +65,28 @@ occ::handle<StepData_Simple> StepData_Plex::As(const char* steptype) const
   {
     ent = Member(i);
     if (ent->Matches(steptype))
+    {
       return ent;
+    }
   }
   ent.Nullify();
   return ent;
 }
 
-bool StepData_Plex::HasField(const char* name) const
+bool StepData_Plex::HasField(const char* const name) const
 {
   int i, nb = NbMembers();
   for (i = 1; i <= nb; i++)
   {
     if (Member(i)->HasField(name))
+    {
       return true;
+    }
   }
   return false;
 }
 
-const StepData_Field& StepData_Plex::Field(const char* name) const
+const StepData_Field& StepData_Plex::Field(const char* const name) const
 {
   occ::handle<StepData_Simple> ent;
   int                          i, nb = NbMembers();
@@ -88,12 +94,14 @@ const StepData_Field& StepData_Plex::Field(const char* name) const
   {
     ent = Member(i);
     if (ent->HasField(name))
+    {
       return ent->Field(name);
+    }
   }
   throw Interface_InterfaceMismatch("StepData_Plex : Field");
 }
 
-StepData_Field& StepData_Plex::CField(const char* name)
+StepData_Field& StepData_Plex::CField(const char* const name)
 {
   occ::handle<StepData_Simple> ent;
   int                          i, nb = NbMembers();
@@ -101,7 +109,9 @@ StepData_Field& StepData_Plex::CField(const char* name)
   {
     ent = Member(i);
     if (ent->HasField(name))
+    {
       return ent->CField(name);
+    }
   }
   throw Interface_InterfaceMismatch("StepData_Plex : Field");
 }

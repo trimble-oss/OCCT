@@ -41,38 +41,44 @@ bool StepData_Simple::IsComplex() const
   return false;
 }
 
-bool StepData_Simple::Matches(const char* steptype) const
+bool StepData_Simple::Matches(const char* const steptype) const
 {
   return ESDescr()->Matches(steptype);
 }
 
-occ::handle<StepData_Simple> StepData_Simple::As(const char* steptype) const
+occ::handle<StepData_Simple> StepData_Simple::As(const char* const steptype) const
 {
   occ::handle<StepData_Simple> nulent;
   if (Matches(steptype))
+  {
     return this;
+  }
   return nulent;
 }
 
-bool StepData_Simple::HasField(const char* name) const
+bool StepData_Simple::HasField(const char* const name) const
 {
   int num = ESDescr()->Rank(name);
   return (num > 0);
 }
 
-const StepData_Field& StepData_Simple::Field(const char* name) const
+const StepData_Field& StepData_Simple::Field(const char* const name) const
 {
   int num = ESDescr()->Rank(name);
   if (num == 0)
+  {
     throw Interface_InterfaceMismatch("StepData_Simple : Field");
+  }
   return FieldNum(num);
 }
 
-StepData_Field& StepData_Simple::CField(const char* name)
+StepData_Field& StepData_Simple::CField(const char* const name)
 {
   int num = ESDescr()->Rank(name);
   if (num == 0)
+  {
     throw Interface_InterfaceMismatch("StepData_Simple : Field");
+  }
   return CFieldNum(num);
 }
 
@@ -113,16 +119,22 @@ void StepData_Simple::Shared(Interface_EntityIterator& list) const
     int                   j1, j2, l1, l2;
     l1 = l2 = 1;
     if (fi.Arity() >= 1)
+    {
       l1 = fi.Length(1);
+    }
     if (fi.Arity() > 1)
+    {
       l2 = fi.Length(2);
+    }
     for (j1 = 1; j1 <= l1; j1++)
     {
       for (j2 = 1; j2 <= l2; j2++)
       {
         occ::handle<Standard_Transient> ent = fi.Entity(j1, j2);
         if (!ent.IsNull())
+        {
           list.AddItem(ent);
+        }
       }
     }
   }

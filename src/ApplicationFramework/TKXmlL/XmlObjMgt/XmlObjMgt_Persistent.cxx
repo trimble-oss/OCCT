@@ -33,7 +33,9 @@ XmlObjMgt_Persistent::XmlObjMgt_Persistent(const XmlObjMgt_Element& theElement)
       myID(0)
 {
   if (theElement != nullptr)
+  {
     theElement.getAttribute(XmlObjMgt::IdString()).GetInteger(myID);
+  }
 }
 
 //=================================================================================================
@@ -49,15 +51,15 @@ XmlObjMgt_Persistent::XmlObjMgt_Persistent(const XmlObjMgt_Element&   theElement
     {
       myElement = XmlObjMgt::FindChildElement(theElement, aRefID);
       if (myElement != nullptr)
+      {
         myElement.getAttribute(XmlObjMgt::IdString()).GetInteger(myID);
+      }
     }
   }
 }
 
-//=======================================================================
-// function : CreateElement
-// purpose  : <theType id="theID"/>
-//=======================================================================
+//=================================================================================================
+
 void XmlObjMgt_Persistent::CreateElement(XmlObjMgt_Element&         theParent,
                                          const XmlObjMgt_DOMString& theType,
                                          const int                  theID)

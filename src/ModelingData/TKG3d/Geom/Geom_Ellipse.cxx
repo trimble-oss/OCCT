@@ -127,9 +127,13 @@ void Geom_Ellipse::SetMajorRadius(const double MajorRadius)
 {
 
   if (MajorRadius < minorRadius)
+  {
     throw Standard_ConstructionError();
+  }
   else
+  {
     majorRadius = MajorRadius;
+  }
 }
 
 //=================================================================================================
@@ -182,42 +186,53 @@ Ax1 Geom_Ellipse::Directrix2() const
 
 //=================================================================================================
 
-void Geom_Ellipse::D0(const double U, gp_Pnt& P) const
+gp_Pnt Geom_Ellipse::EvalD0(const double U) const
 {
-
-  P = ElCLib::EllipseValue(U, pos, majorRadius, minorRadius);
+  return ElCLib::EllipseValue(U, pos, majorRadius, minorRadius);
 }
 
 //=================================================================================================
 
-void Geom_Ellipse::D1(const double U, Pnt& P, Vec& V1) const
+Geom_Curve::ResD1 Geom_Ellipse::EvalD1(const double U) const
 {
-
-  ElCLib::EllipseD1(U, pos, majorRadius, minorRadius, P, V1);
+  Geom_Curve::ResD1 aResult;
+  ElCLib::EllipseD1(U, pos, majorRadius, minorRadius, aResult.Point, aResult.D1);
+  return aResult;
 }
 
 //=================================================================================================
 
-void Geom_Ellipse::D2(const double U, Pnt& P, Vec& V1, Vec& V2) const
+Geom_Curve::ResD2 Geom_Ellipse::EvalD2(const double U) const
 {
-
-  ElCLib::EllipseD2(U, pos, majorRadius, minorRadius, P, V1, V2);
+  Geom_Curve::ResD2 aResult;
+  ElCLib::EllipseD2(U, pos, majorRadius, minorRadius, aResult.Point, aResult.D1, aResult.D2);
+  return aResult;
 }
 
 //=================================================================================================
 
-void Geom_Ellipse::D3(const double U, Pnt& P, Vec& V1, Vec& V2, Vec& V3) const
+Geom_Curve::ResD3 Geom_Ellipse::EvalD3(const double U) const
 {
-
-  ElCLib::EllipseD3(U, pos, majorRadius, minorRadius, P, V1, V2, V3);
+  Geom_Curve::ResD3 aResult;
+  ElCLib::EllipseD3(U,
+                    pos,
+                    majorRadius,
+                    minorRadius,
+                    aResult.Point,
+                    aResult.D1,
+                    aResult.D2,
+                    aResult.D3);
+  return aResult;
 }
 
 //=================================================================================================
 
-Vec Geom_Ellipse::DN(const double U, const int N) const
+gp_Vec Geom_Ellipse::EvalDN(const double U, const int N) const
 {
-
-  Standard_RangeError_Raise_if(N < 1, " ");
+  if (N < 1)
+  {
+    throw Geom_UndefinedDerivative();
+  }
   return ElCLib::EllipseDN(U, pos, majorRadius, minorRadius, N);
 }
 
@@ -274,9 +289,13 @@ double Geom_Ellipse::Parameter() const
 {
 
   if (majorRadius == 0.0)
+  {
     return 0.0;
+  }
   else
+  {
     return (minorRadius * minorRadius) / majorRadius;
+  }
 }
 
 //=================================================================================================

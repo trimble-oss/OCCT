@@ -63,29 +63,43 @@ const char* StepFEA_SymmetricTensor43dMember::Name() const
 
 //=================================================================================================
 
-static int CompareNames(const char* name)
+static int CompareNames(const char* const name)
 {
   int thecase = 0;
   if (!name || name[0] == '\0')
+  {
     thecase = 0;
+  }
   else if (!strcmp(name, AST))
+  {
     thecase = 1;
+  }
   else if (!strcmp(name, IST))
+  {
     thecase = 2;
+  }
   else if (!strcmp(name, IOST))
+  {
     thecase = 3;
+  }
   else if (!strcmp(name, TIST))
+  {
     thecase = 4;
+  }
   else if (!strcmp(name, CNOST))
+  {
     thecase = 5;
+  }
   else if (!strcmp(name, CNMST))
+  {
     thecase = 6;
+  }
   return thecase;
 }
 
 //=================================================================================================
 
-bool StepFEA_SymmetricTensor43dMember::SetName(const char* name)
+bool StepFEA_SymmetricTensor43dMember::SetName(const char* const name)
 {
   mycase = CompareNames(name);
   return (mycase > 0);
@@ -93,7 +107,7 @@ bool StepFEA_SymmetricTensor43dMember::SetName(const char* name)
 
 //=================================================================================================
 
-bool StepFEA_SymmetricTensor43dMember::Matches(const char* name) const
+bool StepFEA_SymmetricTensor43dMember::Matches(const char* const name) const
 {
   int thecase = CompareNames(name);
   return (mycase == thecase);

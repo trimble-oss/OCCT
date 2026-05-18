@@ -44,20 +44,15 @@ GeomFill_GuideTrihedronAC::GeomFill_GuideTrihedronAC(const occ::handle<Adaptor3d
   Orig2       = 1;
 }
 
-//=======================================================================
-// function : Guide
-// purpose  : calculation of trihedron
-//=======================================================================
+//=================================================================================================
 
 occ::handle<Adaptor3d_Curve> GeomFill_GuideTrihedronAC::Guide() const
 {
   return myGuide;
 }
 
-//=======================================================================
-// function : D0
-// purpose  : calculation of trihedron
-//=======================================================================
+//=================================================================================================
+
 bool GeomFill_GuideTrihedronAC::D0(const double Param,
                                    gp_Vec&      Tangent,
                                    gp_Vec&      Normal,
@@ -75,6 +70,9 @@ bool GeomFill_GuideTrihedronAC::D0(const double Param,
 
   gp_Vec n(P, PG); // vecteur definissant la normale
 
+  // TODO: finding #8 - no zero-magnitude guard before Normalized()/Magnitude().
+  // Adding guards (return false on near-zero) caused blend regressions.
+  // Needs investigation to find a safe fallback strategy.
   Normal   = n.Normalized();
   B        = To.Crossed(Normal);
   BiNormal = B / B.Magnitude();
@@ -123,7 +121,8 @@ bool GeomFill_GuideTrihedronAC::D1(const double Param,
   }
 
   n /= Norm;
-  // derivee de n par rapport a Param
+  // TODO: finding #8 - no zero-magnitude guard before TG.Magnitude()/L division.
+  // Adding guards caused blend regressions. Needs safe fallback strategy.
   dtg = (Orig2 - Orig1) * (To.Magnitude() / TG.Magnitude()) * (Lguide / L);
   dn.SetLinearForm(dtg, TG, -1, To);
   dn /= Norm;
@@ -215,7 +214,9 @@ bool GeomFill_GuideTrihedronAC::D2(const double Param,
 
   double Norma = TN.Magnitude();
   if (Norma > 1.e-9)
+  {
     TN /= Norma;
+  }
 
   BiNormal = TN;
 
@@ -258,8 +259,7 @@ bool GeomFill_GuideTrihedronAC::D2(const double Param,
                           DNormal.Crossed(DBiNormal),
                           Normal.Crossed(D2BiNormal));
 
-  //  return true;
-  return false;
+  return true;
 }
 
 //=================================================================================================

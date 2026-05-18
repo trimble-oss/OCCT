@@ -186,7 +186,9 @@ static bool FindParameterWithExt(const gp_Pnt&                   Pt1,
       return true;
     }
     else
+    {
       return false;
+    }
   } // end try
   catch (Standard_Failure const& anException)
   {
@@ -211,7 +213,9 @@ void ShapeFix_EdgeProjAux::Init2d(const double preci)
   occ::handle<Geom_Surface> theSurface = BRep_Tool::Surface(myFace);
   occ::handle<Geom2d_Curve> theCurve2d = BRep_Tool::CurveOnSurface(myEdge, myFace, cf, cl);
   if (theCurve2d.IsNull())
+  {
     return; //: r5 abv 6 Apr 99:  ec_turbine-A.stp, #4313
+  }
   myFirstParam = 0.;
   myLastParam  = 0.;
   TopoDS_Vertex V1, V2;
@@ -345,7 +349,9 @@ void ShapeFix_EdgeProjAux::Init2d(const double preci)
         if (dir.X() != 0)
         {
           if (dir.Y() == 0)
+          {
             parU = true;
+          }
           gp_Pnt2d pnt = lin->Location(); // szv#4:S4163:12Mar99 moved
           double   cfi = (uf - pnt.X()) / dir.X();
           double   cli = (ul - pnt.X()) / dir.X();
@@ -386,8 +392,7 @@ void ShapeFix_EdgeProjAux::Init2d(const double preci)
         // Try to reparametrize (CASE dxf read bug25899)
         occ::handle<Geom2d_BSplineCurve> aBspl =
           occ::down_cast<Geom2d_BSplineCurve>(theCurve2d->Copy());
-        NCollection_Array1<double> aNewKnots(1, aBspl->NbKnots());
-        aBspl->Knots(aNewKnots);
+        NCollection_Array1<double> aNewKnots(aBspl->Knots());
         BSplCLib::Reparametrize(cf, cl, aNewKnots);
         aBspl->SetKnots(aNewKnots);
         theCurve2d = aBspl;
@@ -416,7 +421,9 @@ void ShapeFix_EdgeProjAux::Init2d(const double preci)
   double              dist = sac.Project(COnS, Pt1, preci, pnt, w1, false);
   // if distance is infinite then projection is not performed
   if (Precision::IsInfinite(dist))
+  {
     return;
+  }
 
   myFirstDone  = true;
   myFirstParam = w1;
@@ -424,7 +431,9 @@ void ShapeFix_EdgeProjAux::Init2d(const double preci)
   dist = sac.Project(COnS, Pt2, preci, pnt, w2, false);
 
   if (Precision::IsInfinite(dist))
+  {
     return;
+  }
 
   myLastDone  = true;
   myLastParam = w2;
@@ -432,11 +441,15 @@ void ShapeFix_EdgeProjAux::Init2d(const double preci)
   if (fabs(w1 - w2) < Precision::PConfusion())
   {
     if (!theSurface->IsUPeriodic() && !theSurface->IsVPeriodic())
+    {
       return;
+    }
   }
 
   if (myFirstParam == Uinf && myLastParam == Usup)
+  {
     return;
+  }
   if (myFirstParam == Usup && myLastParam == Uinf)
   {
     myFirstParam = theCurve2d->ReversedParameter(Usup);
@@ -453,11 +466,15 @@ void ShapeFix_EdgeProjAux::Init2d(const double preci)
     // 18.11.2002 SKL OCC630 compare values with tolerance Precision::PConfusion() instead of "=="
     if (std::abs(myFirstParam - Uinf) < ::Precision::PConfusion()
         && std::abs(myLastParam - Uinf) < ::Precision::PConfusion())
+    {
       myLastParam = w2 = Usup;
-    // 18.11.2002 SKL OCC630 compare values with tolerance Precision::PConfusion() instead of "=="
+      // 18.11.2002 SKL OCC630 compare values with tolerance Precision::PConfusion() instead of "=="
+    }
     else if (std::abs(myFirstParam - Usup) < ::Precision::PConfusion()
              && std::abs(myLastParam - Usup) < ::Precision::PConfusion())
+    {
       myFirstParam = w1 = Uinf;
+    }
   }
 
   // pdn adjust parameters in periodic case
@@ -483,9 +500,13 @@ void ShapeFix_EdgeProjAux::Init2d(const double preci)
     if (w1 >= w2)
     {
       if (w2 > wmid)
+      {
         myFirstParam -= period;
+      }
       else if (w1 > wmid)
+      {
         UpdateParam2d(theCurve2d);
+      }
       else
       {
         myLastParam += period;
@@ -512,7 +533,6 @@ void ShapeFix_EdgeProjAux::Init2d(const double preci)
     }
   }
   UpdateParam2d(theCurve2d);
-  return;
 }
 
 //=================================================================================================
@@ -525,7 +545,9 @@ void ShapeFix_EdgeProjAux::Init3d(const double preci)
   occ::handle<Geom_Surface> theSurface = BRep_Tool::Surface(myFace);
   occ::handle<Geom2d_Curve> theCurve2d = BRep_Tool::CurveOnSurface(myEdge, myFace, cf, cl);
   if (theCurve2d.IsNull())
+  {
     return; //: r5 abv 6 Apr 99:  ec_turbine-A.stp, #4313
+  }
   TopoDS_Vertex V1, V2;
 
   V1         = TopExp::FirstVertex(myEdge);
@@ -597,7 +619,9 @@ void ShapeFix_EdgeProjAux::Init3d(const double preci)
 void ShapeFix_EdgeProjAux::UpdateParam2d(const occ::handle<Geom2d_Curve>& theCurve2d)
 {
   if (myFirstParam < myLastParam)
+  {
     return;
+  }
 
   double cf = theCurve2d->FirstParameter();
   double cl = theCurve2d->LastParameter();
@@ -613,9 +637,13 @@ void ShapeFix_EdgeProjAux::UpdateParam2d(const occ::handle<Geom2d_Curve>& theCur
   {
     // szv#4:S4163:12Mar99 optimized
     if (std::abs(myFirstParam - cl) <= preci2d)
+    {
       myFirstParam = cf;
+    }
     else if (std::abs(myLastParam - cf) <= preci2d)
+    {
       myLastParam = cl;
+    }
     else
     {
 #ifdef OCCT_DEBUG
@@ -633,9 +661,13 @@ void ShapeFix_EdgeProjAux::UpdateParam2d(const occ::handle<Geom2d_Curve>& theCur
     if (aBSpline2d->StartPoint().Distance(aBSpline2d->EndPoint()) <= preci2d)
     {
       if (std::abs(myFirstParam - cl) <= preci2d)
+      {
         myFirstParam = cf;
+      }
       else if (std::abs(myLastParam - cf) <= preci2d)
+      {
         myLastParam = cl;
+      }
     }
   }
   else

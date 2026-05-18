@@ -168,9 +168,13 @@ static void Hunt(const NCollection_Array1<double>& Arr, const double Coord, int&
   }
 
   if (std::abs(Coord - Arr(i)) < Tol)
+  {
     Iloc = i;
+  }
   else if (std::abs(Coord - Arr(i)) > Tol)
+  {
     throw Standard_NotImplemented("Adaptor3d_CurveOnSurface:Hunt");
+  }
 }
 
 //=================================================================================================
@@ -224,9 +228,13 @@ static void FindBounds(const NCollection_Array1<double>& Arr,
   if (N == Bound1)
   {
     if (std::abs(Der) > Tol)
+    {
       DerNull = false;
+    }
     if (std::abs(Der) <= Tol)
+    {
       DerNull = true;
+    }
     Bound1 = N;
     Bound2 = N + 1;
     return;
@@ -234,9 +242,13 @@ static void FindBounds(const NCollection_Array1<double>& Arr,
   if (N == Bound2)
   {
     if (std::abs(Der) > Tol)
+    {
       DerNull = false;
+    }
     if (std::abs(Der) <= Tol)
+    {
       DerNull = true;
+    }
     Bound1 = N - 1;
     Bound2 = N;
     return;
@@ -275,12 +287,11 @@ static void Locate1Coord(const int                             Index,
                          gp_Pnt2d&                             LeftBot,
                          gp_Pnt2d&                             RightTop)
 {
-  double                     Comp1 = 0, DComp1 = 0, cur, f = 0.0, l = 0.0;
-  constexpr double           Tol     = Precision::PConfusion() / 10;
-  int                        i       = 1, Bnd1, Bnd2;
-  bool                       DIsNull = false;
-  NCollection_Array1<double> Arr(1, BSplC->NbKnots());
-  BSplC->Knots(Arr);
+  double                            Comp1 = 0, DComp1 = 0, cur, f = 0.0, l = 0.0;
+  constexpr double                  Tol     = Precision::PConfusion() / 10;
+  int                               i       = 1, Bnd1, Bnd2;
+  bool                              DIsNull = false;
+  const NCollection_Array1<double>& Arr     = BSplC->Knots();
 
   if (Index == 1)
   {
@@ -297,7 +308,9 @@ static void Locate1Coord(const int                             Index,
 
   i = Lo;
   while ((std::abs(BSplC->Knot(i) - Comp1) > Tol) && (i != Up))
+  {
     i++;
+  }
   cur = BSplC->Knot(i);
 
   if (std::abs(Comp1 - cur) <= Tol)
@@ -371,7 +384,9 @@ static void Locate1Coord(const int                             Index,
       f = BSplC->Knot(i);
       l = BSplC->Knot(i + 1);
       if (f < Comp1 && l > Comp1)
+      {
         break;
+      }
       i++;
     }
     ReverseParam(f, l, f, l);
@@ -495,14 +510,12 @@ static void Locate1Coord(const int                               Index,
     int Bnd1 = Down, Bnd2 = Up;
     if (Index == 1)
     {
-      NCollection_Array1<double> Arr1(1, BSplS->NbUKnots());
-      BSplS->UKnots(Arr1); //   Up1=Arr1.Upper(); Down1=Arr1.Lower();
+      const NCollection_Array1<double>& Arr1 = BSplS->UKnots();
       FindBounds(Arr1, cur, DUV.X(), Bnd1, Bnd2, DIsNull);
     }
     else if (Index == 2)
     {
-      NCollection_Array1<double> Arr2(1, BSplS->NbVKnots());
-      BSplS->VKnots(Arr2); //   Up2=Arr2.Upper(); Down2=Arr2.Lower();
+      const NCollection_Array1<double>& Arr2 = BSplS->VKnots();
       FindBounds(Arr2, cur, DUV.Y(), Bnd1, Bnd2, DIsNull);
     }
 
@@ -583,7 +596,9 @@ static void Locate1Coord(const int                               Index,
         }
       }
       else
+      {
         ReverseParam(f, l, f, l);
+      }
 
       if (i != Up)
       {
@@ -650,10 +665,7 @@ static void Locate1Coord(const int                               Index,
   }
 }
 
-//=======================================================================
-// function :Locate2Coord
-// purpose  : along non-BSpline curve
-//=======================================================================
+//=================================================================================================
 
 static void Locate2Coord(const int       Index,
                          const gp_Pnt2d& UV,
@@ -921,7 +933,9 @@ void Adaptor3d_CurveOnSurface::Load(const occ::handle<Adaptor3d_Surface>& S)
 {
   mySurface = S;
   if (!myCurve.IsNull())
+  {
     EvalKPart();
+  }
 }
 
 //=================================================================================================
@@ -979,10 +993,14 @@ GeomAbs_Shape Adaptor3d_CurveOnSurface::Continuity() const
   GeomAbs_Shape ContC  = myCurve->Continuity();
   GeomAbs_Shape ContSu = mySurface->UContinuity();
   if (ContSu < ContC)
+  {
     ContC = ContSu;
+  }
   GeomAbs_Shape ContSv = mySurface->VContinuity();
   if (ContSv < ContC)
+  {
     ContC = ContSv;
+  }
 
   return ContC;
 }
@@ -994,15 +1012,18 @@ static void AddIntervals(const occ::handle<NCollection_HSequence<double>>& thePa
                          double                                            theTol)
 {
   if (!theRoots.IsDone() || theRoots.IsAllNull())
+  {
     return;
+  }
 
   int nsol = theRoots.NbSolutions();
   for (int i = 1; i <= nsol; i++)
   {
     double param = theRoots.Value(i);
-    if (param - theParameters->Value(1)
-        < theTol) // skip param if equal to or less than theParameters(1)
+    if (param - theParameters->Value(1) < theTol)
+    { // skip param if equal to or less than theParameters(1)
       continue;
+    }
     for (int j = 2; j <= theParameters->Length(); ++j)
     {
       double aDelta = theParameters->Value(j) - param;
@@ -1011,8 +1032,10 @@ static void AddIntervals(const occ::handle<NCollection_HSequence<double>>& thePa
         theParameters->InsertBefore(j, param);
         break;
       }
-      else if (aDelta >= -theTol) // param == theParameters(j) within Tol
+      else if (aDelta >= -theTol)
+      { // param == theParameters(j) within Tol
         break;
+      }
     }
   }
 }
@@ -1022,7 +1045,9 @@ static void AddIntervals(const occ::handle<NCollection_HSequence<double>>& thePa
 int Adaptor3d_CurveOnSurface::NbIntervals(const GeomAbs_Shape S) const
 {
   if (S == myIntCont && !myIntervals.IsNull())
+  {
     return myIntervals->Length() - 1;
+  }
 
   int nu, nv, nc;
   nu = mySurface->NbUIntervals(S);
@@ -1080,7 +1105,9 @@ int Adaptor3d_CurveOnSurface::NbIntervals(const GeomAbs_Shape S) const
   // contains only one value, therefore it is necessary to add second
   // value into aIntervals which will be equal first value.
   if (aIntervals->Length() == 1)
+  {
     aIntervals->Append(aIntervals->Value(1));
+  }
 
   const_cast<Adaptor3d_CurveOnSurface*>(this)->myIntervals = aIntervals;
   const_cast<Adaptor3d_CurveOnSurface*>(this)->myIntCont   = S;
@@ -1125,7 +1152,9 @@ bool Adaptor3d_CurveOnSurface::IsClosed() const
 bool Adaptor3d_CurveOnSurface::IsPeriodic() const
 {
   if (myType == GeomAbs_Circle || myType == GeomAbs_Ellipse)
+  {
     return true;
+  }
 
   return myCurve->IsPeriodic();
 }
@@ -1135,25 +1164,31 @@ bool Adaptor3d_CurveOnSurface::IsPeriodic() const
 double Adaptor3d_CurveOnSurface::Period() const
 {
   if (myType == GeomAbs_Circle || myType == GeomAbs_Ellipse)
+  {
     return (2. * M_PI);
+  }
 
   return myCurve->Period();
 }
 
 //=================================================================================================
 
-gp_Pnt Adaptor3d_CurveOnSurface::Value(const double U) const
+gp_Pnt Adaptor3d_CurveOnSurface::EvalD0(const double theU) const
 {
   gp_Pnt   P;
   gp_Pnt2d Puv;
 
   if (myType == GeomAbs_Line)
-    P = ElCLib::Value(U, myLin);
+  {
+    P = ElCLib::Value(theU, myLin);
+  }
   else if (myType == GeomAbs_Circle)
-    P = ElCLib::Value(U, myCirc);
+  {
+    P = ElCLib::Value(theU, myCirc);
+  }
   else
   {
-    myCurve->D0(U, Puv);
+    myCurve->D0(theU, Puv);
     mySurface->D0(Puv.X(), Puv.Y(), P);
   }
 
@@ -1162,185 +1197,166 @@ gp_Pnt Adaptor3d_CurveOnSurface::Value(const double U) const
 
 //=================================================================================================
 
-void Adaptor3d_CurveOnSurface::D0(const double U, gp_Pnt& P) const
-{
-  gp_Pnt2d Puv;
-
-  if (myType == GeomAbs_Line)
-    P = ElCLib::Value(U, myLin);
-  else if (myType == GeomAbs_Circle)
-    P = ElCLib::Value(U, myCirc);
-  else
-  {
-    myCurve->D0(U, Puv);
-    mySurface->D0(Puv.X(), Puv.Y(), P);
-  }
-}
-
-//=================================================================================================
-
-void Adaptor3d_CurveOnSurface::D1(const double U, gp_Pnt& P, gp_Vec& V) const
+Geom_Curve::ResD1 Adaptor3d_CurveOnSurface::EvalD1(const double theU) const
 {
   gp_Pnt2d Puv;
   gp_Vec2d Duv;
   gp_Vec   D1U, D1V;
 
-  double FP = myCurve->FirstParameter();
-  double LP = myCurve->LastParameter();
+  Geom_Curve::ResD1 aRes;
 
+  const double     FP  = myCurve->FirstParameter();
+  const double     LP  = myCurve->LastParameter();
   constexpr double Tol = Precision::PConfusion() / 10;
-  if ((std::abs(U - FP) < Tol) && (!myFirstSurf.IsNull()))
+
+  if ((std::abs(theU - FP) < Tol) && (!myFirstSurf.IsNull()))
   {
-    myCurve->D1(U, Puv, Duv);
-    myFirstSurf->D1(Puv.X(), Puv.Y(), P, D1U, D1V);
-    V.SetLinearForm(Duv.X(), D1U, Duv.Y(), D1V);
+    myCurve->D1(theU, Puv, Duv);
+    myFirstSurf->D1(Puv.X(), Puv.Y(), aRes.Point, D1U, D1V);
+    aRes.D1.SetLinearForm(Duv.X(), D1U, Duv.Y(), D1V);
   }
-  else if ((std::abs(U - LP) < Tol) && (!myLastSurf.IsNull()))
+  else if ((std::abs(theU - LP) < Tol) && (!myLastSurf.IsNull()))
   {
-    myCurve->D1(U, Puv, Duv);
-    myLastSurf->D1(Puv.X(), Puv.Y(), P, D1U, D1V);
-    V.SetLinearForm(Duv.X(), D1U, Duv.Y(), D1V);
+    myCurve->D1(theU, Puv, Duv);
+    myLastSurf->D1(Puv.X(), Puv.Y(), aRes.Point, D1U, D1V);
+    aRes.D1.SetLinearForm(Duv.X(), D1U, Duv.Y(), D1V);
   }
   else if (myType == GeomAbs_Line)
-    ElCLib::D1(U, myLin, P, V);
+  {
+    ElCLib::D1(theU, myLin, aRes.Point, aRes.D1);
+  }
   else if (myType == GeomAbs_Circle)
-    ElCLib::D1(U, myCirc, P, V);
+  {
+    ElCLib::D1(theU, myCirc, aRes.Point, aRes.D1);
+  }
   else
   {
-    myCurve->D1(U, Puv, Duv);
-    mySurface->D1(Puv.X(), Puv.Y(), P, D1U, D1V);
-    V.SetLinearForm(Duv.X(), D1U, Duv.Y(), D1V);
+    myCurve->D1(theU, Puv, Duv);
+    mySurface->D1(Puv.X(), Puv.Y(), aRes.Point, D1U, D1V);
+    aRes.D1.SetLinearForm(Duv.X(), D1U, Duv.Y(), D1V);
   }
+  return aRes;
 }
 
 //=================================================================================================
 
-void Adaptor3d_CurveOnSurface::D2(const double U, gp_Pnt& P, gp_Vec& V1, gp_Vec& V2) const
+Geom_Curve::ResD2 Adaptor3d_CurveOnSurface::EvalD2(const double theU) const
 {
   gp_Pnt2d UV;
   gp_Vec2d DW, D2W;
   gp_Vec   D1U, D1V, D2U, D2V, D2UV;
 
-  double FP = myCurve->FirstParameter();
-  double LP = myCurve->LastParameter();
+  Geom_Curve::ResD2 aRes;
 
+  const double     FP  = myCurve->FirstParameter();
+  const double     LP  = myCurve->LastParameter();
   constexpr double Tol = Precision::PConfusion() / 10;
-  if ((std::abs(U - FP) < Tol) && (!myFirstSurf.IsNull()))
-  {
-    myCurve->D2(U, UV, DW, D2W);
-    myFirstSurf->D2(UV.X(), UV.Y(), P, D1U, D1V, D2U, D2V, D2UV);
 
-    V1.SetLinearForm(DW.X(), D1U, DW.Y(), D1V);
-    V2.SetLinearForm(D2W.X(), D1U, D2W.Y(), D1V, 2. * DW.X() * DW.Y(), D2UV);
-    V2.SetLinearForm(DW.X() * DW.X(), D2U, DW.Y() * DW.Y(), D2V, V2);
+  if ((std::abs(theU - FP) < Tol) && (!myFirstSurf.IsNull()))
+  {
+    myCurve->D2(theU, UV, DW, D2W);
+    myFirstSurf->D2(UV.X(), UV.Y(), aRes.Point, D1U, D1V, D2U, D2V, D2UV);
+    aRes.D1.SetLinearForm(DW.X(), D1U, DW.Y(), D1V);
+    aRes.D2.SetLinearForm(D2W.X(), D1U, D2W.Y(), D1V, 2. * DW.X() * DW.Y(), D2UV);
+    aRes.D2.SetLinearForm(DW.X() * DW.X(), D2U, DW.Y() * DW.Y(), D2V, aRes.D2);
   }
-  else if ((std::abs(U - LP) < Tol) && (!myLastSurf.IsNull()))
+  else if ((std::abs(theU - LP) < Tol) && (!myLastSurf.IsNull()))
   {
-    myCurve->D2(U, UV, DW, D2W);
-    myLastSurf->D2(UV.X(), UV.Y(), P, D1U, D1V, D2U, D2V, D2UV);
-
-    V1.SetLinearForm(DW.X(), D1U, DW.Y(), D1V);
-    V2.SetLinearForm(D2W.X(), D1U, D2W.Y(), D1V, 2. * DW.X() * DW.Y(), D2UV);
-    V2.SetLinearForm(DW.X() * DW.X(), D2U, DW.Y() * DW.Y(), D2V, V2);
+    myCurve->D2(theU, UV, DW, D2W);
+    myLastSurf->D2(UV.X(), UV.Y(), aRes.Point, D1U, D1V, D2U, D2V, D2UV);
+    aRes.D1.SetLinearForm(DW.X(), D1U, DW.Y(), D1V);
+    aRes.D2.SetLinearForm(D2W.X(), D1U, D2W.Y(), D1V, 2. * DW.X() * DW.Y(), D2UV);
+    aRes.D2.SetLinearForm(DW.X() * DW.X(), D2U, DW.Y() * DW.Y(), D2V, aRes.D2);
   }
   else if (myType == GeomAbs_Line)
   {
-    ElCLib::D1(U, myLin, P, V1);
-    V2.SetCoord(0., 0., 0.);
+    ElCLib::D1(theU, myLin, aRes.Point, aRes.D1);
+    aRes.D2.SetCoord(0., 0., 0.);
   }
   else if (myType == GeomAbs_Circle)
-    ElCLib::D2(U, myCirc, P, V1, V2);
+  {
+    ElCLib::D2(theU, myCirc, aRes.Point, aRes.D1, aRes.D2);
+  }
   else
   {
-    myCurve->D2(U, UV, DW, D2W);
-    mySurface->D2(UV.X(), UV.Y(), P, D1U, D1V, D2U, D2V, D2UV);
-
-    V1.SetLinearForm(DW.X(), D1U, DW.Y(), D1V);
-    V2.SetLinearForm(D2W.X(), D1U, D2W.Y(), D1V, 2. * DW.X() * DW.Y(), D2UV);
-    V2.SetLinearForm(DW.X() * DW.X(), D2U, DW.Y() * DW.Y(), D2V, V2);
+    myCurve->D2(theU, UV, DW, D2W);
+    mySurface->D2(UV.X(), UV.Y(), aRes.Point, D1U, D1V, D2U, D2V, D2UV);
+    aRes.D1.SetLinearForm(DW.X(), D1U, DW.Y(), D1V);
+    aRes.D2.SetLinearForm(D2W.X(), D1U, D2W.Y(), D1V, 2. * DW.X() * DW.Y(), D2UV);
+    aRes.D2.SetLinearForm(DW.X() * DW.X(), D2U, DW.Y() * DW.Y(), D2V, aRes.D2);
   }
+  return aRes;
 }
 
 //=================================================================================================
 
-void Adaptor3d_CurveOnSurface::D3(const double U,
-                                  gp_Pnt&      P,
-                                  gp_Vec&      V1,
-                                  gp_Vec&      V2,
-                                  gp_Vec&      V3) const
+Geom_Curve::ResD3 Adaptor3d_CurveOnSurface::EvalD3(const double theU) const
 {
-
   constexpr double Tol = Precision::PConfusion() / 10;
   gp_Pnt2d         UV;
   gp_Vec2d         DW, D2W, D3W;
   gp_Vec           D1U, D1V, D2U, D2V, D2UV, D3U, D3V, D3UUV, D3UVV;
 
-  double FP = myCurve->FirstParameter();
-  double LP = myCurve->LastParameter();
+  Geom_Curve::ResD3 aRes;
 
-  if ((std::abs(U - FP) < Tol) && (!myFirstSurf.IsNull()))
+  const double FP = myCurve->FirstParameter();
+  const double LP = myCurve->LastParameter();
+
+  if ((std::abs(theU - FP) < Tol) && (!myFirstSurf.IsNull()))
   {
-    myCurve->D3(U, UV, DW, D2W, D3W);
-    myFirstSurf->D3(UV.X(), UV.Y(), P, D1U, D1V, D2U, D2V, D2UV, D3U, D3V, D3UUV, D3UVV);
-    V1.SetLinearForm(DW.X(), D1U, DW.Y(), D1V);
-    V2.SetLinearForm(D2W.X(), D1U, D2W.Y(), D1V, 2. * DW.X() * DW.Y(), D2UV);
-    V2.SetLinearForm(DW.X() * DW.X(), D2U, DW.Y() * DW.Y(), D2V, V2);
-    V3 = SetLinearForm(DW, D2W, D3W, D1U, D1V, D2U, D2V, D2UV, D3U, D3V, D3UUV, D3UVV);
+    myCurve->D3(theU, UV, DW, D2W, D3W);
+    myFirstSurf->D3(UV.X(), UV.Y(), aRes.Point, D1U, D1V, D2U, D2V, D2UV, D3U, D3V, D3UUV, D3UVV);
+    aRes.D1.SetLinearForm(DW.X(), D1U, DW.Y(), D1V);
+    aRes.D2.SetLinearForm(D2W.X(), D1U, D2W.Y(), D1V, 2. * DW.X() * DW.Y(), D2UV);
+    aRes.D2.SetLinearForm(DW.X() * DW.X(), D2U, DW.Y() * DW.Y(), D2V, aRes.D2);
+    aRes.D3 = SetLinearForm(DW, D2W, D3W, D1U, D1V, D2U, D2V, D2UV, D3U, D3V, D3UUV, D3UVV);
   }
-  else
-
-    if ((std::abs(U - LP) < Tol) && (!myLastSurf.IsNull()))
+  else if ((std::abs(theU - LP) < Tol) && (!myLastSurf.IsNull()))
   {
-    myCurve->D3(U, UV, DW, D2W, D3W);
-    myLastSurf->D3(UV.X(), UV.Y(), P, D1U, D1V, D2U, D2V, D2UV, D3U, D3V, D3UUV, D3UVV);
-    V1.SetLinearForm(DW.X(), D1U, DW.Y(), D1V);
-
-    V2.SetLinearForm(D2W.X(), D1U, D2W.Y(), D1V, 2. * DW.X() * DW.Y(), D2UV);
-    V2.SetLinearForm(DW.X() * DW.X(), D2U, DW.Y() * DW.Y(), D2V, V2);
-    V3 = SetLinearForm(DW, D2W, D3W, D1U, D1V, D2U, D2V, D2UV, D3U, D3V, D3UUV, D3UVV);
+    myCurve->D3(theU, UV, DW, D2W, D3W);
+    myLastSurf->D3(UV.X(), UV.Y(), aRes.Point, D1U, D1V, D2U, D2V, D2UV, D3U, D3V, D3UUV, D3UVV);
+    aRes.D1.SetLinearForm(DW.X(), D1U, DW.Y(), D1V);
+    aRes.D2.SetLinearForm(D2W.X(), D1U, D2W.Y(), D1V, 2. * DW.X() * DW.Y(), D2UV);
+    aRes.D2.SetLinearForm(DW.X() * DW.X(), D2U, DW.Y() * DW.Y(), D2V, aRes.D2);
+    aRes.D3 = SetLinearForm(DW, D2W, D3W, D1U, D1V, D2U, D2V, D2UV, D3U, D3V, D3UUV, D3UVV);
   }
   else if (myType == GeomAbs_Line)
   {
-    ElCLib::D1(U, myLin, P, V1);
-    V2.SetCoord(0., 0., 0.);
-    V3.SetCoord(0., 0., 0.);
+    ElCLib::D1(theU, myLin, aRes.Point, aRes.D1);
+    aRes.D2.SetCoord(0., 0., 0.);
+    aRes.D3.SetCoord(0., 0., 0.);
   }
   else if (myType == GeomAbs_Circle)
-    ElCLib::D3(U, myCirc, P, V1, V2, V3);
+  {
+    ElCLib::D3(theU, myCirc, aRes.Point, aRes.D1, aRes.D2, aRes.D3);
+  }
   else
   {
-    myCurve->D3(U, UV, DW, D2W, D3W);
-    mySurface->D3(UV.X(), UV.Y(), P, D1U, D1V, D2U, D2V, D2UV, D3U, D3V, D3UUV, D3UVV);
-    V1.SetLinearForm(DW.X(), D1U, DW.Y(), D1V);
-
-    V2.SetLinearForm(D2W.X(), D1U, D2W.Y(), D1V, 2. * DW.X() * DW.Y(), D2UV);
-    V2.SetLinearForm(DW.X() * DW.X(), D2U, DW.Y() * DW.Y(), D2V, V2);
-    V3 = SetLinearForm(DW, D2W, D3W, D1U, D1V, D2U, D2V, D2UV, D3U, D3V, D3UUV, D3UVV);
+    myCurve->D3(theU, UV, DW, D2W, D3W);
+    mySurface->D3(UV.X(), UV.Y(), aRes.Point, D1U, D1V, D2U, D2V, D2UV, D3U, D3V, D3UUV, D3UVV);
+    aRes.D1.SetLinearForm(DW.X(), D1U, DW.Y(), D1V);
+    aRes.D2.SetLinearForm(D2W.X(), D1U, D2W.Y(), D1V, 2. * DW.X() * DW.Y(), D2UV);
+    aRes.D2.SetLinearForm(DW.X() * DW.X(), D2U, DW.Y() * DW.Y(), D2V, aRes.D2);
+    aRes.D3 = SetLinearForm(DW, D2W, D3W, D1U, D1V, D2U, D2V, D2UV, D3U, D3V, D3UUV, D3UVV);
   }
+  return aRes;
 }
 
 //=================================================================================================
 
-gp_Vec Adaptor3d_CurveOnSurface::DN(const double U, const int N) const
+gp_Vec Adaptor3d_CurveOnSurface::EvalDN(const double theU, const int theN) const
 {
-  gp_Pnt P;
-  gp_Vec V1, V2, V;
-  switch (N)
+  switch (theN)
   {
     case 1:
-      D1(U, P, V);
-      break;
+      return EvalD1(theU).D1;
     case 2:
-      D2(U, P, V1, V);
-      break;
+      return EvalD2(theU).D2;
     case 3:
-      D3(U, P, V1, V2, V);
-      break;
+      return EvalD3(theU).D3;
     default:
-      throw Standard_NotImplemented("Adaptor3d_CurveOnSurface:DN");
-      break;
+      throw Standard_NotImplemented("Adaptor3d_CurveOnSurface:EvalDN");
   }
-  return V;
 }
 
 //=================================================================================================
@@ -1428,7 +1444,9 @@ int Adaptor3d_CurveOnSurface::NbPoles() const
 int Adaptor3d_CurveOnSurface::NbKnots() const
 {
   if (mySurface->GetType() == GeomAbs_Plane)
+  {
     return myCurve->NbKnots();
+  }
   else
   {
     throw Standard_NoSuchObject();
@@ -1456,9 +1474,8 @@ occ::handle<Geom_BezierCurve> Adaptor3d_CurveOnSurface::Bezier() const
 
   if (Bez2d->IsRational())
   {
-    NCollection_Array1<double> Weights(1, NbPoles);
-    Bez2d->Weights(Weights);
-    Bez = new Geom_BezierCurve(Poles, Weights);
+    const NCollection_Array1<double>& Weights = Bez2d->WeightsArray();
+    Bez                                       = new Geom_BezierCurve(Poles, Weights);
   }
   else
   {
@@ -1485,17 +1502,14 @@ occ::handle<Geom_BSplineCurve> Adaptor3d_CurveOnSurface::BSpline() const
     Poles(i) = to3d(Plane, Bsp2d->Pole(i));
   }
 
-  NCollection_Array1<double> Knots(1, Bsp2d->NbKnots());
-  NCollection_Array1<int>    Mults(1, Bsp2d->NbKnots());
-  Bsp2d->Knots(Knots);
-  Bsp2d->Multiplicities(Mults);
+  const NCollection_Array1<double>& Knots = Bsp2d->Knots();
+  const NCollection_Array1<int>&    Mults = Bsp2d->Multiplicities();
 
   occ::handle<Geom_BSplineCurve> Bsp;
 
   if (Bsp2d->IsRational())
   {
-    NCollection_Array1<double> Weights(1, NbPoles);
-    Bsp2d->Weights(Weights);
+    const NCollection_Array1<double>& Weights = Bsp2d->WeightsArray();
     Bsp = new Geom_BSplineCurve(Poles, Weights, Knots, Mults, Bsp2d->Degree(), Bsp2d->IsPeriodic());
   }
   else
@@ -1545,7 +1559,9 @@ void Adaptor3d_CurveOnSurface::EvalKPart()
   {
     myType = CTy;
     if (myType == GeomAbs_Circle)
+    {
       myCirc = to3d(mySurface->Plane(), myCurve->Circle());
+    }
     else if (myType == GeomAbs_Line)
     {
       gp_Pnt   P;
@@ -1646,15 +1662,15 @@ void Adaptor3d_CurveOnSurface::EvalKPart()
           gp_Sphere Sph  = mySurface->Sphere();
           gp_Pnt2d  P    = myCurve->Line().Location();
           gp_Ax3    Axis = Sph.Position();
-          // calcul de l'iso 0.
+          // Compute the iso 0.
           myCirc = ElSLib::SphereUIso(Axis, Sph.Radius(), 0.);
 
-          // mise a sameparameter (rotation du cercle - decalage du Y)
+          // Same-parametrization (circle rotation - Y offset)
           gp_Dir DRev = Axis.XDirection().Crossed(Axis.Direction());
           gp_Ax1 AxeRev(Axis.Location(), DRev);
           myCirc.Rotate(AxeRev, P.Y());
 
-          // transformation en iso U ( = P.X())
+          // Transform to iso U ( = P.X())
           DRev   = Axis.XDirection().Crossed(Axis.YDirection());
           AxeRev = gp_Ax1(Axis.Location(), DRev);
           myCirc.Rotate(AxeRev, P.X());
@@ -1676,7 +1692,9 @@ void Adaptor3d_CurveOnSurface::EvalKPart()
           Tr.Multiply(P.Y());
           myLin.Translate(Tr);
           if (D.IsOpposite(gp::DY2d(), Precision::Angular()))
+          {
             myLin.Reverse();
+          }
         }
         else if (STy == GeomAbs_Cone)
         {
@@ -1688,7 +1706,9 @@ void Adaptor3d_CurveOnSurface::EvalKPart()
           Tr.Multiply(P.Y());
           myLin.Translate(Tr);
           if (D.IsOpposite(gp::DY2d(), Precision::Angular()))
+          {
             myLin.Reverse();
+          }
         }
         else if (STy == GeomAbs_Torus)
         {
@@ -1725,7 +1745,9 @@ void Adaptor3d_CurveOnSurface::EvalFirstLastSurf()
   myCurve->D1(FirstPar, UV, DUV);
 
   if (DUV.Magnitude() <= Tol)
+  {
     Ok = false;
+  }
 
   if (Ok)
   {
@@ -1767,7 +1789,9 @@ void Adaptor3d_CurveOnSurface::EvalFirstLastSurf()
   DUV.Reverse(); // We want the other part
 
   if (DUV.Magnitude() <= Tol)
+  {
     Ok = false;
+  }
 
   if (Ok)
   {
@@ -1889,14 +1913,12 @@ void Adaptor3d_CurveOnSurface::LocatePart(const gp_Pnt2d&                       
 
   if ((DUIsNull) && (!DVIsNull))
   {
-    NCollection_Array1<double> ArrU(1, BSplS->NbUKnots());
-    BSplS->UKnots(ArrU);
+    const NCollection_Array1<double>& ArrU = BSplS->UKnots();
     Locate2Coord(1, UV, DUV, BSplS, ArrU, LeftBot, RightTop);
   }
   else if ((DVIsNull) && (!DUIsNull))
   {
-    NCollection_Array1<double> ArrV(1, BSplS->NbVKnots());
-    BSplS->VKnots(ArrV);
+    const NCollection_Array1<double>& ArrV = BSplS->VKnots();
     Locate2Coord(2, UV, DUV, BSplS, ArrV, LeftBot, RightTop);
   }
 }

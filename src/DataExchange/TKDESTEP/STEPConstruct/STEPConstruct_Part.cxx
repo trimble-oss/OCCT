@@ -52,7 +52,7 @@ STEPConstruct_Part::STEPConstruct_Part()
 void STEPConstruct_Part::MakeSDR(const occ::handle<StepShape_ShapeRepresentation>& SR,
                                  const occ::handle<TCollection_HAsciiString>&      aName,
                                  const occ::handle<StepBasic_ApplicationContext>&  AC,
-                                 occ::handle<StepData_StepModel>&                  theStepModel)
+                                 const occ::handle<StepData_StepModel>&            theStepModel)
 {
   // get current schema
   const int schema = theStepModel->InternalParameters.WriteSchema;
@@ -202,7 +202,9 @@ occ::handle<StepShape_ShapeDefinitionRepresentation> STEPConstruct_Part::SDRValu
 occ::handle<StepShape_ShapeRepresentation> STEPConstruct_Part::SRValue() const
 {
   if (!myDone)
+  {
     return nullptr;
+  }
   return occ::down_cast<StepShape_ShapeRepresentation>(mySDR->UsedRepresentation());
 }
 

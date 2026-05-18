@@ -75,7 +75,13 @@ BRepBlend_AppFuncRoot::BRepBlend_AppFuncRoot(occ::handle<BRepBlend_Line>& Line,
   {
     myBary.SetCoord(0, 0, 0);
   }
+
+  mySolver = std::make_unique<math_FunctionSetRoot>(Func, myTolerance, 30);
 }
+
+//=================================================================================================
+
+BRepBlend_AppFuncRoot::~BRepBlend_AppFuncRoot() = default;
 
 //================================================================================
 // Function: D0
@@ -94,7 +100,9 @@ bool BRepBlend_AppFuncRoot::D0(const double Param,
   Ok                      = SearchPoint(*Func, Param, myPnt);
 
   if (Ok)
+  {
     (*Func).Section(myPnt, Poles, Poles2d, Weigths);
+  }
   return Ok;
 }
 
@@ -236,7 +244,9 @@ void BRepBlend_AppFuncRoot::GetTolerance(const double                BoundTol,
 
   Func->GetTolerance(BoundTol, SurfTol, AngleTol, V3d, V1d);
   for (ii = 1; ii <= Tol3d.Length(); ii++)
+  {
     Tol3d(ii) = V3d(ii);
+  }
 }
 
 void BRepBlend_AppFuncRoot::SetTolerance(const double Tol3d, const double Tol2d)
@@ -251,6 +261,7 @@ void BRepBlend_AppFuncRoot::SetTolerance(const double Tol3d, const double Tol2d)
       myTolerance(ii) = Tol2d;
     }
   }
+  mySolver->SetTolerance(myTolerance);
 }
 
 gp_Pnt BRepBlend_AppFuncRoot::BarycentreOfSurf() const
@@ -337,28 +348,26 @@ bool BRepBlend_AppFuncRoot::SearchPoint(Blend_AppFunction& Func,
   // (2) Calculation of the solution ------------------------
   Func.Set(Param);
   Func.GetBounds(X1, X2);
-  math_FunctionSetRoot rsnld(Func, myTolerance, 30);
+  mySolver->Perform(Func, XInit, X1, X2);
 
-  rsnld.Perform(Func, XInit, X1, X2);
-
-  if (!rsnld.IsDone())
+  if (!mySolver->IsDone())
   {
 #ifdef BREPBLEND_DEB
     std::cout << "AppFunc : RNLD Not done en t = " << Param << std::endl;
 #endif
     return false;
   }
-  rsnld.Root(Sol);
+  mySolver->Root(Sol);
 
   // (3) Storage of the point
   Point(Func, Param, Sol, Pnt);
 
   // (4) Insertion of the point if the calculation seems long.
-  if ((!Trouve) && (rsnld.NbIterations() > 3))
+  if ((!Trouve) && (mySolver->NbIterations() > 3))
   {
 #ifdef OCCT_DEBUG
     std::cout << "Evaluation in t = " << Param << "given" << std::endl;
-    rsnld.Dump(std::cout);
+    mySolver->Dump(std::cout);
 #endif
     myLine->InsertBefore(Index + 1, Pnt);
   }

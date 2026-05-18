@@ -55,11 +55,13 @@ const char* StepElement_SurfaceElementPurposeMember::Name() const
 
 //=================================================================================================
 
-static int CompareNames(const char* name, int& /*numen*/)
+static int CompareNames(const char* const name, int& /*numen*/)
 {
   int thecase = 0;
   if (!name || name[0] == '\0')
+  {
     thecase = 0;
+  }
   else if (!strcmp(name, ESEP))
   {
     thecase = 1;
@@ -73,18 +75,20 @@ static int CompareNames(const char* name, int& /*numen*/)
 
 //=================================================================================================
 
-bool StepElement_SurfaceElementPurposeMember::SetName(const char* name)
+bool StepElement_SurfaceElementPurposeMember::SetName(const char* const name)
 {
   int numit = 0;
   mycase    = CompareNames(name, numit);
   if (numit)
+  {
     SetInteger(numit);
+  }
   return (mycase > 0);
 }
 
 //=================================================================================================
 
-bool StepElement_SurfaceElementPurposeMember::Matches(const char* name) const
+bool StepElement_SurfaceElementPurposeMember::Matches(const char* const name) const
 {
   int numit   = 0;
   int thecase = CompareNames(name, numit);

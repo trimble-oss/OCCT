@@ -198,16 +198,18 @@ const TopoDS_Shape& TopOpeBRep_VPointInterClassifier::Edge() const
 double TopOpeBRep_VPointInterClassifier::EdgeParameter() const
 {
   if (myState == TopAbs_ON)
+  {
     return mySlowFaceClassifier.EdgeParameter();
+  }
   else
+  {
     return 0;
+  }
 }
 
 // modified by NIZHNY-MKK  Mon Jun 19 11:47:23 2000.BEGIN
-//=======================================================================
-// static function : SlowClassifyOnBoundary
-// purpose  :
-//=======================================================================
+//=================================================================================================
+
 static TopAbs_State SlowClassifyOnBoundary(const gp_Pnt&             thePointToClassify,
                                            const gp_Pnt2d&           thePoint2dToClassify,
                                            BRepClass_FaceClassifier& theSlowClassifier,
@@ -232,10 +234,14 @@ static TopAbs_State SlowClassifyOnBoundary(const gp_Pnt&             thePointToC
       double        aVertexTolerance  = BRep_Tool::Tolerance(aVertex);
       gp_Pnt        anEdgeVertexPoint = BRep_Tool::Pnt(aVertex);
       if (thePointToClassify.IsEqual(anEdgeVertexPoint, aVertexTolerance))
+      {
         samewithvertex = true;
+      }
     }
     if (samewithvertex)
+    {
       return TopAbs_ON;
+    }
 
     GeomAPI_ProjectPointOnCurve aProjTool(thePointToClassify, anEdgeCurve);
 
@@ -262,9 +268,13 @@ static TopAbs_State SlowClassifyOnBoundary(const gp_Pnt&             thePointToC
         double   aTol2d         = thePoint2dToClassify.Distance(aPoint2dOnEdge) / 3;
         theSlowClassifier.Perform(theFace, thePoint2dToClassify, aTol2d);
         if (theSlowClassifier.State() == TopAbs_IN)
+        {
           return TopAbs_IN;
+        }
         else
+        {
           return TopAbs_OUT;
+        }
       }
       else
       {

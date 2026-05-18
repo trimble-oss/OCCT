@@ -57,6 +57,7 @@ class HeaderInfo:
     relative_path: str
     is_typedef_only: bool          # True if header contains ONLY typedefs
     typedefs: List[TypedefInfo] = field(default_factory=list)
+    includes: List[str] = field(default_factory=list)  # List of #include statements
     has_class: bool = False
     has_function: bool = False
     has_template_class: bool = False
@@ -70,9 +71,9 @@ class TypedefCollector:
     # Directories to skip
     SKIP_DIRS = {'install', 'build', 'mac64', 'win64', 'lin64', '.git', '__pycache__'}
 
-    # File extensions to process for typedef collection (public headers only)
-    # NOTE: .cxx and .pxx files are excluded - their typedefs are internal/implementation details
-    HEADER_EXTENSIONS = {'.hxx', '.lxx', '.h'}
+    # File extensions to process for typedef collection (public headers + inline headers)
+    # NOTE: source files (.c, .cpp, .cxx) are excluded - typedefs there are implementation details
+    HEADER_EXTENSIONS = {'.lxx', '.hxx', '.hpp', '.pxx', '.h'}
 
     # Pattern for NCollection container typedef (handles nested templates like occ::handle<T>)
     # typedef NCollection_Map<BOPDS_Pair> BOPDS_MapOfPair;
@@ -120,6 +121,9 @@ class TypedefCollector:
     # Pattern to find all typedef statements (not just NCollection ones)
     ANY_TYPEDEF_PATTERN = re.compile(r'^typedef\s+.+;\s*$', re.MULTILINE)
 
+    # Pattern to extract #include statements
+    INCLUDE_PATTERN = re.compile(r'^\s*#include\s*[<"]([^>"]+)[>"]', re.MULTILINE)
+
     def __init__(self, src_dir: str, verbose: bool = False):
         self.src_dir = Path(src_dir)
         self.verbose = verbose
@@ -142,7 +146,7 @@ class TypedefCollector:
         return any(skip in path.parts for skip in self.SKIP_DIRS)
 
     def get_source_files(self) -> List[Path]:
-        """Get all header files (excluding .cxx - internal typedefs)."""
+        """Get all header/inline files (excluding .c/.cpp/.cxx implementation files)."""
         files = []
         for ext in self.HEADER_EXTENSIONS:
             pattern = f'*{ext}'
@@ -285,6 +289,14 @@ class TypedefCollector:
                 return ns
 
         return ""
+
+    def extract_includes(self, content: str) -> List[str]:
+        """Extract all #include statements from content."""
+        includes = []
+        for match in self.INCLUDE_PATTERN.finditer(content):
+            include_path = match.group(1)
+            includes.append(include_path)
+        return includes
 
     def extract_typedefs(self, content: str, header_path: str) -> List[TypedefInfo]:
         """Extract NCollection typedefs from content."""
@@ -480,6 +492,9 @@ class TypedefCollector:
 
         self.log(f"Processing: {relative_path}")
 
+        # Extract includes from the header
+        includes = self.extract_includes(content)
+
         # Check for non-typedef content
         # Pass the count of NCollection typedefs we found to detect non-NCollection typedefs
         has_class, has_function, has_template_class, has_enum, has_other = \
@@ -493,6 +508,7 @@ class TypedefCollector:
             relative_path=relative_path,
             is_typedef_only=is_typedef_only,
             typedefs=typedefs,
+            includes=includes,
             has_class=has_class,
             has_function=has_function,
             has_template_class=has_template_class,
@@ -551,9 +567,12 @@ class TypedefCollector:
             else:
                 # New header with only alias typedef - need to check if it has other content
                 full_path = self.src_dir / header_path
+                includes = []
                 try:
                     with open(full_path, 'r', encoding='utf-8', errors='ignore') as f:
                         content = f.read()
+                    # Extract includes
+                    includes = self.extract_includes(content)
                     # Check for non-typedef content (passing 1 since we have at least 1 typedef)
                     has_class, has_function, has_template_class, has_enum, has_other = \
                         self.has_non_typedef_content(content, 1)
@@ -568,6 +587,7 @@ class TypedefCollector:
                     relative_path=header_path,
                     is_typedef_only=is_typedef_only,
                     typedefs=[typedef],
+                    includes=includes,
                     has_class=has_class,
                     has_function=has_function,
                     has_template_class=has_template_class,

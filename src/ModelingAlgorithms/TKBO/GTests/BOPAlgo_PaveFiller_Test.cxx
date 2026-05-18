@@ -44,9 +44,9 @@
 #include <TopoDS_Vertex.hxx>
 #include <TopoDS_Wire.hxx>
 
-//==================================================================================================
+//=================================================================================================
 // BOPAlgo_PaveFiller Tests - Regression tests for edge cases in Boolean operations
-//==================================================================================================
+//=================================================================================================
 
 class BOPAlgo_PaveFillerTest : public ::testing::Test
 {
@@ -249,7 +249,9 @@ TEST_F(BOPAlgo_PaveFillerTest, FuseConeWithRemovedPCurve_NullPCurveHandling)
       }
     }
     if (!aDegeneratedEdge.IsNull())
+    {
       break;
+    }
   }
 
   // If we found a degenerated edge with pcurve, create a modified cone
@@ -277,7 +279,8 @@ TEST_F(BOPAlgo_PaveFillerTest, FuseConeWithRemovedPCurve_NullPCurveHandling)
     TopoDS_Wire aNewWire;
     aBuilder.MakeWire(aNewWire);
 
-    for (TopExp_Explorer aWireExp(aConicalFace, TopAbs_WIRE); aWireExp.More(); aWireExp.Next())
+    TopExp_Explorer aWireExp(aConicalFace, TopAbs_WIRE);
+    if (aWireExp.More()) // Only process first wire
     {
       const TopoDS_Wire& aWire = TopoDS::Wire(aWireExp.Current());
       for (TopExp_Explorer anEdgeExp(aWire, TopAbs_EDGE); anEdgeExp.More(); anEdgeExp.Next())
@@ -292,7 +295,6 @@ TEST_F(BOPAlgo_PaveFillerTest, FuseConeWithRemovedPCurve_NullPCurveHandling)
           aBuilder.Add(aNewWire, anEdge);
         }
       }
-      break; // Only process first wire
     }
 
     // Create new face with the modified wire

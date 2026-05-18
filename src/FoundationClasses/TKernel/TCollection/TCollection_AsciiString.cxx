@@ -40,6 +40,39 @@ inline size_t calculatePaddedSize(const int theLength)
   return (theLength + 4) & ~0x3; // Always guarantees at least +1 byte, up to +4 bytes
 }
 
+template <typename T>
+int utf8Length(const T* theUtfString)
+{
+  if (theUtfString == nullptr)
+  {
+    return 0;
+  }
+
+  int aLength = 0;
+  for (NCollection_UtfIterator<T> anIter(theUtfString); *anIter != 0; ++anIter)
+  {
+    aLength += anIter.AdvanceBytesUtf8();
+  }
+  return aLength;
+}
+
+template <typename T>
+void writeUtf8(char* theBuffer, const T* theUtfString)
+{
+  if (theUtfString == nullptr)
+  {
+    *theBuffer = '\0';
+    return;
+  }
+
+  char* anIterWrite = theBuffer;
+  for (NCollection_UtfIterator<T> anIterRead(theUtfString); *anIterRead != 0; ++anIterRead)
+  {
+    anIterWrite = anIterRead.GetUtf(anIterWrite);
+  }
+  *anIterWrite = '\0';
+}
+
 //! Helper structure to hold formatted integer string with its length
 struct FormattedInteger
 {
@@ -70,7 +103,7 @@ TCollection_AsciiString::TCollection_AsciiString() noexcept
 
 //=================================================================================================
 
-TCollection_AsciiString::TCollection_AsciiString(const char* theString, const int theLen)
+TCollection_AsciiString::TCollection_AsciiString(const char* const theString, const int theLen)
 {
   if (theString == nullptr)
   {
@@ -169,7 +202,7 @@ TCollection_AsciiString::TCollection_AsciiString(const TCollection_AsciiString& 
 //=================================================================================================
 
 TCollection_AsciiString::TCollection_AsciiString(const TCollection_AsciiString& theString1,
-                                                 const char*                    theString2)
+                                                 const char* const              theString2)
 {
   const int aStr2Len = int(theString2 ? strlen(theString2) : 0);
   allocate(theString1.myLength + aStr2Len);
@@ -227,17 +260,59 @@ TCollection_AsciiString::TCollection_AsciiString(
 
 TCollection_AsciiString::TCollection_AsciiString(const wchar_t* theStringUtf)
 {
-  int aLength = 0;
-  for (NCollection_UtfIterator<wchar_t> anIter(theStringUtf); *anIter != 0; ++anIter)
-  {
-    aLength += anIter.AdvanceBytesUtf8();
-  }
+  const int aLength = utf8Length(theStringUtf);
   allocate(aLength);
-  NCollection_UtfIterator<wchar_t> anIterRead(theStringUtf);
-  for (char* anIterWrite = myString; *anIterRead != 0; ++anIterRead)
+  writeUtf8(myString, theStringUtf);
+}
+
+//=================================================================================================
+
+void TCollection_AsciiString::AssignCat(const TCollection_ExtendedString& theOther,
+                                        const char                        theReplaceNonAscii)
+{
+  if (theReplaceNonAscii != 0)
   {
-    anIterWrite = anIterRead.GetUtf(anIterWrite);
+    const int anOtherLength = theOther.Length();
+    if (anOtherLength == 0)
+    {
+      return;
+    }
+
+    const int anOldLength = myLength;
+    reallocate(myLength + anOtherLength);
+    for (int i = 0; i < anOtherLength; ++i)
+    {
+      const char16_t aChar      = theOther.Value(i + 1);
+      myString[anOldLength + i] = IsAnAscii(aChar) ? ToCharacter(aChar) : theReplaceNonAscii;
+    }
+    return;
   }
+
+  const int anUtf8Length = theOther.LengthOfCString();
+  if (anUtf8Length == 0)
+  {
+    return;
+  }
+
+  const int anOldLength = myLength;
+  reallocate(myLength + anUtf8Length);
+  char* aWritePtr = myString + anOldLength;
+  theOther.ToUTF8CString(aWritePtr);
+}
+
+//=================================================================================================
+
+void TCollection_AsciiString::AssignCat(const wchar_t* theStringUtf)
+{
+  const int anUtf8Length = utf8Length(theStringUtf);
+  if (anUtf8Length == 0)
+  {
+    return;
+  }
+
+  const int anOldLength = myLength;
+  reallocate(myLength + anUtf8Length);
+  writeUtf8(myString + anOldLength, theStringUtf);
 }
 
 //=================================================================================================
@@ -269,10 +344,12 @@ void TCollection_AsciiString::AssignCat(const char theOther)
 
 //=================================================================================================
 
-void TCollection_AsciiString::AssignCat(const char* theString, const int theLength)
+void TCollection_AsciiString::AssignCat(const char* const theString, const int theLength)
 {
   if (theLength == 0 || theString == nullptr)
+  {
     return;
+  }
 
   // Check if theString points into our own buffer (self-assignment protection)
   // Use std::less for well-defined pointer comparison (avoids undefined behavior)
@@ -306,15 +383,19 @@ void TCollection_AsciiString::AssignCat(const char* theString, const int theLeng
 void TCollection_AsciiString::Capitalize()
 {
   if (myLength)
+  {
     myString[0] = ::UpperCase(myString[0]);
+  }
   for (int i = 1; i < myLength; i++)
+  {
     myString[i] = ::LowerCase(myString[i]);
+  }
 }
 
 //=================================================================================================
 
-TCollection_AsciiString TCollection_AsciiString::Cat(const char* theString,
-                                                     const int   theLength) const
+TCollection_AsciiString TCollection_AsciiString::Cat(const char* const theString,
+                                                     const int         theLength) const
 {
   TCollection_AsciiString aResult(*this);
   aResult.AssignCat(theString, theLength);
@@ -335,6 +416,52 @@ TCollection_AsciiString TCollection_AsciiString::Cat(const double theOther) cons
 {
   const FormattedReal aFormatted(theOther);
   return Cat(aFormatted.Buffer, aFormatted.Length);
+}
+
+//=================================================================================================
+
+TCollection_AsciiString TCollection_AsciiString::Cat(const TCollection_ExtendedString& theOther,
+                                                     const char theReplaceNonAscii) const
+{
+  if (theReplaceNonAscii != 0)
+  {
+    const int               anOtherLength = theOther.Length();
+    TCollection_AsciiString aResult(myLength + anOtherLength, '\0');
+    if (myLength > 0)
+    {
+      memcpy(aResult.myString, myString, myLength);
+    }
+    for (int i = 0; i < anOtherLength; ++i)
+    {
+      const char16_t aChar           = theOther.Value(i + 1);
+      aResult.myString[myLength + i] = IsAnAscii(aChar) ? ToCharacter(aChar) : theReplaceNonAscii;
+    }
+    return aResult;
+  }
+
+  const int               anUtf8Length = theOther.LengthOfCString();
+  TCollection_AsciiString aResult(myLength + anUtf8Length, '\0');
+  if (myLength > 0)
+  {
+    memcpy(aResult.myString, myString, myLength);
+  }
+  char* aWritePtr = aResult.myString + myLength;
+  theOther.ToUTF8CString(aWritePtr);
+  return aResult;
+}
+
+//=================================================================================================
+
+TCollection_AsciiString TCollection_AsciiString::Cat(const wchar_t* theStringUtf) const
+{
+  const int               aUtf8Length = utf8Length(theStringUtf);
+  TCollection_AsciiString aResult(myLength + aUtf8Length, '\0');
+  if (myLength > 0)
+  {
+    memcpy(aResult.myString, myString, myLength);
+  }
+  writeUtf8(aResult.myString + myLength, theStringUtf);
+  return aResult;
 }
 
 //=================================================================================================
@@ -362,15 +489,23 @@ void TCollection_AsciiString::ChangeAll(const char theChar,
   if (theCaseSensitive)
   {
     for (int i = 0; i < myLength; i++)
+    {
       if (myString[i] == theChar)
+      {
         myString[i] = theNewChar;
+      }
+    }
   }
   else
   {
     char anUpperChar = ::UpperCase(theChar);
     for (int i = 0; i < myLength; i++)
+    {
       if (::UpperCase(myString[i]) == anUpperChar)
+      {
         myString[i] = theNewChar;
+      }
+    }
   }
 }
 
@@ -383,7 +518,7 @@ void TCollection_AsciiString::Clear()
 
 //=================================================================================================
 
-void TCollection_AsciiString::Copy(const char* theString, const int theLength)
+void TCollection_AsciiString::Copy(const char* const theString, const int theLength)
 {
   if (myString == theString)
   {
@@ -450,19 +585,27 @@ TCollection_AsciiString::~TCollection_AsciiString()
 
 //=================================================================================================
 
-int TCollection_AsciiString::FirstLocationInSet(const char* theSet,
-                                                const int   theSetLength,
-                                                const int   theFromIndex,
-                                                const int   theToIndex) const
+int TCollection_AsciiString::FirstLocationInSet(const char* const theSet,
+                                                const int         theSetLength,
+                                                const int         theFromIndex,
+                                                const int         theToIndex) const
 {
   if (myLength == 0 || theSetLength == 0)
+  {
     return 0;
+  }
   if (theFromIndex > 0 && theToIndex <= myLength && theFromIndex <= theToIndex)
   {
     for (int i = theFromIndex - 1; i < theToIndex; i++)
+    {
       for (int j = 0; j < theSetLength; j++)
+      {
         if (myString[i] == theSet[j])
+        {
           return i + 1;
+        }
+      }
+    }
     return 0;
   }
   throw Standard_OutOfRange();
@@ -470,13 +613,15 @@ int TCollection_AsciiString::FirstLocationInSet(const char* theSet,
 
 //=================================================================================================
 
-int TCollection_AsciiString::FirstLocationNotInSet(const char* theSet,
-                                                   const int   theSetLength,
-                                                   const int   theFromIndex,
-                                                   const int   theToIndex) const
+int TCollection_AsciiString::FirstLocationNotInSet(const char* const theSet,
+                                                   const int         theSetLength,
+                                                   const int         theFromIndex,
+                                                   const int         theToIndex) const
 {
   if (myLength == 0 || theSetLength == 0)
+  {
     return 0;
+  }
   if (theFromIndex > 0 && theToIndex <= myLength && theFromIndex <= theToIndex)
   {
     bool aFind;
@@ -484,10 +629,16 @@ int TCollection_AsciiString::FirstLocationNotInSet(const char* theSet,
     {
       aFind = false;
       for (int j = 0; j < theSetLength; j++)
+      {
         if (myString[i] == theSet[j])
+        {
           aFind = true;
+        }
+      }
       if (!aFind)
+      {
         return i + 1;
+      }
     }
     return 0;
   }
@@ -499,29 +650,41 @@ int TCollection_AsciiString::FirstLocationNotInSet(const char* theSet,
 void TCollection_AsciiString::Insert(const int theWhere, const char theWhat)
 {
   if (theWhere > myLength + 1)
+  {
     throw Standard_OutOfRange("TCollection_AsciiString::Insert : Parameter theWhere is too big");
+  }
   if (theWhere < 1)
+  {
     throw Standard_OutOfRange("TCollection_AsciiString::Insert : Parameter theWhere is too small");
+  }
 
   const int anOldLength = myLength;
   reallocate(myLength + 1);
   if (theWhere != anOldLength + 1)
   {
     for (int i = anOldLength - 1; i >= theWhere - 1; i--)
+    {
       myString[i + 1] = myString[i];
+    }
   }
   myString[theWhere - 1] = theWhat;
 }
 
 //=================================================================================================
 
-void TCollection_AsciiString::Insert(const int theWhere, const char* theString, const int theLength)
+void TCollection_AsciiString::Insert(const int         theWhere,
+                                     const char* const theString,
+                                     const int         theLength)
 {
   if (theWhere < 1 || theWhere > myLength + 1)
+  {
     throw Standard_OutOfRange("TCollection_AsciiString::Insert : parameter theWhere");
+  }
 
   if (theLength == 0 || theString == nullptr)
+  {
     return;
+  }
 
   const int anInsertSize  = theLength;
   const int anOldLength   = myLength;
@@ -575,91 +738,116 @@ void TCollection_AsciiString::Insert(const int theWhere, const char* theString, 
 
 //=================================================================================================
 
-void TCollection_AsciiString::InsertAfter(const int   theIndex,
-                                          const char* theString,
-                                          const int   theLength)
+void TCollection_AsciiString::InsertAfter(const int         theIndex,
+                                          const char* const theString,
+                                          const int         theLength)
 {
   if (theIndex < 0 || theIndex > myLength)
+  {
     throw Standard_OutOfRange();
+  }
   Insert(theIndex + 1, theString, theLength);
 }
 
 //=================================================================================================
 
-void TCollection_AsciiString::InsertBefore(const int   theIndex,
-                                           const char* theString,
-                                           const int   theLength)
+void TCollection_AsciiString::InsertBefore(const int         theIndex,
+                                           const char* const theString,
+                                           const int         theLength)
 {
   if (theIndex < 1 || theIndex > myLength)
+  {
     throw Standard_OutOfRange();
+  }
   Insert(theIndex, theString, theLength);
 }
 
 //=================================================================================================
 
-bool TCollection_AsciiString::IsEqual(const char* theString, const int theLength) const
+bool TCollection_AsciiString::IsEqual(const char* const theString, const int theLength) const
 {
   if (myLength != theLength)
+  {
     return false;
+  }
 
   if (myLength == 0)
+  {
     return true;
+  }
 
   return memcmp(myString, theString, myLength) == 0;
 }
 
 //=================================================================================================
 
-bool TCollection_AsciiString::IsLess(const char* theString, const int theLength) const
+bool TCollection_AsciiString::IsLess(const char* const theString, const int theLength) const
 {
   const int aMinLength = std::min(myLength, theLength);
   const int aResult    = memcmp(myString, theString, aMinLength);
 
   if (aResult < 0)
+  {
     return true;
+  }
   if (aResult > 0)
+  {
     return false;
+  }
 
   return myLength < theLength;
 }
 
 //=================================================================================================
 
-bool TCollection_AsciiString::IsGreater(const char* theString, const int theLength) const
+bool TCollection_AsciiString::IsGreater(const char* const theString, const int theLength) const
 {
   const int aMinLength = std::min(myLength, theLength);
   const int aResult    = memcmp(myString, theString, aMinLength);
 
   if (aResult > 0)
+  {
     return true;
+  }
   if (aResult < 0)
+  {
     return false;
+  }
 
   return myLength > theLength;
 }
 
 //=================================================================================================
 
-bool TCollection_AsciiString::StartsWith(const char* theStartString, const int theStartLength) const
+bool TCollection_AsciiString::StartsWith(const char* const theStartString,
+                                         const int         theStartLength) const
 {
   if (theStartLength > myLength)
+  {
     return false;
+  }
 
   if (theStartLength == 0)
+  {
     return true;
+  }
 
   return memcmp(myString, theStartString, theStartLength) == 0;
 }
 
 //=================================================================================================
 
-bool TCollection_AsciiString::EndsWith(const char* theEndString, const int theEndLength) const
+bool TCollection_AsciiString::EndsWith(const char* const theEndString, const int theEndLength) const
 {
   if (theEndLength > myLength)
+  {
     return false;
+  }
 
   if (theEndLength == 0)
+  {
     return true;
+  }
 
   return memcmp(myString + myLength - theEndLength, theEndString, theEndLength) == 0;
 }
@@ -671,7 +859,9 @@ int TCollection_AsciiString::IntegerValue() const
   char* ptr;
   int   value = (int)strtol(myString, &ptr, 10);
   if (ptr != myString)
+  {
     return value;
+  }
 
   throw Standard_NumericError("TCollection_AsciiString::IntegerValue");
 }
@@ -688,7 +878,9 @@ bool TCollection_AsciiString::IsIntegerValue() const
     for (int i = int(ptr - myString); i < myLength; i++)
     {
       if (myString[i] == '.')
+      {
         return false; // what about 'e','x',etc ???
+      }
     }
     return true;
   }
@@ -718,8 +910,12 @@ bool TCollection_AsciiString::IsAscii() const
   // LD : Debuggee le 26/11/98
   //      Cette fonction retournait TOUJOURS true !
   for (int i = 0; i < myLength; i++)
+  {
     if (myString[i] >= 127 || myString[i] < ' ')
+    {
       return false;
+    }
+  }
   return true;
 }
 
@@ -729,10 +925,16 @@ void TCollection_AsciiString::LeftAdjust()
 {
   int i;
   for (i = 0; i < myLength; i++)
+  {
     if (!IsSpace(myString[i]))
+    {
       break;
+    }
+  }
   if (i > 0)
+  {
     Remove(1, i);
+  }
 }
 
 //=================================================================================================
@@ -744,7 +946,9 @@ void TCollection_AsciiString::LeftJustify(const int theWidth, const char theFill
     const int anOldLength = myLength;
     reallocate(theWidth);
     for (int i = anOldLength; i < theWidth; i++)
+    {
       myString[i] = theFiller;
+    }
   }
   else if (theWidth < 0)
   {
@@ -767,7 +971,9 @@ int TCollection_AsciiString::Location(const int  theN,
       {
         aCount++;
         if (aCount == theN)
+        {
           return i + 1;
+        }
       }
     }
     return 0;
@@ -782,7 +988,9 @@ int TCollection_AsciiString::Location(const TCollection_AsciiString& theWhat,
                                       const int                      theToIndex) const
 {
   if (myLength == 0 || theWhat.myLength == 0)
+  {
     return 0;
+  }
   if (theToIndex <= myLength && theFromIndex > 0 && theFromIndex <= theToIndex)
   {
     int  i     = theFromIndex - 1;
@@ -795,21 +1003,29 @@ int TCollection_AsciiString::Location(const TCollection_AsciiString& theWhat,
       {
         k++;
         if (k > theWhat.myLength)
+        {
           aFind = true;
+        }
       }
       else
       {
         if (k > 1)
+        {
           i--; // si on est en cours de recherche
+        }
         k = 1;
         l = i;
       }
       i++;
     }
     if (aFind)
+    {
       return l + 2;
+    }
     else
+    {
       return 0;
+    }
   }
   throw Standard_OutOfRange();
 }
@@ -819,7 +1035,9 @@ int TCollection_AsciiString::Location(const TCollection_AsciiString& theWhat,
 void TCollection_AsciiString::LowerCase()
 {
   for (int i = 0; i < myLength; i++)
+  {
     myString[i] = ::LowerCase(myString[i]);
+  }
 }
 
 //=================================================================================================
@@ -836,7 +1054,9 @@ double TCollection_AsciiString::RealValue() const
   char*  ptr;
   double value = Strtod(myString, &ptr);
   if (ptr != myString)
+  {
     return value;
+  }
 
   throw Standard_NumericError("TCollection_AsciiString::RealValue");
 }
@@ -869,7 +1089,9 @@ Standard_IStream& operator>>(Standard_IStream& astream, TCollection_AsciiString&
 void TCollection_AsciiString::Print(Standard_OStream& theStream) const
 {
   if (myString)
+  {
     theStream << myString;
+  }
 }
 
 // ----------------------------------------------------------------------------
@@ -916,7 +1138,9 @@ void TCollection_AsciiString::Remove(const int theWhere, const int theHowMany)
   {
     int i, j;
     for (i = theWhere + theHowMany - 1, j = theWhere - 1; i < myLength; i++, j++)
+    {
       myString[j] = myString[i];
+    }
     myLength -= theHowMany;
     myString[myLength] = '\0';
   }
@@ -934,10 +1158,16 @@ void TCollection_AsciiString::RightAdjust()
 {
   int i;
   for (i = myLength - 1; i >= 0; i--)
+  {
     if (!IsSpace(myString[i]))
+    {
       break;
+    }
+  }
   if (i < myLength - 1)
+  {
     Remove(i + 2, myLength - (i + 2) + 1);
+  }
 }
 
 //=================================================================================================
@@ -950,9 +1180,13 @@ void TCollection_AsciiString::RightJustify(const int theWidth, const char theFil
     reallocate(theWidth);
     int i, k;
     for (i = anOldLength - 1, k = theWidth - 1; i >= 0; i--, k--)
+    {
       myString[k] = myString[i];
+    }
     for (; k >= 0; k--)
+    {
       myString[k] = theFiller;
+    }
   }
   else if (theWidth < 0)
   {
@@ -962,10 +1196,12 @@ void TCollection_AsciiString::RightJustify(const int theWidth, const char theFil
 
 //=================================================================================================
 
-int TCollection_AsciiString::Search(const char* theWhat, const int theWhatLength) const
+int TCollection_AsciiString::Search(const char* const theWhat, const int theWhatLength) const
 {
   if (theWhatLength == 0)
+  {
     return -1;
+  }
 
   for (int i = 0; i <= myLength - theWhatLength; ++i)
   {
@@ -979,10 +1215,12 @@ int TCollection_AsciiString::Search(const char* theWhat, const int theWhatLength
 
 //=================================================================================================
 
-int TCollection_AsciiString::SearchFromEnd(const char* theWhat, const int theWhatLength) const
+int TCollection_AsciiString::SearchFromEnd(const char* const theWhat, const int theWhatLength) const
 {
   if (theWhatLength == 0)
+  {
     return -1;
+  }
 
   for (int i = myLength - theWhatLength; i >= 0; --i)
   {
@@ -1011,12 +1249,14 @@ void TCollection_AsciiString::SetValue(const int theWhere, const char theWhat)
 
 //=================================================================================================
 
-void TCollection_AsciiString::SetValue(const int   theWhere,
-                                       const char* theString,
-                                       const int   theLength)
+void TCollection_AsciiString::SetValue(const int         theWhere,
+                                       const char* const theString,
+                                       const int         theLength)
 {
   if (theWhere <= 0)
+  {
     throw Standard_OutOfRange("TCollection_AsciiString::SetValue");
+  }
 
   const int anInsertSize = theLength;
   const int aNewLength   = theWhere - 1 + anInsertSize;
@@ -1058,12 +1298,14 @@ TCollection_AsciiString TCollection_AsciiString::SubString(const int theFromInde
 
 //=================================================================================================
 
-TCollection_AsciiString TCollection_AsciiString::Token(const char* theSeparators,
-                                                       const int   theWhichOne) const
+TCollection_AsciiString TCollection_AsciiString::Token(const char* const theSeparators,
+                                                       const int         theWhichOne) const
 {
   if (!theSeparators)
+  {
     throw Standard_NullObject("TCollection_AsciiString::Token : "
                               "parameter 'theSeparators'");
+  }
 
   int anIndex;
   int aStringIndex = 0;
@@ -1078,7 +1320,9 @@ TCollection_AsciiString TCollection_AsciiString::Token(const char* theSeparators
     anEndIndex  = 0;
     //     std::cout << "anIndex " << anIndex << std::endl ;
     if (aStringIndex == myLength)
+    {
       break;
+    }
     for (; aStringIndex < myLength && anEndIndex == 0; aStringIndex++)
     {
       aSeparatorIndex = 0;
@@ -1110,9 +1354,13 @@ TCollection_AsciiString TCollection_AsciiString::Token(const char* theSeparators
     //     std::cout << "aBeginIndex " << aBeginIndex << " anEndIndex " << anEndIndex << std::endl ;
   }
   if (aBeginIndex == 0)
+  {
     return TCollection_AsciiString("", 0);
+  }
   if (anEndIndex == 0)
+  {
     anEndIndex = myLength;
+  }
   //    std::cout << "'" << SubString( aBeginIndex , anEndIndex ).ToCString() << "'" << std::endl ;
   return TCollection_AsciiString(&myString[aBeginIndex - 1], anEndIndex - aBeginIndex + 1);
 }
@@ -1122,8 +1370,10 @@ TCollection_AsciiString TCollection_AsciiString::Token(const char* theSeparators
 void TCollection_AsciiString::Trunc(const int theHowMany)
 {
   if (theHowMany < 0 || theHowMany > myLength)
+  {
     throw Standard_OutOfRange("TCollection_AsciiString::Trunc : "
                               "parameter 'theHowMany'");
+  }
   myLength           = theHowMany;
   myString[myLength] = '\0';
 }
@@ -1133,18 +1383,28 @@ void TCollection_AsciiString::Trunc(const int theHowMany)
 void TCollection_AsciiString::UpperCase()
 {
   for (int i = 0; i < myLength; i++)
+  {
     myString[i] = ::UpperCase(myString[i]);
+  }
 }
 
 //=================================================================================================
 
 int TCollection_AsciiString::UsefullLength() const
 {
-  int i;
-  for (i = myLength - 1; i >= 0; i--)
-    if (IsGraphic(myString[i]))
-      break;
-  return i + 1;
+  // Use NCollection_UtfIterator to correctly handle multibyte UTF-8 characters.
+  // Non-ASCII Unicode characters (code point > 0x7F) are always considered graphic.
+  // The method trims trailing non-graphic ASCII characters (spaces, control chars).
+  int aLastGraphicEnd = 0;
+  for (NCollection_UtfIterator<char> anIter(myString); *anIter != 0; ++anIter)
+  {
+    const char32_t aChar = *anIter;
+    if (aChar > char32_t(0x7F) || std::isgraph(static_cast<int>(aChar)) != 0)
+    {
+      aLastGraphicEnd = int(anIter.BufferNext() - myString);
+    }
+  }
+  return aLastGraphicEnd;
 }
 
 //=================================================================================================
@@ -1216,17 +1476,21 @@ void TCollection_AsciiString::deallocate()
 
 //=================================================================================================
 
-bool TCollection_AsciiString::IsSameString(const char* theString1,
-                                           const int   theLength1,
-                                           const char* theString2,
-                                           const int   theLength2,
-                                           const bool  theIsCaseSensitive)
+bool TCollection_AsciiString::IsSameString(const char* const theString1,
+                                           const int         theLength1,
+                                           const char* const theString2,
+                                           const int         theLength2,
+                                           const bool        theIsCaseSensitive)
 {
   if (theLength1 != theLength2)
+  {
     return false;
+  }
 
   if (theLength1 == 0)
+  {
     return true;
+  }
 
   if (theIsCaseSensitive)
   {
@@ -1237,7 +1501,9 @@ bool TCollection_AsciiString::IsSameString(const char* theString1,
     for (int anIndex = 0; anIndex < theLength1; ++anIndex)
     {
       if (::UpperCase(theString1[anIndex]) != ::UpperCase(theString2[anIndex]))
+      {
         return false;
+      }
     }
     return true;
   }

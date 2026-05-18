@@ -68,7 +68,9 @@ bool ShapeAlgo_AlgoContainer::ConnectNextWire(const occ::handle<ShapeAnalysis_Wi
   distmin = 0;
   revsewd = revnextsewd = false;
   if (nextsewd->NbEdges() == 0)
+  {
     return true;
+  }
 
   occ::handle<ShapeExtend_WireData> sewd = saw->WireData();
   // add edges into empty WireData
@@ -104,7 +106,9 @@ bool ShapeAlgo_AlgoContainer::ConnectNextWire(const occ::handle<ShapeAnalysis_Wi
   }
   bool OK = !saw->LastCheckStatus(ShapeExtend_FAIL);
   if (OK)
+  {
     sewd->Add(nextsewd);
+  }
   return OK;
 }
 
@@ -132,20 +136,12 @@ void ShapeAlgo_AlgoContainer::ApproxBSplineCurve(
   // on detecte d`eventuelles cassures par la multiplicite des poles.
   // Puis on approxime chaque "partie" de BSpline
 
-  int                        NbKnots = bspline->NbKnots();
-  int                        NbPoles = bspline->NbPoles();
-  NCollection_Array1<gp_Pnt> Poles(1, NbPoles);
-  NCollection_Array1<double> Weigs(1, NbPoles);
-  Weigs.Init(1.);
-  NCollection_Array1<double> Knots(1, NbKnots);
-  NCollection_Array1<int>    Mults(1, NbKnots);
-
-  bspline->Poles(Poles);
-  if (bspline->IsRational())
-    bspline->Weights(Weigs);
-  bspline->Knots(Knots);
-  bspline->Multiplicities(Mults);
-  int deg = bspline->Degree();
+  int                               NbPoles = bspline->NbPoles();
+  const NCollection_Array1<gp_Pnt>& Poles   = bspline->Poles();
+  const NCollection_Array1<double>& Weigs   = bspline->WeightsArray();
+  const NCollection_Array1<double>& Knots   = bspline->Knots();
+  const NCollection_Array1<int>&    Mults   = bspline->Multiplicities();
+  int                               deg     = bspline->Degree();
 
   int jpole = 1;
   int j, PoleIndex, I1;
@@ -163,7 +159,7 @@ void ShapeAlgo_AlgoContainer::ApproxBSplineCurve(
       {
         NCollection_Array1<gp_Pnt> newPoles(1, jpole);
         NCollection_Array1<double> newWeigs(1, jpole);
-        Weigs.Init(1.);
+        newWeigs.Init(1.);
         int                        NbNew = jpole - deg + 1;
         NCollection_Array1<double> newKnots(1, NbNew);
         NCollection_Array1<int>    newMults(1, NbNew);
@@ -206,10 +202,9 @@ void ShapeAlgo_AlgoContainer::ApproxBSplineCurve(
     jpole   = mycurve->NbPoles();
     if (jpole > 2)
     {
-      NCollection_Array1<gp_Pnt> newP(1, jpole);
-      mycurve->Poles(newP);
-      occ::handle<IntSurf_LineOn2S> R = new IntSurf_LineOn2S();
-      double                        u1, v1, u2, v2;
+      const NCollection_Array1<gp_Pnt>& newP = mycurve->Poles();
+      occ::handle<IntSurf_LineOn2S>     R    = new IntSurf_LineOn2S();
+      double                            u1, v1, u2, v2;
       u1 = v1 = 0.;
       u2 = v2 = 1.;
       for (j = 1; j <= jpole; j++)
@@ -277,20 +272,12 @@ void ShapeAlgo_AlgoContainer::ApproxBSplineCurve(
   // Puis on approxime chaque "partie" de BSpline et on reconstruit
   // une BSpline = somme des BSplines traitees
 
-  int                          NbKnots = bspline->NbKnots();
-  int                          NbPoles = bspline->NbPoles();
-  NCollection_Array1<gp_Pnt2d> Poles(1, NbPoles);
-  NCollection_Array1<double>   Weigs(1, NbPoles);
-  Weigs.Init(1.);
-  NCollection_Array1<double> Knots(1, NbKnots);
-  NCollection_Array1<int>    Mults(1, NbKnots);
-
-  bspline->Poles(Poles);
-  if (bspline->IsRational())
-    bspline->Weights(Weigs);
-  bspline->Knots(Knots);
-  bspline->Multiplicities(Mults);
-  int deg = bspline->Degree();
+  int                                 NbPoles = bspline->NbPoles();
+  const NCollection_Array1<gp_Pnt2d>& Poles   = bspline->Poles();
+  const NCollection_Array1<double>&   Weigs   = bspline->WeightsArray();
+  const NCollection_Array1<double>&   Knots   = bspline->Knots();
+  const NCollection_Array1<int>&      Mults   = bspline->Multiplicities();
+  int                                 deg     = bspline->Degree();
 
   int jpole = 1;
   int j, PoleIndex, I1;
@@ -308,7 +295,7 @@ void ShapeAlgo_AlgoContainer::ApproxBSplineCurve(
       {
         NCollection_Array1<gp_Pnt2d> newPoles(1, jpole);
         NCollection_Array1<double>   newWeigs(1, jpole);
-        Weigs.Init(1.);
+        newWeigs.Init(1.);
         int                        NbNew = jpole - deg + 1;
         NCollection_Array1<double> newKnots(1, NbNew);
         NCollection_Array1<int>    newMults(1, NbNew);
@@ -351,11 +338,10 @@ void ShapeAlgo_AlgoContainer::ApproxBSplineCurve(
     jpole   = mycurve->NbPoles();
     if (jpole > 10)
     {
-      NCollection_Array1<gp_Pnt>   P(1, jpole);
-      NCollection_Array1<gp_Pnt2d> newP(1, jpole);
-      mycurve->Poles(newP);
-      occ::handle<IntSurf_LineOn2S> R = new IntSurf_LineOn2S();
-      double                        u2, v2;
+      NCollection_Array1<gp_Pnt>          P(1, jpole);
+      const NCollection_Array1<gp_Pnt2d>& newP = mycurve->Poles();
+      occ::handle<IntSurf_LineOn2S>       R    = new IntSurf_LineOn2S();
+      double                              u2, v2;
       u2 = v2 = 1.;
       for (j = 1; j <= jpole; j++)
       {
@@ -528,9 +514,13 @@ bool ShapeAlgo_AlgoContainer::HomoWires(const TopoDS_Wire& wireIn1,
   bool IsToReverse1 = false;
   bool IsToReverse2 = false;
   if (edge1.Orientation() == TopAbs_REVERSED)
+  {
     IsToReverse1 = true;
+  }
   if (edge2.Orientation() == TopAbs_REVERSED)
+  {
     IsToReverse2 = true;
+  }
   crv1   = BRep_Tool::Curve(edge1, loc1, first1, last1);
   crv2   = BRep_Tool::Curve(edge2, loc2, first2, last2);
   delta1 = last1 - first1;
@@ -597,9 +587,13 @@ bool ShapeAlgo_AlgoContainer::HomoWires(const TopoDS_Wire& wireIn1,
     edge1.Move(loc1);
     edge2.Move(loc2);
     if (IsToReverse1)
+    {
       edge1.Reverse();
+    }
     if (IsToReverse2)
+    {
       edge2.Reverse();
+    }
     makeWire1.Add(edge1);
     makeWire2.Add(edge2);
 
@@ -607,7 +601,9 @@ bool ShapeAlgo_AlgoContainer::HomoWires(const TopoDS_Wire& wireIn1,
     {
       TopoDS_Iterator Copernic = Cook;
       if (Copernic.More())
+      {
         Copernic.Next();
+      }
       if (!Copernic.More())
       {
         wireOut1 = makeWire1.Wire();

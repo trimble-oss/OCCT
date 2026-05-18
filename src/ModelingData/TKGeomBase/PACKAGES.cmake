@@ -9,6 +9,7 @@ set(OCCT_TKGeomBase_LIST_OF_PACKAGES
   FEmTool
   AppCont
   Extrema
+  ExtremaPC
   IntAna
   IntAna2d
   GeomConvert
@@ -17,9 +18,13 @@ set(OCCT_TKGeomBase_LIST_OF_PACKAGES
   Geom2dConvert
   Hermit
   BndLib
+  GeomBndLib
   AppDef
   GeomTools
   GC
   GCE2d
   gce
+  LProp
+  GeomLProp
+  GProp
 )

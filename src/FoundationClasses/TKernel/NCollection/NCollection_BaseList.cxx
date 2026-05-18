@@ -36,17 +36,18 @@ void NCollection_BaseList::PClear(NCollection_DelListNode fDel)
   myFirst = myLast = nullptr;
 }
 
-//=======================================================================
-// function : PAppend
-// purpose  : Appends one item at the end
-//=======================================================================
+//=================================================================================================
 
 void NCollection_BaseList::PAppend(NCollection_ListNode* theNode) noexcept
 {
   if (myLength)
+  {
     myLast->Next() = theNode;
+  }
   else
+  {
     myFirst = theNode;
+  }
   theNode->Next() = nullptr;
   myLast          = theNode;
   myLength++;
@@ -60,12 +61,18 @@ void NCollection_BaseList::PAppend(NCollection_ListNode* theNode) noexcept
 void NCollection_BaseList::PAppend(NCollection_BaseList& theOther) noexcept
 {
   if (this == &theOther || theOther.IsEmpty())
+  {
     return;
+  }
 
   if (IsEmpty())
+  {
     myFirst = theOther.myFirst;
+  }
   else
+  {
     myLast->Next() = theOther.myFirst;
+  }
   myLast           = theOther.myLast;
   theOther.myFirst = theOther.myLast = nullptr;
 
@@ -83,7 +90,9 @@ void NCollection_BaseList::PPrepend(NCollection_ListNode* theNode) noexcept
   theNode->Next() = myFirst;
   myFirst         = theNode;
   if (myLast == nullptr)
+  {
     myLast = myFirst;
+  }
   myLength++;
 }
 
@@ -92,12 +101,18 @@ void NCollection_BaseList::PPrepend(NCollection_ListNode* theNode) noexcept
 void NCollection_BaseList::PPrepend(NCollection_BaseList& theOther) noexcept
 {
   if (this == &theOther || theOther.IsEmpty())
+  {
     return;
+  }
 
   if (IsEmpty())
+  {
     myLast = theOther.myLast;
+  }
   else
+  {
     theOther.myLast->Next() = myFirst;
+  }
   myFirst          = theOther.myFirst;
   theOther.myFirst = theOther.myLast = nullptr;
 
@@ -115,7 +130,9 @@ void NCollection_BaseList::PRemoveFirst(NCollection_DelListNode fDel)
   fDel(pItem, myAllocator);
   myLength--;
   if (myLength == 0)
+  {
     myLast = nullptr;
+  }
 }
 
 //=================================================================================================
@@ -135,7 +152,9 @@ void NCollection_BaseList::PRemove(Iterator& theIter, NCollection_DelListNode fD
     fDel(theIter.myCurrent, myAllocator);
     theIter.myCurrent = pNode;
     if (pNode == nullptr)
+    {
       myLast = theIter.myPrevious;
+    }
     myLength--;
   }
 }

@@ -102,9 +102,13 @@ public:
 TNaming_Node* TNaming_Node::NextSameShape(TNaming_RefShape* prs)
 {
   if (myOld == prs)
+  {
     return nextSameOld;
+  }
   if (myNew == prs)
+  {
     return nextSameNew;
+  }
   return nextSameNew;
 }
 
@@ -177,12 +181,16 @@ static void RemoveNode(
     {
       TNaming_Node* nextOld = N->nextSameOld;
       if (nextOld != nullptr)
+      {
         pos->FirstUse(nextOld);
+      }
       else
       {
         // le shape disparait
         if (MapExist)
+        {
           M.UnBind(pos->Shape());
+        }
         N->myOld = nullptr;
         if (pos != N->myNew)
         {
@@ -200,9 +208,13 @@ static void RemoveNode(
         if (pdn->NextSameShape(pos) == N)
         {
           if (pdn->myOld == pos)
+          {
             pdn->nextSameOld = N->nextSameOld;
+          }
           else
+          {
             pdn->nextSameNew = N->nextSameOld;
+          }
           break;
         }
         pdn = pdn->NextSameShape(pos);
@@ -217,12 +229,16 @@ static void RemoveNode(
     {
       TNaming_Node* nextNew = N->nextSameNew;
       if (nextNew != nullptr)
+      {
         pns->FirstUse(nextNew);
+      }
       else
       {
         // le shape disparait
         if (MapExist)
+        {
           M.UnBind(pns->Shape());
+        }
 
         pns->FirstUse(nullptr);
         delete pns;
@@ -239,9 +255,13 @@ static void RemoveNode(
         if (pdn->NextSameShape(pns) == N)
         {
           if (pdn->myOld == pns)
+          {
             pdn->nextSameOld = N->nextSameNew;
+          }
           else
+          {
             pdn->nextSameNew = N->nextSameNew;
+          }
           break;
         }
         pdn = pdn->NextSameShape(pns);
@@ -271,7 +291,9 @@ void TNaming_NamedShape::Clear()
 
   bool MapExist = Label().Root().FindAttribute(TNaming_UsedShapes::GetID(), US);
   if (MapExist)
+  {
     M = &(US->Map());
+  }
 
   TNaming_Node* p = myNode;
   while (p != nullptr)
@@ -286,11 +308,8 @@ void TNaming_NamedShape::Clear()
   {
     q = p;
     p = p->nextSameAttribute;
-    if (q != nullptr)
-    {
-      delete q;
-      q = nullptr;
-    }
+    delete q;
+    q = nullptr;
   }
 
   myNode = nullptr;
@@ -303,10 +322,7 @@ void TNaming_NamedShape::BeforeRemoval()
   Clear();
 }
 
-//=======================================================================
-// function : BeforeUndo
-// purpose  : before application of a TDF_Delta.
-//=======================================================================
+//=================================================================================================
 
 bool TNaming_NamedShape::BeforeUndo(const occ::handle<TDF_AttributeDelta>& /*anAttDelta*/,
                                     const bool /*forceIt*/)
@@ -317,10 +333,7 @@ bool TNaming_NamedShape::BeforeUndo(const occ::handle<TDF_AttributeDelta>& /*anA
   return true;
 }
 
-//=======================================================================
-// function : AfterUndo
-// purpose  : After application of a TDF_Delta.
-//=======================================================================
+//=================================================================================================
 
 bool TNaming_NamedShape::AfterUndo(const occ::handle<TDF_AttributeDelta>& anAttDelta,
                                    const bool /*forceIt*/)
@@ -337,7 +350,9 @@ bool TNaming_NamedShape::AfterUndo(const occ::handle<TDF_AttributeDelta>& anAttD
     bool MapExist = anAttDelta->Label().Root().FindAttribute(TNaming_UsedShapes::GetID(), US);
 
     if (MapExist)
+    {
       M = &(US->Map());
+    }
 
     TNaming_Node* p = myNode;
     while (p != nullptr)
@@ -352,11 +367,8 @@ bool TNaming_NamedShape::AfterUndo(const occ::handle<TDF_AttributeDelta>& anAttD
     {
       q = p;
       p = p->nextSameAttribute;
-      if (q != nullptr)
-      {
-        delete q;
-        q = nullptr;
-      }
+      delete q;
+      q = nullptr;
     }
 
     myNode = nullptr;
@@ -396,7 +408,7 @@ void TNaming_NamedShape::Restore(const occ::handle<TDF_Attribute>& anAttribute)
 {
   Clear();
 
-  TNaming_NamedShape* PAtt = (TNaming_NamedShape*)anAttribute.operator->();
+  TNaming_NamedShape* PAtt = static_cast<TNaming_NamedShape*>(anAttribute.get());
   myNode                   = PAtt->myNode;
   myEvolution              = PAtt->myEvolution;
   myVersion                = PAtt->myVersion;
@@ -463,13 +475,21 @@ void TNaming_NamedShape::Paste(const occ::handle<TDF_Attribute>&       into,
     // Modification_1 24.06.99 (szy)
     TopoDS_Shape copOS, copNS;
     if (aStatus != TNaming_PRIMITIVE)
+    {
       TNaming_CopyShape::CopyTool(OS, Tab->TransientTable(), copOS);
+    }
     else
+    {
       copOS.Nullify();
+    }
     if (aStatus != TNaming_DELETE)
+    {
       TNaming_CopyShape::CopyTool(NS, Tab->TransientTable(), copNS);
+    }
     else
+    {
       copNS.Nullify();
+    }
 
     switch (aStatus)
     {
@@ -613,9 +633,13 @@ static void UpdateFirstUseOrNextSameShape(TNaming_RefShape*& prs, TNaming_Node*&
     if (ldn != pdn)
     {
       if (ldn->myOld == prs)
+      {
         ldn->nextSameOld = pdn;
+      }
       if (ldn->myNew == prs)
+      {
         ldn->nextSameNew = pdn;
+      }
     }
   }
 }
@@ -625,11 +649,15 @@ static void UpdateFirstUseOrNextSameShape(TNaming_RefShape*& prs, TNaming_Node*&
 void TNaming_Builder::Generated(const TopoDS_Shape& newShape)
 {
   if (myAtt->myNode == nullptr)
+  {
     myAtt->myEvolution = TNaming_PRIMITIVE;
+  }
   else
   {
     if (myAtt->myEvolution != TNaming_PRIMITIVE)
+    {
       throw Standard_ConstructionError("TNaming_Builder : not same evolution");
+    }
   }
 
   TNaming_RefShape* pos = nullptr;
@@ -664,18 +692,24 @@ void TNaming_Builder::Generated(const TopoDS_Shape& newShape)
 void TNaming_Builder::Delete(const TopoDS_Shape& oldShape)
 {
   if (myAtt->myNode == nullptr)
+  {
     myAtt->myEvolution = TNaming_DELETE;
+  }
   else
   {
     if (myAtt->myEvolution != TNaming_DELETE)
+    {
       throw Standard_ConstructionError("TNaming_Builder : not same evolution");
+    }
   }
 
   TNaming_RefShape* pns;
   TNaming_RefShape* pos;
 
   if (myShapes->myMap.IsBound(oldShape))
+  {
     pos = myShapes->myMap.ChangeFind(oldShape);
+  }
   else
   {
 #ifdef OCCT_DEBUG_BUILDER
@@ -700,11 +734,15 @@ void TNaming_Builder::Delete(const TopoDS_Shape& oldShape)
 void TNaming_Builder::Generated(const TopoDS_Shape& oldShape, const TopoDS_Shape& newShape)
 {
   if (myAtt->myNode == nullptr)
+  {
     myAtt->myEvolution = TNaming_GENERATED;
+  }
   else
   {
     if (myAtt->myEvolution != TNaming_GENERATED)
+    {
       throw Standard_ConstructionError("TNaming_Builder : not same evolution");
+    }
   }
 
   if (oldShape.IsSame(newShape))
@@ -721,7 +759,9 @@ void TNaming_Builder::Generated(const TopoDS_Shape& oldShape, const TopoDS_Shape
     myShapes->myMap.Bind(oldShape, pos);
   }
   else
+  {
     pos = myShapes->myMap.ChangeFind(oldShape);
+  }
 
   TNaming_RefShape* pns;
   if (!myShapes->myMap.IsBound(newShape))
@@ -730,7 +770,9 @@ void TNaming_Builder::Generated(const TopoDS_Shape& oldShape, const TopoDS_Shape
     myShapes->myMap.Bind(newShape, pns);
   }
   else
+  {
     pns = myShapes->myMap.ChangeFind(newShape);
+  }
 
   TNaming_Node* pdn = new TNaming_Node(pos, pns);
   myAtt->Add(pdn);
@@ -743,11 +785,15 @@ void TNaming_Builder::Generated(const TopoDS_Shape& oldShape, const TopoDS_Shape
 void TNaming_Builder::Modify(const TopoDS_Shape& oldShape, const TopoDS_Shape& newShape)
 {
   if (myAtt->myNode == nullptr)
+  {
     myAtt->myEvolution = TNaming_MODIFY;
+  }
   else
   {
     if (myAtt->myEvolution != TNaming_MODIFY)
+    {
       throw Standard_ConstructionError("TNaming_Builder : not same evolution");
+    }
   }
 
   if (oldShape.IsSame(newShape))
@@ -764,7 +810,9 @@ void TNaming_Builder::Modify(const TopoDS_Shape& oldShape, const TopoDS_Shape& n
     myShapes->myMap.Bind(oldShape, pos);
   }
   else
+  {
     pos = myShapes->myMap.ChangeFind(oldShape);
+  }
 
   TNaming_RefShape* pns;
   if (!myShapes->myMap.IsBound(newShape))
@@ -773,7 +821,9 @@ void TNaming_Builder::Modify(const TopoDS_Shape& oldShape, const TopoDS_Shape& n
     myShapes->myMap.Bind(newShape, pns);
   }
   else
+  {
     pns = myShapes->myMap.ChangeFind(newShape);
+  }
 
   TNaming_Node* pdn = new TNaming_Node(pos, pns);
   myAtt->Add(pdn);
@@ -786,11 +836,15 @@ void TNaming_Builder::Modify(const TopoDS_Shape& oldShape, const TopoDS_Shape& n
 void TNaming_Builder::Select(const TopoDS_Shape& S, const TopoDS_Shape& InS)
 {
   if (myAtt->myNode == nullptr)
+  {
     myAtt->myEvolution = TNaming_SELECTED;
+  }
   else
   {
     if (myAtt->myEvolution != TNaming_SELECTED)
+    {
       throw Standard_ConstructionError("TNaming_Builder : not same evolution");
+    }
   }
 
   TNaming_RefShape* pos;
@@ -800,7 +854,9 @@ void TNaming_Builder::Select(const TopoDS_Shape& S, const TopoDS_Shape& InS)
     myShapes->myMap.Bind(InS, pos);
   }
   else
+  {
     pos = myShapes->myMap.ChangeFind(InS);
+  }
 
   TNaming_RefShape* pns;
   if (!myShapes->myMap.IsBound(S))
@@ -809,7 +865,9 @@ void TNaming_Builder::Select(const TopoDS_Shape& S, const TopoDS_Shape& InS)
     myShapes->myMap.Bind(S, pns);
   }
   else
+  {
     pns = myShapes->myMap.ChangeFind(S);
+  }
 
   TNaming_Node* pdn = new TNaming_Node(pos, pns);
   myAtt->Add(pdn);
@@ -919,13 +977,7 @@ TNaming_Evolution TNaming_Iterator::Evolution() const
 // Methods of the TNaming_NewShapeIterator class
 //**********************************************************************
 
-//=======================================================================
-// function : SelectSameShape
-// purpose  : Selectionne le prochain noeud ou le shape est le meme que celui
-//           de RS. Old = 0 si il doit etre new dans le noeud a chercher.
-//           selection dans la transaction valide.
-//           On saute aussi les noeud ou OS = NS;
-//=======================================================================
+//=================================================================================================
 
 static void SelectSameShape(TNaming_Node*&     myNode,
                             bool               Old,
@@ -938,9 +990,13 @@ static void SelectSameShape(TNaming_Node*&     myNode,
   {
     bool Valid;
     if (Trans < 0)
+    {
       Valid = pdn->myAtt->IsValid();
+    }
     else
+    {
       Valid = pdn->IsValidInTrans(Trans);
+    }
 
     if (Valid)
     {
@@ -1008,7 +1064,9 @@ TNaming_NewShapeIterator::TNaming_NewShapeIterator(const TNaming_Iterator& anIte
   myNode               = anIterator.myNode;
   TNaming_RefShape* RS = myNode->myNew;
   if (RS == nullptr)
+  {
     myNode = nullptr; // No descendant
+  }
   else
   {
     // il faut repartir de la premiere utilisation.
@@ -1060,7 +1118,9 @@ TNaming_NewShapeIterator::TNaming_NewShapeIterator(const TNaming_NewShapeIterato
   myNode               = anIterator.myNode;
   TNaming_RefShape* RS = myNode->myNew;
   if (RS == nullptr)
+  {
     myNode = nullptr; // No descendant
+  }
   else
   {
     // il faut repartir de la premiere utilisation.
@@ -1193,7 +1253,9 @@ TNaming_OldShapeIterator::TNaming_OldShapeIterator(const TNaming_Iterator& anIte
   myNode               = anIterator.myNode;
   TNaming_RefShape* RS = myNode->myNew;
   if (RS == nullptr)
+  {
     myNode = nullptr; // No descendant
+  }
   else
   {
     // il faut repartir de la premiere utilisation.
@@ -1213,7 +1275,9 @@ TNaming_OldShapeIterator::TNaming_OldShapeIterator(const TNaming_OldShapeIterato
   myNode               = anIterator.myNode;
   TNaming_RefShape* RS = myNode->myOld;
   if (RS == nullptr)
+  {
     myNode = nullptr; // No descendant
+  }
   else
   {
     // il faut repartir de la premiere utilisation.
@@ -1238,7 +1302,9 @@ void TNaming_OldShapeIterator::Next()
 TDF_Label TNaming_OldShapeIterator::Label() const
 {
   if (myNode == nullptr)
+  {
     throw Standard_NoSuchObject("TNaming_OldShapeIterator::Label");
+  }
   return myNode->Label();
 }
 
@@ -1247,7 +1313,9 @@ TDF_Label TNaming_OldShapeIterator::Label() const
 occ::handle<TNaming_NamedShape> TNaming_OldShapeIterator::NamedShape() const
 {
   if (myNode == nullptr)
+  {
     throw Standard_NoSuchObject("TNaming_OldShapeIterator::Label");
+  }
   return myNode->myAtt;
 }
 
@@ -1256,7 +1324,9 @@ occ::handle<TNaming_NamedShape> TNaming_OldShapeIterator::NamedShape() const
 const TopoDS_Shape& TNaming_OldShapeIterator::Shape() const
 {
   if (myNode == nullptr)
+  {
     throw Standard_NoSuchObject("TNaming_OldShapeIterator::Shape");
+  }
   return myNode->myOld->Shape();
 }
 
@@ -1303,13 +1373,19 @@ void TNaming_SameShapeIterator::Next()
 {
   TNaming_RefShape* prs;
   if (myIsNew)
+  {
     prs = myNode->myNew;
+  }
   else
+  {
     prs = myNode->myOld;
+  }
 
   myNode = myNode->NextSameShape(prs);
   if (myNode != nullptr)
+  {
     myIsNew = (myNode->myNew == prs);
+  }
 }
 
 //=================================================================================================
@@ -1376,10 +1452,7 @@ TDF_Label TNaming_Tool::Label(const TDF_Label& access, const TopoDS_Shape& S, in
   return TNaming_Tool::Label(US, S, Trans);
 }
 
-//=======================================================================
-// function : IsValidInTrans
-// purpose  : un shape est valid tant que l attribut ou il est cree est valid
-//=======================================================================
+//=================================================================================================
 
 int TNaming_Tool::ValidUntil(const TDF_Label& access, const TopoDS_Shape& S)
 {
@@ -1411,7 +1484,9 @@ TDF_Label TNaming_Tool::Label(const occ::handle<TNaming_UsedShapes>& Shapes,
     pdn = pdn->NextSameShape(prs);
   }
   if (pdn == nullptr)
+  {
     pdn = prs->FirstUse();
+  }
 
   TDF_Label L = pdn->Label();
   Trans       = pdn->myAtt->Transaction();
@@ -1456,7 +1531,9 @@ occ::handle<TNaming_NamedShape> TNaming_Tool::NamedShape(const TopoDS_Shape& S,
   }
 
   if (res == nullptr)
+  {
     return NS;
+  }
 
   // VERUE EN ATTENDANT DE REVOIR ABORT 03/11/98
   // Protection pour eviter de renvoyer un attribut backuped
@@ -1466,10 +1543,7 @@ occ::handle<TNaming_NamedShape> TNaming_Tool::NamedShape(const TopoDS_Shape& S,
   //  return res->myAtt;
 }
 
-//=======================================================================
-// function : IsValidInTrans
-// purpose  : un shape est valid tant que l attribut ou il est cree est valid
-//=======================================================================
+//=================================================================================================
 
 int TNaming_Tool::ValidUntil(const TopoDS_Shape& S, const occ::handle<TNaming_UsedShapes>& US)
 {
@@ -1486,7 +1560,9 @@ int TNaming_Tool::ValidUntil(const TopoDS_Shape& S, const occ::handle<TNaming_Us
     {
       Cur = Node->myAtt->UntilTransaction();
       if (Cur > Until)
+      {
         Until = Cur;
+      }
     }
     Node = Node->NextSameShape(RS);
   }

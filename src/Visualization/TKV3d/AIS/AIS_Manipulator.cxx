@@ -148,28 +148,14 @@ void AIS_Manipulator::init()
   myDrawer->ShadingAspect()->SetColor(Quantity_NOC_WHITE);
   myDrawer->ShadingAspect()->SetMaterial(aShadingMaterial);
 
-  Graphic3d_MaterialAspect aHilightMaterial;
-  aHilightMaterial.SetColor(Quantity_NOC_AZURE);
-  aHilightMaterial.SetAmbientColor(Quantity_NOC_BLACK);
-  aHilightMaterial.SetDiffuseColor(Quantity_NOC_BLACK);
-  aHilightMaterial.SetSpecularColor(Quantity_NOC_BLACK);
-  aHilightMaterial.SetEmissiveColor(Quantity_NOC_BLACK);
-  aHilightMaterial.SetMaterialType(Graphic3d_MATERIAL_ASPECT);
-
   myHighlightAspect = new Prs3d_ShadingAspect();
   myHighlightAspect->Aspect()->SetInteriorStyle(Aspect_IS_SOLID);
-  myHighlightAspect->SetMaterial(aHilightMaterial);
-
-  Graphic3d_MaterialAspect aDraggerMaterial;
-  aDraggerMaterial.SetAmbientColor(Quantity_NOC_BLACK);
-  aDraggerMaterial.SetDiffuseColor(Quantity_NOC_BLACK);
-  aDraggerMaterial.SetSpecularColor(Quantity_NOC_BLACK);
-  aDraggerMaterial.SetMaterialType(Graphic3d_MATERIAL_ASPECT);
+  myHighlightAspect->Aspect()->SetShadingModel(Graphic3d_TypeOfShadingModel_Unlit);
+  myHighlightAspect->SetColor(Quantity_NOC_AZURE);
 
   myDraggerHighlight = new Prs3d_ShadingAspect();
   myDraggerHighlight->Aspect()->SetInteriorStyle(Aspect_IS_SOLID);
-  myDraggerHighlight->SetMaterial(aDraggerMaterial);
-
+  myDraggerHighlight->Aspect()->SetShadingModel(Graphic3d_TypeOfShadingModel_Unlit);
   myDraggerHighlight->SetTransparency(0.5);
 
   SetSize(100);
@@ -844,7 +830,9 @@ void AIS_Manipulator::RecomputeTransformation(const occ::handle<Graphic3d_Camera
     const bool isReversed = anAxisDir.Dot(aCameraDir) > 0;
     double     anAngle    = aNormal.AngleWithRef(aCameraProj, anAxisDir);
     if (aRefAxis.Direction().X() > 0)
+    {
       anAngle -= M_PI_2;
+    }
 
     if (anAxis.HasTranslation())
     {
@@ -1156,7 +1144,9 @@ void AIS_Manipulator::DeactivateCurrentMode()
     anAspect->Aspect()->SetInteriorStyle(Aspect_IS_SOLID);
     anAspect->SetMaterial(myDrawer->ShadingAspect()->Material());
     if (myCurrentMode == AIS_MM_TranslationPlane)
+    {
       anAspect->SetTransparency(1.0);
+    }
     else
     {
       anAspect->SetTransparency(myDrawer->ShadingAspect()->Transparency());
@@ -1337,7 +1327,9 @@ void AIS_Manipulator::HilightSelected(
     aGroup->SetGroupPrimitivesAspect(myDraggerHighlight->Aspect());
   }
   else
+  {
     aGroup->SetGroupPrimitivesAspect(myHighlightAspect->Aspect());
+  }
 
   myCurrentIndex = anOwner->Index();
   myCurrentMode  = anOwner->Mode();
@@ -1641,11 +1633,17 @@ void AIS_Manipulator::Cube::Init(const gp_Ax1&         thePosition,
   {
     gp_Dir aXDirection;
     if (thePosition.Direction().X() > 0)
+    {
       aXDirection = gp::DY();
+    }
     else if (thePosition.Direction().Y() > 0)
+    {
       aXDirection = gp::DZ();
+    }
     else
+    {
       aXDirection = gp::DX();
+    }
 
     gp_Pnt aLocation =
       thePosition.Location().Translated(gp_Vec(thePosition.Direction().XYZ() * theSize));
@@ -1709,11 +1707,8 @@ void AIS_Manipulator::Cube::Init(const gp_Ax1&         thePosition,
   }
 }
 
-//=======================================================================
-// class    : Cube
-// function : addTriangle
-// purpose  :
-//=======================================================================
+//=================================================================================================
+
 void AIS_Manipulator::Cube::addTriangle(const int     theIndex,
                                         const gp_Pnt& theP1,
                                         const gp_Pnt& theP2,
@@ -1778,11 +1773,8 @@ void AIS_Manipulator::Sector::Init(const float           theRadius,
   }
 }
 
-//=======================================================================
-// class    : Axis
-// function : Constructor
-// purpose  :
-//=======================================================================
+//=================================================================================================
+
 AIS_Manipulator::Axis::Axis(const gp_Ax1&         theAxis,
                             const Quantity_Color& theColor,
                             const float           theLength)
@@ -1968,11 +1960,17 @@ void AIS_Manipulator::Axis::Compute(const occ::handle<PrsMgr_PresentationManager
   {
     gp_Dir aXDirection;
     if (myReferenceAxis.Direction().X() > 0)
+    {
       aXDirection = gp::DY();
+    }
     else if (myReferenceAxis.Direction().Y() > 0)
+    {
       aXDirection = gp::DZ();
+    }
     else
+    {
       aXDirection = gp::DX();
+    }
 
     gp_Pnt aPosition = theSkinMode == ManipulatorSkin_Flat
                          ? gp_Pnt(myReferenceAxis.Direction().Reversed().XYZ() * (myAxisRadius))

@@ -37,7 +37,7 @@
 #include <TopoDS_Vertex.hxx>
 #include <TopoDS_Wire.hxx>
 #include <TopTools_ShapeMapHasher.hxx>
-#include <Geom2dLProp_CLProps2d.hxx>
+#include <GeomLProp_CLProps.hxx>
 #include <NCollection_Sequence.hxx>
 #include <TopoDS_Shape.hxx>
 #include <NCollection_List.hxx>
@@ -52,7 +52,7 @@ static double Angle(const gp_Dir2d& aDir2D);
 static double Angle2D(const TopoDS_Vertex&                 aV,
                       const TopoDS_Edge&                   anEdge,
                       const TopoDS_Face&                   myFace,
-                      const GeomAdaptor_Surface&           aGAS,
+                      const BRepAdaptor_Surface&           aGAS,
                       const bool                           aFlag,
                       const occ::handle<IntTools_Context>& theContext);
 
@@ -68,7 +68,7 @@ static gp_Pnt2d Coord2d(const TopoDS_Vertex& aV1, const TopoDS_Edge& aE1, const 
 
 static double ClockWiseAngle(const double aAngleIn, const double aAngleOut);
 
-static void Path(const GeomAdaptor_Surface&                           aGAS,
+static void Path(const BRepAdaptor_Surface&                           aGAS,
                  const TopoDS_Face&                                   myFace,
                  const MyDataMapOfShapeBoolean&                       aVertMap,
                  const TopoDS_Vertex&                                 aVa,
@@ -82,12 +82,10 @@ static void Path(const GeomAdaptor_Surface&                           aGAS,
                                             NCollection_List<BOPAlgo_EdgeInfo>,
                                             TopTools_ShapeMapHasher>& mySmartMap);
 
-static double Angle(const gp_Dir2d& aDir2D);
+static double Tolerance2D(const TopoDS_Vertex& aV, const BRepAdaptor_Surface& aGAS);
 
-static double Tolerance2D(const TopoDS_Vertex& aV, const GeomAdaptor_Surface& aGAS);
-
-static double UTolerance2D(const TopoDS_Vertex& aV, const GeomAdaptor_Surface& aGAS);
-static double VTolerance2D(const TopoDS_Vertex& aV, const GeomAdaptor_Surface& aGAS);
+static double UTolerance2D(const TopoDS_Vertex& aV, const BRepAdaptor_Surface& aGAS);
+static double VTolerance2D(const TopoDS_Vertex& aV, const BRepAdaptor_Surface& aGAS);
 
 static void RefineAngles(const TopoDS_Face& myFace,
                          NCollection_IndexedDataMap<TopoDS_Shape,
@@ -148,7 +146,9 @@ void BOPAlgo_WireSplitter::SplitBlock(const TopoDS_Face&                   myFac
     bIsClosed = BRep_Tool::Degenerated(aE) || BRep_Tool::IsClosed(aE, myFace);
 
     if (!aMS.Add(aE) && !bIsClosed)
+    {
       aMS.Remove(aE);
+    }
 
     //
     aItS.Initialize(aE);
@@ -296,7 +296,6 @@ void BOPAlgo_WireSplitter::SplitBlock(const TopoDS_Face&                   myFac
   //
   // 3. Angles in mySmartMap
   const BRepAdaptor_Surface& aBAS = theContext->SurfaceAdaptor(myFace);
-  const GeomAdaptor_Surface& aGAS = aBAS.Surface();
   //
   for (i = 1; i <= aNb; i++)
   {
@@ -313,7 +312,7 @@ void BOPAlgo_WireSplitter::SplitBlock(const TopoDS_Face&                   myFac
       bIsIN = aEI.IsIn();
       aOr   = bIsIN ? TopAbs_REVERSED : TopAbs_FORWARD;
       aVV.Orientation(aOr);
-      aAngle = Angle2D(aVV, aE, myFace, aGAS, bIsIN, theContext);
+      aAngle = Angle2D(aVV, aE, myFace, aBAS, bIsIN, theContext);
       aEI.SetAngle(aAngle);
     }
   } // for (i=1; i<=aNb; i++) {
@@ -348,7 +347,7 @@ void BOPAlgo_WireSplitter::SplitBlock(const TopoDS_Face&                   myFac
         aVertVa.Clear();
         aCoordVa.Clear();
         //
-        Path(aGAS, myFace, aVertMap, aVa, aEOuta, aEI, aLS, aVertVa, aCoordVa, aCB, mySmartMap);
+        Path(aBAS, myFace, aVertMap, aVa, aEOuta, aEI, aLS, aVertVa, aCoordVa, aCB, mySmartMap);
       }
     }
   } // for (i=1; i<=aNb; ++i) {
@@ -356,7 +355,7 @@ void BOPAlgo_WireSplitter::SplitBlock(const TopoDS_Face&                   myFac
 
 //=================================================================================================
 
-void Path(const GeomAdaptor_Surface&                           aGAS,
+void Path(const BRepAdaptor_Surface&                           aGAS,
           const TopoDS_Face&                                   myFace,
           const MyDataMapOfShapeBoolean&                       aVertMap,
           const TopoDS_Vertex&                                 aVFirst,
@@ -769,7 +768,7 @@ void GetNextVertex(const TopoDS_Vertex& aV, const TopoDS_Edge& aE, TopoDS_Vertex
 double Angle2D(const TopoDS_Vertex&                 aV,
                const TopoDS_Edge&                   anEdge,
                const TopoDS_Face&                   myFace,
-               const GeomAdaptor_Surface&           aGAS,
+               const BRepAdaptor_Surface&           aGAS,
                const bool                           bIsIN,
                const occ::handle<IntTools_Context>& theContext)
 {
@@ -795,7 +794,7 @@ double Angle2D(const TopoDS_Vertex&                 aV,
   aType = aGAC2D.GetType();
   if (aType != GeomAbs_Line)
   {
-    Geom2dLProp_CLProps2d LProp(aC2D, aTV, 2, Precision::PConfusion());
+    GeomLProp_CLProps2d LProp(aC2D, aTV, 2, Precision::PConfusion());
     if (LProp.IsTangentDefined())
     {
       double R = LProp.Curvature();
@@ -849,13 +848,15 @@ double Angle(const gp_Dir2d& aDir2D)
 
   anAngle = aRefDir.Angle(aDir2D);
   if (anAngle < 0.)
+  {
     anAngle += M_PI + M_PI;
+  }
   return anAngle;
 }
 
 //=================================================================================================
 
-double Tolerance2D(const TopoDS_Vertex& aV, const GeomAdaptor_Surface& aGAS)
+double Tolerance2D(const TopoDS_Vertex& aV, const BRepAdaptor_Surface& aGAS)
 {
   double              aTol2D, anUr, aVr, aTolV3D;
   GeomAbs_SurfaceType aType;
@@ -881,7 +882,7 @@ double Tolerance2D(const TopoDS_Vertex& aV, const GeomAdaptor_Surface& aGAS)
 
 //=================================================================================================
 
-double UTolerance2D(const TopoDS_Vertex& aV, const GeomAdaptor_Surface& aGAS)
+double UTolerance2D(const TopoDS_Vertex& aV, const BRepAdaptor_Surface& aGAS)
 {
   const double aTolV3D = BRep_Tool::Tolerance(aV);
   const double anUr    = aGAS.UResolution(aTolV3D);
@@ -891,7 +892,7 @@ double UTolerance2D(const TopoDS_Vertex& aV, const GeomAdaptor_Surface& aGAS)
 
 //=================================================================================================
 
-double VTolerance2D(const TopoDS_Vertex& aV, const GeomAdaptor_Surface& aGAS)
+double VTolerance2D(const TopoDS_Vertex& aV, const BRepAdaptor_Surface& aGAS)
 {
   const double aTolV3D = BRep_Tool::Tolerance(aV);
   const double anVr    = aGAS.VResolution(aTolV3D);

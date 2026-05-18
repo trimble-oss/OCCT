@@ -21,8 +21,6 @@
 #include <Standard_ConstructionError.hxx>
 #include <Standard_Macro.hxx>
 #include <iostream>
-#include <iomanip>
-#include <fstream>
 
 namespace
 {
@@ -51,13 +49,21 @@ void Bnd_Box2d::Update(const double x, const double y, const double X, const dou
   else
   {
     if (!(Flags & XminMask))
+    {
       Xmin = std::min(Xmin, x);
+    }
     if (!(Flags & XmaxMask))
+    {
       Xmax = std::max(Xmax, X);
+    }
     if (!(Flags & YminMask))
+    {
       Ymin = std::min(Ymin, y);
+    }
     if (!(Flags & YmaxMask))
+    {
       Ymax = std::max(Ymax, Y);
+    }
   }
 }
 
@@ -76,13 +82,21 @@ void Bnd_Box2d::Update(const double X, const double Y)
   else
   {
     if (!(Flags & XminMask))
+    {
       Xmin = std::min(Xmin, X);
+    }
     if (!(Flags & XmaxMask))
+    {
       Xmax = std::max(Xmax, X);
+    }
     if (!(Flags & YminMask))
+    {
       Ymin = std::min(Ymin, Y);
+    }
     if (!(Flags & YmaxMask))
+    {
       Ymax = std::max(Ymax, Y);
+    }
   }
 }
 
@@ -91,7 +105,9 @@ void Bnd_Box2d::Update(const double X, const double Y)
 void Bnd_Box2d::Get(double& x, double& y, double& Xm, double& Ym) const
 {
   if (Flags & VoidMask)
+  {
     throw Standard_ConstructionError("Bnd_Box is void");
+  }
 
   x  = GetXMin();
   Xm = GetXMax();
@@ -141,7 +157,9 @@ Bnd_Box2d Bnd_Box2d::Transformed(const gp_Trsf2d& T) const
   const gp_TrsfForm aF = T.Form();
   Bnd_Box2d         aNewBox(*this);
   if (IsVoid())
+  {
     return aNewBox;
+  }
 
   if (aF == gp_Identity)
   {
@@ -151,13 +169,21 @@ Bnd_Box2d Bnd_Box2d::Transformed(const gp_Trsf2d& T) const
     double aDX, aDY;
     (T.TranslationPart()).Coord(aDX, aDY);
     if (!(Flags & XminMask))
+    {
       aNewBox.Xmin += aDX;
+    }
     if (!(Flags & XmaxMask))
+    {
       aNewBox.Xmax += aDX;
+    }
     if (!(Flags & YminMask))
+    {
       aNewBox.Ymin += aDY;
+    }
     if (!(Flags & YmaxMask))
+    {
       aNewBox.Ymax += aDY;
+    }
   }
   else
   {
@@ -232,42 +258,66 @@ Bnd_Box2d Bnd_Box2d::Transformed(const gp_Trsf2d& T) const
 void Bnd_Box2d::Add(const Bnd_Box2d& Other)
 {
   if (IsWhole())
+  {
     return;
+  }
   else if (Other.IsVoid())
+  {
     return;
+  }
   else if (Other.IsWhole())
+  {
     SetWhole();
+  }
   else if (IsVoid())
+  {
     (*this) = Other;
+  }
   else
   {
     if (!IsOpenXmin())
     {
       if (Other.IsOpenXmin())
+      {
         OpenXmin();
+      }
       else if (Xmin > Other.Xmin)
+      {
         Xmin = Other.Xmin;
+      }
     }
     if (!IsOpenXmax())
     {
       if (Other.IsOpenXmax())
+      {
         OpenXmax();
+      }
       else if (Xmax < Other.Xmax)
+      {
         Xmax = Other.Xmax;
+      }
     }
     if (!IsOpenYmin())
     {
       if (Other.IsOpenYmin())
+      {
         OpenYmin();
+      }
       else if (Ymin > Other.Ymin)
+      {
         Ymin = Other.Ymin;
+      }
     }
     if (!IsOpenYmax())
     {
       if (Other.IsOpenYmax())
+      {
         OpenYmax();
+      }
       else if (Ymax < Other.Ymax)
+      {
         Ymax = Other.Ymax;
+      }
     }
     Gap = std::max(Gap, Other.Gap);
   }
@@ -281,14 +331,22 @@ void Bnd_Box2d::Add(const gp_Dir2d& D)
   double DY = D.Y();
 
   if (DX < -RealEpsilon())
+  {
     OpenXmin();
+  }
   else if (DX > RealEpsilon())
+  {
     OpenXmax();
+  }
 
   if (DY < -RealEpsilon())
+  {
     OpenYmin();
+  }
   else if (DY > RealEpsilon())
+  {
     OpenYmax();
+  }
 }
 
 //=================================================================================================
@@ -296,23 +354,37 @@ void Bnd_Box2d::Add(const gp_Dir2d& D)
 bool Bnd_Box2d::IsOut(const gp_Pnt2d& P) const
 {
   if (IsWhole())
+  {
     return false;
+  }
   else if (IsVoid())
+  {
     return true;
+  }
   else
   {
     double X = P.X();
     double Y = P.Y();
     if (!(Flags & XminMask) && (X < (Xmin - Gap)))
+    {
       return true;
+    }
     else if (!(Flags & XmaxMask) && (X > (Xmax + Gap)))
+    {
       return true;
+    }
     else if (!(Flags & YminMask) && (Y < (Ymin - Gap)))
+    {
       return true;
+    }
     else if (!(Flags & YmaxMask) && (Y > (Ymax + Gap)))
+    {
       return true;
+    }
     else
+    {
       return false;
+    }
   }
 }
 
@@ -383,28 +455,108 @@ bool Bnd_Box2d::IsOut(const gp_Pnt2d& theP0, const gp_Pnt2d& theP1) const
 
 bool Bnd_Box2d::IsOut(const Bnd_Box2d& Other) const
 {
-  if (IsWhole())
-    return false;
-  else if (IsVoid())
-    return true;
-  else if (Other.IsWhole())
-    return false;
-  else if (Other.IsVoid())
-    return true;
-  else
+  // Fast path for non-open, non-void, non-whole boxes (most common case)
+  if (!Flags && !Other.Flags)
   {
-    double OXmin, OXmax, OYmin, OYmax;
-    Other.Get(OXmin, OYmin, OXmax, OYmax);
-    if (!(Flags & XminMask) && (OXmax < (Xmin - Gap)))
+    const double aDelta = Other.Gap + Gap;
+    if (Xmin - Other.Xmax > aDelta)
+    {
       return true;
-    else if (!(Flags & XmaxMask) && (OXmin > (Xmax + Gap)))
+    }
+    if (Other.Xmin - Xmax > aDelta)
+    {
       return true;
-    else if (!(Flags & YminMask) && (OYmax < (Ymin - Gap)))
+    }
+    if (Ymin - Other.Ymax > aDelta)
+    {
       return true;
-    else if (!(Flags & YmaxMask) && (OYmin > (Ymax + Gap)))
+    }
+    if (Other.Ymin - Ymax > aDelta)
+    {
       return true;
+    }
+    return false;
+  }
+
+  // Handle special cases
+  if (IsVoid() || Other.IsVoid())
+  {
+    return true;
+  }
+  if (IsWhole() || Other.IsWhole())
+  {
+    return false;
+  }
+
+  double OXmin, OXmax, OYmin, OYmax;
+  Other.Get(OXmin, OYmin, OXmax, OYmax);
+  if (!(Flags & XminMask) && (OXmax < (Xmin - Gap)))
+  {
+    return true;
+  }
+  if (!(Flags & XmaxMask) && (OXmin > (Xmax + Gap)))
+  {
+    return true;
+  }
+  if (!(Flags & YminMask) && (OYmax < (Ymin - Gap)))
+  {
+    return true;
+  }
+  if (!(Flags & YmaxMask) && (OYmin > (Ymax + Gap)))
+  {
+    return true;
   }
   return false;
+}
+
+//=================================================================================================
+
+std::optional<gp_Pnt2d> Bnd_Box2d::Center() const
+{
+  if (IsVoid())
+  {
+    return std::nullopt;
+  }
+  return gp_Pnt2d(0.5 * (GetXMin() + GetXMax()), 0.5 * (GetYMin() + GetYMax()));
+}
+
+//=================================================================================================
+
+double Bnd_Box2d::Distance(const Bnd_Box2d& theOther) const
+{
+  if (IsVoid() || theOther.IsVoid())
+  {
+    return 0.0;
+  }
+
+  double aXMin1, aYMin1, aXMax1, aYMax1;
+  double aXMin2, aYMin2, aXMax2, aYMax2;
+
+  Get(aXMin1, aYMin1, aXMax1, aYMax1);
+  theOther.Get(aXMin2, aYMin2, aXMax2, aYMax2);
+
+  // Compute squared distance per axis
+  auto distAxis = [](const double theMin1,
+                     const double theMax1,
+                     const double theMin2,
+                     const double theMax2) -> double {
+    if (theMin1 > theMax2)
+    {
+      const double aD = theMin1 - theMax2;
+      return aD * aD;
+    }
+    if (theMin2 > theMax1)
+    {
+      const double aD = theMin2 - theMax1;
+      return aD * aD;
+    }
+    return 0.0;
+  };
+
+  const double aDx = distAxis(aXMin1, aXMax1, aXMin2, aXMax2);
+  const double aDy = distAxis(aYMin1, aYMax1, aYMin2, aYMax2);
+
+  return std::sqrt(aDx + aDy);
 }
 
 //=================================================================================================
@@ -413,31 +565,51 @@ void Bnd_Box2d::Dump() const
 {
   std::cout << "Box2d : ";
   if (IsVoid())
+  {
     std::cout << "Void";
+  }
   else if (IsWhole())
+  {
     std::cout << "Whole";
+  }
   else
   {
     std::cout << "\n Xmin : ";
     if (IsOpenXmin())
+    {
       std::cout << "Infinite";
+    }
     else
+    {
       std::cout << Xmin;
+    }
     std::cout << "\n Xmax : ";
     if (IsOpenXmax())
+    {
       std::cout << "Infinite";
+    }
     else
+    {
       std::cout << Xmax;
+    }
     std::cout << "\n Ymin : ";
     if (IsOpenYmin())
+    {
       std::cout << "Infinite";
+    }
     else
+    {
       std::cout << Ymin;
+    }
     std::cout << "\n Ymax : ";
     if (IsOpenYmax())
+    {
       std::cout << "Infinite";
+    }
     else
+    {
       std::cout << Ymax;
+    }
   }
   std::cout << "\n Gap : " << Gap;
   std::cout << "\n";

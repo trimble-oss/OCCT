@@ -67,11 +67,11 @@ static bool IsPlane(const occ::handle<Geom_Surface>& aS);
 
 // modified by NIZNHY-PKV Fri Oct 17 14:13:33 2008t
 //
-//=======================================================================
+//=================================================================================================
 // function : Surface
 // purpose  : Returns the geometric surface of the face. Returns
 //            in <L> the location for the surface.
-//=======================================================================
+//=================================================================================================
 
 const occ::handle<Geom_Surface>& BRep_Tool::Surface(const TopoDS_Face& F, TopLoc_Location& L)
 {
@@ -80,11 +80,11 @@ const occ::handle<Geom_Surface>& BRep_Tool::Surface(const TopoDS_Face& F, TopLoc
   return TF->Surface();
 }
 
-//=======================================================================
+//=================================================================================================
 // function : Surface
 // purpose  : Returns the geometric  surface of the face. It can
 //           be a copy if there is a Location.
-//=======================================================================
+//=================================================================================================
 
 occ::handle<Geom_Surface> BRep_Tool::Surface(const TopoDS_Face& F)
 {
@@ -92,7 +92,9 @@ occ::handle<Geom_Surface> BRep_Tool::Surface(const TopoDS_Face& F)
   const occ::handle<Geom_Surface>& S  = TF->Surface();
 
   if (S.IsNull())
+  {
     return S;
+  }
 
   TopLoc_Location L = F.Location() * TF->Location();
   if (!L.IsIdentity())
@@ -127,10 +129,10 @@ const NCollection_List<occ::handle<Poly_Triangulation>>& BRep_Tool::Triangulatio
   return aTFace->Triangulations();
 }
 
-//=======================================================================
+//=================================================================================================
 // function : Tolerance
 // purpose  : Returns the tolerance of the face.
-//=======================================================================
+//=================================================================================================
 
 double BRep_Tool::Tolerance(const TopoDS_Face& F)
 {
@@ -138,15 +140,19 @@ double BRep_Tool::Tolerance(const TopoDS_Face& F)
   double            p    = TF->Tolerance();
   constexpr double  pMin = Precision::Confusion();
   if (p > pMin)
+  {
     return p;
+  }
   else
+  {
     return pMin;
+  }
 }
 
-//=======================================================================
+//=================================================================================================
 // function : NaturalRestriction
 // purpose  : Returns the  NaturalRestriction  flag of the  face.
-//=======================================================================
+//=================================================================================================
 
 bool BRep_Tool::NaturalRestriction(const TopoDS_Face& F)
 {
@@ -154,12 +160,12 @@ bool BRep_Tool::NaturalRestriction(const TopoDS_Face& F)
   return TF->NaturalRestriction();
 }
 
-//=======================================================================
+//=================================================================================================
 // function : Curve
 // purpose  : Returns the 3D curve  of the edge.  May be  a Null
 //           handle. Returns in <L> the location for the curve.
 //           In <First> and <Last> the parameter range.
-//=======================================================================
+//=================================================================================================
 
 static const occ::handle<Geom_Curve> nullCurve;
 
@@ -189,12 +195,12 @@ const occ::handle<Geom_Curve>& BRep_Tool::Curve(const TopoDS_Edge& E,
   return nullCurve;
 }
 
-//=======================================================================
+//=================================================================================================
 // function : Curve
 // purpose  : Returns the 3D curve  of the edge. May be a Null handle.
 //           In <First> and <Last> the parameter range.
 //           It can be a copy if there is a Location.
-//=======================================================================
+//=================================================================================================
 
 occ::handle<Geom_Curve> BRep_Tool::Curve(const TopoDS_Edge& E, double& First, double& Last)
 {
@@ -212,10 +218,10 @@ occ::handle<Geom_Curve> BRep_Tool::Curve(const TopoDS_Edge& E, double& First, do
   return C;
 }
 
-//=======================================================================
+//=================================================================================================
 // function : IsGeometric
 // purpose  : Returns True if <F> has a surface.
-//=======================================================================
+//=================================================================================================
 bool BRep_Tool::IsGeometric(const TopoDS_Face& F)
 {
   const BRep_TFace*                TF = static_cast<const BRep_TFace*>(F.TShape().get());
@@ -223,11 +229,11 @@ bool BRep_Tool::IsGeometric(const TopoDS_Face& F)
   return !S.IsNull();
 }
 
-//=======================================================================
+//=================================================================================================
 // function : IsGeometric
 // purpose  : Returns True if <E> is a 3d curve or a curve on
 //           surface.
-//=======================================================================
+//=================================================================================================
 
 bool BRep_Tool::IsGeometric(const TopoDS_Edge& E)
 {
@@ -242,20 +248,24 @@ bool BRep_Tool::IsGeometric(const TopoDS_Edge& E)
     {
       occ::handle<BRep_Curve3D> GC(occ::down_cast<BRep_Curve3D>(cr));
       if (!GC.IsNull() && !GC->Curve3D().IsNull())
+      {
         return true;
+      }
     }
     else if (cr->IsCurveOnSurface())
+    {
       return true;
+    }
     itcr.Next();
   }
   return false;
 }
 
-//=======================================================================
+//=================================================================================================
 // function : Polygon3D
 // purpose  : Returns the 3D polygon of the edge. May be   a Null
 //           handle. Returns in <L> the location for the polygon.
-//=======================================================================
+//=================================================================================================
 
 static const occ::handle<Poly_Polygon3D> nullPolygon3D;
 
@@ -280,13 +290,13 @@ const occ::handle<Poly_Polygon3D>& BRep_Tool::Polygon3D(const TopoDS_Edge& E, To
   return nullPolygon3D;
 }
 
-//=======================================================================
+//=================================================================================================
 // function : CurveOnSurface
 // purpose  : Returns the curve  associated to the  edge in  the
 //           parametric  space of  the  face.  Returns   a NULL
 //           handle  if this curve  does not exist.  Returns in
 //           <First> and <Last> the parameter range.
-//=======================================================================
+//=================================================================================================
 
 occ::handle<Geom2d_Curve> BRep_Tool::CurveOnSurface(const TopoDS_Edge& E,
                                                     const TopoDS_Face& F,
@@ -304,13 +314,13 @@ occ::handle<Geom2d_Curve> BRep_Tool::CurveOnSurface(const TopoDS_Edge& E,
   return CurveOnSurface(aLocalEdge, S, l, First, Last, theIsStored);
 }
 
-//=======================================================================
+//=================================================================================================
 // function : CurveOnSurface
 // purpose  : Returns the  curve associated to   the edge in the
 //           parametric  space of the   surface. Returns a NULL
 //           handle  if this curve does  not exist.  Returns in
 //           <First> and <Last> the parameter range.
-//=======================================================================
+//=================================================================================================
 
 static const occ::handle<Geom2d_Curve> nullPCurve;
 
@@ -321,40 +331,51 @@ occ::handle<Geom2d_Curve> BRep_Tool::CurveOnSurface(const TopoDS_Edge&          
                                                     double&                          Last,
                                                     bool*                            theIsStored)
 {
-  TopLoc_Location loc         = L.Predivided(E.Location());
-  bool            Eisreversed = (E.Orientation() == TopAbs_REVERSED);
+  bool Eisreversed = (E.Orientation() == TopAbs_REVERSED);
   if (theIsStored)
+  {
     *theIsStored = true;
+  }
 
   // find the representation
   const BRep_TEdge* TE = static_cast<const BRep_TEdge*>(E.TShape().get());
   NCollection_List<occ::handle<BRep_CurveRepresentation>>::Iterator itcr(TE->Curves());
-
-  while (itcr.More())
+  if (itcr.More())
   {
-    const occ::handle<BRep_CurveRepresentation>& cr = itcr.Value();
-    if (cr->IsCurveOnSurface(S, loc))
+    const TopLoc_Location loc = L.Predivided(E.Location());
+
+    while (itcr.More())
     {
-      const BRep_GCurve* GC = static_cast<const BRep_GCurve*>(cr.get());
-      GC->Range(First, Last);
-      if (GC->IsCurveOnClosedSurface() && Eisreversed)
-        return GC->PCurve2();
-      else
-        return GC->PCurve();
+      const occ::handle<BRep_CurveRepresentation>& cr = itcr.Value();
+      if (cr->IsCurveOnSurface(S, loc))
+      {
+        const BRep_GCurve* GC = static_cast<const BRep_GCurve*>(cr.get());
+        GC->Range(First, Last);
+        if (GC->IsCurveOnClosedSurface() && Eisreversed)
+        {
+          return GC->PCurve2();
+        }
+        else
+        {
+          return GC->PCurve();
+        }
+      }
+      itcr.Next();
     }
-    itcr.Next();
   }
 
   // Curve is not found. Try projection on plane
   if (theIsStored)
+  {
     *theIsStored = false;
+  }
   return CurveOnPlane(E, S, L, First, Last);
 }
 
-//=======================================================================
+//=================================================================================================
 // function : CurveOnPlane
 // purpose  : For planar surface returns projection of the edge on the plane
-//=======================================================================
+//=================================================================================================
 occ::handle<Geom2d_Curve> BRep_Tool::CurveOnPlane(const TopoDS_Edge&               E,
                                                   const occ::handle<Geom_Surface>& S,
                                                   const TopLoc_Location&           L,
@@ -368,13 +389,19 @@ occ::handle<Geom2d_Curve> BRep_Tool::CurveOnPlane(const TopoDS_Edge&            
   occ::handle<Geom_RectangularTrimmedSurface> GRTS;
   GRTS = occ::down_cast<Geom_RectangularTrimmedSurface>(S);
   if (!GRTS.IsNull())
+  {
     GP = occ::down_cast<Geom_Plane>(GRTS->BasisSurface());
+  }
   else
+  {
     GP = occ::down_cast<Geom_Plane>(S);
+  }
 
   if (GP.IsNull())
+  {
     // not a plane
     return nullPCurve;
+  }
 
   // Check existence of 3d curve in edge
   double                  f, l;
@@ -382,8 +409,10 @@ occ::handle<Geom2d_Curve> BRep_Tool::CurveOnPlane(const TopoDS_Edge&            
   occ::handle<Geom_Curve> C3D = BRep_Tool::Curve(E, aCurveLocation, f, l);
 
   if (C3D.IsNull())
+  {
     // no 3d curve
     return nullPCurve;
+  }
 
   aCurveLocation = aCurveLocation.Predivided(L);
   First          = f;
@@ -465,7 +494,9 @@ void BRep_Tool::CurveOnSurface(const TopoDS_Edge&         E,
                                const int                  Index)
 {
   if (Index < 1)
+  {
     return;
+  }
 
   int i = 0;
   // find the representation
@@ -481,11 +512,17 @@ void BRep_Tool::CurveOnSurface(const TopoDS_Edge&         E,
       // Compare index taking into account the fact that for the curves on
       // closed surfaces there are two PCurves
       if (i == Index)
+      {
         C = GC->PCurve();
+      }
       else if (GC->IsCurveOnClosedSurface() && (++i == Index))
+      {
         C = GC->PCurve2();
+      }
       else
+      {
         continue;
+      }
 
       S = GC->Surface();
       L = E.Location() * GC->Location();
@@ -500,12 +537,12 @@ void BRep_Tool::CurveOnSurface(const TopoDS_Edge&         E,
   First = Last = 0.;
 }
 
-//=======================================================================
+//=================================================================================================
 // function : PolygonOnSurface
 // purpose  : Returns the polygon associated to the  edge in  the
 //           parametric  space of  the  face.  Returns   a NULL
 //           handle  if this polygon  does not exist.
-//=======================================================================
+//=================================================================================================
 
 occ::handle<Poly_Polygon2D> BRep_Tool::PolygonOnSurface(const TopoDS_Edge& E, const TopoDS_Face& F)
 {
@@ -523,12 +560,12 @@ occ::handle<Poly_Polygon2D> BRep_Tool::PolygonOnSurface(const TopoDS_Edge& E, co
   return PolygonOnSurface(aLocalEdge, S, l);
 }
 
-//=======================================================================
+//=================================================================================================
 // function : PolygonOnSurface
 // purpose  : Returns the polygon associated to the  edge in  the
 //           parametric  space of  the surface. Returns   a NULL
 //           handle  if this polygon  does not exist.
-//=======================================================================
+//=================================================================================================
 
 static const occ::handle<Poly_Polygon2D> nullPolygon2D;
 
@@ -549,9 +586,13 @@ occ::handle<Poly_Polygon2D> BRep_Tool::PolygonOnSurface(const TopoDS_Edge&      
     if (cr->IsPolygonOnSurface(S, l))
     {
       if (cr->IsPolygonOnClosedSurface() && Eisreversed)
+      {
         return cr->Polygon2();
+      }
       else
+      {
         return cr->Polygon();
+      }
     }
     itcr.Next();
   }
@@ -611,7 +652,9 @@ void BRep_Tool::PolygonOnSurface(const TopoDS_Edge&           E,
       const BRep_PolygonOnSurface* PS = static_cast<const BRep_PolygonOnSurface*>(cr.get());
       i++;
       if (i > Index)
+      {
         break;
+      }
       if (i == Index)
       {
         P = PS->Polygon();
@@ -628,12 +671,12 @@ void BRep_Tool::PolygonOnSurface(const TopoDS_Edge&           E,
   S.Nullify();
 }
 
-//=======================================================================
+//=================================================================================================
 // function : PolygonOnTriangulation
 // purpose  : Returns the polygon associated to the  edge in  the
 //           parametric  space of  the  face.  Returns   a NULL
 //           handle  if this polygon  does not exist.
-//=======================================================================
+//=================================================================================================
 
 static const occ::handle<Poly_PolygonOnTriangulation> nullArray;
 
@@ -655,9 +698,13 @@ const occ::handle<Poly_PolygonOnTriangulation>& BRep_Tool::PolygonOnTriangulatio
     if (cr->IsPolygonOnTriangulation(T, l))
     {
       if (cr->IsPolygonOnClosedTriangulation() && Eisreversed)
+      {
         return cr->PolygonOnTriangulation2();
+      }
       else
+      {
         return cr->PolygonOnTriangulation();
+      }
     }
     itcr.Next();
   }
@@ -719,7 +766,9 @@ void BRep_Tool::PolygonOnTriangulation(const TopoDS_Edge&                       
         static_cast<const BRep_PolygonOnTriangulation*>(cr.get());
       i++;
       if (i > Index)
+      {
         break;
+      }
       if (i == Index)
       {
         T = PT->Triangulation();
@@ -736,29 +785,31 @@ void BRep_Tool::PolygonOnTriangulation(const TopoDS_Edge&                       
   T.Nullify();
 }
 
-//=======================================================================
+//=================================================================================================
 // function : IsClosed
 // purpose  : Returns  True  if  <E>  has  two  PCurves  in  the
 //           parametric space of <F>. i.e.  <F>  is on a closed
 //           surface and <E> is on the closing curve.
-//=======================================================================
+//=================================================================================================
 
 bool BRep_Tool::IsClosed(const TopoDS_Edge& E, const TopoDS_Face& F)
 {
   TopLoc_Location                  l;
   const occ::handle<Geom_Surface>& S = BRep_Tool::Surface(F, l);
   if (IsClosed(E, S, l))
+  {
     return true;
+  }
   const occ::handle<Poly_Triangulation>& T = BRep_Tool::Triangulation(F, l);
   return IsClosed(E, T, l);
 }
 
-//=======================================================================
+//=================================================================================================
 // function : IsClosed
 // purpose  : Returns  True  if  <E>  has  two  PCurves  in  the
 //           parametric space  of <S>.  i.e.   <S>  is a closed
 //           surface and <E> is on the closing curve.
-//=======================================================================
+//=================================================================================================
 
 bool BRep_Tool::IsClosed(const TopoDS_Edge&               E,
                          const occ::handle<Geom_Surface>& S,
@@ -781,17 +832,19 @@ bool BRep_Tool::IsClosed(const TopoDS_Edge&               E,
   {
     const occ::handle<BRep_CurveRepresentation>& cr = itcr.Value();
     if (cr->IsCurveOnSurface(S, l) && cr->IsCurveOnClosedSurface())
+    {
       return true;
+    }
     itcr.Next();
   }
   return false;
 }
 
-//=======================================================================
+//=================================================================================================
 // function : IsClosed
 // purpose  : Returns  True  if <E> has two arrays of indices in
 //           the triangulation <T>.
-//=======================================================================
+//=================================================================================================
 
 bool BRep_Tool::IsClosed(const TopoDS_Edge&                     E,
                          const occ::handle<Poly_Triangulation>& T,
@@ -812,16 +865,18 @@ bool BRep_Tool::IsClosed(const TopoDS_Edge&                     E,
   {
     const occ::handle<BRep_CurveRepresentation>& cr = itcr.Value();
     if (cr->IsPolygonOnTriangulation(T, l) && cr->IsPolygonOnClosedTriangulation())
+    {
       return true;
+    }
     itcr.Next();
   }
   return false;
 }
 
-//=======================================================================
+//=================================================================================================
 // function : Tolerance
 // purpose  : Returns the tolerance for <E>.
-//=======================================================================
+//=================================================================================================
 
 double BRep_Tool::Tolerance(const TopoDS_Edge& E)
 {
@@ -829,15 +884,19 @@ double BRep_Tool::Tolerance(const TopoDS_Edge& E)
   double            p    = TE->Tolerance();
   constexpr double  pMin = Precision::Confusion();
   if (p > pMin)
+  {
     return p;
+  }
   else
+  {
     return pMin;
+  }
 }
 
-//=======================================================================
+//=================================================================================================
 // function : SameParameter
 // purpose  : Returns the SameParameter flag for the edge.
-//=======================================================================
+//=================================================================================================
 
 bool BRep_Tool::SameParameter(const TopoDS_Edge& E)
 {
@@ -845,10 +904,10 @@ bool BRep_Tool::SameParameter(const TopoDS_Edge& E)
   return TE->SameParameter();
 }
 
-//=======================================================================
+//=================================================================================================
 // function : SameRange
 // purpose  : Returns the SameRange flag for the edge.
-//=======================================================================
+//=================================================================================================
 
 bool BRep_Tool::SameRange(const TopoDS_Edge& E)
 {
@@ -856,10 +915,10 @@ bool BRep_Tool::SameRange(const TopoDS_Edge& E)
   return TE->SameRange();
 }
 
-//=======================================================================
+//=================================================================================================
 // function : Degenerated
 // purpose  : Returns True  if the edge is degenerated.
-//=======================================================================
+//=================================================================================================
 
 bool BRep_Tool::Degenerated(const TopoDS_Edge& E)
 {
@@ -983,10 +1042,14 @@ void BRep_Tool::UVPoints(const TopoDS_Edge&               E,
   occ::handle<Geom_RectangularTrimmedSurface> GRTS;
   GRTS = occ::down_cast<Geom_RectangularTrimmedSurface>(S);
   if (!GRTS.IsNull())
+  {
     GP = occ::down_cast<Geom_Plane>(GRTS->BasisSurface());
+  }
   else
+  {
     GP = occ::down_cast<Geom_Plane>(S);
-  // fin modif du 21-05-97
+  }
+  // end of modification from 21-05-97
   if (!GP.IsNull())
   {
     // get the two vertices
@@ -1098,11 +1161,11 @@ void BRep_Tool::SetUVPoints(const TopoDS_Edge& E,
   SetUVPoints(aLocalEdge, S, L, PFirst, PLast);
 }
 
-//=======================================================================
+//=================================================================================================
 // function : HasContinuity
 // purpose  : Returns True if the edge is on the surfaces of the
 //           two faces.
-//=======================================================================
+//=================================================================================================
 
 bool BRep_Tool::HasContinuity(const TopoDS_Edge& E, const TopoDS_Face& F1, const TopoDS_Face& F2)
 {
@@ -1112,10 +1175,7 @@ bool BRep_Tool::HasContinuity(const TopoDS_Edge& E, const TopoDS_Face& F1, const
   return HasContinuity(E, S1, S2, l1, l2);
 }
 
-//=======================================================================
-// function : Continuity
-// purpose  : Returns the continuity.
-//=======================================================================
+//=================================================================================================
 
 GeomAbs_Shape BRep_Tool::Continuity(const TopoDS_Edge& E,
                                     const TopoDS_Face& F1,
@@ -1127,10 +1187,10 @@ GeomAbs_Shape BRep_Tool::Continuity(const TopoDS_Edge& E,
   return Continuity(E, S1, S2, l1, l2);
 }
 
-//=======================================================================
+//=================================================================================================
 // function : HasContinuity
 // purpose  : Returns True if the edge is on the surfaces.
-//=======================================================================
+//=================================================================================================
 
 bool BRep_Tool::HasContinuity(const TopoDS_Edge&               E,
                               const occ::handle<Geom_Surface>& S1,
@@ -1150,16 +1210,15 @@ bool BRep_Tool::HasContinuity(const TopoDS_Edge&               E,
   {
     const occ::handle<BRep_CurveRepresentation>& cr = itcr.Value();
     if (cr->IsRegularity(S1, S2, l1, l2))
+    {
       return true;
+    }
     itcr.Next();
   }
   return false;
 }
 
-//=======================================================================
-// function : Continuity
-// purpose  : Returns the continuity.
-//=======================================================================
+//=================================================================================================
 
 GeomAbs_Shape BRep_Tool::Continuity(const TopoDS_Edge&               E,
                                     const occ::handle<Geom_Surface>& S1,
@@ -1178,16 +1237,18 @@ GeomAbs_Shape BRep_Tool::Continuity(const TopoDS_Edge&               E,
   {
     const occ::handle<BRep_CurveRepresentation>& cr = itcr.Value();
     if (cr->IsRegularity(S1, S2, l1, l2))
+    {
       return cr->Continuity();
+    }
     itcr.Next();
   }
   return GeomAbs_C0;
 }
 
-//=======================================================================
+//=================================================================================================
 // function : HasContinuity
 // purpose  : Returns True if the edge is on some two surfaces.
-//=======================================================================
+//=================================================================================================
 
 bool BRep_Tool::HasContinuity(const TopoDS_Edge& E)
 {
@@ -1198,7 +1259,9 @@ bool BRep_Tool::HasContinuity(const TopoDS_Edge& E)
   {
     const occ::handle<BRep_CurveRepresentation>& CR = itcr.Value();
     if (CR->IsRegularity())
+    {
       return true;
+    }
   }
   return false;
 }
@@ -1246,10 +1309,7 @@ gp_Pnt BRep_Tool::Pnt(const TopoDS_Vertex& V)
   return P.Transformed(V.Location().Transformation());
 }
 
-//=======================================================================
-// function : Tolerance
-// purpose  : Returns the tolerance.
-//=======================================================================
+//=================================================================================================
 
 double BRep_Tool::Tolerance(const TopoDS_Vertex& V)
 {
@@ -1263,15 +1323,19 @@ double BRep_Tool::Tolerance(const TopoDS_Vertex& V)
   double           p    = aTVert->Tolerance();
   constexpr double pMin = Precision::Confusion();
   if (p > pMin)
+  {
     return p;
+  }
   else
+  {
     return pMin;
+  }
 }
 
-//=======================================================================
+//=================================================================================================
 // function : Parameter
 // purpose  : Returns the parameter of <V> on <E>.
-//=======================================================================
+//=================================================================================================
 
 bool BRep_Tool::Parameter(const TopoDS_Vertex& theV, const TopoDS_Edge& theE, double& theParam)
 {
@@ -1314,7 +1378,9 @@ bool BRep_Tool::Parameter(const TopoDS_Vertex& theV, const TopoDS_Edge& theE, do
   }
 
   if (!VF.IsNull())
+  {
     orient = VF.Orientation();
+  }
 
   double f, l;
 
@@ -1370,9 +1436,13 @@ bool BRep_Tool::Parameter(const TopoDS_Vertex& theV, const TopoDS_Edge& theE, do
               if (Pf.Distance(BRep_Tool::Pnt(theV)) < tol)
               {
                 if (theV.Orientation() == TopAbs_FORWARD)
+                {
                   res = f; // p = f;
+                }
                 else
+                {
                   res = l; // p = l;
+                }
               }
             }
           }
@@ -1405,9 +1475,13 @@ bool BRep_Tool::Parameter(const TopoDS_Vertex& theV, const TopoDS_Edge& theE, do
             if ((p == PC->FirstParameter()) || (p == PC->LastParameter()))
             {
               if (theV.Orientation() == TopAbs_FORWARD)
+              {
                 p = PC->FirstParameter();
+              }
               else
+              {
                 p = PC->LastParameter();
+              }
             }
           }
           theParam = p;
@@ -1421,24 +1495,26 @@ bool BRep_Tool::Parameter(const TopoDS_Vertex& theV, const TopoDS_Edge& theE, do
   return false;
 }
 
-//=======================================================================
+//=================================================================================================
 // function : Parameter
 // purpose  : Returns the parameter of <V> on <E>.
-//=======================================================================
+//=================================================================================================
 
 double BRep_Tool::Parameter(const TopoDS_Vertex& V, const TopoDS_Edge& E)
 {
   double p;
   if (Parameter(V, E, p))
+  {
     return p;
+  }
   throw Standard_NoSuchObject("BRep_Tool:: no parameter on edge");
 }
 
-//=======================================================================
+//=================================================================================================
 // function : Parameter
 // purpose  : Returns the  parameters  of   the  vertex   on the
 //           pcurve of the edge on the face.
-//=======================================================================
+//=================================================================================================
 
 double BRep_Tool::Parameter(const TopoDS_Vertex& V, const TopoDS_Edge& E, const TopoDS_Face& F)
 {
@@ -1447,11 +1523,11 @@ double BRep_Tool::Parameter(const TopoDS_Vertex& V, const TopoDS_Edge& E, const 
   return BRep_Tool::Parameter(V, E, S, L);
 }
 
-//=======================================================================
+//=================================================================================================
 // function : Parameter
 // purpose  : Returns the  parameters  of   the  vertex   on the
 //           pcurve of the edge on the surface.
-//=======================================================================
+//=================================================================================================
 
 double BRep_Tool::Parameter(const TopoDS_Vertex&             V,
                             const TopoDS_Edge&               E,
@@ -1469,12 +1545,16 @@ double BRep_Tool::Parameter(const TopoDS_Vertex&             V,
     if (V.IsSame(itv.Value()))
     {
       if (VF.IsNull())
+      {
         VF = itv.Value();
+      }
       else
       {
         rev = E.Orientation() == TopAbs_REVERSED;
         if (itv.Value().Orientation() == V.Orientation())
+        {
           VF = itv.Value();
+        }
       }
     }
     itv.Next();
@@ -1482,7 +1562,9 @@ double BRep_Tool::Parameter(const TopoDS_Vertex&             V,
 
   TopAbs_Orientation orient = TopAbs_INTERNAL;
   if (!VF.IsNull())
+  {
     orient = VF.Orientation();
+  }
 
   double f, l;
 
@@ -1507,7 +1589,9 @@ double BRep_Tool::Parameter(const TopoDS_Vertex&             V,
     while (itpr.More())
     {
       if (itpr.Value()->IsPointOnCurveOnSurface(PC, S, L))
+      {
         return itpr.Value()->Parameter();
+      }
       itpr.Next();
     }
   }
@@ -1533,9 +1617,13 @@ double BRep_Tool::Parameter(const TopoDS_Vertex&             V,
         {
           // Closed curves RLE 16 june 94
           if (Precision::IsNegativeInfinite(f))
+          {
             return res;
+          }
           if (Precision::IsPositiveInfinite(l))
+          {
             return res;
+          }
           gp_Pnt Pf  = C->Value(f).Transformed(L1.Transformation());
           gp_Pnt Pl  = C->Value(l).Transformed(L1.Transformation());
           double tol = BRep_Tool::Tolerance(V);
@@ -1544,9 +1632,13 @@ double BRep_Tool::Parameter(const TopoDS_Vertex&             V,
             if (Pf.Distance(BRep_Tool::Pnt(V)) < tol)
             {
               if (V.Orientation() == TopAbs_FORWARD)
+              {
                 res = f;
+              }
               else
+              {
                 res = l;
+              }
             }
           }
         }
@@ -1561,10 +1653,10 @@ double BRep_Tool::Parameter(const TopoDS_Vertex&             V,
   throw Standard_NoSuchObject("BRep_Tool:: no parameter on edge");
 }
 
-//=======================================================================
+//=================================================================================================
 // function : Parameters
 // purpose  : Returns the parameters of the vertex on the face.
-//=======================================================================
+//=================================================================================================
 
 gp_Pnt2d BRep_Tool::Parameters(const TopoDS_Vertex& V, const TopoDS_Face& F)
 {
@@ -1598,9 +1690,13 @@ gp_Pnt2d BRep_Tool::Parameters(const TopoDS_Vertex& V, const TopoDS_Face& F)
       gp_Pnt2d Pf, Pl;
       UVPoints(E, F, Pf, Pl);
       if (V.IsSame(Vf))
+      {
         return Pf;
+      }
       else
+      {
         return Pl; // Ambiguity (natural) for degenerated edges.
+      }
     }
   }
   throw Standard_NoSuchObject("BRep_Tool:: no parameters on surface");
@@ -1620,10 +1716,14 @@ bool BRep_Tool::IsClosed(const TopoDS_Shape& theShape)
       const TopoDS_Edge& E = TopoDS::Edge(exp.Current());
       if (BRep_Tool::Degenerated(E) || E.Orientation() == TopAbs_INTERNAL
           || E.Orientation() == TopAbs_EXTERNAL)
+      {
         continue;
+      }
       hasBound = true;
       if (!aMap.Add(E))
+      {
         aMap.Remove(E);
+      }
     }
     return hasBound && aMap.IsEmpty();
   }
@@ -1636,10 +1736,14 @@ bool BRep_Tool::IsClosed(const TopoDS_Shape& theShape)
     {
       const TopoDS_Shape& V = exp.Current();
       if (V.Orientation() == TopAbs_INTERNAL || V.Orientation() == TopAbs_EXTERNAL)
+      {
         continue;
+      }
       hasBound = true;
       if (!aMap.Add(V))
+      {
         aMap.Remove(V);
+      }
     }
     return hasBound && aMap.IsEmpty();
   }

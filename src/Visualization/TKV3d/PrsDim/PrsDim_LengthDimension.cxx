@@ -47,10 +47,8 @@ PrsDim_LengthDimension::PrsDim_LengthDimension()
   SetFlyout(15.0);
 }
 
-//=======================================================================
-// function : Constructor
-// purpose  : Dimension between two faces
-//=======================================================================
+//=================================================================================================
+
 PrsDim_LengthDimension::PrsDim_LengthDimension(const TopoDS_Face& theFirstFace,
                                                const TopoDS_Face& theSecondFace)
     : PrsDim_Dimension(PrsDim_KOD_LENGTH),
@@ -60,10 +58,8 @@ PrsDim_LengthDimension::PrsDim_LengthDimension(const TopoDS_Face& theFirstFace,
   SetFlyout(15.0);
 }
 
-//=======================================================================
-// function : Constructor
-// purpose  : Dimension between two shape
-//=======================================================================
+//=================================================================================================
+
 PrsDim_LengthDimension::PrsDim_LengthDimension(const TopoDS_Face& theFace,
                                                const TopoDS_Edge& theEdge)
     : PrsDim_Dimension(PrsDim_KOD_LENGTH),
@@ -73,10 +69,8 @@ PrsDim_LengthDimension::PrsDim_LengthDimension(const TopoDS_Face& theFace,
   SetFlyout(15.0);
 }
 
-//=======================================================================
-// function : Constructor
-// purpose  : Dimension between two points
-//=======================================================================
+//=================================================================================================
+
 PrsDim_LengthDimension::PrsDim_LengthDimension(const gp_Pnt& theFirstPoint,
                                                const gp_Pnt& theSecondPoint,
                                                const gp_Pln& thePlane)
@@ -87,10 +81,8 @@ PrsDim_LengthDimension::PrsDim_LengthDimension(const gp_Pnt& theFirstPoint,
   SetFlyout(15.0);
 }
 
-//=======================================================================
-// function : Constructor
-// purpose  : Dimension between two shape
-//=======================================================================
+//=================================================================================================
+
 PrsDim_LengthDimension::PrsDim_LengthDimension(const TopoDS_Shape& theFirstShape,
                                                const TopoDS_Shape& theSecondShape,
                                                const gp_Pln&       thePlane)
@@ -246,10 +238,14 @@ void PrsDim_LengthDimension::SetDisplayUnits(const TCollection_AsciiString& theU
 double PrsDim_LengthDimension::ComputeValue() const
 {
   if (!IsValid())
+  {
     return 0.0;
+  }
 
   if (!myHasCustomDirection)
+  {
     return myFirstPoint.Distance(mySecondPoint);
+  }
 
   return fabs(gp_Vec(myFirstPoint, mySecondPoint).Dot(myDirection));
 }
@@ -831,5 +827,7 @@ void PrsDim_LengthDimension::SetDirection(const gp_Dir& theDirection, const bool
 {
   myHasCustomDirection = theUseDirection;
   if (myHasCustomDirection)
+  {
     myDirection = theDirection;
+  }
 }

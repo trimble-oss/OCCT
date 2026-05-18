@@ -34,10 +34,8 @@ const Standard_GUID& TDataStd_Integer::GetID()
   return TDataStd_IntegerID;
 }
 
-//=======================================================================
-// function : SetAttr
-// purpose  : Implements Set functionality
-//=======================================================================
+//=================================================================================================
+
 static occ::handle<TDataStd_Integer> SetAttr(const TDF_Label&     label,
                                              const int            V,
                                              const Standard_GUID& theGuid)
@@ -61,10 +59,7 @@ occ::handle<TDataStd_Integer> TDataStd_Integer::Set(const TDF_Label& L, const in
   return SetAttr(L, V, GetID());
 }
 
-//=======================================================================
-// function : Set
-// purpose  : Set user defined attribute
-//=======================================================================
+//=================================================================================================
 
 occ::handle<TDataStd_Integer> TDataStd_Integer::Set(const TDF_Label&     L,
                                                     const Standard_GUID& theGuid,
@@ -87,7 +82,9 @@ void TDataStd_Integer::Set(const int v)
 {
   // OCC2932 correction
   if (myValue == v)
+  {
     return;
+  }
 
   Backup();
   myValue = v;
@@ -120,7 +117,9 @@ const Standard_GUID& TDataStd_Integer::ID() const
 void TDataStd_Integer::SetID(const Standard_GUID& theGuid)
 {
   if (myID == theGuid)
+  {
     return;
+  }
 
   Backup();
   myID = theGuid;

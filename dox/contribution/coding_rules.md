@@ -49,9 +49,9 @@ Camel Case style is preferred for names.
 For example:
 
 ~~~~{.cpp}
-Standard_Integer awidthofbox;  // this is bad
-Standard_Integer width_of_box; // this is bad
-Standard_Integer aWidthOfBox;  // this is OK
+int awidthofbox;  // this is bad
+int width_of_box; // this is bad
+int aWidthOfBox;  // this is OK
 ~~~~
 
 @subsection occt_coding_rules_2_2 Names of development units
@@ -70,7 +70,7 @@ The following extensions should be used for source files, depending on their typ
 * <i>.hxx</i> -- C++ header files
 * <i>.lxx</i> -- additional headers containing definitions of inline methods and auxiliary code
 
-Note that .lxx files should be avoided in most cases - inline method should be placed in header file instead.
+Note that .lxx files should be avoided in most cases - inline methods should be placed in the header file instead.
 
 ### Prefix for toolkit names [MANDATORY]
 
@@ -96,7 +96,7 @@ Such types should be given own names using *typedef* statement, located in same-
 
 For example, see definition in the file *TColStd_IndexedDataMapOfStringString.hxx*:
 ~~~~{.cpp}
-typedef NCollection_IndexedDataMap<TCollection_AsciiString,TCollection_AsciiString,TCollection_AsciiString> TColStd_IndexedDataMapOfStringString;
+typedef NCollection_IndexedDataMap<TCollection_AsciiString, TCollection_AsciiString> TColStd_IndexedDataMapOfStringString;
 ~~~~
 
 ### Names of functions
@@ -115,12 +115,12 @@ class MyPackage_MyClass
 
 public:
 
-  Standard_Integer Value() const;
-  void             SetValue (const Standard_Integer theValue);
+  int Value() const;
+  void             SetValue (const int theValue);
 
 private:
 
-  void setIntegerValue (const Standard_Integer theValue);
+  void setIntegerValue (const int theValue);
 
 };
 ~~~~
@@ -138,11 +138,11 @@ The name of a variable should not start with an underscore.
 See the following examples:
 
 ~~~~{.cpp}
-Standard_Integer Elapsed_Time = 0; // this is bad - possible class   name
-Standard_Integer gp = 0;           // this is bad - existing package name
-Standard_Integer aGp = 0;          // this is OK
-Standard_Integer _KERNEL = 0;      // this is bad
-Standard_Integer THE_KERNEL = 0;   // this is OK
+int Elapsed_Time = 0; // this is bad - possible class   name
+int gp = 0;           // this is bad - existing package name
+int aGp = 0;          // this is OK
+int _KERNEL = 0;      // this is bad
+int THE_KERNEL = 0;   // this is OK
 ~~~~
 
 ### Names of function parameters
@@ -159,14 +159,14 @@ void Package_MyClass::MyFunction (const gp_Pnt& thePoint); // this is preferred
 
 ### Names of class member variables
 
-The name of a class member variable should start with prefix *my* followed by the meaningful of the name starting with a capital letter.
+The name of a class member variable should start with prefix *my* followed by the meaningful part of the name starting with a capital letter.
 
 See the following examples:
 
 ~~~~{.cpp}
-Standard_Integer counter;   // This is bad
-Standard_Integer myC;       // This is OK
-Standard_Integer myCounter; // This is preferred
+int counter;   // This is bad
+int myC;       // This is OK
+int myCounter; // This is preferred
 ~~~~
 
 ### Names of global variables
@@ -177,15 +177,15 @@ However, as soon as a global variable is necessary, its name should be prefixed 
 See the following examples:
 
 ~~~~{.cpp}
-Standard_Integer MyPackage_myGlobalVariable = 0;
-Standard_Integer MyPackage_MyClass_myGlobalVariable = 0;
+int MyPackage_myGlobalVariable = 0;
+int MyPackage_MyClass_myGlobalVariable = 0;
 ~~~~
 
 Static constants within the file should be written in upper-case and begin with prefix *THE_*:
 ~~~~{.cpp}
 namespace
 {
-  static const Standard_Real THE_CONSTANT_COEF = 3.14;
+  static const double THE_CONSTANT_COEF = 3.14;
 };
 ~~~~
 
@@ -198,10 +198,10 @@ It is preferred to prefix local variable names with *a* and *an* (or *is*, *to* 
 See the following example:
 
 ~~~~{.cpp}
-Standard_Integer theI;    // this is bad
-Standard_Integer i;       // this is bad
-Standard_Integer index;   // this is bad
-Standard_Integer anIndex; // this is OK
+int theI;    // this is bad
+int i;       // this is bad
+int index;   // this is bad
+int anIndex; // this is OK
 ~~~~
 
 ### Avoid dummy names
@@ -212,31 +212,40 @@ The code becomes more and more complicated when such dummy names are used there 
 See the following examples for preferred style:
 
 ~~~~{.cpp}
-void Average (const Standard_Real** theArray,
-              Standard_Integer      theRowsNb,
-              Standard_Integer      theRowLen,
-              Standard_Real&        theResult)
+void Average (const double** theArray,
+              int      theRowsNb,
+              int      theRowLen,
+              double&        theResult)
 {
   theResult = 0.0;
-  for (Standard_Integer aRow = 0; aRow < aRowsNb; ++aRow)
+  for (int aRow = 0; aRow < theRowsNb; ++aRow)
   {
-    for (Standard_Integer aCol = 0; aCol < aRowLen; ++aCol)
+    for (int aCol = 0; aCol < theRowLen; ++aCol)
     {
       theResult += theArray[aRow][aCol];
     }
-    theResult /= Standard_Real(aRowsNb * aRowLen);
+    theResult /= double(theRowsNb * theRowLen);
   }
 }
 ~~~~
 
 @section occt_coding_rules_3 Formatting rules
 
-To improve the open source readability and, consequently, maintainability, the following set of rules is applied.
+To improve the open-source readability and, consequently, maintainability, the following set of rules is applied.
 
 ### Clang-format [MANDATORY]
 
-The source code should be formatted using the clang-format tool with the configuration file provided in the OCCT repository.
+The source code must be formatted using the clang-format tool with the configuration file provided in the OCCT repository (`.clang-format` at the project root).
 The version of clang-format should be 18.1.8 or higher.
+
+### Clang-tidy
+
+Source code should also be checked with clang-tidy where practical to ensure compliance with modern C++ best practices.
+Useful checks include:
+- `readability-braces-around-statements` -- braces required for all `if`/`for`/`while`/`else` blocks
+- `readability-identifier-naming` -- checks the/a/THE/an naming prefixes
+- `modernize-use-override` -- requires `override` specifier on virtual methods
+- `modernize-use-nullptr` -- use `nullptr` instead of `NULL` or `0`
 
 ### International language [MANDATORY]
 
@@ -267,7 +276,7 @@ See the following example:
 
 ~~~~{.cpp}
 // check arguments
-Standard_Integer anArgsNb = argCount();
+int anArgsNb = argCount();
 if (anArgsNb < 3 || isSmthInvalid)
 {
   return THE_ARG_INVALID;
@@ -293,14 +302,14 @@ See the following example:
 
 ~~~~{.cpp}
 
-// ================================================================================================
+//=================================================================================================
 
 void TellMeSmthGood()
 {
   ...
 }
 
-// ================================================================================================
+//=================================================================================================
 
 void TellMeSmthBad()
 {
@@ -309,7 +318,7 @@ void TellMeSmthBad()
 ~~~~
 
 ### Block layout [MANDATORY]
-Figure brackets <i>{ }</i> and each operator <i>(for, if, else, try, catch)</i> should be written on a dedicated line.
+Curly braces <i>{ }</i> and each operator <i>(for, if, else, try, catch)</i> should be written on a dedicated line.
 
 In general, the layout should be as follows:
 
@@ -320,25 +329,29 @@ while (expression)
 }
 ~~~~
 
-Entering a block increases and leaving a block decreases the indentation by one tabulation.
+Entering a block increases and leaving a block decreases the indentation by one level.
 
-### Single-line operators
+### Braces around statements [MANDATORY]
 
-Single-line conditional operators <i>(if, while, for,</i> etc.) can be written without brackets on the following line.
+Curly braces `{ }` are required for all compound statements (`if`, `for`, `while`, `else`, etc.), even when the body contains a single statement.
+The clang-tidy `readability-braces-around-statements` check can be used to detect violations of this rule.
 
 ~~~~{.cpp}
-if (!myIsInit) return Standard_False; // bad
+if (!myIsInit) return false; // WRONG - missing braces
 
-if (thePtr == NULL)                   // OK
-  return Standard_False;
+if (thePtr == nullptr)       // WRONG - missing braces
+  return false;
 
-if (!theAlgo.IsNull())                // preferred
+if (!theAlgo.IsNull())       // CORRECT
+{
+  DoSomething();
+}
+
+for (int anIdx = 0; anIdx < aSize; ++anIdx) // CORRECT
 {
   DoSomething();
 }
 ~~~~
-
-Having all code in the same line is less convenient for debugging.
 
 ### Comparison expressions with constants
 
@@ -346,8 +359,8 @@ In comparisons, put the variable (in the current context) on the left side and c
 That is, the so called "Yoda style" is to be avoided.
 
 ~~~~{.cpp}
-if (NULL != thePointer)    // Yoda style, not recommended
-if (thePointer != NULL)    // OK
+if (nullptr != thePointer) // Yoda style, not recommended
+if (thePointer != nullptr) // OK
 
 if (34 < anIter)           // Yoda style, not recommended
 if (anIter > 34)           // OK
@@ -384,11 +397,11 @@ Use an early return condition rather than collect indentations.
 Write like this:
 
 ~~~~{.cpp}
-Standard_Integer ComputeSumm (const Standard_Integer* theArray,
-                              const Standard_Size     theSize)
+int ComputeSumm (const int* theArray,
+                              const size_t     theSize)
 {
-  Standard_Integer aSumm = 0;
-  if (theArray == NULL || theSize == 0)
+  int aSumm = 0;
+  if (theArray == nullptr || theSize == 0)
   {
     return 0;
   }
@@ -401,11 +414,11 @@ Standard_Integer ComputeSumm (const Standard_Integer* theArray,
 Rather than:
 
 ~~~~{.cpp}
-Standard_Integer ComputeSumm (const Standard_Integer* theArray,
-                              const Standard_Size     theSize)
+int ComputeSumm (const int* theArray,
+                              const size_t     theSize)
 {
-  Standard_Integer aSumm = 0;
-  if (theArray != NULL && theSize != 0)
+  int aSumm = 0;
+  if (theArray != nullptr && theSize != 0)
   {
     ... computing summ ...
   }
@@ -479,7 +492,7 @@ Accepted style is:
 //! Method computes the square value.
 //! @param theValue the input value
 //! @return squared value
-Standard_Export Standard_Real Square (Standard_Real theValue);
+Standard_EXPORT double Square (double theValue);
 @endverbatim
 
 ### Documenting C/C++ sources
@@ -562,8 +575,7 @@ A class with virtual function(s) ought to have a virtual destructor.
 
 ### Overriding virtual methods
 
-Declaration of overriding method should contains specifiers "virtual" and "override"
-(using Standard_OVERRIDE alias for compatibility with old compilers).
+Declaration of overriding method should contain specifiers "virtual" and "override".
 
 ~~~~{.cpp}
 class MyPackage_BaseClass
@@ -571,7 +583,7 @@ class MyPackage_BaseClass
 
 public:
 
-  Standard_EXPORT virtual Standard_Boolean Perform();
+  Standard_EXPORT virtual bool Perform();
 
 };
 
@@ -580,7 +592,7 @@ class MyPackage_MyClass : public MyPackage_BaseClass
 
 public:
 
-  Standard_EXPORT virtual Standard_Boolean Perform() Standard_OVERRIDE;
+  Standard_EXPORT virtual bool Perform() override;
 
 };
 ~~~~
@@ -610,11 +622,11 @@ Avoid *goto* statement unless it is really needed.
 Declare a cycle variable in the header of the *for()* statement if not used out of cycle.
 
 ~~~~{.cpp}
-Standard_Real aMinDist = Precision::Infinite();
+double aMinDist = Precision::Infinite();
 for (NCollection_Sequence<gp_Pnt>::Iterator aPntIter (theSequence);
      aPntIter.More(); aPntIter.Next())
 {
-  aMinDist = Min (aMinDist, theOrigin.Distance (aPntIter.Value()));
+  aMinDist = std::min (aMinDist, theOrigin.Distance (aPntIter.Value()));
 }
 ~~~~
 
@@ -623,8 +635,8 @@ for (NCollection_Sequence<gp_Pnt>::Iterator aPntIter (theSequence);
 Avoid usage of C-style comparison for non-boolean variables:
 
 ~~~~{.cpp}
-void Function (Standard_Integer theValue,
-               Standard_Real*   thePointer)
+void Function (int theValue,
+               double*   thePointer)
 {
   if (!theValue)          // bad style - ambiguous logic
   {
@@ -636,8 +648,8 @@ void Function (Standard_Integer theValue,
     DoSome();
   }
 
-  if (thePointer != NULL) // OK, predefined NULL makes pointer comparison cleaner to reader
-  {                       // (nullptr should be used instead as soon as C++11 will be available)
+  if (thePointer != nullptr) // OK, nullptr is preferred for pointer comparisons
+  {
     DoSome2();
   }
 }
@@ -652,8 +664,8 @@ This chapter contains rules that are critical for cross-platform portability.
 The source code must be portable to all platforms listed in the official 'Technical Requirements'.
 The term 'portable' here means 'able to be built from source'.
 
-The C++ source code should meet C++03 standard.
-Any usage of compiler-specific features or further language versions (for example, C++11, until all major compilers on all supported platforms implement all its features) should be optional (used only with appropriate preprocessor checks) and non-exclusive (an alternative implementation compatible with other compilers should be provided).
+The C++ source code should meet the C++17 standard or later.
+Compiler-specific features should be avoided where possible, or used only with appropriate preprocessor checks to ensure portability across all supported platforms.
 
 ### Avoid usage of global variables [MANDATORY]
 
@@ -663,9 +675,9 @@ Use global (package or class) functions that return reference to static variable
 
 Another possible problem is the order of initialization of global variables defined in various libraries that may differ depending on platform, compiler and environment.
 
-### Avoid explicit basic types
+### Use standard C++ primitive types
 
-Avoid explicit usage of basic types (*int*, *float*, *double*, etc.), use Open CASCADE Technology types from package *Standard: Standard_Integer, Standard_Real, Standard_ShortReal, Standard_Boolean, Standard_CString* and others or a specific *typedef* instead.
+In new code, use standard C++ primitive types (*int*, *double*, *bool*, *float*) directly instead of legacy Open CASCADE Technology typedef aliases (*Standard_Integer*, *Standard_Real*, *Standard_Boolean*, etc.). The legacy types are typedef aliases to native types and remain in the codebase for historical reasons. New code should prefer native types for clarity and consistency with modern C++.
 
 ### Use sizeof() to calculate sizes [MANDATORY]
 
@@ -701,26 +713,26 @@ See the following example:
     class Master : public Standard_Transient
     {
     ...
-      void SetSlave (const Handle(Slave)& theSlave)
+      void SetSlave (const occ::handle<Slave>& theSlave)
       { 
         mySlave = theSlave;
       }
     ...
     private:
-      Handle(Slave) theSlave; // smart pointer
+      occ::handle<Slave> mySlave; // smart pointer
     ...
     }
 
     class Slave : public Standard_Transient
     {
     ...
-      void SetMaster (const Handle(Master)& theMaster)
+      void SetMaster (const occ::handle<Master>& theMaster)
       { 
         myMaster = theMaster.get();
       }
     ...
     private:
-      Master* theMaster; // simple pointer
+      Master* myMaster; // simple pointer
     ...
     }
 ~~~~
@@ -748,8 +760,8 @@ Define a destructor, a copy constructor and an assignment operator for classes w
 Every variable should be initialized.
 
 ~~~~{.cpp}
-Standard_Integer aTmpVar1;     // bad
-Standard_Integer aTmpVar2 = 0; // OK
+int aTmpVar1;     // bad
+int aTmpVar2 = 0; // OK
 ~~~~
 
 Uninitialized variables might be kept only within performance-sensitive code blocks and only when their initialization is guaranteed by subsequent code.
@@ -767,7 +779,7 @@ In *operator=()* assign to all data members and check for assignment to self.
 Don't check floats for equality or non-equality; check for GT, GE, LT or LE.
 
 ~~~~{.cpp}
-if (Abs (theFloat1 - theFloat2) < theTolerance)
+if (std::abs (theFloat1 - theFloat2) < theTolerance)
 {
   DoSome();
 }
@@ -830,8 +842,8 @@ public:
 
 private:
 
-  Standard_Integer myPropertyA;
-  Standard_Integer myPropertyB;
+  int myPropertyA;
+  int myPropertyB;
 
 };
 ~~~~
@@ -855,8 +867,8 @@ When programming procedures with extensive memory access, try to optimize them i
 On x86 this code
 
 ~~~~{.cpp}
-Standard_Real anArray[4096][2];
-for (Standard_Integer anIter = 0; anIter < 4096; ++anIter)
+double anArray[4096][2];
+for (int anIter = 0; anIter < 4096; ++anIter)
 {
   anArray[anIter][0] = anArray[anIter][1];
 }
@@ -865,14 +877,23 @@ for (Standard_Integer anIter = 0; anIter < 4096; ++anIter)
 is more efficient then
 
 ~~~~{.cpp}
-Standard_Real anArray[2][4096];
-for (Standard_Integer anIter = 0; anIter < 4096; ++anIter)
+double anArray[2][4096];
+for (int anIter = 0; anIter < 4096; ++anIter)
 {
   anArray[0][anIter] = anArray[1][anIter];
 }
 ~~~~
 
 since linear access does not invalidate cache too often.
+
+@section occt_coding_rules_testing Testing
+
+OCCT ships with two complementary test runners; new code is expected to be covered by at least one of them:
+
+* **DRAW Tcl tests** (under `tests/`) -- the primary regression suite, exercised through DRAW commands. See @ref occt_contribution__tests "Automated Test System" for layout, naming, `TODO`/`REQUIRED`/`BAD` conventions and how to add a new case.
+* **OpenCascadeGTest** (under `src/<Module>/<Toolkit>/GTests/`) -- a GoogleTest-based C++ unit test runner, enabled at configure time with `-DBUILD_GTEST=ON` and producing the `OpenCascadeGTest` executable in the build/install `bin/` directory. Use it for unit-level tests of C++ APIs that are awkward to drive from DRAW. Add new test files to the corresponding `GTests/FILES.cmake`. Use the project's standard naming convention `TestFixture.MethodOrFeature_Scenario_ExpectedBehavior` for test names. Default to GTest assertions (`EXPECT_*` / `ASSERT_*`); use `EXPECT_NEAR` with `Precision::Confusion()` / `Precision::Angular()` for geometric / direction comparisons; wrap intentional `Standard_*` exception assertions in `#ifndef No_Exception` and cast the call with `(void)` to silence `[[nodiscard]]`.
+
+Refactors that affect public behaviour should add or update tests in the same PR; bug-fix PRs are expected to include a minimal regression test that fails before the fix and passes after.
 
 @section occt_coding_rules_10 Draw Harness command
 
@@ -901,9 +922,9 @@ Command should warn the user about unknown arguments, including cases when extra
     return 1;
   }
 
-  Standard_Integer anArgIter  = 1;
-  Standard_CString aResName   = theArgVec[anArgIter++];
-  Standard_CString aFaceName  = theArgVec[anArgIter++];
+  int anArgIter  = 1;
+  const char* aResName   = theArgVec[anArgIter++];
+  const char* aFaceName  = theArgVec[anArgIter++];
   TopoDS_Shape     aFaceShape = DBRep::Get (aFaceName);
   if (aFaceShape.IsNull()
    || aFaceShape.ShapeType() != TopAbs_FACE)
@@ -926,7 +947,7 @@ Information printed into Draw Interpreter should be well-structured to allow usa
 Any command with a long list of obligatory parameters should be considered as ill-formed by design.
 Optional parameters should start with flag name (with '-' prefix) and followed by its values:
 
-~~~~{.php}
+~~~~{.tcl}
 myCommand -flag1 value1 value2 -flag2 value3
 ~~~~
 
@@ -939,22 +960,22 @@ myCommand -flag1 value1 value2 -flag2 value3
 Functions *Draw::Atof()* and *Draw::Atoi()* support expressions and read values in C-locale.
 
 ~~~~{.cpp}
-  Standard_Real aPosition[3] = {0.0, 0.0, 0.0};
-  for (Standard_Integer anArgIter = 1; anArgIter < theArgsNb; ++anArgIter)
+  double aPosition[3] = {0.0, 0.0, 0.0};
+  for (int anArgIter = 1; anArgIter < theArgsNb; ++anArgIter)
   {
-    Standard_CString anArg = theArgVec[anArgIter];
+    const char* anArg = theArgVec[anArgIter];
     TCollection_AsciiString aFlag (anArg);
     aFlag.LowerCase(); //!< for case insensitive comparison
     if (aFlag == "position")
     {
-      if ((anArgIt + 3) >= theArgsNb)
+      if ((anArgIter + 3) >= theArgsNb)
       {
         std::cerr << "Wrong syntax at argument '" << anArg << "'!\n";
         return 1;
       }
-      aPosition[0] = Draw::Atof (theArgVec[++anArgIt]);
-      aPosition[1] = Draw::Atof (theArgVec[++anArgIt]);
-      aPosition[2] = Draw::Atof (theArgVec[++anArgIt]);
+      aPosition[0] = Draw::Atof (theArgVec[++anArgIter]);
+      aPosition[1] = Draw::Atof (theArgVec[++anArgIter]);
+      aPosition[2] = Draw::Atof (theArgVec[++anArgIter]);
     }
     else
     {
@@ -977,16 +998,16 @@ public: //! @name public methods
   //! Method computes the square value.
   //! @param theValue the input value
   //! @return squared value
-  Standard_Export Standard_Real Square (const Standard_Real theValue);
+  Standard_EXPORT double Square (const double theValue);
 
-private: //! \@name private methods
+private: //! @name private methods
 
   //! Auxiliary method
   void increment();
 
-private: //! \@name private fields
+private: //! @name private fields
 
-  Standard_Integer myCounter; //!< usage counter
+  int myCounter; //!< usage counter
 
 };
 
@@ -995,20 +1016,17 @@ private: //! \@name private fields
 
 ~~~~{.cpp}
 #include <Package_Class.hxx>
-// ==========================================================
-// function : Square
-// purpose  : Method computes the square value
-// ==========================================================
-Standard_Real Package_Class::Square (const Standard_Real theValue)
+
+//=================================================================================================
+
+double Package_Class::Square (const double theValue)
 {
   increment();
   return theValue * theValue;
 }
 
-// ==========================================================
-// function : increment
-// purpose  :
-// ==========================================================
+//=================================================================================================
+
 void Package_Class::increment()
 {
   ++myCounter;
@@ -1051,7 +1069,7 @@ vdump $imagedir/${casename}.png 512 512
 ~~~~
 
 ### GLSL program:
-~~~~{.cpp}
+~~~~{.glsl}
 vec3 Ambient;  //!< Ambient  contribution of light sources
 vec3 Diffuse;  //!< Diffuse  contribution of light sources
 vec3 Specular; //!< Specular contribution of light sources
@@ -1087,7 +1105,7 @@ vec4 ComputeLighting (in vec3 theNormal,
 //! Entry point to the Fragment Shader
 void main()
 {
-  gl_FragColor = computeLighting (normalize (Normal),
+  gl_FragColor = ComputeLighting (normalize (Normal),
                                   normalize (View),
                                   Position);
 }

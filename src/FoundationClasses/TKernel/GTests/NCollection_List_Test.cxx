@@ -485,3 +485,336 @@ TEST_F(NCollection_ListTest, OCC25348_AssignDoesNotChangeAllocator)
     EXPECT_EQ(i, aList1.First());
   }
 }
+
+// Helper struct for testing in-place construction with multiple arguments
+struct MultiArgType
+{
+  int    myA;
+  double myB;
+
+  MultiArgType(int theA, double theB)
+      : myA(theA),
+        myB(theB)
+  {
+  }
+};
+
+// Helper struct for testing move-only types
+struct MoveOnlyType
+{
+  int myValue;
+
+  explicit MoveOnlyType(int theValue)
+      : myValue(theValue)
+  {
+  }
+
+  MoveOnlyType(MoveOnlyType&& theOther) noexcept
+      : myValue(theOther.myValue)
+  {
+    theOther.myValue = 0;
+  }
+
+  MoveOnlyType& operator=(MoveOnlyType&& theOther) noexcept
+  {
+    myValue          = theOther.myValue;
+    theOther.myValue = 0;
+    return *this;
+  }
+
+  MoveOnlyType(const MoveOnlyType&)            = delete;
+  MoveOnlyType& operator=(const MoveOnlyType&) = delete;
+};
+
+TEST_F(NCollection_ListTest, EmplaceAppend)
+{
+  NCollection_List<MultiArgType> aList;
+
+  // Test EmplaceAppend with multiple constructor arguments
+  MultiArgType& aRef1 = aList.EmplaceAppend(42, 3.14);
+  EXPECT_EQ(42, aRef1.myA);
+  EXPECT_NEAR(3.14, aRef1.myB, 1e-10);
+  EXPECT_EQ(1, aList.Size());
+
+  MultiArgType& aRef2 = aList.EmplaceAppend(100, 2.71);
+  EXPECT_EQ(100, aRef2.myA);
+  EXPECT_NEAR(2.71, aRef2.myB, 1e-10);
+  EXPECT_EQ(2, aList.Size());
+
+  // Verify the order
+  EXPECT_EQ(42, aList.First().myA);
+  EXPECT_EQ(100, aList.Last().myA);
+}
+
+TEST_F(NCollection_ListTest, EmplacePrepend)
+{
+  NCollection_List<MultiArgType> aList;
+
+  // Test EmplacePrepend with multiple constructor arguments
+  MultiArgType& aRef1 = aList.EmplacePrepend(42, 3.14);
+  EXPECT_EQ(42, aRef1.myA);
+  EXPECT_NEAR(3.14, aRef1.myB, 1e-10);
+  EXPECT_EQ(1, aList.Size());
+
+  MultiArgType& aRef2 = aList.EmplacePrepend(100, 2.71);
+  EXPECT_EQ(100, aRef2.myA);
+  EXPECT_NEAR(2.71, aRef2.myB, 1e-10);
+  EXPECT_EQ(2, aList.Size());
+
+  // Verify the order (prepended items should be at the front)
+  EXPECT_EQ(100, aList.First().myA);
+  EXPECT_EQ(42, aList.Last().myA);
+}
+
+TEST_F(NCollection_ListTest, EmplaceBefore)
+{
+  NCollection_List<MultiArgType> aList;
+  aList.EmplaceAppend(10, 1.0);
+  aList.EmplaceAppend(30, 3.0);
+
+  // Get iterator to second element
+  NCollection_List<MultiArgType>::Iterator anIter(aList);
+  anIter.Next();
+
+  // Emplace before the second element
+  MultiArgType& aRef = aList.EmplaceBefore(anIter, 20, 2.0);
+  EXPECT_EQ(20, aRef.myA);
+  EXPECT_NEAR(2.0, aRef.myB, 1e-10);
+
+  // Verify the order
+  EXPECT_EQ(3, aList.Size());
+  NCollection_List<MultiArgType>::Iterator aCheckIter(aList);
+  EXPECT_EQ(10, aCheckIter.Value().myA);
+  aCheckIter.Next();
+  EXPECT_EQ(20, aCheckIter.Value().myA);
+  aCheckIter.Next();
+  EXPECT_EQ(30, aCheckIter.Value().myA);
+}
+
+TEST_F(NCollection_ListTest, EmplaceAfter)
+{
+  NCollection_List<MultiArgType> aList;
+  aList.EmplaceAppend(10, 1.0);
+  aList.EmplaceAppend(30, 3.0);
+
+  // Get iterator to first element
+  NCollection_List<MultiArgType>::Iterator anIter(aList);
+
+  // Emplace after the first element
+  MultiArgType& aRef = aList.EmplaceAfter(anIter, 20, 2.0);
+  EXPECT_EQ(20, aRef.myA);
+  EXPECT_NEAR(2.0, aRef.myB, 1e-10);
+
+  // Verify the order
+  EXPECT_EQ(3, aList.Size());
+  NCollection_List<MultiArgType>::Iterator aCheckIter(aList);
+  EXPECT_EQ(10, aCheckIter.Value().myA);
+  aCheckIter.Next();
+  EXPECT_EQ(20, aCheckIter.Value().myA);
+  aCheckIter.Next();
+  EXPECT_EQ(30, aCheckIter.Value().myA);
+}
+
+TEST_F(NCollection_ListTest, EmplaceWithMoveOnlyType)
+{
+  NCollection_List<MoveOnlyType> aList;
+
+  // Test EmplaceAppend with move-only type
+  MoveOnlyType& aRef1 = aList.EmplaceAppend(42);
+  EXPECT_EQ(42, aRef1.myValue);
+
+  MoveOnlyType& aRef2 = aList.EmplacePrepend(100);
+  EXPECT_EQ(100, aRef2.myValue);
+
+  EXPECT_EQ(2, aList.Size());
+  EXPECT_EQ(100, aList.First().myValue);
+  EXPECT_EQ(42, aList.Last().myValue);
+}
+
+TEST_F(NCollection_ListTest, InitializerListConstructor)
+{
+  // Test initializer list constructor
+  NCollection_List<int> aList = {10, 20, 30, 40, 50};
+
+  EXPECT_EQ(5, aList.Size());
+  EXPECT_EQ(10, aList.First());
+  EXPECT_EQ(50, aList.Last());
+
+  // Verify all elements
+  int                             anExpected[] = {10, 20, 30, 40, 50};
+  NCollection_List<int>::Iterator anIter(aList);
+  for (int anIdx = 0; anIter.More(); anIter.Next(), ++anIdx)
+  {
+    EXPECT_EQ(anExpected[anIdx], anIter.Value());
+  }
+}
+
+TEST_F(NCollection_ListTest, InitializerListConstructorEmpty)
+{
+  // Test empty initializer list
+  NCollection_List<int> aList = {};
+
+  EXPECT_TRUE(aList.IsEmpty());
+  EXPECT_EQ(0, aList.Size());
+}
+
+TEST_F(NCollection_ListTest, Exchange)
+{
+  NCollection_List<int> aList1;
+  aList1.Append(10);
+  aList1.Append(20);
+
+  NCollection_List<int> aList2;
+  aList2.Append(30);
+  aList2.Append(40);
+  aList2.Append(50);
+
+  // Exchange the lists
+  aList1.Exchange(aList2);
+
+  // Verify aList1 now has aList2's content
+  EXPECT_EQ(3, aList1.Size());
+  EXPECT_EQ(30, aList1.First());
+  EXPECT_EQ(50, aList1.Last());
+
+  // Verify aList2 now has aList1's content
+  EXPECT_EQ(2, aList2.Size());
+  EXPECT_EQ(10, aList2.First());
+  EXPECT_EQ(20, aList2.Last());
+}
+
+TEST_F(NCollection_ListTest, ExchangeWithEmpty)
+{
+  NCollection_List<int> aList1;
+  aList1.Append(10);
+  aList1.Append(20);
+
+  NCollection_List<int> aList2;
+
+  // Exchange with empty list
+  aList1.Exchange(aList2);
+
+  EXPECT_TRUE(aList1.IsEmpty());
+  EXPECT_EQ(2, aList2.Size());
+  EXPECT_EQ(10, aList2.First());
+  EXPECT_EQ(20, aList2.Last());
+}
+
+TEST_F(NCollection_ListTest, MoveConstructor)
+{
+  NCollection_List<int> aList1;
+  aList1.Append(10);
+  aList1.Append(20);
+  aList1.Append(30);
+
+  // Move construct
+  NCollection_List<int> aList2(std::move(aList1));
+
+  // Verify aList2 has the content
+  EXPECT_EQ(3, aList2.Size());
+  EXPECT_EQ(10, aList2.First());
+  EXPECT_EQ(30, aList2.Last());
+
+  // Verify aList1 is empty after move
+  EXPECT_TRUE(aList1.IsEmpty());
+  EXPECT_EQ(0, aList1.Size());
+}
+
+TEST_F(NCollection_ListTest, MoveAssignment)
+{
+  NCollection_List<int> aList1;
+  aList1.Append(10);
+  aList1.Append(20);
+
+  NCollection_List<int> aList2;
+  aList2.Append(100); // Some initial content
+
+  // Move assign
+  aList2 = std::move(aList1);
+
+  // Verify aList2 has aList1's content
+  EXPECT_EQ(2, aList2.Size());
+  EXPECT_EQ(10, aList2.First());
+  EXPECT_EQ(20, aList2.Last());
+
+  // Verify aList1 is empty after move
+  EXPECT_TRUE(aList1.IsEmpty());
+}
+
+TEST_F(NCollection_ListTest, ConstIteratorFromConstList)
+{
+  NCollection_List<int> aList;
+  aList.Append(10);
+  aList.Append(20);
+  aList.Append(30);
+
+  // Get const reference to the list
+  const NCollection_List<int>& aConstList = aList;
+
+  // Iterate using const iterators
+  int anExpected[] = {10, 20, 30};
+  int anIdx        = 0;
+  for (auto anIt = aConstList.begin(); anIt != aConstList.end(); ++anIt, ++anIdx)
+  {
+    EXPECT_EQ(anExpected[anIdx], *anIt);
+  }
+  EXPECT_EQ(3, anIdx);
+
+  // Also test range-based for on const list
+  anIdx = 0;
+  for (const auto& aValue : aConstList)
+  {
+    EXPECT_EQ(anExpected[anIdx++], aValue);
+  }
+  EXPECT_EQ(3, anIdx);
+}
+
+TEST_F(NCollection_ListTest, InitializerListWithCustomAllocator)
+{
+  // Test initializer list constructor with custom allocator
+  occ::handle<NCollection_IncAllocator> anAlloc = new NCollection_IncAllocator();
+  NCollection_List<int>                 aList({10, 20, 30}, anAlloc);
+
+  EXPECT_EQ(3, aList.Size());
+  EXPECT_EQ(10, aList.First());
+  EXPECT_EQ(30, aList.Last());
+
+  // Verify the allocator was set correctly
+  EXPECT_EQ(anAlloc, aList.Allocator());
+}
+
+TEST_F(NCollection_ListTest, ExchangeWithDifferentAllocators)
+{
+  // Test Exchange between lists with different allocators
+  occ::handle<NCollection_IncAllocator> anAlloc1 = new NCollection_IncAllocator();
+  occ::handle<NCollection_IncAllocator> anAlloc2 = new NCollection_IncAllocator();
+
+  NCollection_List<int> aList1(anAlloc1);
+  aList1.Append(10);
+  aList1.Append(20);
+
+  NCollection_List<int> aList2(anAlloc2);
+  aList2.Append(30);
+  aList2.Append(40);
+  aList2.Append(50);
+
+  // Store original allocators
+  occ::handle<NCollection_BaseAllocator> anOrigAlloc1 = aList1.Allocator();
+  occ::handle<NCollection_BaseAllocator> anOrigAlloc2 = aList2.Allocator();
+
+  // Exchange the lists
+  aList1.Exchange(aList2);
+
+  // Verify contents were exchanged
+  EXPECT_EQ(3, aList1.Size());
+  EXPECT_EQ(30, aList1.First());
+  EXPECT_EQ(50, aList1.Last());
+
+  EXPECT_EQ(2, aList2.Size());
+  EXPECT_EQ(10, aList2.First());
+  EXPECT_EQ(20, aList2.Last());
+
+  // Verify allocators were also exchanged (nodes stay with their allocator)
+  EXPECT_EQ(anOrigAlloc2, aList1.Allocator());
+  EXPECT_EQ(anOrigAlloc1, aList2.Allocator());
+}

@@ -20,21 +20,21 @@
 #endif
 
 //----------------------------------------------------------------------
-//-- Differents constructeurs sont proposes qui correspondent aux
-//-- polynomes en Z :
+//-- Various constructors are provided corresponding to
+//-- polynomials in Z:
 //--    A(std::sin(Theta),std::cos(Theta)) Z**2
 //--  + B(std::sin(Theta),std::cos(Theta)) Z
 //--  + C(std::sin(Theta),std::cos(Theta))
 //--
-//-- Une Courbe est definie sur un domaine
+//-- A Curve is defined on a domain
 //--
-//-- Value retourne le point de parametre U(Theta),V(Theta)
-//--       ou V est la solution du polynome A V**2 + B V + C
-//--       (Selon les cas, on prend V+ ou V-)
+//-- Value returns the point at parameter U(Theta),V(Theta)
+//--       where V is the solution of the polynomial A V**2 + B V + C
+//--       (Depending on the case, V+ or V- is taken)
 //--
-//-- D1u   calcule le vecteur tangent a la courbe
-//--       et retourne le booleen false si ce calcul ne peut
-//--       pas etre mene a bien.
+//-- D1u   computes the tangent vector to the curve
+//--       and returns false if this computation cannot
+//--       be carried out.
 //----------------------------------------------------------------------
 
 #include <algorithm>
@@ -88,10 +88,10 @@ IntAna_Curve::IntAna_Curve()
 {
 }
 
-//=======================================================================
+//=================================================================================================
 // function : SetConeQuadValues
-// purpose  : Description de l intersection Cone Quadrique
-//=======================================================================
+// purpose  : Description of the Cone-Quadric intersection
+//=================================================================================================
 void IntAna_Curve::SetConeQuadValues(const gp_Cone& Cone,
                                      const double   Qxx,
                                      const double   Qyy,
@@ -118,15 +118,15 @@ void IntAna_Curve::SetConeQuadValues(const gp_Cone& Cone,
 
   typequadric = GeomAbs_Cone;
 
-  TwoCurves     = twocurves;     //-- deux  Z pour un meme parametre
-  TakeZPositive = takezpositive; //-- Prendre sur la courbe le Z Positif
-                                 //--   ( -B + std::sqrt()) et non (-B - std::sqrt())
+  TwoCurves     = twocurves;     //-- two Z values for the same parameter
+  TakeZPositive = takezpositive; //-- Take the positive Z on the curve
+                                 //--   ( -B + std::sqrt()) and not (-B - std::sqrt())
 
-  Z0Cte    = Q1;  //-- Attention On a    Z?Cos std::cos(t)
-  Z0Sin    = 0.0; //-- et Non          2 Z?Cos std::cos(t) !!!
-  Z0Cos    = 0.0; //-- Ce pour tous les Parametres
-  Z0CosCos = 0.0; //--  ie pas de Coefficient 2
-  Z0SinSin = 0.0; //--     devant les termes CS C S
+  Z0Cte    = Q1;  //-- Note: we have    Z?Cos std::cos(t)
+  Z0Sin    = 0.0; //-- and not         2 Z?Cos std::cos(t) !!!
+  Z0Cos    = 0.0; //-- This applies to all parameters
+  Z0CosCos = 0.0; //--  i.e. no coefficient 2
+  Z0SinSin = 0.0; //--     in front of the CS C S terms
   Z0CosSin = 0.0;
 
   Z1Cte    = 2.0 * (UnSurTgAngle)*Qz;
@@ -154,10 +154,10 @@ void IntAna_Curve::SetConeQuadValues(const gp_Cone& Cone,
   myLastParameter  = (TwoCurves) ? DomainSup + DomainSup - DomainInf : DomainSup;
 }
 
-//=======================================================================
+//=================================================================================================
 // function : SetCylinderQuadValues
-// purpose  : Description de l intersection Cylindre Quadrique
-//=======================================================================
+// purpose  : Description of the Cylinder-Quadric intersection
+//=================================================================================================
 void IntAna_Curve::SetCylinderQuadValues(const gp_Cylinder& Cyl,
                                          const double       Qxx,
                                          const double       Qyy,
@@ -180,8 +180,8 @@ void IntAna_Curve::SetCylinderQuadValues(const gp_Cylinder& Cyl,
   RCyl        = Cyl.Radius();
   typequadric = GeomAbs_Cylinder;
 
-  TwoCurves       = twocurves;     //-- deux  Z pour un meme parametre
-  TakeZPositive   = takezpositive; //-- Prendre sur la courbe le Z Positif
+  TwoCurves       = twocurves;     //-- two Z values for the same parameter
+  TakeZPositive   = takezpositive; //-- Take the positive Z on the curve
   double RCylmul2 = RCyl + RCyl;   //--   ( -B + std::sqrt())
 
   Z0Cte    = Q1;
@@ -242,7 +242,7 @@ void IntAna_Curve::Domain(double& theFirst, double& theLast) const
 
 bool IntAna_Curve::IsConstant() const
 {
-  //-- ???  Pas facile de decider a la seule vue des Param.
+  //-- ???  Not easy to decide based only on the parameters.
   return (false);
 }
 
@@ -351,7 +351,9 @@ void IntAna_Curve::InternalUVValue(const double theta,
   const double aTolD = 2.0 * aDT * std::abs(B * aDB - 2.0 * (A * aDC + C * aDA));
 
   if (aDiscriminant < aTolD)
+  {
     aDiscriminant = 0.0;
+  }
 
   if (std::abs(A) <= Precision::PConfusion())
   {
@@ -394,7 +396,7 @@ gp_Pnt IntAna_Curve::Value(const double theta)
 
 bool IntAna_Curve::D1u(const double theta, gp_Pnt& Pt, gp_Vec& Vec)
 {
-  //-- Pour detecter le cas ou le calcul est impossible
+  //-- To detect the case where the computation is impossible
   double A, B, C, U, V, sint, cost, SigneSqrtDis;
   A    = 0.0;
   B    = 0.0;
@@ -408,9 +410,11 @@ bool IntAna_Curve::D1u(const double theta, gp_Pnt& Pt, gp_Vec& Vec)
   //
   Pt = Value(theta);
   if (std::abs(A) < 1.0e-7 || std::abs(SigneSqrtDis) < 1.0e-10)
+  {
     return (false);
+  }
 
-  //-- Approximation de la derivee (mieux que le calcul mathematique!)
+  //-- Approximation of the derivative (better than the mathematical computation!)
   double dtheta = (DomainSup - DomainInf) * 1.0e-6;
   double theta2 = theta + dtheta;
   if ((theta2 < DomainInf) || ((theta2 > DomainSup) && (!TwoCurves))
@@ -426,13 +430,13 @@ bool IntAna_Curve::D1u(const double theta, gp_Pnt& Pt, gp_Vec& Vec)
   return (true);
 }
 
-//=======================================================================
+//=================================================================================================
 // function : FindParameter
 // purpose  : Projects P to the ALine. Returns the list of parameters as a results
 //            of projection.
 //           Sometimes aline can be self-intersected line (see bug #29807 where
 //            ALine goes through the cone apex).
-//=======================================================================
+//=================================================================================================
 void IntAna_Curve::FindParameter(const gp_Pnt& theP, NCollection_List<double>& theParams) const
 {
   const double aPIpPI = M_PI + M_PI, anEpsAng = 1.e-8,
@@ -491,13 +495,19 @@ void IntAna_Curve::FindParameter(const gp_Pnt& theP, NCollection_List<double>& t
   for (int i = 0; i < aMaxPar; i++)
   {
     if (aParams[i] > myLastParameter)
+    {
       break;
+    }
 
     if (aParams[i] < myFirstParameter)
+    {
       continue;
+    }
 
     if (i && (aParams[i] - aParams[i - 1]) < Precision::PConfusion())
+    {
       continue;
+    }
 
     double U = 0.0, V = 0.0, A = 0.0, B = 0.0, C = 0.0, sint = 0.0, cost = 0.0, SigneSqrtDis = 0.0;
     InternalUVValue(aParams[i], U, V, A, B, C, cost, sint, SigneSqrtDis);
@@ -505,9 +515,13 @@ void IntAna_Curve::FindParameter(const gp_Pnt& theP, NCollection_List<double>& t
 
     double aSqTol;
     if (aParams[i] == aTheta || (TwoCurves && aParams[i] == DomainSup + DomainSup - aTheta))
+    {
       aSqTol = InternalPrecision;
+    }
     else
+    {
       aSqTol = aSqTolPrecision;
+    }
 
     if (aP.SquareDistance(theP) < aSqTol)
     {

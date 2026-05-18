@@ -25,9 +25,19 @@
 #include <BSplCLib.hxx>
 #include <Geom_BSplineCurve.hxx>
 #include <GeomAPI_PointsToBSpline.hxx>
+#include <gp.hxx>
 #include <math_Vector.hxx>
 #include <Standard_OutOfRange.hxx>
 #include <StdFail_NotDone.hxx>
+
+namespace
+{
+bool hasMeaningfulSpan(const double theSpan)
+{
+  const double aResolution = gp::Resolution();
+  return theSpan * theSpan > aResolution * aResolution;
+}
+} // namespace
 
 //=================================================================================================
 
@@ -109,12 +119,15 @@ void GeomAPI_PointsToBSpline::Init(const NCollection_Array1<gp_Pnt>& Points,
                                    const GeomAbs_Shape               Continuity,
                                    const double                      Tol3D)
 {
+  myIsDone     = false;
   double Tol2D = 0.; // dummy argument for BSplineCompute.
 
   int  nbit       = 2;
   bool UseSquares = false;
   if (Tol3D <= 1.e-3)
+  {
     UseSquares = true;
+  }
 
   AppDef_BSplineCompute TheComputer(DegMin, DegMax, Tol3D, Tol2D, nbit, true, ParType, UseSquares);
 
@@ -160,8 +173,11 @@ void GeomAPI_PointsToBSpline::Init(const NCollection_Array1<gp_Pnt>& Points,
                                    const GeomAbs_Shape               Continuity,
                                    const double                      Tol3D)
 {
+  myIsDone = false;
   if (Params.Length() != Points.Length())
+  {
     throw Standard_OutOfRange("GeomAPI_PointsToBSpline::Init() - invalid input");
+  }
 
   double      Tol2D = 0.; // dummy argument for BSplineCompute.
   int         Nbp   = Params.Length();
@@ -171,6 +187,11 @@ void GeomAPI_PointsToBSpline::Init(const NCollection_Array1<gp_Pnt>& Points,
 
   double Uf = Params(Params.Lower());
   double Ul = Params(Params.Upper()) - Uf;
+  if (!hasMeaningfulSpan(Ul))
+  {
+    return;
+  }
+
   for (int i = 2; i < Nbp; i++)
   {
     theParams(i) = (Params(i) - Uf) / Ul;
@@ -226,11 +247,14 @@ void GeomAPI_PointsToBSpline::Init(const NCollection_Array1<gp_Pnt>& Points,
                                    const GeomAbs_Shape               Continuity,
                                    const double                      Tol3D)
 {
+  myIsDone    = false;
   int NbPoint = Points.Length(), i;
 
   int nbit = 2;
   if (Tol3D <= 1.e-3)
+  {
     nbit = 0;
+  }
 
   // Variational algo
 
@@ -312,7 +336,9 @@ void GeomAPI_PointsToBSpline::Init(const NCollection_Array1<gp_Pnt>& Points,
 const occ::handle<Geom_BSplineCurve>& GeomAPI_PointsToBSpline::Curve() const
 {
   if (!myIsDone)
+  {
     throw StdFail_NotDone("GeomAPI_PointsToBSpline::Curve ");
+  }
   return myCurve;
 }
 

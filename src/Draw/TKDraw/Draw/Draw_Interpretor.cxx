@@ -57,8 +57,10 @@ namespace
 void dumpArgs(Standard_OStream& os, int argc, const char* argv[])
 {
   for (int i = 0; i < argc; i++)
+  {
     os << argv[i] << " ";
-  os << std::endl;
+  }
+  os << '\n';
 }
 
 void flush_standard_streams()
@@ -96,7 +98,9 @@ int capture_start(int theFDStd, int theFDLog)
 void capture_end(int theFDStd, int& theFDSave)
 {
   if (theFDSave < 0)
+  {
     return;
+  }
 
   // restore normal descriptors of console stream
   if (dup2(theFDSave, theFDStd) < 0)
@@ -138,7 +142,9 @@ static int CommandCmd(ClientData theClientData, Tcl_Interp* interp, int argc, co
   }
 
   if (doEcho || doLog)
+  {
     dumpArgs(std::cout, argc, argv);
+  }
 
   // run command
   try
@@ -218,7 +224,7 @@ static int CommandCmd(ClientData theClientData, Tcl_Interp* interp, int argc, co
     const char* aResultStr = Tcl_GetStringResult(interp);
     if (aResultStr != nullptr && aResultStr[0] != '\0')
     {
-      std::cout << aResultStr << std::endl;
+      std::cout << aResultStr << '\n';
     }
   }
 
@@ -275,7 +281,9 @@ Draw_Interpretor::Draw_Interpretor(const Draw_PInterp& theInterp)
 void Draw_Interpretor::Init()
 {
   if (isAllocated)
+  {
     Tcl_DeleteInterp(myInterp);
+  }
   isAllocated = true;
   myInterp    = Tcl_CreateInterp();
 }
@@ -300,11 +308,11 @@ void Draw_Interpretor::SetToColorize(bool theToColorize)
 
 //=================================================================================================
 
-void Draw_Interpretor::add(const char*                     theCommandName,
-                           const char*                     theHelp,
-                           const char*                     theFileName,
+void Draw_Interpretor::add(const char* const               theCommandName,
+                           const char* const               theHelp,
+                           const char* const               theFileName,
                            Draw_Interpretor::CallBackData* theCallback,
-                           const char*                     theGroup)
+                           const char* const               theGroup)
 {
   Standard_ASSERT_RAISE(myInterp != nullptr, "Attempt to add command to Null interpreter");
 
@@ -373,7 +381,7 @@ void Draw_Interpretor::Reset()
 
 //=================================================================================================
 
-Draw_Interpretor& Draw_Interpretor::Append(const char* s)
+Draw_Interpretor& Draw_Interpretor::Append(const char* const s)
 {
   Tcl_AppendResult(myInterp, s, (const char*)nullptr);
   return *this;
@@ -416,6 +424,16 @@ Draw_Interpretor& Draw_Interpretor::Append(const int i)
 
 //=================================================================================================
 
+Draw_Interpretor& Draw_Interpretor::Append(const size_t theResult)
+{
+  char c[100];
+  Sprintf(c, "%zu", theResult);
+  Tcl_AppendResult(myInterp, c, (const char*)nullptr);
+  return *this;
+}
+
+//=================================================================================================
+
 Draw_Interpretor& Draw_Interpretor::Append(const double r)
 {
   char s[100];
@@ -433,35 +451,35 @@ Draw_Interpretor& Draw_Interpretor::Append(const Standard_SStream& s)
 
 //=================================================================================================
 
-void Draw_Interpretor::AppendElement(const char* s)
+void Draw_Interpretor::AppendElement(const char* const s)
 {
   Tcl_AppendElement(myInterp, s);
 }
 
 //=================================================================================================
 
-int Draw_Interpretor::Eval(const char* line)
+int Draw_Interpretor::Eval(const char* const line)
 {
   return Tcl_Eval(myInterp, line);
 }
 
 //=================================================================================================
 
-int Draw_Interpretor::RecordAndEval(const char* line, const int flags)
+int Draw_Interpretor::RecordAndEval(const char* const line, const int flags)
 {
   return Tcl_RecordAndEval(myInterp, line, flags);
 }
 
 //=================================================================================================
 
-int Draw_Interpretor::EvalFile(const char* fname)
+int Draw_Interpretor::EvalFile(const char* const fname)
 {
   return Tcl_EvalFile(myInterp, fname);
 }
 
 //=================================================================================================
 
-int Draw_Interpretor::PrintHelp(const char* theCommandName)
+int Draw_Interpretor::PrintHelp(const char* const theCommandName)
 {
   TCollection_AsciiString aCmd     = TCollection_AsciiString("help ") + theCommandName;
   Standard_PCharacter     aLinePtr = (Standard_PCharacter)aCmd.ToCString();
@@ -470,7 +488,7 @@ int Draw_Interpretor::PrintHelp(const char* theCommandName)
 
 //=================================================================================================
 
-bool Draw_Interpretor::Complete(const char* line)
+bool Draw_Interpretor::Complete(const char* const line)
 {
   Standard_PCharacter pLine;
   //
@@ -520,7 +538,9 @@ Draw_PInterp Draw_Interpretor::Interp() const
 void Draw_Interpretor::Set(const Draw_PInterp& PIntrp)
 {
   if (isAllocated)
+  {
     Tcl_DeleteInterp(myInterp);
+  }
   isAllocated = false;
   myInterp    = PIntrp;
 }
@@ -530,7 +550,9 @@ void Draw_Interpretor::Set(const Draw_PInterp& PIntrp)
 void Draw_Interpretor::SetDoLog(bool doLog)
 {
   if (myDoLog == doLog)
+  {
     return;
+  }
 
   // create log file if not opened yet
   if (doLog && myFDLog < 0)
@@ -579,7 +601,9 @@ bool Draw_Interpretor::GetDoEcho() const
 void Draw_Interpretor::ResetLog()
 {
   if (myFDLog < 0)
+  {
     return;
+  }
 
   // flush cerr and cout, for the case if they are bound to the log
   flush_standard_streams();
@@ -596,10 +620,12 @@ void Draw_Interpretor::ResetLog()
   }
 }
 
-void Draw_Interpretor::AddLog(const char* theStr)
+void Draw_Interpretor::AddLog(const char* const theStr)
 {
   if (myFDLog < 0 || !theStr || !theStr[0])
+  {
     return;
+  }
 
   // flush cerr and cout, for the case if they are bound to the log
   flush_standard_streams();
@@ -615,7 +641,9 @@ TCollection_AsciiString Draw_Interpretor::GetLog()
 {
   TCollection_AsciiString aLog;
   if (myFDLog < 0)
+  {
     return aLog;
+  }
 
   // flush cerr and cout
   flush_standard_streams();

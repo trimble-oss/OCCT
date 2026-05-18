@@ -35,10 +35,8 @@ const Standard_GUID& TDataStd_Real::GetID()
   return TDataStd_RealID;
 }
 
-//=======================================================================
-// function : SetAttr
-// purpose  : Implements Set functionality
-//=======================================================================
+//=================================================================================================
+
 static occ::handle<TDataStd_Real> SetAttr(const TDF_Label&     label,
                                           const double         V,
                                           const Standard_GUID& theGuid)
@@ -61,10 +59,7 @@ occ::handle<TDataStd_Real> TDataStd_Real::Set(const TDF_Label& L, const double V
   return SetAttr(L, V, GetID());
 }
 
-//=======================================================================
-// function : Set
-// purpose  : User defined attribute
-//=======================================================================
+//=================================================================================================
 
 occ::handle<TDataStd_Real> TDataStd_Real::Set(const TDF_Label&     L,
                                               const Standard_GUID& theGuid,
@@ -103,7 +98,9 @@ void TDataStd_Real::Set(const double v)
 {
   // OCC2932 correction
   if (myValue == v)
+  {
     return;
+  }
 
   Backup();
   myValue = v;
@@ -122,7 +119,9 @@ void TDataStd_Real::SetDimension(const TDataStd_RealEnum DIM)
 {
   // OCC2932 correction
   if (myDimension == DIM)
+  {
     return;
+  }
 
   Backup();
   myDimension = DIM;
@@ -147,7 +146,9 @@ const Standard_GUID& TDataStd_Real::ID() const
 void TDataStd_Real::SetID(const Standard_GUID& theGuid)
 {
   if (myID == theGuid)
+  {
     return;
+  }
 
   Backup();
   myID = theGuid;

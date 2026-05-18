@@ -30,10 +30,8 @@
 
 IMPLEMENT_STANDARD_RTTIEXT(DrawTrSurf_Drawable, Draw_Drawable3D)
 
-//=======================================================================
-// function : DrawTrSurf_Drawable
-// purpose  : initialise the discretisation
-//=======================================================================
+//=================================================================================================
+
 DrawTrSurf_Drawable::DrawTrSurf_Drawable(
 
   const int    discret,
@@ -95,10 +93,8 @@ void DrawTrSurf_Drawable::DrawCurve2dOn(Adaptor2d_Curve2d& C, Draw_Display& aDis
   }
 }
 
-//=======================================================================
-// static function : PlotCurve
-// purpose  : draw a 3D curve
-//=======================================================================
+//=================================================================================================
+
 static void PlotCurve(Draw_Display&          aDisplay,
                       const Adaptor3d_Curve& C,
                       double&                theFirstParam,
@@ -212,12 +208,18 @@ void DrawTrSurf_Drawable::DrawIsoCurveOn(Adaptor3d_IsoCurve&   C,
   {
     GeomAdaptor_Curve GC;
     if (C.GetType() == GeomAbs_BezierCurve)
+    {
       GC.Load(C.Bezier(), F, L);
+    }
     else
+    {
       GC.Load(C.BSpline(), F, L);
+    }
 
     DrawCurveOn(GC, dis);
   }
   else
+  {
     DrawCurveOn(C, dis);
+  }
 }

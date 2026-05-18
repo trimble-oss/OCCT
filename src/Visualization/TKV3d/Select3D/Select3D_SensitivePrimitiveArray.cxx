@@ -15,6 +15,7 @@
 
 #include <Select3D_SensitivePrimitiveArray.hxx>
 
+#include <NCollection_PackedMapAlgo.hxx>
 #include <OSD_Parallel.hxx>
 
 #include <atomic>
@@ -329,7 +330,7 @@ bool Select3D_SensitivePrimitiveArray::InitTriangulation(
       myBvhIndices.SetIndex(aGroupIter, aGroupIter);
       myCDG3D.ChangeCoord() += anEntity->CenterOfGeometry().XYZ();
     }
-    myCDG3D.ChangeCoord().Divide(static_cast<double>(myGroups->Size()));
+    myCDG3D.ChangeCoord().Divide(static_cast<double>(myGroups->Length()));
     if (theToEvalMinMax)
     {
       computeBoundingBox();
@@ -398,6 +399,16 @@ bool Select3D_SensitivePrimitiveArray::InitTriangulation(
     computeBoundingBox();
   }
   return true;
+}
+
+//=================================================================================================
+
+std::array<NCollection_Vec3<float>, 3> Select3D_SensitivePrimitiveArray::GetVertex(
+  const int theIndex) const
+{
+  int aTriNodes[3] = {0, 0, 0};
+  getTriIndices(myIndices, theIndex * 3, aTriNodes);
+  return {getPosVec3(aTriNodes[0]), getPosVec3(aTriNodes[1]), getPosVec3(aTriNodes[2])};
 }
 
 //=================================================================================================
@@ -492,7 +503,7 @@ bool Select3D_SensitivePrimitiveArray::InitPoints(
       myBvhIndices.SetIndex(aGroupIter, aGroupIter);
       myCDG3D.ChangeCoord() += anEntity->CenterOfGeometry().XYZ();
     }
-    myCDG3D.ChangeCoord().Divide(static_cast<double>(myGroups->Size()));
+    myCDG3D.ChangeCoord().Divide(static_cast<double>(myGroups->Length()));
     if (theToEvalMinMax)
     {
       computeBoundingBox();
@@ -591,7 +602,7 @@ occ::handle<Select3D_SensitiveEntity> Select3D_SensitivePrimitiveArray::GetConne
                              myIndexLower,
                              myIndexUpper,
                              true,
-                             !myGroups.IsNull() ? myGroups->Size() : 1);
+                             !myGroups.IsNull() ? myGroups->Length() : 1);
       break;
     }
     case Graphic3d_TOPA_TRIANGLES: {
@@ -601,7 +612,7 @@ occ::handle<Select3D_SensitiveEntity> Select3D_SensitivePrimitiveArray::GetConne
                                     myIndexLower,
                                     myIndexUpper,
                                     true,
-                                    !myGroups.IsNull() ? myGroups->Size() : 1);
+                                    !myGroups.IsNull() ? myGroups->Length() : 1);
       break;
     }
     default:
@@ -906,11 +917,13 @@ bool Select3D_SensitivePrimitiveArray::Matches(SelectBasics_SelectingVolumeManag
       hasResults = true;
       if (!myDetectedElemMap.IsNull())
       {
-        myDetectedElemMap->ChangeMap().Unite(aChild->myDetectedElemMap->Map());
+        NCollection_PackedMapAlgo::Unite(myDetectedElemMap->ChangeMap(),
+                                         aChild->myDetectedElemMap->Map());
       }
       if (!myDetectedNodeMap.IsNull())
       {
-        myDetectedNodeMap->ChangeMap().Unite(aChild->myDetectedNodeMap->Map());
+        NCollection_PackedMapAlgo::Unite(myDetectedNodeMap->ChangeMap(),
+                                         aChild->myDetectedNodeMap->Map());
       }
       if (thePickResult.Depth() > aPickResult.Depth())
       {

@@ -16,7 +16,7 @@
 #include <Geom_OffsetCurveUtils.pxx>
 #include <GeomGridEval_Curve.hxx>
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array1<gp_Pnt> GeomGridEval_OffsetCurve::EvaluateGrid(
   const NCollection_Array1<double>& theParams) const
@@ -28,8 +28,7 @@ NCollection_Array1<gp_Pnt> GeomGridEval_OffsetCurve::EvaluateGrid(
 
   // Offset D0 requires basis D1 to compute offset direction
   // Batch evaluate basis curve D1
-  GeomGridEval_Curve aBasisEval;
-  aBasisEval.Initialize(myBasis);
+  GeomGridEval_Curve aBasisEval(myBasis);
 
   NCollection_Array1<GeomGridEval::CurveD1> aBasisD1 = aBasisEval.EvaluateGridD1(theParams);
   if (aBasisD1.IsEmpty())
@@ -37,7 +36,7 @@ NCollection_Array1<gp_Pnt> GeomGridEval_OffsetCurve::EvaluateGrid(
     return NCollection_Array1<gp_Pnt>();
   }
 
-  const int                  aNbParams = theParams.Size();
+  const int                  aNbParams = theParams.Length();
   NCollection_Array1<gp_Pnt> aResult(1, aNbParams);
 
   const gp_XYZ aDirXYZ = myDirection.XYZ();
@@ -46,15 +45,17 @@ NCollection_Array1<gp_Pnt> GeomGridEval_OffsetCurve::EvaluateGrid(
   {
     const GeomGridEval::CurveD1& aBasis = aBasisD1.Value(i);
     gp_Pnt                       aP     = aBasis.Point;
-    // CalculateD0 - no direction change handling needed
-    Geom_OffsetCurveUtils::CalculateD0(aP, aBasis.D1, aDirXYZ, myOffset);
+    if (!Geom_OffsetCurveUtils::CalculateD0(aP, aBasis.D1, aDirXYZ, myOffset))
+    {
+      return NCollection_Array1<gp_Pnt>();
+    }
     aResult.SetValue(i, aP);
   }
 
   return aResult;
 }
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array1<GeomGridEval::CurveD1> GeomGridEval_OffsetCurve::EvaluateGridD1(
   const NCollection_Array1<double>& theParams) const
@@ -66,8 +67,7 @@ NCollection_Array1<GeomGridEval::CurveD1> GeomGridEval_OffsetCurve::EvaluateGrid
 
   // Offset D1 requires basis D2
   // Batch evaluate basis curve D2
-  GeomGridEval_Curve aBasisEval;
-  aBasisEval.Initialize(myBasis);
+  GeomGridEval_Curve aBasisEval(myBasis);
 
   NCollection_Array1<GeomGridEval::CurveD2> aBasisD2 = aBasisEval.EvaluateGridD2(theParams);
   if (aBasisD2.IsEmpty())
@@ -75,7 +75,7 @@ NCollection_Array1<GeomGridEval::CurveD1> GeomGridEval_OffsetCurve::EvaluateGrid
     return NCollection_Array1<GeomGridEval::CurveD1>();
   }
 
-  const int                                 aNbParams = theParams.Size();
+  const int                                 aNbParams = theParams.Length();
   NCollection_Array1<GeomGridEval::CurveD1> aResult(1, aNbParams);
 
   const gp_XYZ aDirXYZ = myDirection.XYZ();
@@ -85,15 +85,17 @@ NCollection_Array1<GeomGridEval::CurveD1> GeomGridEval_OffsetCurve::EvaluateGrid
     const GeomGridEval::CurveD2& aBasis = aBasisD2.Value(i);
     gp_Pnt                       aP     = aBasis.Point;
     gp_Vec                       aD1    = aBasis.D1;
-    // CalculateD1 - no direction change handling needed
-    Geom_OffsetCurveUtils::CalculateD1(aP, aD1, aBasis.D2, aDirXYZ, myOffset);
+    if (!Geom_OffsetCurveUtils::CalculateD1(aP, aD1, aBasis.D2, aDirXYZ, myOffset))
+    {
+      return NCollection_Array1<GeomGridEval::CurveD1>();
+    }
     aResult.ChangeValue(i) = {aP, aD1};
   }
 
   return aResult;
 }
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array1<GeomGridEval::CurveD2> GeomGridEval_OffsetCurve::EvaluateGridD2(
   const NCollection_Array1<double>& theParams) const
@@ -105,8 +107,7 @@ NCollection_Array1<GeomGridEval::CurveD2> GeomGridEval_OffsetCurve::EvaluateGrid
 
   // Offset D2 requires basis D3
   // Batch evaluate basis curve D3
-  GeomGridEval_Curve aBasisEval;
-  aBasisEval.Initialize(myBasis);
+  GeomGridEval_Curve aBasisEval(myBasis);
 
   NCollection_Array1<GeomGridEval::CurveD3> aBasisD3 = aBasisEval.EvaluateGridD3(theParams);
   if (aBasisD3.IsEmpty())
@@ -114,7 +115,7 @@ NCollection_Array1<GeomGridEval::CurveD2> GeomGridEval_OffsetCurve::EvaluateGrid
     return NCollection_Array1<GeomGridEval::CurveD2>();
   }
 
-  const int                                 aNbParams = theParams.Size();
+  const int                                 aNbParams = theParams.Length();
   NCollection_Array1<GeomGridEval::CurveD2> aResult(1, aNbParams);
 
   const gp_XYZ aDirXYZ = myDirection.XYZ();
@@ -132,24 +133,36 @@ NCollection_Array1<GeomGridEval::CurveD2> GeomGridEval_OffsetCurve::EvaluateGrid
     if (aD1.SquareMagnitude() <= gp::Resolution())
     {
       gp_Vec aDummyD4;
-      isDirectionChange =
-        Geom_OffsetCurveUtils::AdjustDerivative(*myBasis,
-                                                3,
-                                                theParams.Value(theParams.Lower() + i - 1),
-                                                aD1,
-                                                aD2,
-                                                aD3,
-                                                aDummyD4);
+      if (!Geom_OffsetCurveUtils::AdjustDerivative(*myBasis,
+                                                   3,
+                                                   theParams.Value(theParams.Lower() + i - 1),
+                                                   aD1,
+                                                   aD2,
+                                                   aD3,
+                                                   aDummyD4,
+                                                   isDirectionChange))
+      {
+        return NCollection_Array1<GeomGridEval::CurveD2>();
+      }
     }
 
-    Geom_OffsetCurveUtils::CalculateD2(aP, aD1, aD2, aD3, aDirXYZ, myOffset, isDirectionChange);
+    if (!Geom_OffsetCurveUtils::CalculateD2(aP,
+                                            aD1,
+                                            aD2,
+                                            aD3,
+                                            aDirXYZ,
+                                            myOffset,
+                                            isDirectionChange))
+    {
+      return NCollection_Array1<GeomGridEval::CurveD2>();
+    }
     aResult.ChangeValue(i) = {aP, aD1, aD2};
   }
 
   return aResult;
 }
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array1<GeomGridEval::CurveD3> GeomGridEval_OffsetCurve::EvaluateGridD3(
   const NCollection_Array1<double>& theParams) const
@@ -161,8 +174,7 @@ NCollection_Array1<GeomGridEval::CurveD3> GeomGridEval_OffsetCurve::EvaluateGrid
 
   // Offset D3 requires basis D3 + D4
   // Batch evaluate basis curve D3, get D4 individually
-  GeomGridEval_Curve aBasisEval;
-  aBasisEval.Initialize(myBasis);
+  GeomGridEval_Curve aBasisEval(myBasis);
 
   NCollection_Array1<GeomGridEval::CurveD3> aBasisD3 = aBasisEval.EvaluateGridD3(theParams);
   if (aBasisD3.IsEmpty())
@@ -170,7 +182,7 @@ NCollection_Array1<GeomGridEval::CurveD3> GeomGridEval_OffsetCurve::EvaluateGrid
     return NCollection_Array1<GeomGridEval::CurveD3>();
   }
 
-  const int                                 aNbParams = theParams.Size();
+  const int                                 aNbParams = theParams.Length();
   NCollection_Array1<GeomGridEval::CurveD3> aResult(1, aNbParams);
 
   const gp_XYZ aDirXYZ = myDirection.XYZ();
@@ -190,25 +202,37 @@ NCollection_Array1<GeomGridEval::CurveD3> GeomGridEval_OffsetCurve::EvaluateGrid
     bool isDirectionChange = false;
     if (aD1.SquareMagnitude() <= gp::Resolution())
     {
-      isDirectionChange =
-        Geom_OffsetCurveUtils::AdjustDerivative(*myBasis, 4, aParam, aD1, aD2, aD3, aD4);
+      if (!Geom_OffsetCurveUtils::AdjustDerivative(*myBasis,
+                                                   4,
+                                                   aParam,
+                                                   aD1,
+                                                   aD2,
+                                                   aD3,
+                                                   aD4,
+                                                   isDirectionChange))
+      {
+        return NCollection_Array1<GeomGridEval::CurveD3>();
+      }
     }
 
-    Geom_OffsetCurveUtils::CalculateD3(aP,
-                                       aD1,
-                                       aD2,
-                                       aD3,
-                                       aD4,
-                                       aDirXYZ,
-                                       myOffset,
-                                       isDirectionChange);
+    if (!Geom_OffsetCurveUtils::CalculateD3(aP,
+                                            aD1,
+                                            aD2,
+                                            aD3,
+                                            aD4,
+                                            aDirXYZ,
+                                            myOffset,
+                                            isDirectionChange))
+    {
+      return NCollection_Array1<GeomGridEval::CurveD3>();
+    }
     aResult.ChangeValue(i) = {aP, aD1, aD2, aD3};
   }
 
   return aResult;
 }
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array1<gp_Vec> GeomGridEval_OffsetCurve::EvaluateGridDN(
   const NCollection_Array1<double>& theParams,
@@ -219,7 +243,7 @@ NCollection_Array1<gp_Vec> GeomGridEval_OffsetCurve::EvaluateGridDN(
     return NCollection_Array1<gp_Vec>();
   }
 
-  const int aNbParams = theParams.Size();
+  const int aNbParams = theParams.Length();
 
   // Reuse optimized grid evaluators for orders 1-3
   if (theN == 1)
@@ -256,8 +280,7 @@ NCollection_Array1<gp_Vec> GeomGridEval_OffsetCurve::EvaluateGridDN(
   {
     // For orders > 3, offset curve DN = basis curve DN (no offset contribution)
     // Batch evaluate basis curve DN
-    GeomGridEval_Curve aBasisEval;
-    aBasisEval.Initialize(myBasis);
+    GeomGridEval_Curve aBasisEval(myBasis);
     return aBasisEval.EvaluateGridDN(theParams, theN);
   }
 }

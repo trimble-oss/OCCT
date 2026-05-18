@@ -18,10 +18,7 @@
 #include <TObj_Persistence.hxx>
 #include <TObj_Object.hxx>
 
-//=======================================================================
-// function : getMapOfTypes
-// purpose  : Returns the map of types
-//=======================================================================
+//=================================================================================================
 
 NCollection_DataMap<TCollection_AsciiString, void*>& TObj_Persistence::getMapOfTypes()
 {
@@ -34,7 +31,7 @@ NCollection_DataMap<TCollection_AsciiString, void*>& TObj_Persistence::getMapOfT
 // purpose  : Register the type for persistence
 //=======================================================================
 
-TObj_Persistence::TObj_Persistence(const char* theType)
+TObj_Persistence::TObj_Persistence(const char* const theType)
 {
   myType = theType;
   getMapOfTypes().Bind(theType, this);
@@ -49,14 +46,16 @@ TObj_Persistence::~TObj_Persistence()
 
 //=================================================================================================
 
-occ::handle<TObj_Object> TObj_Persistence::CreateNewObject(const char*      theType,
-                                                           const TDF_Label& theLabel)
+occ::handle<TObj_Object> TObj_Persistence::CreateNewObject(const char* const theType,
+                                                           const TDF_Label&  theLabel)
 {
   if (getMapOfTypes().IsBound(theType))
   {
     TObj_Persistence* tool = (TObj_Persistence*)getMapOfTypes().Find(theType);
     if (tool)
+    {
       return tool->New(theLabel);
+    }
   }
   return nullptr;
 }
@@ -68,6 +67,6 @@ void TObj_Persistence::DumpTypes(Standard_OStream& theOs)
   NCollection_DataMap<TCollection_AsciiString, void*>::Iterator it(getMapOfTypes());
   for (; it.More(); it.Next())
   {
-    theOs << it.Key() << std::endl;
+    theOs << it.Key() << '\n';
   }
 }

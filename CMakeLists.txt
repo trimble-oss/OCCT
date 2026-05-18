@@ -116,9 +116,9 @@ if ("${BUILD_LIBRARY_TYPE}" STREQUAL "Shared")
     set (BUILD_SHARED_LIBRARY_NAME_POSTFIX "" CACHE STRING "${BUILD_SHARED_LIBRARY_NAME_POSTFIX_DESCR}" FORCE)
   endif()
 else()
-  message(AUTHOR_WARNING "OCCT is licensed under LGPL 2.1, which has limitations on"
-                         "static linking with proprietary software."
-                         "OCCT3D offers commercial licensing exceptions to LGPL 2.1."
+  message(AUTHOR_WARNING "OCCT is licensed under LGPL 2.1, which has limitations on "
+                         "static linking with proprietary software. "
+                         "OCCT3D offers commercial licensing exceptions to LGPL 2.1. "
                          "Please use our contact form at https://occt3d.com/")
   unset (BUILD_SHARED_LIBS)
   unset (BUILD_SHARED_LIBRARY_NAME_POSTFIX)
@@ -675,12 +675,10 @@ endif()
 # OpenGL ES 2.0
 if (CAN_USE_GLES2 AND USE_GLES2)
   add_definitions (-DHAVE_GLES2_EXT)
-  if (NOT IOS)
+  if (NOT IOS AND NOT EMSCRIPTEN)
     list (APPEND OCCT_3RDPARTY_CMAKE_LIST "adm/cmake/egl")
     list (APPEND OCCT_3RDPARTY_CMAKE_LIST "adm/cmake/gles2")
-    if (NOT EMSCRIPTEN)
-      OCCT_ADD_VCPKG_FEATURE ("angle")
-    endif()
+    OCCT_ADD_VCPKG_FEATURE ("angle")
   endif()
 else()
   if (NOT CAN_USE_GLES2)
@@ -1105,6 +1103,10 @@ COLLECT_AND_INSTALL_OCCT_HEADER_FILES ("${CMAKE_BINARY_DIR}" "${BUILD_TOOLKITS}"
 
 # Create and install Standard_Version.hxx
 CONFIGURE_AND_INSTALL_VERSION_HEADER()
+
+# Install deprecated NCollection alias headers for backward compatibility
+install(DIRECTORY src/Deprecated/NCollectionAliases/
+        DESTINATION "${INSTALL_DIR_INCLUDE}")
 
 string(TIMESTAMP CURRENT_TIME "%H:%M:%S")
 message (STATUS "Info: \(${CURRENT_TIME}\) End the collecting")

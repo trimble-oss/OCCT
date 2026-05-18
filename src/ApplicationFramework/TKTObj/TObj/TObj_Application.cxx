@@ -64,10 +64,7 @@ const char* TObj_Application::ResourcesName()
   return static_cast<const char*>("TObj");
 }
 
-//=======================================================================
-// function : SaveDocument
-// purpose  : Saving the OCAF document
-//=======================================================================
+//=================================================================================================
 
 bool TObj_Application::SaveDocument(const occ::handle<TDocStd_Document>& theSourceDoc,
                                     const TCollection_ExtendedString&    theTargetFile)
@@ -75,7 +72,9 @@ bool TObj_Application::SaveDocument(const occ::handle<TDocStd_Document>& theSour
   const PCDM_StoreStatus aStatus = SaveAs(theSourceDoc, theTargetFile);
   myIsError                      = (aStatus != PCDM_SS_OK);
   if (myIsError)
+  {
     SetError(aStatus, theTargetFile);
+  }
 
   // Release free memory
   Standard::Purge();
@@ -93,17 +92,16 @@ bool TObj_Application::SaveDocument(const occ::handle<TDocStd_Document>& theSour
   const PCDM_StoreStatus aStatus = SaveAs(theSourceDoc, theOStream);
   myIsError                      = (aStatus != PCDM_SS_OK);
   if (myIsError)
+  {
     SetError(aStatus, "");
+  }
 
   // Release free memory
   Standard::Purge();
   return !myIsError;
 }
 
-//=======================================================================
-// function : LoadDocument
-// purpose  : Loading the OCAF document
-//=======================================================================
+//=================================================================================================
 
 bool TObj_Application::LoadDocument(const TCollection_ExtendedString& theSourceFile,
                                     occ::handle<TDocStd_Document>&    theTargetDoc)
@@ -124,7 +122,9 @@ bool TObj_Application::LoadDocument(const TCollection_ExtendedString& theSourceF
   }
   myIsError = (aStatus != PCDM_RS_OK);
   if (myIsError)
+  {
     SetError(aStatus, theSourceFile);
+  }
 
   // Release free memory
   Standard::Purge();
@@ -155,7 +155,9 @@ bool TObj_Application::LoadDocument(Standard_IStream&              theIStream,
   }
   myIsError = (aStatus != PCDM_RS_OK);
   if (myIsError)
+  {
     SetError(aStatus, "");
+  }
 
   // Release free memory
   Standard::Purge();

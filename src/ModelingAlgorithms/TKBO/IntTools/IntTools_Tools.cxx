@@ -192,7 +192,9 @@ int IntTools_Tools::SplitCurve(const IntTools_Curve& IC, NCollection_Sequence<In
 {
   const occ::handle<Geom_Curve>& aC3D = IC.Curve();
   if (aC3D.IsNull())
+  {
     return 0;
+  }
   //
   const occ::handle<Geom2d_Curve>& aC2D1 = IC.FirstCurve2d();
   const occ::handle<Geom2d_Curve>& aC2D2 = IC.SecondCurve2d();
@@ -252,10 +254,8 @@ int IntTools_Tools::SplitCurve(const IntTools_Curve& IC, NCollection_Sequence<In
 double IntTools_Tools::IntermediatePoint(const double aFirst, const double aLast)
 {
   // define parameter division number as 10*e^(-M_PI) = 0.43213918
-  const double PAR_T = 0.43213918;
-  double       aParm;
-  aParm = (1. - PAR_T) * aFirst + PAR_T * aLast;
-  return aParm;
+  constexpr double PAR_T = 0.43213918;
+  return (1. - PAR_T) * aFirst + PAR_T * aLast;
 }
 
 //=================================================================================================

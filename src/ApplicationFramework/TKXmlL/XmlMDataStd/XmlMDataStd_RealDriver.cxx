@@ -41,10 +41,8 @@ occ::handle<TDF_Attribute> XmlMDataStd_RealDriver::NewEmpty() const
   return (new TDataStd_Real());
 }
 
-//=======================================================================
-// function : Paste
-// purpose  : persistent -> transient (retrieve)
-//=======================================================================
+//=================================================================================================
+
 bool XmlMDataStd_RealDriver::Paste(const XmlObjMgt_Persistent&       theSource,
                                    const occ::handle<TDF_Attribute>& theTarget,
                                    XmlObjMgt_RRelocationTable&) const
@@ -54,9 +52,13 @@ bool XmlMDataStd_RealDriver::Paste(const XmlObjMgt_Persistent&       theSource,
   const XmlObjMgt_Element& anElement = theSource;
   XmlObjMgt_DOMString      aGUIDStr  = anElement.getAttribute(::AttributeIDString());
   if (aGUIDStr.Type() == XmlObjMgt_DOMString::LDOM_NULL)
+  {
     aGUID = TDataStd_Real::GetID(); // default case
+  }
   else
+  {
     aGUID = Standard_GUID(static_cast<const char*>(aGUIDStr.GetString())); // user defined case
+  }
 
   occ::down_cast<TDataStd_Real>(theTarget)->SetID(aGUID);
 
@@ -75,10 +77,8 @@ bool XmlMDataStd_RealDriver::Paste(const XmlObjMgt_Persistent&       theSource,
   return true;
 }
 
-//=======================================================================
-// function : Paste
-// purpose  : transient -> persistent (store)
-//=======================================================================
+//=================================================================================================
+
 void XmlMDataStd_RealDriver::Paste(const occ::handle<TDF_Attribute>& theSource,
                                    XmlObjMgt_Persistent&             theTarget,
                                    XmlObjMgt_SRelocationTable&) const

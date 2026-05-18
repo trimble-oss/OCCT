@@ -14,7 +14,6 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
-#include <Adaptor3d_CurveOnSurface.hxx>
 #include <BRep_Tool.hxx>
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepAdaptor_Surface.hxx>
@@ -128,10 +127,16 @@ void TopoDSToStep_MakeStepEdge::Init(const TopoDS_Edge&                         
     int             count = 0;
     TopExp_Explorer exp(aTool.CurrentFace(), TopAbs_EDGE);
     for (; exp.More(); exp.Next())
+    {
       if (aEdge.IsSame(exp.Current()))
+      {
         count++;
+      }
+    }
     if (count < 2)
+    {
       isSeam = false;
+    }
   }
 
   if (aEdge.Orientation() == TopAbs_INTERNAL || aEdge.Orientation() == TopAbs_EXTERNAL)
@@ -155,7 +160,9 @@ void TopoDSToStep_MakeStepEdge::Init(const TopoDS_Edge&                         
 
   MkVertex.Init(Vfirst, aTool, FP, theLocalFactors);
   if (MkVertex.IsDone())
+  {
     V1 = occ::down_cast<StepShape_Vertex>(MkVertex.Value());
+  }
   else
   {
     occ::handle<TransferBRep_ShapeMapper> errShape = new TransferBRep_ShapeMapper(aEdge);
@@ -167,7 +174,9 @@ void TopoDSToStep_MakeStepEdge::Init(const TopoDS_Edge&                         
 
   MkVertex.Init(Vlast, aTool, FP, theLocalFactors);
   if (MkVertex.IsDone())
+  {
     V2 = occ::down_cast<StepShape_Vertex>(MkVertex.Value());
+  }
   else
   {
     occ::handle<TransferBRep_ShapeMapper> errShape = new TransferBRep_ShapeMapper(aEdge);
@@ -339,7 +348,6 @@ void TopoDSToStep_MakeStepEdge::Init(const TopoDS_Edge&                         
   myError  = TopoDSToStep_EdgeDone;
   myResult = Epms;
   done     = true;
-  return;
 }
 
 //=================================================================================================

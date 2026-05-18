@@ -111,7 +111,9 @@ bool Bnd_SphereUBTreeSelectorMin::Accept(const int& theInd)
   {
     mySol = aSph;
     if (aCurDist < myMinDist)
+    {
       myMinDist = aCurDist;
+    }
 
     return true;
   }
@@ -156,7 +158,9 @@ bool Bnd_SphereUBTreeSelectorMax::Accept(const int& theInd)
   {
     mySol = aSph;
     if (aCurDist > myMaxDist)
+    {
       myMaxDist = aCurDist;
+    }
 
     return true;
   }
@@ -321,16 +325,18 @@ inline static void fillParams(const NCollection_Array1<double>&         theKnots
                               occ::handle<NCollection_HArray1<double>>& theParams,
                               int                                       theSample)
 {
-  NCollection_Vector<double> aParams;
-  int                        i        = 1;
-  double                     aPrevPar = theParMin;
+  NCollection_DynamicArray<double> aParams;
+  int                              i        = 1;
+  double                           aPrevPar = theParMin;
   aParams.Append(aPrevPar);
   // calculation the array of parametric points depending on the knots array variation and degree of
   // given surface
   for (; i < theKnots.Length() && theKnots(i) < (theParMax - Precision::PConfusion()); i++)
   {
     if (theKnots(i + 1) < theParMin + Precision::PConfusion())
+    {
       continue;
+    }
 
     double aStep = (theKnots(i + 1) - theKnots(i)) / std::max(theDegree, 2);
     int    k     = 1;
@@ -338,7 +344,9 @@ inline static void fillParams(const NCollection_Array1<double>&         theKnots
     {
       double aPar = theKnots(i) + k * aStep;
       if (aPar > theParMax - Precision::PConfusion())
+      {
         break;
+      }
       if (aPar > aPrevPar + Precision::PConfusion())
       {
         aParams.Append(aPar);
@@ -350,10 +358,14 @@ inline static void fillParams(const NCollection_Array1<double>&         theKnots
   int nbPar = aParams.Length();
   // in case of an insufficient number of points the grid will be built later
   if (nbPar < theSample)
+  {
     return;
+  }
   theParams = new NCollection_HArray1<double>(1, nbPar);
   for (i = 0; i < nbPar; i++)
+  {
     theParams->SetValue(i + 1, aParams(i));
+  }
 }
 
 void Extrema_GenExtPS::GetGridPoints(const Adaptor3d_Surface& theSurf)
@@ -370,10 +382,8 @@ void Extrema_GenExtPS::GetGridPoints(const Adaptor3d_Surface& theSurf)
     occ::handle<Geom_BSplineSurface> aBspl = theSurf.BSpline();
     if (!aBspl.IsNull())
     {
-      NCollection_Array1<double> aUKnots(1, aBspl->NbUKnots());
-      aBspl->UKnots(aUKnots);
-      NCollection_Array1<double> aVKnots(1, aBspl->NbVKnots());
-      aBspl->VKnots(aVKnots);
+      const NCollection_Array1<double>& aUKnots = aBspl->UKnots();
+      const NCollection_Array1<double>& aVKnots = aBspl->VKnots();
       fillParams(aUKnots, aBspl->UDegree(), myumin, myusup, myUParams, myusample);
       fillParams(aVKnots, aBspl->VDegree(), myvmin, myvsup, myVParams, myvsample);
     }
@@ -383,7 +393,9 @@ void Extrema_GenExtPS::GetGridPoints(const Adaptor3d_Surface& theSurf)
   {
     occ::handle<Geom_BezierSurface> aBezier = theSurf.Bezier();
     if (aBezier.IsNull())
+    {
       return;
+    }
 
     NCollection_Array1<double> aUKnots(1, 2);
     NCollection_Array1<double> aVKnots(1, 2);
@@ -402,9 +414,8 @@ void Extrema_GenExtPS::GetGridPoints(const Adaptor3d_Surface& theSurf)
       occ::handle<Geom_BSplineCurve> aBspl = theSurf.BasisCurve()->BSpline();
       if (!aBspl.IsNull())
       {
-        anArrKnots = new NCollection_HArray1<double>(1, aBspl->NbKnots());
-        aBspl->Knots(anArrKnots->ChangeArray1());
-        aDegree = aBspl->Degree();
+        anArrKnots = new NCollection_HArray1<double>(aBspl->Knots());
+        aDegree    = aBspl->Degree();
       }
     }
     if (theSurf.BasisCurve()->GetType() == GeomAbs_BezierCurve)
@@ -419,17 +430,27 @@ void Extrema_GenExtPS::GetGridPoints(const Adaptor3d_Surface& theSurf)
       }
     }
     if (anArrKnots.IsNull())
+    {
       return;
+    }
     if (theSurf.GetType() == GeomAbs_SurfaceOfRevolution)
+    {
       fillParams(anArrKnots->Array1(), aDegree, myvmin, myvsup, myVParams, myvsample);
+    }
     else
+    {
       fillParams(anArrKnots->Array1(), aDegree, myumin, myusup, myUParams, myusample);
+    }
   }
   // update the number of points in sample
   if (!myUParams.IsNull())
+  {
     myusample = myUParams->Length();
+  }
   if (!myVParams.IsNull())
+  {
     myvsample = myVParams->Length();
+  }
 }
 
 /*
@@ -522,7 +543,9 @@ void Extrema_GenExtPS::BuildGrid(const gp_Pnt& thePoint)
       myUParams   = new NCollection_HArray1<double>(1, myusample);
       double U    = U0;
       for (int NoU = 1; NoU <= myusample; NoU++, U += PasU)
+      {
         myUParams->SetValue(NoU, U);
+      }
     }
 
     if (myVParams.IsNull())
@@ -535,14 +558,15 @@ void Extrema_GenExtPS::BuildGrid(const gp_Pnt& thePoint)
       myVParams = new NCollection_HArray1<double>(1, myvsample);
       double V  = V0;
       for (int NoV = 1; NoV <= myvsample; NoV++, V += PasV)
+      {
         myVParams->SetValue(NoV, V);
+      }
     }
 
     // If flag was changed and extrema not reinitialized Extrema would fail
     myPoints.Resize(0, myusample + 1, 0, myvsample + 1, false);
 
-    GeomGridEval_Surface aGridEval;
-    aGridEval.Initialize(*myS);
+    GeomGridEval_Surface aGridEval(*myS);
 
     NCollection_Array2<gp_Pnt> aGridPoints =
       aGridEval.EvaluateGrid(myUParams->Array1(), myVParams->Array1());
@@ -815,13 +839,17 @@ static void CorrectNbSamples(const Adaptor3d_Surface& theS,
   {
     int aMult = RealToInt(std::log(aRatio));
     if (aMult > 1)
+    {
       theNbV *= aMult;
+    }
   }
   else if (aRatio < 0.1)
   {
     int aMult = RealToInt(-std::log(aRatio));
     if (aMult > 1)
+    {
       theNbV *= aMult;
+    }
   }
 }
 
@@ -829,7 +857,9 @@ void Extrema_GenExtPS::BuildTree()
 {
   // if tree already exists, assume it is already correctly filled
   if (!mySphereUBTree.IsNull())
+  {
     return;
+  }
 
   if (myS->GetType() == GeomAbs_BSplineSurface)
   {
@@ -838,9 +868,13 @@ void Extrema_GenExtPS::BuildTree()
     int                              aVValue = aBspl->VDegree() * aBspl->NbVKnots();
     // 300 is value, which is used for singular points (see Extrema_ExtPS.cxx::Initialize(...))
     if (aUValue > myusample)
+    {
       myusample = std::min(aUValue, 300);
+    }
     if (aVValue > myvsample)
+    {
       myvsample = std::min(aVValue, 300);
+    }
   }
   //
   CorrectNbSamples(*myS, myumin, myusup, myusample, myvmin, myvsup, myvsample);
@@ -860,9 +894,13 @@ void Extrema_GenExtPS::BuildTree()
   int    NoU, NoV;
   double U = U0, V = V0;
   for (NoU = 1; NoU <= myusample; NoU++, U += PasU)
+  {
     myUParams->SetValue(NoU, U);
+  }
   for (NoV = 1; NoV <= myvsample; NoV++, V += PasV)
+  {
     myVParams->SetValue(NoV, V);
+  }
 
   // Build UB-tree with surface points for fast proximity search.
   // Use optimized grid evaluator with span-based caching for B-spline surfaces.
@@ -873,8 +911,7 @@ void Extrema_GenExtPS::BuildTree()
   mySphereArray = new NCollection_HArray1<Bnd_Sphere>(0, myusample * myvsample);
 
   // Use unified grid evaluator for all surface types (optimized for BSpline, Bezier, etc.)
-  GeomGridEval_Surface aGridEval;
-  aGridEval.Initialize(*myS);
+  GeomGridEval_Surface aGridEval(*myS);
 
   const NCollection_Array2<gp_Pnt> aGridPoints =
     aGridEval.EvaluateGrid(myUParams->Array1(), myVParams->Array1());
@@ -922,7 +959,9 @@ void Extrema_GenExtPS::SetFlag(const Extrema_ExtFlag F)
 void Extrema_GenExtPS::SetAlgo(const Extrema_ExtAlgo A)
 {
   if (myAlgo != A)
+  {
     myInit = false;
+  }
   myAlgo = A;
 }
 

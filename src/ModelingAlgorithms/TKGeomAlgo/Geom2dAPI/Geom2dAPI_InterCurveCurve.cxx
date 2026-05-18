@@ -56,6 +56,8 @@ void Geom2dAPI_InterCurveCurve::Init(const occ::handle<Geom2d_Curve>& C1,
                                      const occ::handle<Geom2d_Curve>& C2,
                                      const double                     Tol)
 {
+  Standard_NullObject_Raise_if(C1.IsNull(), "Geom2dAPI_InterCurveCurve::Init - C1 is null");
+  Standard_NullObject_Raise_if(C2.IsNull(), "Geom2dAPI_InterCurveCurve::Init - C2 is null");
   myCurve1 = occ::down_cast<Geom2d_Curve>(C1->Copy());
   myCurve2 = occ::down_cast<Geom2d_Curve>(C2->Copy());
 
@@ -69,6 +71,7 @@ void Geom2dAPI_InterCurveCurve::Init(const occ::handle<Geom2d_Curve>& C1,
 
 void Geom2dAPI_InterCurveCurve::Init(const occ::handle<Geom2d_Curve>& C1, const double Tol)
 {
+  Standard_NullObject_Raise_if(C1.IsNull(), "Geom2dAPI_InterCurveCurve::Init - C1 is null");
   myCurve1 = occ::down_cast<Geom2d_Curve>(C1->Copy());
   myCurve2.Nullify();
 
@@ -82,17 +85,20 @@ void Geom2dAPI_InterCurveCurve::Init(const occ::handle<Geom2d_Curve>& C1, const 
 int Geom2dAPI_InterCurveCurve::NbPoints() const
 {
   if (myIsDone)
+  {
     return myIntersector.NbPoints();
+  }
   else
+  {
     return 0;
+  }
 }
 
 //=================================================================================================
 
 gp_Pnt2d Geom2dAPI_InterCurveCurve::Point(const int Index) const
 {
-  Standard_OutOfRange_Raise_if(Index < 0 || Index > NbPoints(),
-                               "Geom2dAPI_InterCurveCurve::Points");
+  Standard_OutOfRange_Raise_if(Index < 1 || Index > NbPoints(), "Geom2dAPI_InterCurveCurve::Point");
 
   return (myIntersector.Point(Index)).Value();
 }
@@ -102,9 +108,13 @@ gp_Pnt2d Geom2dAPI_InterCurveCurve::Point(const int Index) const
 int Geom2dAPI_InterCurveCurve::NbSegments() const
 {
   if (myIsDone)
+  {
     return myIntersector.NbSegments();
+  }
   else
+  {
     return 0;
+  }
 }
 
 //=======================================================================
@@ -164,9 +174,13 @@ void Geom2dAPI_InterCurveCurve::Segment(const int                  theIndex,
     aU1                                     = anIPF.ParamOnFirst();
 
     if (isOpposite)
+    {
       aV2 = anIPF.ParamOnSecond();
+    }
     else
+    {
       aV1 = anIPF.ParamOnSecond();
+    }
   }
 
   if (aSeg.HasLastPoint())
@@ -175,14 +189,22 @@ void Geom2dAPI_InterCurveCurve::Segment(const int                  theIndex,
     aU2                                     = anIPL.ParamOnFirst();
 
     if (isOpposite)
+    {
       aV1 = anIPL.ParamOnSecond();
+    }
     else
+    {
       aV2 = anIPL.ParamOnSecond();
+    }
   }
 
   theCurve1 = new Geom2d_TrimmedCurve(myCurve1, aU1, aU2);
   if (myCurve2.IsNull())
+  {
     theCurve2 = new Geom2d_TrimmedCurve(myCurve1, aV1, aV2);
+  }
   else
+  {
     theCurve2 = new Geom2d_TrimmedCurve(myCurve2, aV1, aV2);
+  }
 }

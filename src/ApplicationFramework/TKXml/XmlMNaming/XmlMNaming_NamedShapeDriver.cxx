@@ -69,10 +69,7 @@ occ::handle<TDF_Attribute> XmlMNaming_NamedShapeDriver::NewEmpty() const
   return (new TNaming_NamedShape());
 }
 
-//=======================================================================
-// function : Paste()
-// purpose  : retrieval of TNaming_NamedShape
-//=======================================================================
+//=================================================================================================
 
 bool XmlMNaming_NamedShapeDriver::Paste(const XmlObjMgt_Persistent&       theSource,
                                         const occ::handle<TDF_Attribute>& theTarget,
@@ -87,7 +84,9 @@ bool XmlMNaming_NamedShapeDriver::Paste(const XmlObjMgt_Persistent&       theSou
   const XmlObjMgt_Element& anElement  = theSource;
   XmlObjMgt_DOMString      aVerString = anElement.getAttribute(::VersionString());
   if (aVerString != nullptr)
+  {
     aVerString.GetInteger(aVersion);
+  }
 
   //    Get Evolution status
   XmlObjMgt_DOMString aStatus = anElement.getAttribute(::StatusString());
@@ -98,7 +97,9 @@ bool XmlMNaming_NamedShapeDriver::Paste(const XmlObjMgt_Persistent&       theSou
   const XmlObjMgt_Array1 OldPShapes(anElement, ::OldsString());
   const XmlObjMgt_Array1 NewPShapes(anElement, ::NewsString());
   if (NewPShapes.Length() == 0 && OldPShapes.Length() == 0)
+  {
     return true;
+  }
 
   TopoDS_Shape        anOldShape;
   TopoDS_Shape        aNewShape;
@@ -106,11 +107,15 @@ bool XmlMNaming_NamedShapeDriver::Paste(const XmlObjMgt_Persistent&       theSou
 
   int lower = NewPShapes.Lower();
   if (OldPShapes.Lower() < lower)
+  {
     lower = OldPShapes.Lower();
+  }
 
   int upper = NewPShapes.Upper();
   if (OldPShapes.Upper() > upper)
+  {
     upper = OldPShapes.Upper();
+  }
 
   for (int i = upper; i >= lower; --i)
   {
@@ -167,10 +172,7 @@ bool XmlMNaming_NamedShapeDriver::Paste(const XmlObjMgt_Persistent&       theSou
   return true;
 }
 
-//=======================================================================
-// function : Paste()
-// purpose  : storage of TNaming_NamedShape
-//=======================================================================
+//=================================================================================================
 
 void XmlMNaming_NamedShapeDriver::Paste(const occ::handle<TDF_Attribute>& theSource,
                                         XmlObjMgt_Persistent&             theTarget,
@@ -226,7 +228,9 @@ void XmlMNaming_NamedShapeDriver::Paste(const occ::handle<TDF_Attribute>& theSou
   theTarget.Element().setAttribute(::StatusString(), EvolutionString(evol));
   int aVersion = aNamedShape->Version();
   if (aVersion != 0)
+  {
     theTarget.Element().setAttribute(::VersionString(), aVersion);
+  }
 }
 
 //=================================================================================================
@@ -261,17 +265,29 @@ static TNaming_Evolution EvolutionEnum(const XmlObjMgt_DOMString& theString)
   if (!theString.equals(::EvolPrimitiveString()))
   {
     if (theString.equals(::EvolGeneratedString()))
+    {
       aResult = TNaming_GENERATED;
+    }
     else if (theString.equals(::EvolModifyString()))
+    {
       aResult = TNaming_MODIFY;
+    }
     else if (theString.equals(::EvolDeleteString()))
+    {
       aResult = TNaming_DELETE;
+    }
     else if (theString.equals(::EvolSelectedString()))
+    {
       aResult = TNaming_SELECTED;
+    }
     else if (theString.equals(::EvolReplaceString()))
+    {
       aResult = TNaming_MODIFY; // for compatibility //TNaming_REPLACE;
+    }
     else
+    {
       throw Standard_DomainError("TNaming_Evolution; string value without enum term equivalence");
+    }
   }
   return aResult;
 }
@@ -284,7 +300,9 @@ static void doTranslate(const TopoDS_Shape& theShape,
 {
   // Check for empty shape
   if (theShape.IsNull())
+  {
     return;
+  }
 
   // Add to shape set both TShape and Location contained in theShape
   const int aTShapeId = theShapeSet.Add(theShape);
@@ -299,10 +317,7 @@ static void doTranslate(const TopoDS_Shape& theShape,
   }
 }
 
-//=======================================================================
-// function : doTranslate
-// purpose  : shape retrieval from XML
-//=======================================================================
+//=================================================================================================
 
 static int doTranslate(const XmlMNaming_Shape1& thePShape,
                        TopoDS_Shape&            theResult,
@@ -312,7 +327,9 @@ static int doTranslate(const XmlMNaming_Shape1& thePShape,
 
   // Read TShape and Orientation
   if (aShapeId <= 0 || aShapeId > theShapeSet.NbShapes())
+  {
     return 1;
+  }
   theResult.TShape(theShapeSet.Shape(aShapeId).TShape());
   theResult.Orientation(thePShape.Orientation());
   theResult.Location(theShapeSet.Locations().Location(thePShape.LocId()), false);
@@ -372,10 +389,12 @@ void XmlMNaming_NamedShapeDriver::WriteShapeSection(XmlObjMgt_Element&    theEle
     Message_ProgressScope aPS(theRange, "Writing shape section", 2);
     myShapeSet.Write(aStream, aPS.Next());
     if (!aPS.More())
+    {
       return;
+    }
 
     aStream << std::ends;
-    char*     aStr  = (char*)aStream.str();
+    char*     aStr  = const_cast<char*>(aStream.str());
     LDOM_Text aText = aDoc.createTextNode(aStr);
     delete[] aStr;
     aText.SetValueClear(); // There are no characters '<' and '&' and like
@@ -385,7 +404,9 @@ void XmlMNaming_NamedShapeDriver::WriteShapeSection(XmlObjMgt_Element&    theEle
     BRepTools_ShapeSet& aShapeSet = (BRepTools_ShapeSet&)myShapeSet;
     aShapeSet.Clear();
     if (!aPS.More())
+    {
       return;
+    }
     aPS.Next();
   }
 }

@@ -20,11 +20,13 @@ IMPLEMENT_STANDARD_RTTIEXT(BinMDF_ADriver, Standard_Transient)
 //=================================================================================================
 
 BinMDF_ADriver::BinMDF_ADriver(const occ::handle<Message_Messenger>& theMsgDriver,
-                               const char*                           theName)
+                               const char* const                     theName)
     : myMessageDriver(theMsgDriver)
 {
   if (theName)
+  {
     myTypeName = theName;
+  }
 }
 
 //=================================================================================================

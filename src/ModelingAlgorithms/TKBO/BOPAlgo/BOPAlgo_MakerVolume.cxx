@@ -53,11 +53,8 @@ void BOPAlgo_MakerVolume::Perform(const Message_ProgressRange& theRange)
   //
   if (myEntryPoint == 1)
   {
-    if (myPaveFiller)
-    {
-      delete myPaveFiller;
-      myPaveFiller = nullptr;
-    }
+    delete myPaveFiller;
+    myPaveFiller = nullptr;
   }
   //
   occ::handle<NCollection_BaseAllocator> aAllocator =
@@ -373,7 +370,9 @@ void BOPAlgo_MakerVolume::FillInternalShapes(const NCollection_List<TopoDS_Shape
 
   NCollection_List<TopoDS_Shape>::Iterator itLA(myDS->Arguments());
   for (; itLA.More(); itLA.Next())
+  {
     BOPTools_AlgoTools::TreatCompound(itLA.Value(), aLSC, &aMFence);
+  }
 
   // Get only edges and vertices from arguments
   NCollection_List<TopoDS_Shape> aLVE;
@@ -389,11 +388,15 @@ void BOPAlgo_MakerVolume::FillInternalShapes(const NCollection_List<TopoDS_Shape
       {
         const TopoDS_Shape& aSS = it.Value();
         if (aMFence.Add(aSS))
+        {
           aLVE.Append(aSS);
+        }
       }
     }
     else if (aType == TopAbs_VERTEX || aType == TopAbs_EDGE)
+    {
       aLVE.Append(aS);
+    }
   }
 
   BOPAlgo_Tools::FillInternals(theLSR, aLVE, myImages, myContext);

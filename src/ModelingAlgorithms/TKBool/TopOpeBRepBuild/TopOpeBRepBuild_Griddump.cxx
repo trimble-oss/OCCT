@@ -67,10 +67,8 @@ void TopOpeBRepBuild_Builder::PrintGeo(const TopoDS_Shape& S)
 void TopOpeBRepBuild_Builder::PrintGeo(const TopoDS_Shape&) {}
 #endif
 
-//=======================================================================
-// function : PrintSur
-// purpose  : print the name of a surface
-//=======================================================================
+//=================================================================================================
+
 #ifdef OCCT_DEBUG
 void TopOpeBRepBuild_Builder::PrintSur(const TopoDS_Face& F)
 {
@@ -116,10 +114,8 @@ void TopOpeBRepBuild_Builder::PrintSur(const TopoDS_Face& F)
 void TopOpeBRepBuild_Builder::PrintSur(const TopoDS_Face&) {}
 #endif
 
-//=======================================================================
-// function : PrintCur
-// purpose  : print the name of a curve
-//=======================================================================
+//=================================================================================================
+
 #ifdef OCCT_DEBUG
 void TopOpeBRepBuild_Builder::PrintCur(const TopoDS_Edge& E)
 {
@@ -324,7 +320,7 @@ void TopOpeBRepBuild_Builder::GdumpSAMDOM(const NCollection_List<TopoDS_Shape>& 
                                           void* const                           astr) const
 {
   TopOpeBRepDS_Dumper Dumper(myDataStructure);
-  std::cout << Dumper.SPrintShapeRefOri(L, (char*)astr) << std::endl;
+  std::cout << Dumper.SPrintShapeRefOri(L, (char*)astr) << '\n';
   std::cout.flush();
 }
 

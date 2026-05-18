@@ -149,16 +149,24 @@ static int TranslateFrom(const BinObjMgt_Persistent& theSource,
   char aCharOrient;
   bool Ok = theSource >> aShapeID; // TShapeID;
   if (!Ok)
+  {
     return 1;
+  }
   // Read TShape and Orientation
   if (aShapeID <= 0 || aShapeID > theShapeSet->NbShapes())
+  {
     return 1;
+  }
   Ok = theSource >> aLocID;
   if (!Ok)
+  {
     return 1;
+  }
   Ok = theSource >> aCharOrient;
   if (!Ok)
+  {
     return 1;
+  }
   TopAbs_Orientation anOrient = CharToOrientation(aCharOrient);
 
   theResult.TShape(theShapeSet->Shape(aShapeID).TShape());              // TShape
@@ -186,10 +194,7 @@ occ::handle<TDF_Attribute> BinMNaming_NamedShapeDriver::NewEmpty() const
   return new TNaming_NamedShape();
 }
 
-//=======================================================================
-// function : Paste
-// purpose  : persistent => transient (retrieve)
-//=======================================================================
+//=================================================================================================
 
 bool BinMNaming_NamedShapeDriver::Paste(const BinObjMgt_Persistent&       theSource,
                                         const occ::handle<TDF_Attribute>& theTarget,
@@ -203,19 +208,25 @@ bool BinMNaming_NamedShapeDriver::Paste(const BinObjMgt_Persistent&       theSou
   int             aVer;
   bool            ok = theSource >> aVer;
   if (!ok)
+  {
     return false;
+  }
   aTAtt->SetVersion(aVer); // Version
   char aCharEvol;
   ok = theSource >> aCharEvol;
   if (!ok)
+  {
     return false;
+  }
   TNaming_Evolution anEvol = EvolutionToEnum(aCharEvol); // Evolution
   aTAtt->SetVersion(anEvol);
 
   BinTools_ShapeSetBase* aShapeSet = const_cast<BinMNaming_NamedShapeDriver*>(this)->ShapeSet(true);
   Standard_IStream*      aDirectStream = nullptr;
-  if (myIsQuickPart) // enables direct reading of shapes from the stream
+  if (myIsQuickPart)
+  { // enables direct reading of shapes from the stream
     aDirectStream = const_cast<BinObjMgt_Persistent*>(&theSource)->GetIStream();
+  }
 
   NCollection_List<TopoDS_Shape> anOldShapes, aNewShapes;
   for (int i = 1; i <= aNbShapes; i++)
@@ -225,17 +236,25 @@ bool BinMNaming_NamedShapeDriver::Paste(const BinObjMgt_Persistent&       theSou
     if (anEvol != TNaming_PRIMITIVE)
     {
       if (myIsQuickPart)
+      {
         aShapeSet->Read(*aDirectStream, anOldShape);
+      }
       else if (TranslateFrom(theSource, anOldShape, static_cast<BinTools_ShapeSet*>(aShapeSet)))
+      {
         return false;
+      }
     }
 
     if (anEvol != TNaming_DELETE)
     {
       if (myIsQuickPart)
+      {
         aShapeSet->Read(*aDirectStream, aNewShape);
+      }
       else if (TranslateFrom(theSource, aNewShape, static_cast<BinTools_ShapeSet*>(aShapeSet)))
+      {
         return false;
+      }
     }
 
     // Here we add shapes in reverse order because TNaming_Builder also adds them in reverse order.
@@ -276,10 +295,7 @@ bool BinMNaming_NamedShapeDriver::Paste(const BinObjMgt_Persistent&       theSou
   return true;
 }
 
-//=======================================================================
-// function : Paste
-// purpose  : transient => persistent (store)
-//=======================================================================
+//=================================================================================================
 
 void BinMNaming_NamedShapeDriver::Paste(
   const occ::handle<TDF_Attribute>& theSource,
@@ -291,7 +307,9 @@ void BinMNaming_NamedShapeDriver::Paste(
   //--------------------------------------------------------------
   int NbShapes = 0;
   for (TNaming_Iterator SItr(aSAtt); SItr.More(); SItr.Next())
+  {
     NbShapes++;
+  }
   //--------------------------------------------------------------
 
   BinTools_ShapeSetBase* aShapeSet =
@@ -303,8 +321,10 @@ void BinMNaming_NamedShapeDriver::Paste(
   theTarget << EvolutionToChar(anEvol);
 
   Standard_OStream* aDirectStream = nullptr;
-  if (myIsQuickPart) // enables direct writing of shapes to the stream
+  if (myIsQuickPart)
+  { // enables direct writing of shapes to the stream
     aDirectStream = theTarget.GetOStream();
+  }
 
   for (TNaming_Iterator SIterator(aSAtt); SIterator.More(); SIterator.Next())
   {
@@ -314,17 +334,25 @@ void BinMNaming_NamedShapeDriver::Paste(
     if (anEvol != TNaming_PRIMITIVE)
     {
       if (myIsQuickPart)
+      {
         aShapeSet->Write(anOldShape, *aDirectStream);
+      }
       else
+      {
         TranslateTo(anOldShape, theTarget, static_cast<BinTools_ShapeSet*>(aShapeSet));
+      }
     }
 
     if (anEvol != TNaming_DELETE)
     {
       if (myIsQuickPart)
+      {
         aShapeSet->Write(aNewShape, *aDirectStream);
+      }
       else
+      {
         TranslateTo(aNewShape, theTarget, static_cast<BinTools_ShapeSet*>(aShapeSet));
+      }
     }
   }
 }
@@ -379,7 +407,9 @@ void BinMNaming_NamedShapeDriver::ReadShapeSection(Standard_IStream&            
     aShapeSet->Read(theIS, theRange);
   }
   else
+  {
     theIS.seekg(aPos); // no shape section is present, try to return to initial point
+  }
 }
 
 //=================================================================================================
@@ -391,12 +421,18 @@ BinTools_ShapeSetBase* BinMNaming_NamedShapeDriver::ShapeSet(const bool theReadi
     if (myIsQuickPart)
     {
       if (theReading)
+      {
         myShapeSet = new BinTools_ShapeReader();
+      }
       else
+      {
         myShapeSet = new BinTools_ShapeWriter();
+      }
     }
     else
+    {
       myShapeSet = new BinTools_ShapeSet();
+    }
     myShapeSet->SetWithTriangles(myWithTriangles);
     myShapeSet->SetWithNormals(myWithNormals);
   }

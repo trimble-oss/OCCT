@@ -56,7 +56,9 @@ bool BinMFunction_GraphNodeDriver::Paste(const BinObjMgt_Persistent&       theSo
 
   int intStatus, nb_previous, nb_next;
   if (!(theSource >> intStatus >> nb_previous >> nb_next))
+  {
     return false;
+  }
 
   // Execution status
   GN->SetStatus((TFunction_ExecutionStatus)intStatus);
@@ -117,7 +119,7 @@ void BinMFunction_GraphNodeDriver::Paste(
     {
       aSourceArray.SetValue(i, itr.Key());
     }
-    int* aPtr = (int*)&aSourceArray(1);
+    int* aPtr = &aSourceArray(1);
     theTarget.PutIntArray(aPtr, nb);
   }
 
@@ -131,7 +133,7 @@ void BinMFunction_GraphNodeDriver::Paste(
     {
       aSourceArray.SetValue(i, itr.Key());
     }
-    int* aPtr = (int*)&aSourceArray(1);
+    int* aPtr = &aSourceArray(1);
     theTarget.PutIntArray(aPtr, nb);
   }
 }

@@ -20,6 +20,8 @@
 
 #include <ViewerTest.hxx>
 
+#include <Aspect_CircularGrid.hxx>
+#include <Aspect_GridParams.hxx>
 #include <AIS_AnimationAxisRotation.hxx>
 #include <AIS_AnimationCamera.hxx>
 #include <AIS_AnimationObject.hxx>
@@ -29,6 +31,7 @@
 #include <AIS_InteractiveContext.hxx>
 #include <AIS_LightSource.hxx>
 #include <AIS_InteractiveObject.hxx>
+#include <NCollection_LinearVector.hxx>
 #include <NCollection_List.hxx>
 #include <AIS_Manipulator.hxx>
 #include <AIS_ViewCube.hxx>
@@ -269,7 +272,9 @@ TCollection_AsciiString CreateName(
   const TCollection_AsciiString&                                    theDefaultString)
 {
   if (theObjectMap.IsEmpty())
+  {
     return theDefaultString + TCollection_AsciiString(1);
+  }
 
   int  aNextKey = 1;
   bool isFound  = false;
@@ -282,7 +287,9 @@ TCollection_AsciiString CreateName(
       aNextKey++;
     }
     else
+    {
       isFound = true;
+    }
   }
 
   return theDefaultString + TCollection_AsciiString(aNextKey);
@@ -324,12 +331,16 @@ public:
     {
       // Get current configuration
       if (ViewerTest_myDrivers.IsEmpty())
+      {
         myDriverName =
           CreateName<occ::handle<Graphic3d_GraphicDriver>>(ViewerTest_myDrivers,
                                                            TCollection_AsciiString("Driver"));
+      }
       else
+      {
         myDriverName =
           ViewerTest_myDrivers.Find2(ViewerTest::GetAISContext()->CurrentViewer()->Driver());
+      }
 
       if (ViewerTest_myContexts.IsEmpty())
       {
@@ -359,7 +370,9 @@ public:
           aName.Split(aParserPos - 1);
         }
         else
+        {
           break;
+        }
       }
       if (aParserNumber == 0)
       {
@@ -387,8 +400,10 @@ public:
       {
         // Here is viewerName/viewName
         if (!ViewerTest::GetAISContext().IsNull())
+        {
           myDriverName =
             ViewerTest_myDrivers.Find2(ViewerTest::GetAISContext()->CurrentViewer()->Driver());
+        }
         else
         {
           // There is no opened contexts here, need to create name for driver
@@ -429,7 +444,9 @@ occ::handle<AIS_InteractiveContext> FindContextByView(const occ::handle<V3d_View
        anIter.Next())
   {
     if (anIter.Key2()->CurrentViewer() == theView->Viewer())
+    {
       return anIter.Key2();
+    }
   }
   return anAISContext;
 }
@@ -679,7 +696,9 @@ TCollection_AsciiString ViewerTest::ViewerInit(const ViewerTest_VinitParams& the
   {
     ViewerTest_ViewerCommandsInteractiveContextMap::Iterator anIter(ViewerTest_myContexts);
     if (anIter.More())
+    {
       ViewerTest::SetAISContext(anIter.Key2());
+    }
     a3DViewer = ViewerTest::GetAISContext()->CurrentViewer();
   }
   else if (ViewerTest_myContexts.IsBound1(aViewNames.GetViewerName()))
@@ -837,10 +856,8 @@ TCollection_AsciiString ViewerTest::ViewerInit(const ViewerTest_VinitParams& the
   return aViewNames.GetViewName();
 }
 
-//==============================================================================
-// function : RedrawAllViews
-// purpose  : Redraw all created views
-//==============================================================================
+//=================================================================================================
+
 void ViewerTest::RedrawAllViews()
 {
   ViewerTest_ViewerCommandsViewMap::Iterator aViewIt(ViewerTest_myViews);
@@ -1480,7 +1497,9 @@ static TCollection_AsciiString FindViewIdByWindowHandle(Aspect_Drawable theWindo
   {
     Aspect_Drawable aWindowHandle = anIter.Key2()->Window()->NativeHandle();
     if (aWindowHandle == theWindowHandle)
+    {
       return anIter.Key1();
+    }
   }
   return TCollection_AsciiString("");
 }
@@ -1814,7 +1833,9 @@ static int VViewList(Draw_Interpretor& theDi, int theArgsNb, const char** theArg
     return 1;
   }
   if (ViewerTest_myContexts.Size() < 1)
+  {
     return 0;
+  }
 
   bool isTreeView = ((theArgsNb == 1) || (strcasecmp(theArgVec[1], "long") != 0));
 
@@ -1828,7 +1849,9 @@ static int VViewList(Draw_Interpretor& theDi, int theArgsNb, const char** theArg
        aDriverIter.Next())
   {
     if (isTreeView)
+    {
       theDi << aDriverIter.Key1() << ":\n";
+    }
 
     for (ViewerTest_ViewerCommandsInteractiveContextMap::Iterator aContextIter(
            ViewerTest_myContexts);
@@ -1853,9 +1876,13 @@ static int VViewList(Draw_Interpretor& theDi, int theArgsNb, const char** theArg
             if (isTreeView)
             {
               if (aViewIter.Key2() == ViewerTest::CurrentView())
+              {
                 theDi << "  " << aViewName.Split(aContextIter.Key1().Length() + 1) << "(*)\n";
+              }
               else
+              {
                 theDi << "  " << aViewName.Split(aContextIter.Key1().Length() + 1) << "\n";
+              }
             }
             else
             {
@@ -1880,10 +1907,8 @@ void ViewerTest::GetMousePosition(int& theX, int& theY)
   }
 }
 
-//==============================================================================
-// function : VViewProj
-// purpose  : Switch view projection
-//==============================================================================
+//=================================================================================================
+
 static int VViewProj(Draw_Interpretor&, int theNbArgs, const char** theArgVec)
 {
   static bool                  isYup = false;
@@ -2652,7 +2677,9 @@ static int VClear(Draw_Interpretor&, int, const char**)
 {
   occ::handle<V3d_View> V = ViewerTest::CurrentView();
   if (!V.IsNull())
+  {
     ViewerTest::Clear();
+  }
   return 0;
 }
 
@@ -2865,7 +2892,7 @@ static int VBackground(Draw_Interpretor& theDI, int theNbArgs, const char** theA
 
       if (aCubeMapSeq.Size() > 1 && aCubeMapSeq.Size() < 6)
       {
-        aCubeMapSeq.Remove(2, aCubeMapSeq.Size());
+        aCubeMapSeq.Remove(2, aCubeMapSeq.Length());
       }
     }
     else if (anArgIter + 6 < theNbArgs && anArg == "-order")
@@ -3138,7 +3165,9 @@ static int VScale(Draw_Interpretor& di, int argc, const char** argv)
 {
   occ::handle<V3d_View> V3dView = ViewerTest::CurrentView();
   if (V3dView.IsNull())
+  {
     return 1;
+  }
 
   if (argc != 4)
   {
@@ -3455,7 +3484,9 @@ static int VPan(Draw_Interpretor& di, int argc, const char** argv)
 {
   occ::handle<V3d_View> V3dView = ViewerTest::CurrentView();
   if (V3dView.IsNull())
+  {
     return 1;
+  }
 
   if (argc == 3)
   {
@@ -4956,7 +4987,9 @@ static int VLayerLine(Draw_Interpretor& di, int argc, const char** argv)
 
   // has width
   if (argc > 5)
+  {
     aWidth = Draw::Atof(argv[5]);
+  }
 
   // select appropriate line type
   Aspect_TypeOfLine aLineType = Aspect_TOL_SOLID;
@@ -4971,7 +5004,9 @@ static int VLayerLine(Draw_Interpretor& di, int argc, const char** argv)
   {
     aTransparency = Draw::Atof(argv[7]);
     if (aTransparency < 0 || aTransparency > 1.0)
+    {
       aTransparency = 1.0;
+    }
   }
 
   static occ::handle<V3d_LineItem> aLine;
@@ -5006,8 +5041,17 @@ static int VGrid(Draw_Interpretor& /*theDI*/, int theArgNb, const char** theArgV
   Aspect_GridType          aType = aViewer->GridType();
   Aspect_GridDrawMode      aMode = aViewer->GridDrawMode();
   NCollection_Vec2<double> aNewOriginXY, aNewStepXY, aNewSizeXY;
-  double                   aNewRotAngle = 0.0, aNewZOffset = 0.0;
-  bool hasOrigin = false, hasStep = false, hasRotAngle = false, hasSize = false, hasZOffset = false;
+  double                   aNewRadius = 0.0, aNewRotAngle = 0.0, aNewZOffset = 0.0;
+  double                   aNewArcStart = 0.0, aNewArcEnd = 0.0;
+  Quantity_Color           aNewColor, aNewTenthColor;
+  bool hasOrigin = false, hasStep = false, hasRotAngle = false, hasSize = false, hasRadius = false,
+       hasZOffset = false;
+  bool isGpuGrid = false, hasGridOff = false, hasScale = false, hasArc = false;
+  bool hasColor = false, hasTenthColor = false;
+  // Tracks whether any GPU-grid-only option was passed; used to warn when
+  // such options are silently ignored on the CPU path.
+  bool                   hasGpuOnlyOpt = false;
+  Aspect_GridParams      aGridParams;
   ViewerTest_AutoUpdater anUpdateTool(ViewerTest::GetAISContext(), aView);
   for (int anArgIter = 1; anArgIter < theArgNb; ++anArgIter)
   {
@@ -5028,6 +5072,10 @@ static int VGrid(Draw_Interpretor& /*theDI*/, int theArgNb, const char** theArgV
       else if (anArgNext == "c" || anArgNext == "circ" || anArgNext == "circular")
       {
         aType = Aspect_GT_Circular;
+      }
+      else if (anArgNext == "gpu" || anArgNext == "shader")
+      {
+        isGpuGrid = true;
       }
       else
       {
@@ -5086,10 +5134,10 @@ static int VGrid(Draw_Interpretor& /*theDI*/, int theArgNb, const char** theArgV
     }
     else if (anArgIter + 1 < theArgNb && anArg == "-radius")
     {
-      hasSize = true;
+      hasRadius = true;
       ++anArgIter;
-      aNewSizeXY.SetValues(Draw::Atof(theArgVec[anArgIter]), 0.0);
-      if (aNewStepXY.x() <= 0.0)
+      aNewRadius = Draw::Atof(theArgVec[anArgIter]);
+      if (aNewRadius <= 0.0)
       {
         Message::SendFail() << "Syntax error: wrong size '" << theArgVec[anArgIter] << "'";
         return 1;
@@ -5100,12 +5148,77 @@ static int VGrid(Draw_Interpretor& /*theDI*/, int theArgNb, const char** theArgV
       hasSize = true;
       aNewSizeXY.SetValues(Draw::Atof(theArgVec[anArgIter + 1]),
                            Draw::Atof(theArgVec[anArgIter + 2]));
-      if (aNewStepXY.x() <= 0.0 || aNewStepXY.y() <= 0.0)
+      if (aNewSizeXY.x() <= 0.0 || aNewSizeXY.y() <= 0.0)
       {
         Message::SendFail() << "Syntax error: wrong size '" << theArgVec[anArgIter + 1] << " "
                             << theArgVec[anArgIter + 2] << "'";
         return 1;
       }
+      anArgIter += 2;
+    }
+    else if (anArgIter + 3 < theArgNb && (anArg == "-color"))
+    {
+      // Colors feed both backends through different sinks: aGridParams here
+      // for the GPU path, and Aspect_Grid::SetColors at the end of this
+      // function for the CPU path (so V3d_Viewer::syncViews picks them up).
+      hasColor  = true;
+      aNewColor = Quantity_Color(Draw::Atof(theArgVec[anArgIter + 1]),
+                                 Draw::Atof(theArgVec[anArgIter + 2]),
+                                 Draw::Atof(theArgVec[anArgIter + 3]),
+                                 Quantity_TOC_RGB);
+      aGridParams.SetColor(aNewColor);
+      anArgIter += 3;
+    }
+    else if (anArgIter + 3 < theArgNb && (anArg == "-tenthcolor" || anArg == "-accentcolor"))
+    {
+      hasTenthColor  = true;
+      aNewTenthColor = Quantity_Color(Draw::Atof(theArgVec[anArgIter + 1]),
+                                      Draw::Atof(theArgVec[anArgIter + 2]),
+                                      Draw::Atof(theArgVec[anArgIter + 3]),
+                                      Quantity_TOC_RGB);
+      aGridParams.SetAccentColor(aNewTenthColor);
+      anArgIter += 3;
+    }
+    else if (anArgIter + 1 < theArgNb && anArg == "-scale")
+    {
+      hasScale      = true;
+      hasGpuOnlyOpt = true;
+      aGridParams.SetScale(Draw::Atof(theArgVec[++anArgIter]));
+    }
+    else if (anArgIter + 1 < theArgNb && (anArg == "-linethickness" || anArg == "-thickness"))
+    {
+      hasGpuOnlyOpt = true;
+      aGridParams.SetLineThickness(Draw::Atof(theArgVec[++anArgIter]));
+    }
+    else if (anArgIter + 1 < theArgNb && anArg == "-background")
+    {
+      hasGpuOnlyOpt  = true;
+      const int aVal = Draw::Atoi(theArgVec[++anArgIter]);
+      aGridParams.SetIsBackground(aVal != 0);
+    }
+    else if (anArgIter + 1 < theArgNb && anArg == "-drawaxis")
+    {
+      hasGpuOnlyOpt  = true;
+      const int aVal = Draw::Atoi(theArgVec[++anArgIter]);
+      aGridParams.SetIsDrawAxis(aVal != 0);
+    }
+    else if (anArgIter + 1 < theArgNb && (anArg == "-viewadaptive" || anArg == "-adaptive"))
+    {
+      hasGpuOnlyOpt  = true;
+      const int aVal = Draw::Atoi(theArgVec[++anArgIter]);
+      aGridParams.SetIsViewAdaptive(aVal != 0);
+    }
+    else if (anArg == "-gpu" || anArg == "-shader")
+    {
+      isGpuGrid = true;
+    }
+    else if (anArgIter + 2 < theArgNb && anArg == "-arc")
+    {
+      // Angular range for circular grids (radians). Equal start/end = full circle.
+      hasArc       = true;
+      aNewArcStart = Draw::Atof(theArgVec[anArgIter + 1]);
+      aNewArcEnd   = Draw::Atof(theArgVec[anArgIter + 2]);
+      aGridParams.SetArcRange(aNewArcStart, aNewArcEnd);
       anArgIter += 2;
     }
     else if (anArg == "r" || anArg == "rect" || anArg == "rectangular")
@@ -5124,16 +5237,138 @@ static int VGrid(Draw_Interpretor& /*theDI*/, int theArgNb, const char** theArgV
     {
       aMode = Aspect_GDM_Points;
     }
-    else if (anArgIter + 1 >= theArgNb && anArg == "off")
+    else if (anArg == "off")
     {
-      aViewer->DeactivateGrid();
-      return 0;
+      hasGridOff = true;
     }
     else
     {
       Message::SendFail() << "Syntax error at '" << anArg << "'";
       return 1;
     }
+  }
+
+  if (isGpuGrid && hasGridOff)
+  {
+    Message::SendFail("Syntax error: 'off' cannot be combined with GPU grid display");
+    return 1;
+  }
+
+  // GPU-only options (-scale, -lineThickness, -background, -drawAxis,
+  // -viewAdaptive) are stored on Aspect_GridParams and consumed only by the
+  // shader path. Silently ignoring them on the CPU path leaves the user
+  // wondering why nothing changed; warn explicitly.
+  if (hasGpuOnlyOpt && !isGpuGrid && !hasGridOff)
+  {
+    Message::SendWarning("vgrid: -scale / -lineThickness / -background / -drawAxis / "
+                         "-viewAdaptive are GPU-grid only; pass -gpu (or -type gpu) to apply.");
+  }
+
+  if (isGpuGrid || hasGridOff)
+  {
+    if (hasGridOff)
+    {
+      aView->GridErase();
+    }
+    if (isGpuGrid)
+    {
+      // The shader grid keeps a real Aspect_Grid to back snap selection, so we
+      // route through ActivateGrid(rect|circ) first and override the display
+      // with shader-specific params afterwards. Decide the shape from aType
+      // or from the presence of circular-only options.
+      const bool   isGpuCircular = aType == Aspect_GT_Circular || hasRadius || hasArc;
+      const double anOrigX       = hasOrigin ? aNewOriginXY.x() : 0.0;
+      const double anOrigY       = hasOrigin ? aNewOriginXY.y() : 0.0;
+      const double aRotAngle     = hasRotAngle ? aNewRotAngle : 0.0;
+
+      if (isGpuCircular)
+      {
+        // Radial step + angular divisions. `-step R N` supplies both; otherwise
+        // use sensible defaults that keep snap consistent with the visible grid.
+        double aRadiusStep    = 1.0;
+        int    aDivisionCount = 16;
+        if (hasStep)
+        {
+          aRadiusStep    = aNewStepXY.x();
+          aDivisionCount = int(aNewStepXY.y() > 0 ? aNewStepXY.y() : aDivisionCount);
+        }
+        else if (hasScale && aGridParams.Scale() > 0.0)
+        {
+          aRadiusStep = 1.0 / aGridParams.Scale();
+        }
+        aViewer->SetCircularGridValues(anOrigX, anOrigY, aRadiusStep, aDivisionCount, aRotAngle);
+        // Arc range reaches the circular grid base before ActivateGrid's first
+        // syncViews fires (otherwise syncViews would overwrite our override).
+        if (hasArc)
+        {
+          if (occ::handle<Aspect_CircularGrid> aCircGrid =
+                occ::down_cast<Aspect_CircularGrid>(aViewer->Grid(true)))
+          {
+            aCircGrid->SetArcRange(aNewArcStart, aNewArcEnd);
+          }
+        }
+        aViewer->ActivateGrid(Aspect_GT_Circular, aMode);
+
+        aGridParams.SetScale(1.0 / aRadiusStep);
+        aGridParams.SetScaleY(0.0); // unused in circular mode
+        aGridParams.SetAngularDivisions(aDivisionCount);
+      }
+      else
+      {
+        // Rectangular shader grid. Derive step from explicit -step or from the
+        // Aspect_GridParams scale; fall back to 1 world unit so the default is
+        // immediately useful (Aspect_GridParams::Scale defaults to 0.01 which
+        // would give step 100 - too coarse for typical scenes).
+        if (!hasScale)
+        {
+          if (hasStep)
+          {
+            aGridParams.SetScale(1.0 / aNewStepXY.x());
+            aGridParams.SetScaleY(1.0 / aNewStepXY.y());
+          }
+          else
+          {
+            aGridParams.SetScale(1.0);
+            aGridParams.SetScaleY(1.0);
+          }
+        }
+        const double aInfStepX = 1.0 / aGridParams.Scale();
+        const double aInfStepY = 1.0 / aGridParams.EffectiveScaleY();
+        aViewer->SetRectangularGridValues(anOrigX, anOrigY, aInfStepX, aInfStepY, aRotAngle);
+        aViewer->ActivateGrid(Aspect_GT_Rectangular, aMode);
+
+        aGridParams.SetAngularDivisions(0);
+      }
+
+      // Convert origin to the same world-offset convention used by V3d
+      // syncViews so the shader's aPlaneOrigin matches snap's aPnt0.
+      const gp_Ax3 aPlane = aViewer->PrivilegedPlane();
+      const gp_XYZ aOriginOffset =
+        aPlane.XDirection().XYZ() * -anOrigX + aPlane.YDirection().XYZ() * -anOrigY;
+      aGridParams.SetOrigin(gp_Pnt(aOriginOffset));
+      aGridParams.SetDrawMode(aMode);
+      aGridParams.SetRotationAngle(aRotAngle);
+      if (hasSize && !isGpuCircular)
+      {
+        aGridParams.SetSizeX(aNewSizeXY.x());
+        aGridParams.SetSizeY(aNewSizeXY.y());
+      }
+      if (hasRadius)
+      {
+        aGridParams.SetRadius(aNewRadius);
+      }
+      if (hasZOffset)
+      {
+        aGridParams.SetZOffset(aNewZOffset);
+      }
+      aView->GridDisplay(aGridParams);
+    }
+    if (hasGridOff && !isGpuGrid)
+    {
+      // plain 'vgrid off' still deactivates the classical grid
+      aViewer->DeactivateGrid();
+    }
+    return 0;
   }
 
   if (aType == Aspect_GT_Rectangular)
@@ -5209,24 +5444,55 @@ static int VGrid(Draw_Interpretor& /*theDI*/, int theArgNb, const char** theArgV
                                    aRadiusStep,
                                    aDivisionNumber,
                                    aRotAngle);
-    if (hasSize || hasZOffset)
+    if (hasSize)
+    {
+      Message::SendFail("Syntax error: circular size should be specified as radius");
+      return 1;
+    }
+    if (hasRadius || hasZOffset)
     {
       double aRadius = 0.0, aZOffset = 0.0;
       aViewer->CircularGridGraphicValues(aRadius, aZOffset);
-      if (hasSize)
+      if (hasRadius)
       {
-        aRadius = aNewSizeXY.x();
-        if (aNewSizeXY.y() != 0.0)
-        {
-          Message::SendFail("Syntax error: circular size should be specified as radius");
-          return 1;
-        }
+        aRadius = aNewRadius;
       }
       if (hasZOffset)
       {
         aZOffset = aNewZOffset;
       }
       aViewer->SetCircularGridGraphicValues(aRadius, aZOffset);
+    }
+    // Angular range must hit the Aspect_CircularGrid base before ActivateGrid
+    // fires syncViews - syncViews copies AngleStart/End from the grid, so any
+    // value set earlier only on aGridParams would get overwritten.
+    if (hasArc)
+    {
+      if (occ::handle<Aspect_CircularGrid> aCircGrid =
+            occ::down_cast<Aspect_CircularGrid>(aViewer->Grid(true)))
+      {
+        aCircGrid->SetArcRange(aNewArcStart, aNewArcEnd);
+      }
+    }
+  }
+  // Apply -color / -tenthColor to the active grid so V3d syncViews picks
+  // them up on the next display. GPU-grid display drives these through
+  // aGridParams directly (set earlier in the parser loop).
+  if (hasColor || hasTenthColor)
+  {
+    if (occ::handle<Aspect_Grid> aGrid = aViewer->Grid(true))
+    {
+      Quantity_Color aMainColor, aTenthColor;
+      aGrid->Colors(aMainColor, aTenthColor);
+      if (hasColor)
+      {
+        aMainColor = aNewColor;
+      }
+      if (hasTenthColor)
+      {
+        aTenthColor = aNewTenthColor;
+      }
+      aGrid->SetColors(aMainColor, aTenthColor);
     }
   }
   aViewer->ActivateGrid(aType, aMode);
@@ -5341,13 +5607,21 @@ static int VConvert(Draw_Interpretor& theDI, int theArgNb, const char** theArgVe
     TCollection_AsciiString anArg(theArgVec[anArgIdx]);
     anArg.LowerCase();
     if (anArg == "window")
+    {
       aMode = Window;
+    }
     else if (anArg == "view")
+    {
       aMode = View;
+    }
     else if (anArg == "grid")
+    {
       aMode = Grid;
+    }
     else if (anArg == "ray")
+    {
       aMode = Ray;
+    }
     else
     {
       Message::SendFail() << "Error: wrong argument " << anArg << "! See usage:";
@@ -5687,7 +5961,7 @@ static int VReadPixel(Draw_Interpretor& theDI, int theArgNb, const char** theArg
   const char* aWarnLog = theDI.Result();
   if (aWarnLog != nullptr && aWarnLog[0] != '\0')
   {
-    std::cout << aWarnLog << std::endl;
+    std::cout << aWarnLog << '\n';
   }
   theDI.Reset();
 
@@ -7980,7 +8254,7 @@ static int VTurnView(Draw_Interpretor& di, int argc, const char** argv)
 class OCC_TextureEnv : public Graphic3d_TextureEnv
 {
 public:
-  OCC_TextureEnv(const char* FileName);
+  OCC_TextureEnv(const char* const FileName);
   OCC_TextureEnv(const Graphic3d_NameOfTextureEnv aName);
   void SetTextureParameters(const bool                          theRepeatFlag,
                             const bool                          theModulateFlag,
@@ -7993,7 +8267,7 @@ public:
   DEFINE_STANDARD_RTTI_INLINE(OCC_TextureEnv, Graphic3d_TextureEnv)
 };
 
-OCC_TextureEnv::OCC_TextureEnv(const char* theFileName)
+OCC_TextureEnv::OCC_TextureEnv(const char* const theFileName)
     : Graphic3d_TextureEnv(theFileName)
 {
 }
@@ -10275,7 +10549,7 @@ static int VLight(Draw_Interpretor& theDi, int theArgsNb, const char** theArgVec
   if (!aPrsList.IsEmpty())
   {
     // update light source presentations
-    std::vector<occ::handle<AIS_LightSource>> aLightPrsVec;
+    NCollection_LinearVector<occ::handle<AIS_LightSource>> aLightPrsVec;
     for (NCollection_List<occ::handle<AIS_InteractiveObject>>::Iterator aPrsIter(aPrsList);
          aPrsIter.More();
          aPrsIter.Next())
@@ -10283,7 +10557,7 @@ static int VLight(Draw_Interpretor& theDi, int theArgsNb, const char** theArgVec
       if (occ::handle<AIS_LightSource> aLightPrs2 =
             occ::down_cast<AIS_LightSource>(aPrsIter.Value()))
       {
-        aLightPrsVec.push_back(aLightPrs2);
+        aLightPrsVec.Append(aLightPrs2);
       }
     }
 
@@ -10291,11 +10565,8 @@ static int VLight(Draw_Interpretor& theDi, int theArgsNb, const char** theArgVec
     std::sort(aLightPrsVec.begin(), aLightPrsVec.end(), LightPrsSort());
 
     int aTopStack = 0;
-    for (std::vector<occ::handle<AIS_LightSource>>::iterator aPrsIter = aLightPrsVec.begin();
-         aPrsIter != aLightPrsVec.end();
-         ++aPrsIter)
+    for (const occ::handle<AIS_LightSource>& aLightPrs2 : aLightPrsVec)
     {
-      occ::handle<AIS_LightSource> aLightPrs2 = *aPrsIter;
       if (!aLightPrs2->TransformPersistence().IsNull()
           && aLightPrs2->TransformPersistence()->IsTrihedronOr2d())
       {
@@ -10308,6 +10579,7 @@ static int VLight(Draw_Interpretor& theDi, int theArgsNb, const char** theArgVec
       aCtx->SetTransformPersistence(aLightPrs2, aLightPrs2->TransformPersistence());
     }
   }
+
   return 0;
 }
 
@@ -10383,35 +10655,65 @@ static bool parsePerfStatsFlag(const TCollection_AsciiString&           theValue
   }
 
   if (aVal == "fps" || aVal == "framerate")
+  {
     aFlag = Graphic3d_RenderingParams::PerfCounters_FrameRate;
+  }
   else if (aVal == "cpu")
+  {
     aFlag = Graphic3d_RenderingParams::PerfCounters_CPU;
+  }
   else if (aVal == "layers")
+  {
     aFlag = Graphic3d_RenderingParams::PerfCounters_Layers;
+  }
   else if (aVal == "structs" || aVal == "structures" || aVal == "objects")
+  {
     aFlag = Graphic3d_RenderingParams::PerfCounters_Structures;
+  }
   else if (aVal == "groups")
+  {
     aFlag = Graphic3d_RenderingParams::PerfCounters_Groups;
+  }
   else if (aVal == "arrays")
+  {
     aFlag = Graphic3d_RenderingParams::PerfCounters_GroupArrays;
+  }
   else if (aVal == "tris" || aVal == "triangles")
+  {
     aFlag = Graphic3d_RenderingParams::PerfCounters_Triangles;
+  }
   else if (aVal == "pnts" || aVal == "points")
+  {
     aFlag = Graphic3d_RenderingParams::PerfCounters_Points;
+  }
   else if (aVal == "lines")
+  {
     aFlag = Graphic3d_RenderingParams::PerfCounters_Lines;
+  }
   else if (aVal == "mem" || aVal == "gpumem" || aVal == "estimmem")
+  {
     aFlag = Graphic3d_RenderingParams::PerfCounters_EstimMem;
+  }
   else if (aVal == "skipimmediate" || aVal == "noimmediate")
+  {
     aFlag = Graphic3d_RenderingParams::PerfCounters_SkipImmediate;
+  }
   else if (aVal == "frametime" || aVal == "frametimers" || aVal == "time")
+  {
     aFlag = Graphic3d_RenderingParams::PerfCounters_FrameTime;
+  }
   else if (aVal == "basic")
+  {
     aFlag = Graphic3d_RenderingParams::PerfCounters_Basic;
+  }
   else if (aVal == "extended" || aVal == "verbose" || aVal == "extra")
+  {
     aFlag = Graphic3d_RenderingParams::PerfCounters_Extended;
+  }
   else if (aVal == "full" || aVal == "all")
+  {
     aFlag = Graphic3d_RenderingParams::PerfCounters_All;
+  }
   else
   {
     return false;
@@ -11810,31 +12112,53 @@ static int VStatProfiler(Draw_Interpretor& theDI, int theArgNb, const char** the
     {
       Graphic3d_RenderingParams::PerfCounters aParam = Graphic3d_RenderingParams::PerfCounters_NONE;
       if (aFlag == "fps")
+      {
         aParam = Graphic3d_RenderingParams::PerfCounters_FrameRate;
+      }
       else if (aFlag == "cpu")
+      {
         aParam = Graphic3d_RenderingParams::PerfCounters_CPU;
+      }
       else if (aFlag == "alllayers" || aFlag == "layers")
+      {
         aParam = Graphic3d_RenderingParams::PerfCounters_Layers;
+      }
       else if (aFlag == "allstructs" || aFlag == "allstructures" || aFlag == "structs"
                || aFlag == "structures")
+      {
         aParam = Graphic3d_RenderingParams::PerfCounters_Structures;
+      }
       else if (aFlag == "groups")
+      {
         aParam = Graphic3d_RenderingParams::PerfCounters_Groups;
+      }
       else if (aFlag == "allarrays" || aFlag == "fillarrays" || aFlag == "linearrays"
                || aFlag == "pointarrays" || aFlag == "textarrays")
+      {
         aParam = Graphic3d_RenderingParams::PerfCounters_GroupArrays;
+      }
       else if (aFlag == "triangles")
+      {
         aParam = Graphic3d_RenderingParams::PerfCounters_Triangles;
+      }
       else if (aFlag == "lines")
+      {
         aParam = Graphic3d_RenderingParams::PerfCounters_Lines;
+      }
       else if (aFlag == "points")
+      {
         aParam = Graphic3d_RenderingParams::PerfCounters_Points;
+      }
       else if (aFlag == "geommem" || aFlag == "texturemem" || aFlag == "framemem")
+      {
         aParam = Graphic3d_RenderingParams::PerfCounters_EstimMem;
+      }
       else if (aFlag == "elapsedframe" || aFlag == "cpuframeaverage" || aFlag == "cpupickingaverage"
                || aFlag == "cpucullingaverage" || aFlag == "cpudynaverage" || aFlag == "cpuframemax"
                || aFlag == "cpupickingmax" || aFlag == "cpucullingmax" || aFlag == "cpudynmax")
+      {
         aParam = Graphic3d_RenderingParams::PerfCounters_FrameTime;
+      }
       else
       {
         Message::SendFail() << "Error: unknown argument '" << theArgVec[anArgIter] << "'";
@@ -13447,7 +13771,7 @@ static int VColorDiff(Draw_Interpretor& theDI, int theNbArgs, const char** theAr
 {
   if (theNbArgs != 7)
   {
-    std::cerr << "Error: command syntax is incorrect, see help" << std::endl;
+    std::cerr << "Error: command syntax is incorrect, see help" << '\n';
     return 1;
   }
 
@@ -13955,9 +14279,22 @@ vlayerline x1 y1 x2 y2 [linewidth=0.5] [linetype=0] [transparency=1.0]
 )" /* [vlayerline] */);
 
   addCmd("vgrid", VGrid, /* [vgrid] */ R"(
-vgrid [off] [-type {rect|circ}] [-mode {line|point}] [-origin X Y] [-rotAngle Angle] [-zoffset DZ]
+vgrid [off] [-type {rect|circ|gpu|shader}] [-gpu] [-mode {line|point}] [-origin X Y] [-rotAngle Angle] [-zoffset DZ]
       [-step X Y] [-size DX DY]
-      [-step StepRadius NbDivisions] [-radius Radius]
+      [-step StepRadius NbDivisions] [-radius Radius] [-arc AngleStart AngleEnd]
+      [-color R G B] [-tenthColor R G B] [-scale N] [-lineThickness T]
+      [-background {0|1}] [-drawAxis {0|1}] [-viewAdaptive {0|1}]
+Two render backends are available:
+  - '-type rect' / '-type circ' (default) draws the legacy CPU grid into a
+    bounded Graphic3d_Structure shared by every active view.
+  - '-type gpu' / '-gpu' activates the shader-rendered grid on the active view.
+    Without '-size' or '-radius' it is unbounded; combine with '-size DX DY'
+    for a rectangle, '-radius R' for a disc, '-arc S E' for a wedge.
+'-color', '-tenthColor' apply to both backends. '-scale', '-lineThickness',
+'-background', '-drawAxis', '-viewAdaptive {0|1}' are GPU-grid only. Switching
+to GPU-grid display hides the CPU grid in the viewer; switching back to a CPU
+grid type erases the shader grid in the active view. 'off' deactivates whichever
+grid is currently visible.
 )" /* [vgrid] */);
 
   addCmd("vpriviledgedplane", VPriviledgedPlane, /* [vpriviledgedplane] */ R"(

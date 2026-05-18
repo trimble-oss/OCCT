@@ -46,7 +46,7 @@ Units_UnitsSystem::Units_UnitsSystem()
 
 //=================================================================================================
 
-Units_UnitsSystem::Units_UnitsSystem(const char* aName, const bool Verbose)
+Units_UnitsSystem::Units_UnitsSystem(const char* const aName, const bool Verbose)
 {
   occ::handle<Resource_Manager> themanager = new Resource_Manager(aName, Verbose);
 
@@ -71,7 +71,7 @@ occ::handle<NCollection_HSequence<int>> Units_UnitsSystem::ActiveUnitsSequence()
 
 //=================================================================================================
 
-void Units_UnitsSystem::Specify(const char* aquantity, const char* aunit)
+void Units_UnitsSystem::Specify(const char* const aquantity, const char* const aunit)
 {
   int                                                             index;
   occ::handle<Units_Unit>                                         unit;
@@ -84,7 +84,7 @@ void Units_UnitsSystem::Specify(const char* aquantity, const char* aunit)
   Units_UnitSentence unitsentence(aunit);
   if (!unitsentence.IsDone())
   {
-    std::cout << "Units_UnitsSystem::Specify : incorrect unit" << std::endl;
+    std::cout << "Units_UnitsSystem::Specify : incorrect unit" << '\n';
     return;
   }
   occ::handle<Units_Token> token = unitsentence.Evaluate();
@@ -119,8 +119,7 @@ void Units_UnitsSystem::Specify(const char* aquantity, const char* aunit)
   //  Units_NoSuchType_Raise_if(quantity.IsNull(),aquantity);
   if (quantity.IsNull())
   {
-    std::cout << "Warning: in Units_UnitsSystem : Units_NoSuchType '" << aquantity << "'"
-              << std::endl;
+    std::cout << "Warning: in Units_UnitsSystem : Units_NoSuchType '" << aquantity << "'" << '\n';
     return;
   }
 
@@ -135,7 +134,7 @@ void Units_UnitsSystem::Specify(const char* aquantity, const char* aunit)
 
 //=================================================================================================
 
-void Units_UnitsSystem::Remove(const char* aquantity, const char* aunit)
+void Units_UnitsSystem::Remove(const char* const aquantity, const char* const aunit)
 {
   int                                                         index1, index2;
   occ::handle<Units_Unit>                                     unit;
@@ -166,9 +165,13 @@ void Units_UnitsSystem::Remove(const char* aquantity, const char* aunit)
           else
           {
             if (theactiveunitssequence->Value(index1) == index2)
+            {
               theactiveunitssequence->SetValue(index1, 0);
+            }
             else if (theactiveunitssequence->Value(index1) > index2)
+            {
               theactiveunitssequence->SetValue(index1, theactiveunitssequence->Value(index1) - 1);
+            }
             return;
           }
         }
@@ -183,7 +186,7 @@ void Units_UnitsSystem::Remove(const char* aquantity, const char* aunit)
 
 //=================================================================================================
 
-void Units_UnitsSystem::Activate(const char* aquantity, const char* aunit)
+void Units_UnitsSystem::Activate(const char* const aquantity, const char* const aunit)
 {
   int                                                         index1, index2;
   occ::handle<Units_Unit>                                     unit;
@@ -233,7 +236,7 @@ void Units_UnitsSystem::Activates()
 
 //=================================================================================================
 
-TCollection_AsciiString Units_UnitsSystem::ActiveUnit(const char* aquantity) const
+TCollection_AsciiString Units_UnitsSystem::ActiveUnit(const char* const aquantity) const
 {
   int                                                         index1, index2;
   occ::handle<Units_Unit>                                     unit;
@@ -248,7 +251,9 @@ TCollection_AsciiString Units_UnitsSystem::ActiveUnit(const char* aquantity) con
       unitssequence = quantity->Sequence();
       index2        = theactiveunitssequence->Value(index1);
       if (index2)
+      {
         return unitssequence->Value(index2)->SymbolsSequence()->Value(1)->String();
+      }
       else
       {
 #ifdef OCCT_DEBUG
@@ -264,15 +269,14 @@ TCollection_AsciiString Units_UnitsSystem::ActiveUnit(const char* aquantity) con
 
 //=================================================================================================
 
-double Units_UnitsSystem::ConvertValueToUserSystem(const char*  aquantity,
-                                                   const double avalue,
-                                                   const char*  aunit) const
+double Units_UnitsSystem::ConvertValueToUserSystem(const char* const aquantity,
+                                                   const double      avalue,
+                                                   const char* const aunit) const
 {
   Units_UnitSentence unitsentence(aunit);
   if (!unitsentence.IsDone())
   {
-    std::cout << "Units_UnitsSystem::ConvertValueToUserSystem : incorrect unit => return 0"
-              << std::endl;
+    std::cout << "Units_UnitsSystem::ConvertValueToUserSystem : incorrect unit => return 0" << '\n';
     return 0.;
   }
   return ConvertSIValueToUserSystem(aquantity, avalue * (unitsentence.Evaluate())->Value());
@@ -280,8 +284,8 @@ double Units_UnitsSystem::ConvertValueToUserSystem(const char*  aquantity,
 
 //=================================================================================================
 
-double Units_UnitsSystem::ConvertSIValueToUserSystem(const char*  aquantity,
-                                                     const double avalue) const
+double Units_UnitsSystem::ConvertSIValueToUserSystem(const char* const aquantity,
+                                                     const double      avalue) const
 {
   int                                                             index, activeunit;
   occ::handle<NCollection_HSequence<occ::handle<Units_Unit>>>     unitssequence;
@@ -330,8 +334,8 @@ double Units_UnitsSystem::ConvertSIValueToUserSystem(const char*  aquantity,
 
 //=================================================================================================
 
-double Units_UnitsSystem::ConvertUserSystemValueToSI(const char*  aquantity,
-                                                     const double avalue) const
+double Units_UnitsSystem::ConvertUserSystemValueToSI(const char* const aquantity,
+                                                     const double      avalue) const
 {
   int                                                             index, activeunit;
   occ::handle<NCollection_HSequence<occ::handle<Units_Unit>>>     unitssequence;
@@ -385,12 +389,14 @@ void Units_UnitsSystem::Dump() const
   occ::handle<Standard_Transient> transient   = This();
   occ::handle<Units_UnitsSystem>  unitssystem = occ::down_cast<Units_UnitsSystem>(transient);
   Units_Explorer                  explorer(unitssystem);
-  std::cout << " UNITSSYSTEM : " << std::endl;
+  std::cout << " UNITSSYSTEM : " << '\n';
   for (; explorer.MoreQuantity(); explorer.NextQuantity())
   {
-    std::cout << explorer.Quantity() << std::endl;
+    std::cout << explorer.Quantity() << '\n';
     for (; explorer.MoreUnit(); explorer.NextUnit())
-      std::cout << "  " << explorer.Unit() << std::endl;
+    {
+      std::cout << "  " << explorer.Unit() << '\n';
+    }
   }
 }
 

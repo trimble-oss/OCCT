@@ -13,7 +13,7 @@
 
 #include <GeomGridEval_OtherCurve.hxx>
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array1<gp_Pnt> GeomGridEval_OtherCurve::EvaluateGrid(
   const NCollection_Array1<double>& theParams) const
@@ -23,7 +23,7 @@ NCollection_Array1<gp_Pnt> GeomGridEval_OtherCurve::EvaluateGrid(
     return NCollection_Array1<gp_Pnt>();
   }
 
-  const int                  aNb = theParams.Size();
+  const int                  aNb = theParams.Length();
   NCollection_Array1<gp_Pnt> aResult(1, aNb);
 
   for (int i = theParams.Lower(); i <= theParams.Upper(); ++i)
@@ -34,7 +34,7 @@ NCollection_Array1<gp_Pnt> GeomGridEval_OtherCurve::EvaluateGrid(
   return aResult;
 }
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array1<GeomGridEval::CurveD1> GeomGridEval_OtherCurve::EvaluateGridD1(
   const NCollection_Array1<double>& theParams) const
@@ -44,7 +44,7 @@ NCollection_Array1<GeomGridEval::CurveD1> GeomGridEval_OtherCurve::EvaluateGridD
     return NCollection_Array1<GeomGridEval::CurveD1>();
   }
 
-  const int                                 aNb = theParams.Size();
+  const int                                 aNb = theParams.Length();
   NCollection_Array1<GeomGridEval::CurveD1> aResult(1, aNb);
 
   for (int i = theParams.Lower(); i <= theParams.Upper(); ++i)
@@ -58,7 +58,7 @@ NCollection_Array1<GeomGridEval::CurveD1> GeomGridEval_OtherCurve::EvaluateGridD
   return aResult;
 }
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array1<GeomGridEval::CurveD2> GeomGridEval_OtherCurve::EvaluateGridD2(
   const NCollection_Array1<double>& theParams) const
@@ -68,7 +68,7 @@ NCollection_Array1<GeomGridEval::CurveD2> GeomGridEval_OtherCurve::EvaluateGridD
     return NCollection_Array1<GeomGridEval::CurveD2>();
   }
 
-  const int                                 aNb = theParams.Size();
+  const int                                 aNb = theParams.Length();
   NCollection_Array1<GeomGridEval::CurveD2> aResult(1, aNb);
 
   for (int i = theParams.Lower(); i <= theParams.Upper(); ++i)
@@ -82,7 +82,7 @@ NCollection_Array1<GeomGridEval::CurveD2> GeomGridEval_OtherCurve::EvaluateGridD
   return aResult;
 }
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array1<GeomGridEval::CurveD3> GeomGridEval_OtherCurve::EvaluateGridD3(
   const NCollection_Array1<double>& theParams) const
@@ -92,7 +92,7 @@ NCollection_Array1<GeomGridEval::CurveD3> GeomGridEval_OtherCurve::EvaluateGridD
     return NCollection_Array1<GeomGridEval::CurveD3>();
   }
 
-  const int                                 aNb = theParams.Size();
+  const int                                 aNb = theParams.Length();
   NCollection_Array1<GeomGridEval::CurveD3> aResult(1, aNb);
 
   for (int i = theParams.Lower(); i <= theParams.Upper(); ++i)
@@ -106,7 +106,7 @@ NCollection_Array1<GeomGridEval::CurveD3> GeomGridEval_OtherCurve::EvaluateGridD
   return aResult;
 }
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array1<gp_Vec> GeomGridEval_OtherCurve::EvaluateGridDN(
   const NCollection_Array1<double>& theParams,
@@ -117,7 +117,7 @@ NCollection_Array1<gp_Vec> GeomGridEval_OtherCurve::EvaluateGridDN(
     return NCollection_Array1<gp_Vec>();
   }
 
-  const int                  aNb = theParams.Size();
+  const int                  aNb = theParams.Length();
   NCollection_Array1<gp_Vec> aResult(1, aNb);
 
   // Reuse existing grid evaluators for orders 1-3

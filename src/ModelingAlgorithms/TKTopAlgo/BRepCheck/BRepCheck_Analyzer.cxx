@@ -170,10 +170,11 @@ public:
 
                 if (performwire)
                 {
-                  std::unique_lock<std::mutex> aLock =
-                    aFaceEdgeRes->GetMutex()
-                      ? std::unique_lock<std::mutex>(*aFaceEdgeRes->GetMutex())
-                      : std::unique_lock<std::mutex>();
+                  std::unique_lock<std::mutex> aLock(aFaceEdgeRes->myMutex, std::defer_lock);
+                  if (aFaceEdgeRes->IsParallel())
+                  {
+                    aLock.lock();
+                  }
                   if (aFaceEdgeRes->IsStatusOnShape(aShape))
                   {
                     NCollection_List<BRepCheck_Status>::Iterator itl(
@@ -219,9 +220,11 @@ public:
 
               if (orientofwires)
               {
-                std::unique_lock<std::mutex> aLock =
-                  aFaceWireRes->GetMutex() ? std::unique_lock<std::mutex>(*aFaceWireRes->GetMutex())
-                                           : std::unique_lock<std::mutex>();
+                std::unique_lock<std::mutex> aLock(aFaceWireRes->myMutex, std::defer_lock);
+                if (aFaceWireRes->IsParallel())
+                {
+                  aLock.lock();
+                }
                 if (aFaceWireRes->IsStatusOnShape(aShape))
                 {
                   const NCollection_List<BRepCheck_Status>& aStatusList =
@@ -416,7 +419,7 @@ void BRepCheck_Analyzer::Put(const TopoDS_Shape& theShape, const bool B)
 
 void BRepCheck_Analyzer::Perform()
 {
-  const int                          aMapSize     = myMap.Size();
+  const int                          aMapSize     = myMap.Length();
   const int                          aMinTaskSize = 10;
   const occ::handle<OSD_ThreadPool>& aThreadPool  = OSD_ThreadPool::DefaultPool();
   const int                          aNbThreads   = aThreadPool->NbThreads();
@@ -447,7 +450,7 @@ void BRepCheck_Analyzer::Perform()
   }
 
   BRepCheck_ParallelAnalyzer aParallelAnalyzer(aArrayOfArray, myMap);
-  OSD_Parallel::For(0, aArrayOfArray.Size(), aParallelAnalyzer, !myIsParallel);
+  OSD_Parallel::For(0, aArrayOfArray.Length(), aParallelAnalyzer, !myIsParallel);
 }
 
 //=================================================================================================
@@ -520,7 +523,9 @@ bool BRepCheck_Analyzer::ValidSub(const TopoDS_Shape& S, const TopAbs_ShapeEnum 
     }
 
     if (!RV->MoreShapeInContext())
+    {
       break;
+    }
 
     for (itl.Initialize(RV->StatusOnShape()); itl.More(); itl.Next())
     {

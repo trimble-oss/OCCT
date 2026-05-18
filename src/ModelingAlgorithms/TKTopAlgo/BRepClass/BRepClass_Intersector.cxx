@@ -23,11 +23,11 @@
 #include <BRepClass_Intersector.hxx>
 #include <ElCLib.hxx>
 #include <Extrema_ExtPC2d.hxx>
-#include <GCE2d_MakeSegment.hxx>
+#include <GC_MakeSegment2d.hxx>
 #include <Geom2d_Curve.hxx>
 #include <Geom2d_Line.hxx>
 #include <Geom2dInt_GInter.hxx>
-#include <Geom2dLProp_CLProps2d.hxx>
+#include <GeomLProp_CLProps.hxx>
 #include <gp_Dir2d.hxx>
 #include <gp_Lin2d.hxx>
 #include <IntRes2d_Domain.hxx>
@@ -282,7 +282,7 @@ void CheckSkip(Geom2dInt_GInter&                theInter,
   else
   {
     anIsLSkip = true;
-    GCE2d_MakeSegment aMkSeg(aP1, aP2);
+    GC_MakeSegment2d aMkSeg(aP1, aP2);
     if (!aMkSeg.IsDone())
     {
       return;
@@ -450,7 +450,7 @@ void BRepClass_Intersector::LocalGeometry(const BRepClass_Edge& E,
 {
   double                    fpar, lpar;
   occ::handle<Geom2d_Curve> aPCurve = BRep_Tool::CurveOnSurface(E.Edge(), E.Face(), fpar, lpar);
-  Geom2dLProp_CLProps2d     Prop(aPCurve, U, 2, Precision::PConfusion());
+  GeomLProp_CLProps2d       Prop(aPCurve, U, 2, Precision::PConfusion());
 
   C = 0.;
   if (Prop.IsTangentDefined())
@@ -459,12 +459,18 @@ void BRepClass_Intersector::LocalGeometry(const BRepClass_Edge& E,
     C = Prop.Curvature();
   }
   else
+  {
     GetTangentAsChord(aPCurve, Tang, U, fpar, lpar);
+  }
 
   if (C > Precision::PConfusion() && !Precision::IsInfinite(C))
+  {
     Prop.Normal(Norm);
+  }
   else
+  {
     Norm.SetCoord(Tang.Y(), -Tang.X());
+  }
 }
 
 //=================================================================================================
@@ -519,19 +525,27 @@ void GetTangentAsChord(const occ::handle<Geom2d_Curve>& thePCurve,
 {
   double Offset = 0.1 * (theLast - theFirst);
 
-  if (theLast - theParam < Precision::PConfusion()) // theParam == theLast
+  if (theLast - theParam < Precision::PConfusion())
+  { // theParam == theLast
     Offset *= -1;
-  else if (theParam + Offset > theLast) //<theParam> is close to <theLast>
+  }
+  else if (theParam + Offset > theLast)
+  { //<theParam> is close to <theLast>
     Offset = 0.5 * (theLast - theParam);
+  }
 
   gp_Pnt2d aPnt2d      = thePCurve->Value(theParam);
   gp_Pnt2d OffsetPnt2d = thePCurve->Value(theParam + Offset);
 
   gp_Vec2d aChord(aPnt2d, OffsetPnt2d);
   if (Offset < 0.)
+  {
     aChord.Reverse();
+  }
 
   double SqLength = aChord.SquareMagnitude();
   if (SqLength > Precision::SquarePConfusion())
+  {
     theTangent = aChord;
+  }
 }

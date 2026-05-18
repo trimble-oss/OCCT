@@ -55,10 +55,12 @@ typedef enum
 //           theDirName may be represented as list: "/dirA/dirB /dirA/dirC"
 //=======================================================================
 
-bool Message_MsgFile::Load(const char* theDirName, const char* theFileName)
+bool Message_MsgFile::Load(const char* const theDirName, const char* const theFileName)
 {
   if (!theDirName || !theFileName)
+  {
     return false;
+  }
 
   bool                    ret = true;
   TCollection_AsciiString aDirList(theDirName);
@@ -67,7 +69,9 @@ bool Message_MsgFile::Load(const char* theDirName, const char* theFileName)
   {
     TCollection_AsciiString aFileName = aDirList.Token(" \t\n", i);
     if (aFileName.IsEmpty())
+    {
       break;
+    }
 #ifdef _WIN32
     aFileName += '\\';
 #else
@@ -75,7 +79,9 @@ bool Message_MsgFile::Load(const char* theDirName, const char* theFileName)
 #endif
     aFileName += theFileName;
     if (!LoadFile(aFileName.ToCString()))
+    {
       ret = false;
+    }
   }
   return ret;
 }
@@ -120,33 +126,49 @@ static inline bool getString(CharType*&                  thePtr,
     {
       CharType aChar = *aPtr;
       if (aChar == ' ')
+      {
         aLeftSpaces++;
+      }
       else if (aChar == '\t')
+      {
         aLeftSpaces += 8;
+      }
       else if (aChar == '\r' || *aPtr == '\n')
+      {
         aLeftSpaces = 0;
+      }
       else
+      {
         break;
+      }
       aPtr++;
     }
 
     //    Find the end of the string
     for (anEndPtr = aPtr; *anEndPtr; anEndPtr++)
+    {
       if (anEndPtr[0] == '\n')
       {
         if (anEndPtr[-1] == '\r')
+        {
           anEndPtr--;
+        }
         break;
       }
+    }
 
   } while (aPtr[0] == '!');
 
   //    form the result
   if (aPtr == anEndPtr)
+  {
     return false;
+  }
   thePtr = anEndPtr;
   if (*thePtr)
+  {
     *thePtr++ = '\0';
+  }
   theString     = typename TCollection_String<CharType>::type(aPtr);
   theLeftSpaces = aLeftSpaces;
   return true;
@@ -175,15 +197,19 @@ static inline bool loadFile(_Char* theBuffer)
     {
       case MsgFile_WaitingMoreMessage:
         if (isKeyword)
+        {
           Message_MsgFile::AddMsg(aKeyword, aMessage); // terminate the previous one
-        //      Pass from here to 'case MsgFile_WaitingKeyword'
+          //      Pass from here to 'case MsgFile_WaitingKeyword'
+        }
         else
         {
           //      Add another line to the message already in the buffer 'aMessage'
           aMessage += '\n';
           aLeftSpaces -= aFirstLeftSpaces;
           if (aLeftSpaces > 0)
+          {
             aMessage += TCollection_ExtendedString(aLeftSpaces, ' ');
+          }
           aMessage += aString;
           break;
         }
@@ -214,7 +240,9 @@ static inline bool loadFile(_Char* theBuffer)
   }
   //    Process the last string still remaining in the buffer
   if (aState == MsgFile_WaitingMoreMessage)
+  {
     Message_MsgFile::AddMsg(aKeyword, aMessage);
+  }
   return true;
 }
 
@@ -223,15 +251,21 @@ static inline bool loadFile(_Char* theBuffer)
 static int GetFileSize(FILE* theFile)
 {
   if (!theFile)
+  {
     return -1;
+  }
 
   // get real file size
   long nRealFileSize = 0;
   if (fseek(theFile, 0, SEEK_END) != 0)
+  {
     return -1;
+  }
   nRealFileSize = ftell(theFile);
   if (fseek(theFile, 0, SEEK_SET) != 0)
+  {
     return -1;
+  }
 
   return (int)nRealFileSize;
 }
@@ -241,15 +275,19 @@ static int GetFileSize(FILE* theFile)
 // purpose  : Load the list of messages from a file
 //=======================================================================
 
-bool Message_MsgFile::LoadFile(const char* theFileName)
+bool Message_MsgFile::LoadFile(const char* const theFileName)
 {
   if (theFileName == nullptr || *theFileName == '\0')
+  {
     return false;
+  }
 
   //    Open the file
   FILE* anMsgFile = OSD_OpenFile(theFileName, "rb");
   if (!anMsgFile)
+  {
     return false;
+  }
 
   const int          aFileSize = GetFileSize(anMsgFile);
   NCollection_Buffer aBuffer(NCollection_BaseAllocator::CommonBaseAllocator());
@@ -264,7 +302,9 @@ bool Message_MsgFile::LoadFile(const char* theFileName)
 
   fclose(anMsgFile);
   if (nbRead != aFileSize)
+  {
     return false;
+  }
 
   anMsgBuffer[aFileSize]     = 0;
   anMsgBuffer[aFileSize + 1] = 0;
@@ -294,14 +334,16 @@ bool Message_MsgFile::LoadFile(const char* theFileName)
     return ::loadFile(aUnicodeBuffer);
   }
   else
+  {
     return ::loadFile(anMsgBuffer);
+  }
 }
 
 //=================================================================================================
 
-bool Message_MsgFile::LoadFromEnv(const char* theEnvName,
-                                  const char* theFileName,
-                                  const char* theLangExt)
+bool Message_MsgFile::LoadFromEnv(const char* const theEnvName,
+                                  const char* const theFileName,
+                                  const char* const theLangExt)
 {
   TCollection_AsciiString aLangExt(theLangExt != nullptr ? theLangExt : "");
   if (aLangExt.IsEmpty())
@@ -340,7 +382,7 @@ bool Message_MsgFile::LoadFromEnv(const char* theEnvName,
 
 //=================================================================================================
 
-bool Message_MsgFile::LoadFromString(const char* theContent, const int theLength)
+bool Message_MsgFile::LoadFromString(const char* const theContent, const int theLength)
 {
   int                aStringSize = theLength >= 0 ? theLength : (int)strlen(theContent);
   NCollection_Buffer aBuffer(NCollection_BaseAllocator::CommonBaseAllocator());
@@ -375,7 +417,7 @@ bool Message_MsgFile::AddMsg(const TCollection_AsciiString&    theKeyword,
 // function : getMsg
 // purpose  : retrieve the message previously defined for the given keyword
 //=======================================================================
-const TCollection_ExtendedString& Message_MsgFile::Msg(const char* theKeyword)
+const TCollection_ExtendedString& Message_MsgFile::Msg(const char* const theKeyword)
 {
   TCollection_AsciiString aKey(theKeyword);
   return Msg(aKey);

@@ -18,17 +18,17 @@
 #include <TNaming_Builder.hxx>
 #include <TNaming_Iterator.hxx>
 
-//=======================================================================
-// function : Import
-// purpose  : Import transient attribute from the persistent data
-//=======================================================================
+//=================================================================================================
+
 void StdPersistent_Naming::NamedShape::Import(
   const occ::handle<TNaming_NamedShape>& theAttribute) const
 {
   theAttribute->SetVersion(myVersion);
 
   if (myOldShapes.IsNull() || myNewShapes.IsNull())
+  {
     return;
+  }
 
   TNaming_Builder aBuilder(theAttribute->Label());
 
@@ -63,28 +63,22 @@ void StdPersistent_Naming::NamedShape::Import(
   }
 }
 
-//=======================================================================
-// function : Read
-// purpose  : Read persistent data from a file
-//=======================================================================
+//=================================================================================================
+
 void StdPersistent_Naming::Name::Read(StdObjMgt_ReadData& theReadData)
 {
   theReadData >> myType >> myShapeType >> myArgs >> myStop >> myIndex;
 }
 
-//=======================================================================
-// function : Write
-// purpose  : Write persistent data to a file
-//=======================================================================
+//=================================================================================================
+
 void StdPersistent_Naming::Name::Write(StdObjMgt_WriteData& theWriteData) const
 {
   theWriteData << myType << myShapeType << myArgs << myStop << myIndex;
 }
 
-//=======================================================================
-// function : Import
-// purpose  : Import transient object from the persistent data
-//=======================================================================
+//=================================================================================================
+
 void StdPersistent_Naming::Name::Import(TNaming_Name& theName, const occ::handle<TDF_Data>&) const
 {
   theName.Type(static_cast<TNaming_NameType>(myType));
@@ -113,62 +107,52 @@ void StdPersistent_Naming::Name::Import(TNaming_Name& theName, const occ::handle
   theName.Index(myIndex);
 }
 
-//=======================================================================
-// function : Read
-// purpose  : Read persistent data from a file
-//=======================================================================
+//=================================================================================================
+
 void StdPersistent_Naming::Name_1::Read(StdObjMgt_ReadData& theReadData)
 {
   Name::Read(theReadData);
   theReadData >> myContextLabel;
 }
 
-//=======================================================================
-// function : Write
-// purpose  : Write persistent data to a file
-//=======================================================================
+//=================================================================================================
+
 void StdPersistent_Naming::Name_1::Write(StdObjMgt_WriteData& theWriteData) const
 {
   Name::Write(theWriteData);
   theWriteData << myContextLabel;
 }
 
-//=======================================================================
-// function : Import
-// purpose  : Import transient object from the persistent data
-//=======================================================================
+//=================================================================================================
+
 void StdPersistent_Naming::Name_1::Import(TNaming_Name&                theName,
                                           const occ::handle<TDF_Data>& theDF) const
 {
   Name::Import(theName, theDF);
   if (myContextLabel)
+  {
     theName.ContextLabel(myContextLabel->Label(theDF));
+  }
 }
 
-//=======================================================================
-// function : Read
-// purpose  : Read persistent data from a file
-//=======================================================================
+//=================================================================================================
+
 void StdPersistent_Naming::Name_2::Read(StdObjMgt_ReadData& theReadData)
 {
   Name_1::Read(theReadData);
   theReadData >> myOrientation;
 }
 
-//=======================================================================
-// function : Write
-// purpose  : Write persistent data to a file
-//=======================================================================
+//=================================================================================================
+
 void StdPersistent_Naming::Name_2::Write(StdObjMgt_WriteData& theWriteData) const
 {
   Name_1::Write(theWriteData);
   theWriteData << myOrientation;
 }
 
-//=======================================================================
-// function : Import
-// purpose  : Import transient object from the persistent data
-//=======================================================================
+//=================================================================================================
+
 void StdPersistent_Naming::Name_2::Import(TNaming_Name&                theName,
                                           const occ::handle<TDF_Data>& theDF) const
 {
@@ -176,10 +160,8 @@ void StdPersistent_Naming::Name_2::Import(TNaming_Name&                theName,
   theName.Orientation(static_cast<TopAbs_Orientation>(myOrientation));
 }
 
-//=======================================================================
-// function : ImportAttribute
-// purpose  : Import transient attribute from the persistent data
-//=======================================================================
+//=================================================================================================
+
 void StdPersistent_Naming::Naming::ImportAttribute()
 {
   occ::handle<Name> aName = occ::down_cast<Name>(myData);
@@ -190,10 +172,8 @@ void StdPersistent_Naming::Naming::ImportAttribute()
   }
 }
 
-//=======================================================================
-// function : ImportAttribute
-// purpose  : Import transient attribute from the persistent data
-//=======================================================================
+//=================================================================================================
+
 void StdPersistent_Naming::Naming_1::ImportAttribute()
 {
   Naming::ImportAttribute();

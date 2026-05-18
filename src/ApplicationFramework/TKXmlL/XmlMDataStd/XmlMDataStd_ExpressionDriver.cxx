@@ -41,10 +41,8 @@ occ::handle<TDF_Attribute> XmlMDataStd_ExpressionDriver::NewEmpty() const
   return (new TDataStd_Expression());
 }
 
-//=======================================================================
-// function : Paste
-// purpose  : persistent -> transient (retrieve)
-//=======================================================================
+//=================================================================================================
+
 bool XmlMDataStd_ExpressionDriver::Paste(const XmlObjMgt_Persistent&       theSource,
                                          const occ::handle<TDF_Attribute>& theTarget,
                                          XmlObjMgt_RRelocationTable&       theRelocTable) const
@@ -85,7 +83,9 @@ bool XmlMDataStd_ExpressionDriver::Paste(const XmlObjMgt_Persistent&       theSo
     {
       occ::handle<TDF_Attribute> aV;
       if (theRelocTable.IsBound(aNb))
+      {
         aV = occ::down_cast<TDataStd_Variable>(theRelocTable.Find(aNb));
+      }
       else
       {
         aV = new TDataStd_Variable;
@@ -95,17 +95,17 @@ bool XmlMDataStd_ExpressionDriver::Paste(const XmlObjMgt_Persistent&       theSo
 
       // next variable
       if (!XmlObjMgt::GetInteger(aVs, aNb))
+      {
         aNb = 0;
+      }
     }
   }
 
   return true;
 }
 
-//=======================================================================
-// function : Paste
-// purpose  : transient -> persistent (store)
-//=======================================================================
+//=================================================================================================
+
 void XmlMDataStd_ExpressionDriver::Paste(const occ::handle<TDF_Attribute>& theSource,
                                          XmlObjMgt_Persistent&             theTarget,
                                          XmlObjMgt_SRelocationTable&       theRelocTable) const
@@ -138,7 +138,9 @@ void XmlMDataStd_ExpressionDriver::Paste(const occ::handle<TDF_Attribute>& theSo
         aGsStr += TCollection_AsciiString(aNb) + " ";
       }
       else
+      {
         aGsStr += "0 ";
+      }
     }
     anElem.setAttribute(::VariablesString(), aGsStr.ToCString());
   }

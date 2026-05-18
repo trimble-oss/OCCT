@@ -84,10 +84,7 @@ struct aFuncStruct
   double                         myPeriod[2]; // U and V period correspondingly.
 };
 
-//=======================================================================
-// function : computePeriodicity
-// purpose  : Compute period information on adaptor.
-//=======================================================================
+//=================================================================================================
 static void computePeriodicity(const occ::handle<Adaptor3d_Surface>& theSurf,
                                double&                               theUPeriod,
                                double&                               theVPeriod)
@@ -109,7 +106,7 @@ static void computePeriodicity(const occ::handle<Adaptor3d_Surface>& theSurf,
   {
     theUPeriod = theSurf->LastUParameter() - theSurf->FirstUParameter();
   }
-  if (theUPeriod != 0.0)
+  if (std::abs(theUPeriod) > Precision::PConfusion())
   {
     aTrimF = theSurf->FirstUParameter();          // Trimmed first
     aTrimL = theSurf->LastUParameter();           // Trimmed last
@@ -130,7 +127,7 @@ static void computePeriodicity(const occ::handle<Adaptor3d_Surface>& theSurf,
   {
     theVPeriod = theSurf->LastVParameter() - theSurf->FirstVParameter();
   }
-  if (theVPeriod != 0.0)
+  if (std::abs(theVPeriod) > Precision::PConfusion())
   {
     aTrimF = theSurf->FirstVParameter();          // Trimmed first
     aTrimL = theSurf->LastVParameter();           // Trimmed last
@@ -143,10 +140,7 @@ static void computePeriodicity(const occ::handle<Adaptor3d_Surface>& theSurf,
   }
 }
 
-//=======================================================================
-// function : aFuncValue
-// purpose  : compute functional value in (theU,theV) point
-//=======================================================================
+//=================================================================================================
 static double anOrthogSqValue(const gp_Pnt&                         aBasePnt,
                               const occ::handle<Adaptor3d_Surface>& Surf,
                               const double                          theU,
@@ -163,21 +157,21 @@ static double anOrthogSqValue(const gp_Pnt&                         aBasePnt,
   gp_Vec aBaseVec(aBasePnt, aProjPnt);
 
   if (aSu.SquareMagnitude() > Precision::SquareConfusion())
+  {
     aSu.Normalize();
+  }
 
   if (aSv.SquareMagnitude() > Precision::SquareConfusion())
+  {
     aSv.Normalize();
+  }
 
   double aFirstPart  = aSu.Dot(aBaseVec);
   double aSecondPart = aSv.Dot(aBaseVec);
   return (aFirstPart * aFirstPart + aSecondPart * aSecondPart);
 }
 
-//=======================================================================
-// function : Value
-// purpose  : (OCC217 - apo)- Compute Point2d that project on polar surface(<Surf>) 3D<Curve>
-//            <InitCurve2d> use for calculate start 2D point.
-//=======================================================================
+//=================================================================================================
 static gp_Pnt2d Function_Value(const double theU, const aFuncStruct& theData)
 {
   gp_Pnt2d p2d          = theData.myInitCurve2d->Value(theU);
@@ -199,7 +193,9 @@ static gp_Pnt2d Function_Value(const double theU, const aFuncStruct& theData)
     gp_Pnt aPnt;
     theData.mySurf->D0(p2d.X(), theU, aPnt);
     if (aPnt.SquareDistance(p) < aSurfPntDist)
+    {
       p2d.SetY(theU);
+    }
   }
 
   if (std::abs(p2d.Y() - Vinf) < Precision::PConfusion()
@@ -209,7 +205,9 @@ static gp_Pnt2d Function_Value(const double theU, const aFuncStruct& theData)
     gp_Pnt aPnt;
     theData.mySurf->D0(theU, p2d.Y(), aPnt);
     if (aPnt.SquareDistance(p) < aSurfPntDist)
+    {
       p2d.SetX(theU);
+    }
   }
 
   int    decalU = 0, decalV = 0;
@@ -227,9 +225,13 @@ static gp_Pnt2d Function_Value(const double theU, const aFuncStruct& theData)
         gp_Cylinder Cylinder = theData.mySurf->Cylinder();
         ElSLib::Parameters(Cylinder, p, S, T);
         if (U0 < Uinf)
+        {
           decalU = -int((Uinf - U0) / (2 * M_PI)) - 1;
+        }
         if (U0 > Usup)
+        {
           decalU = int((U0 - Usup) / (2 * M_PI)) + 1;
+        }
         S += decalU * 2 * M_PI;
         break;
       }
@@ -237,9 +239,13 @@ static gp_Pnt2d Function_Value(const double theU, const aFuncStruct& theData)
         gp_Cone Cone = theData.mySurf->Cone();
         ElSLib::Parameters(Cone, p, S, T);
         if (U0 < Uinf)
+        {
           decalU = -int((Uinf - U0) / (2 * M_PI)) - 1;
+        }
         if (U0 > Usup)
+        {
           decalU = int((U0 - Usup) / (2 * M_PI)) + 1;
+        }
         S += decalU * 2 * M_PI;
         break;
       }
@@ -247,22 +253,34 @@ static gp_Pnt2d Function_Value(const double theU, const aFuncStruct& theData)
         gp_Sphere Sphere = theData.mySurf->Sphere();
         ElSLib::Parameters(Sphere, p, S, T);
         if (U0 < Uinf)
+        {
           decalU = -int((Uinf - U0) / (2 * M_PI)) - 1;
+        }
         if (U0 > Usup)
+        {
           decalU = int((U0 - Usup) / (2 * M_PI)) + 1;
+        }
         S += decalU * 2 * M_PI;
         if (V0 < Vinf)
+        {
           decalV = -int((Vinf - V0) / (2 * M_PI)) - 1;
+        }
         if (V0 > (Vsup + (Vsup - Vinf)))
+        {
           decalV = int((V0 - Vsup + (Vsup - Vinf)) / (2 * M_PI)) + 1;
+        }
         T += decalV * 2 * M_PI;
         if (0.4 * M_PI < std::abs(U0 - S) && std::abs(U0 - S) < 1.6 * M_PI)
         {
           T = M_PI - T;
           if (U0 < S)
+          {
             S -= M_PI;
+          }
           else
+          {
             S += M_PI;
+          }
         }
         break;
       }
@@ -270,13 +288,21 @@ static gp_Pnt2d Function_Value(const double theU, const aFuncStruct& theData)
         gp_Torus Torus = theData.mySurf->Torus();
         ElSLib::Parameters(Torus, p, S, T);
         if (U0 < Uinf)
+        {
           decalU = -int((Uinf - U0) / (2 * M_PI)) - 1;
+        }
         if (U0 > Usup)
+        {
           decalU = int((U0 - Usup) / (2 * M_PI)) + 1;
+        }
         if (V0 < Vinf)
+        {
           decalV = -int((Vinf - V0) / (2 * M_PI)) - 1;
+        }
         if (V0 > Vsup)
+        {
           decalV = int((V0 - Vsup) / (2 * M_PI)) + 1;
+        }
         S += decalU * 2 * M_PI;
         T += decalV * 2 * M_PI;
         break;
@@ -295,7 +321,9 @@ static gp_Pnt2d Function_Value(const double theU, const aFuncStruct& theData)
   if (U0 < Uinf)
   {
     if (!uperiod)
+    {
       U0 = Uinf;
+    }
     else
     {
       decalU = int((Uinf - U0) / uperiod) + 1;
@@ -305,7 +333,9 @@ static gp_Pnt2d Function_Value(const double theU, const aFuncStruct& theData)
   if (U0 > Usup)
   {
     if (!uperiod)
+    {
       U0 = Usup;
+    }
     else
     {
       decalU = -(int((U0 - Usup) / uperiod) + 1);
@@ -315,7 +345,9 @@ static gp_Pnt2d Function_Value(const double theU, const aFuncStruct& theData)
   if (V0 < Vinf)
   {
     if (!vperiod)
+    {
       V0 = Vinf;
+    }
     else
     {
       decalV = int((Vinf - V0) / vperiod) + 1;
@@ -325,7 +357,9 @@ static gp_Pnt2d Function_Value(const double theU, const aFuncStruct& theData)
   if (V0 > Vsup)
   {
     if (!vperiod)
+    {
       V0 = Vsup;
+    }
     else
     {
       decalV = -int((V0 - Vsup) / vperiod) - 1;
@@ -337,21 +371,37 @@ static gp_Pnt2d Function_Value(const double theU, const aFuncStruct& theData)
   double uLittle = (Usup - Uinf) / 10, vLittle = (Vsup - Vinf) / 10;
   double uInfLi = 0, vInfLi = 0, uSupLi = 0, vSupLi = 0;
   if ((U0 - Uinf) > uLittle)
+  {
     uInfLi = U0 - uLittle;
+  }
   else
+  {
     uInfLi = Uinf;
+  }
   if ((V0 - Vinf) > vLittle)
+  {
     vInfLi = V0 - vLittle;
+  }
   else
+  {
     vInfLi = Vinf;
+  }
   if ((Usup - U0) > uLittle)
+  {
     uSupLi = U0 + uLittle;
+  }
   else
+  {
     uSupLi = Usup;
+  }
   if ((Vsup - V0) > vLittle)
+  {
     vSupLi = V0 + vLittle;
+  }
   else
+  {
     vSupLi = Vsup;
+  }
 
   GeomAdaptor_Surface SurfLittle;
   if (Type == GeomAbs_BSplineSurface)
@@ -420,10 +470,7 @@ static gp_Pnt2d Function_Value(const double theU, const aFuncStruct& theData)
   return p2d;
 }
 
-//=======================================================================
-// function : ProjLib_PolarFunction
-// purpose  : (OCC217 - apo)- This class produce interface to call "gp_Pnt2d Function_Value(...)"
-//=======================================================================
+//=================================================================================================
 
 class ProjLib_PolarFunction : public AppCont_Function
 {
@@ -507,10 +554,7 @@ ProjLib_ComputeApproxOnPolarSurface::ProjLib_ComputeApproxOnPolarSurface(
   myBSpline = Perform(theInitialCurve2d, theCurve, theSurface);
 }
 
-//=======================================================================
-// function : ProjLib_ComputeApproxOnPolarSurface
-// purpose  : case without curve of initialization
-//=======================================================================
+//=================================================================================================
 
 ProjLib_ComputeApproxOnPolarSurface::ProjLib_ComputeApproxOnPolarSurface(
   const occ::handle<Adaptor3d_Curve>&   theCurve,
@@ -530,10 +574,7 @@ ProjLib_ComputeApproxOnPolarSurface::ProjLib_ComputeApproxOnPolarSurface(
   myBSpline = Perform(anInitCurve2d, theCurve, theSurface);
 }
 
-//=======================================================================
-// function : ProjLib_ComputeApproxOnPolarSurface
-// purpose  : Process the case of sewing
-//=======================================================================
+//=================================================================================================
 
 ProjLib_ComputeApproxOnPolarSurface::ProjLib_ComputeApproxOnPolarSurface(
   const occ::handle<Adaptor2d_Curve2d>& theInitialCurve2d,
@@ -602,7 +643,9 @@ static occ::handle<Geom2d_BSplineCurve> Concat(const occ::handle<Geom2d_BSplineC
     deg = deg1;
   }
   else
+  {
     deg = deg1;
+  }
 
   int np1, np2, nk1, nk2, np, nk;
   np1 = C1->NbPoles();
@@ -612,18 +655,12 @@ static occ::handle<Geom2d_BSplineCurve> Concat(const occ::handle<Geom2d_BSplineC
   nk  = nk1 + nk2 - 1;
   np  = np1 + np2 - 1;
 
-  NCollection_Array1<double> K1(1, nk1);
-  C1->Knots(K1);
-  NCollection_Array1<int> M1(1, nk1);
-  C1->Multiplicities(M1);
-  NCollection_Array1<gp_Pnt2d> P1(1, np1);
-  C1->Poles(P1);
-  NCollection_Array1<double> K2(1, nk2);
-  C2->Knots(K2);
-  NCollection_Array1<int> M2(1, nk2);
-  C2->Multiplicities(M2);
-  NCollection_Array1<gp_Pnt2d> P2(1, np2);
-  C2->Poles(P2);
+  const NCollection_Array1<double>&   K1 = C1->Knots();
+  const NCollection_Array1<int>&      M1 = C1->Multiplicities();
+  const NCollection_Array1<gp_Pnt2d>& P1 = C1->Poles();
+  const NCollection_Array1<double>&   K2 = C2->Knots();
+  const NCollection_Array1<int>&      M2 = C2->Multiplicities();
+  const NCollection_Array1<gp_Pnt2d>& P2 = C2->Poles();
 
   // Compute the new BSplineCurve
   NCollection_Array1<double>   K(1, nk);
@@ -726,12 +763,16 @@ occ::handle<Geom2d_BSplineCurve> ProjLib_ComputeApproxOnPolarSurface::Perform(
         InitialCurve2d->Intervals(Inter2d, GeomAbs_C1);
         j = 1;
         for (i = 1, j = 1; i <= nbInter; i++)
+        {
           if (std::abs(Inter.Value(i) - Inter2d.Value(j)) < ParamTol)
           {
             if (j > nbInter2d)
+            {
               break;
+            }
             j++;
           }
+        }
         if (j != (nbInter2d + 1))
         {
           C2dIsToCompute = true;
@@ -913,7 +954,9 @@ occ::handle<Geom2d_BSplineCurve> ProjLib_ComputeApproxOnPolarSurface::Perform(
   {
     AHC2d = BuildInitialCurve2d(Curve, S);
     if (!myProjIsDone)
+    {
       return occ::handle<Geom2d_BSplineCurve>();
+    }
   }
   return ProjectUsingInitialCurve2d(AHC, S, AHC2d);
 }
@@ -999,9 +1042,13 @@ occ::handle<Adaptor2d_Curve2d> ProjLib_ComputeApproxOnPolarSurface::BuildInitial
           if (std::abs(Sloc - S) > M_PI)
           {
             if (Sloc > S)
+            {
               usens++;
+            }
             else
+            {
               usens--;
+            }
           }
           Pts2d(i).SetCoord(S + usens * 2 * M_PI, T);
         }
@@ -1022,9 +1069,13 @@ occ::handle<Adaptor2d_Curve2d> ProjLib_ComputeApproxOnPolarSurface::BuildInitial
           if (std::abs(Sloc - S) > M_PI)
           {
             if (Sloc > S)
+            {
               usens++;
+            }
             else
+            {
               usens--;
+            }
           }
           Pts2d(i).SetCoord(S + usens * 2 * M_PI, T);
         }
@@ -1046,21 +1097,33 @@ occ::handle<Adaptor2d_Curve2d> ProjLib_ComputeApproxOnPolarSurface::BuildInitial
           if (1.6 * M_PI < std::abs(Sloc - S))
           {
             if (Sloc > S)
+            {
               usens += 2;
+            }
             else
+            {
               usens -= 2;
+            }
           }
           if (1.6 * M_PI > std::abs(Sloc - S) && std::abs(Sloc - S) > 0.4 * M_PI)
           {
             vparit = !vparit;
             if (Sloc > S)
+            {
               usens++;
+            }
             else
+            {
               usens--;
+            }
             if (std::abs(Tloc - Vsup) < (Vsup - Vinf) / 5)
+            {
               vsens++;
+            }
             else
+            {
               vsens--;
+            }
           }
           if (vparit)
           {
@@ -1088,16 +1151,24 @@ occ::handle<Adaptor2d_Curve2d> ProjLib_ComputeApproxOnPolarSurface::BuildInitial
           if (std::abs(Sloc - S) > M_PI)
           {
             if (Sloc > S)
+            {
               usens++;
+            }
             else
+            {
               usens--;
+            }
           }
           if (std::abs(Tloc - T) > M_PI)
           {
             if (Tloc > T)
+            {
               vsens++;
+            }
             else
+            {
               vsens--;
+            }
           }
           Pts2d(i).SetCoord(S + usens * 2 * M_PI, T + vsens * 2 * M_PI);
         }
@@ -1127,7 +1198,9 @@ occ::handle<Adaptor2d_Curve2d> ProjLib_ComputeApproxOnPolarSurface::BuildInitial
       {
         double aSqDist = aExtPS.SquareDistance(i);
         if (aSqDist < aMinSqDist)
+        {
           aMinSqDist = aSqDist;
+        }
       }
     }
     if (aMinSqDist > DistTol3d2) // try to project with less tolerance
@@ -1167,7 +1240,9 @@ occ::handle<Adaptor2d_Curve2d> ProjLib_ComputeApproxOnPolarSurface::BuildInitial
               }
             }
             if (!isSame)
+            {
               Sols.Append(p2d);
+            }
           }
           if (Dist2Min > aExtPS.SquareDistance(i))
           {
@@ -1178,7 +1253,9 @@ occ::handle<Adaptor2d_Curve2d> ProjLib_ComputeApproxOnPolarSurface::BuildInitial
       }
 
       if (Sols.Length() > 1)
+      {
         areManyZeros = true;
+      }
 
       if (Dist2Min <= DistTol3d2)
       {
@@ -1200,7 +1277,9 @@ occ::handle<Adaptor2d_Curve2d> ProjLib_ComputeApproxOnPolarSurface::BuildInitial
               const gp_Pnt2d& aP2    = Sols.Value(j);
               double          aDist2 = aP1.SquareDistance(aP2);
               if (aDist2 > Dist2Max)
+              {
                 Dist2Max = aDist2;
+              }
             }
           }
           double aMaxT2 = std::max(TolU, TolV);
@@ -1328,6 +1407,7 @@ occ::handle<Adaptor2d_Curve2d> ProjLib_ComputeApproxOnPolarSurface::BuildInitial
       // U1 and V1 are the points for construction of poles
       myDist = Dist2Min;
       for (i = 2; i <= NbOfPnts; i++)
+      {
         if (myProjIsDone)
         {
           myProjIsDone = false;
@@ -1378,16 +1458,24 @@ occ::handle<Adaptor2d_Curve2d> ProjLib_ComputeApproxOnPolarSurface::BuildInitial
                   if (uperiod > 0. && std::abs(U0 - LocalU) >= uperiod / 2.)
                   {
                     if (LocalU > U0)
+                    {
                       usens = -1;
+                    }
                     else
+                    {
                       usens = 1;
+                    }
                   }
                   if (vperiod > 0. && std::abs(V0 - LocalV) >= vperiod / 2.)
                   {
                     if (LocalV > V0)
+                    {
                       vsens = -1;
+                    }
                     else
+                    {
                       vsens = 1;
+                    }
                   }
                   U0 = LocalU;
                   V0 = LocalV;
@@ -1437,14 +1525,19 @@ occ::handle<Adaptor2d_Curve2d> ProjLib_ComputeApproxOnPolarSurface::BuildInitial
             aUinf = Surf->FirstUParameter();
             aUsup = Surf->LastUParameter();
             if ((aUsup - U0) > (U0 - aUinf))
+            {
               Uaux = 2 * aUinf - U0 + uperiod;
+            }
             else
+            {
               Uaux = 2 * aUsup - U0 - uperiod;
+            }
 
             Extrema_GenLocateExtPS locext(*Surf, TolU, TolV);
             locext.Perform(pntproj, Uaux, V0);
 
             if (locext.IsDone())
+            {
               if (locext.SquareDistance() < DistTol3d2)
               { // OCC217
                 // if (locext.SquareDistance() < Tol3d * Tol3d) {
@@ -1454,9 +1547,13 @@ occ::handle<Adaptor2d_Curve2d> ProjLib_ComputeApproxOnPolarSurface::BuildInitial
                 }
                 (locext.Point()).Parameter(u, v);
                 if ((aUsup - U0) > (U0 - aUinf))
+                {
                   usens--;
+                }
                 else
+                {
                   usens++;
+                }
                 U0 = u;
                 V0 = v;
                 U1 = U0 + usens * uperiod;
@@ -1464,6 +1561,7 @@ occ::handle<Adaptor2d_Curve2d> ProjLib_ComputeApproxOnPolarSurface::BuildInitial
                 Pts2d(i).SetCoord(U1, V1);
                 myProjIsDone = true;
               }
+            }
           }
           if (!myProjIsDone && vperiod)
           {
@@ -1471,14 +1569,19 @@ occ::handle<Adaptor2d_Curve2d> ProjLib_ComputeApproxOnPolarSurface::BuildInitial
             aVinf = Surf->FirstVParameter();
             aVsup = Surf->LastVParameter();
             if ((aVsup - V0) > (V0 - aVinf))
+            {
               Vaux = 2 * aVinf - V0 + vperiod;
+            }
             else
+            {
               Vaux = 2 * aVsup - V0 - vperiod;
+            }
 
             Extrema_GenLocateExtPS locext(*Surf, TolU, TolV);
             locext.Perform(pntproj, U0, Vaux);
 
             if (locext.IsDone())
+            {
               if (locext.SquareDistance() < DistTol3d2)
               { // OCC217
                 // if (locext.SquareDistance() < Tol3d * Tol3d) {
@@ -1488,9 +1591,13 @@ occ::handle<Adaptor2d_Curve2d> ProjLib_ComputeApproxOnPolarSurface::BuildInitial
                 }
                 (locext.Point()).Parameter(u, v);
                 if ((aVsup - V0) > (V0 - aVinf))
+                {
                   vsens--;
+                }
                 else
+                {
                   vsens++;
+                }
                 U0 = u;
                 V0 = v;
                 U1 = U0 + usens * uperiod;
@@ -1498,23 +1605,33 @@ occ::handle<Adaptor2d_Curve2d> ProjLib_ComputeApproxOnPolarSurface::BuildInitial
                 Pts2d(i).SetCoord(U1, V1);
                 myProjIsDone = true;
               }
+            }
           }
           if (!myProjIsDone && uperiod && vperiod)
           {
             double Uaux, Vaux;
             if ((Usup - U0) > (U0 - Uinf))
+            {
               Uaux = 2 * Uinf - U0 + uperiod;
+            }
             else
+            {
               Uaux = 2 * Usup - U0 - uperiod;
+            }
             if ((Vsup - V0) > (V0 - Vinf))
+            {
               Vaux = 2 * Vinf - V0 + vperiod;
+            }
             else
+            {
               Vaux = 2 * Vsup - V0 - vperiod;
+            }
 
             Extrema_GenLocateExtPS locext(*Surf, TolU, TolV);
             locext.Perform(pntproj, Uaux, Vaux);
 
             if (locext.IsDone())
+            {
               if (locext.SquareDistance() < DistTol3d2)
               {
                 // if (locext.SquareDistance() < Tol3d * Tol3d) {
@@ -1524,13 +1641,21 @@ occ::handle<Adaptor2d_Curve2d> ProjLib_ComputeApproxOnPolarSurface::BuildInitial
                 }
                 (locext.Point()).Parameter(u, v);
                 if ((Usup - U0) > (U0 - Uinf))
+                {
                   usens--;
+                }
                 else
+                {
                   usens++;
+                }
                 if ((Vsup - V0) > (V0 - Vinf))
+                {
                   vsens--;
+                }
                 else
+                {
                   vsens++;
+                }
                 U0 = u;
                 V0 = v;
                 U1 = U0 + usens * uperiod;
@@ -1538,6 +1663,7 @@ occ::handle<Adaptor2d_Curve2d> ProjLib_ComputeApproxOnPolarSurface::BuildInitial
                 Pts2d(i).SetCoord(U1, V1);
                 myProjIsDone = true;
               }
+            }
           }
           if (!myProjIsDone)
           {
@@ -1547,11 +1673,13 @@ occ::handle<Adaptor2d_Curve2d> ProjLib_ComputeApproxOnPolarSurface::BuildInitial
               Dist2Min       = ext.SquareDistance(1);
               int aGoodValue = 1;
               for (j = 2; j <= ext.NbExt(); j++)
+              {
                 if (Dist2Min > ext.SquareDistance(j))
                 {
                   Dist2Min   = ext.SquareDistance(j);
                   aGoodValue = j;
                 }
+              }
               if (Dist2Min < DistTol3d2)
               {
                 // if (Dist2Min < Tol3d * Tol3d) {
@@ -1593,7 +1721,10 @@ occ::handle<Adaptor2d_Curve2d> ProjLib_ComputeApproxOnPolarSurface::BuildInitial
           }
         }
         else
+        {
           break;
+        }
+      }
     }
   }
   // -- Pnts2d is transformed into Geom2d_BSplineCurve, with the help of Param and Mult
@@ -1608,25 +1739,39 @@ occ::handle<Adaptor2d_Curve2d> ProjLib_ComputeApproxOnPolarSurface::BuildInitial
     if (uperiod)
     {
       if (TestU < Uinf - TolU)
+      {
         sense = 1.;
+      }
       else if (TestU > Usup + TolU)
+      {
         sense = -1;
+      }
       while (TestU < Uinf - TolU || TestU > Usup + TolU)
+      {
         TestU += sense * uperiod;
+      }
     }
     if (vperiod)
     {
       sense = 0.;
       if (TestV < Vinf - TolV)
+      {
         sense = 1.;
+      }
       else if (TestV > Vsup + TolV)
+      {
         sense = -1.;
+      }
       while (TestV < Vinf - TolV || TestV > Vsup + TolV)
+      {
         TestV += sense * vperiod;
+      }
     }
     gp_Vec2d Offset(TestU - MidPoint.X(), TestV - MidPoint.Y());
     if (std::abs(Offset.X()) > gp::Resolution() || std::abs(Offset.Y()) > gp::Resolution())
+    {
       myBSpline->Translate(Offset);
+    }
     //////////////////////////////////////////
     Geom2dAdaptor_Curve            GAC(myBSpline);
     occ::handle<Adaptor2d_Curve2d> IC2d = new Geom2dAdaptor_Curve(GAC);
@@ -1685,20 +1830,20 @@ occ::handle<Geom2d_BSplineCurve> ProjLib_ComputeApproxOnPolarSurface::ProjectUsi
         ElSLib::Parameters(Plane, BSC->Pole(i), S, T);
         Poles2d(i).SetCoord(S, T);
       }
-      NCollection_Array1<double> Knots(1, BSC->NbKnots());
-      BSC->Knots(Knots);
-      NCollection_Array1<int> Mults(1, BSC->NbKnots());
-      BSC->Multiplicities(Mults);
+      const NCollection_Array1<double>& Knots = BSC->Knots();
+      const NCollection_Array1<int>&    Mults = BSC->Multiplicities();
       if (BSC->IsRational())
       {
-        NCollection_Array1<double> Weights(1, BSC->NbPoles());
-        BSC->Weights(Weights);
-        return new Geom2d_BSplineCurve(Poles2d,
-                                       Weights,
-                                       Knots,
-                                       Mults,
-                                       BSC->Degree(),
-                                       BSC->IsPeriodic());
+        const NCollection_Array1<double>* pWeights = BSC->Weights();
+        if (pWeights)
+        {
+          return new Geom2d_BSplineCurve(Poles2d,
+                                         *pWeights,
+                                         Knots,
+                                         Mults,
+                                         BSC->Degree(),
+                                         BSC->IsPeriodic());
+        }
       }
       return new Geom2d_BSplineCurve(Poles2d, Knots, Mults, BSC->Degree(), BSC->IsPeriodic());
     }
@@ -1719,14 +1864,16 @@ occ::handle<Geom2d_BSplineCurve> ProjLib_ComputeApproxOnPolarSurface::ProjectUsi
       Mults.Init(BC->NbPoles());
       if (BC->IsRational())
       {
-        NCollection_Array1<double> Weights(1, BC->NbPoles());
-        BC->Weights(Weights);
-        return new Geom2d_BSplineCurve(Poles2d,
-                                       Weights,
-                                       Knots,
-                                       Mults,
-                                       BC->Degree(),
-                                       BC->IsPeriodic());
+        const NCollection_Array1<double>* pWeights = BC->Weights();
+        if (pWeights)
+        {
+          return new Geom2d_BSplineCurve(Poles2d,
+                                         *pWeights,
+                                         Knots,
+                                         Mults,
+                                         BC->Degree(),
+                                         BC->IsPeriodic());
+        }
       }
       return new Geom2d_BSplineCurve(Poles2d, Knots, Mults, BC->Degree(), BC->IsPeriodic());
     }
@@ -1769,25 +1916,27 @@ occ::handle<Geom2d_BSplineCurve> ProjLib_ComputeApproxOnPolarSurface::ProjectUsi
                 myProjIsDone = true;
               }
               else
+              {
                 break;
+              }
             }
             else
+            {
               break;
+            }
             if (!myProjIsDone)
+            {
               break;
+            }
           }
           if (myProjIsDone)
           {
-            NCollection_Array1<double> Knots(1, BSC->NbKnots());
-            BSC->Knots(Knots);
-            NCollection_Array1<int> Mults(1, BSC->NbKnots());
-            BSC->Multiplicities(Mults);
+            const NCollection_Array1<double>& Knots = BSC->Knots();
+            const NCollection_Array1<int>&    Mults = BSC->Multiplicities();
             if (BSC->IsRational())
             {
-              NCollection_Array1<double> Weights(1, BSC->NbPoles());
-              BSC->Weights(Weights);
               return new Geom2d_BSplineCurve(Poles2d,
-                                             Weights,
+                                             BSC->WeightsArray(),
                                              Knots,
                                              Mults,
                                              BSC->Degree(),
@@ -1818,14 +1967,22 @@ occ::handle<Geom2d_BSplineCurve> ProjLib_ComputeApproxOnPolarSurface::ProjectUsi
                 myProjIsDone = true;
               }
               else
+              {
                 break;
+              }
             }
             else
+            {
               break;
+            }
             if (myProjIsDone)
+            {
               myProjIsDone = false;
+            }
             else
+            {
               break;
+            }
           }
           if (myProjIsDone)
           {
@@ -1836,10 +1993,8 @@ occ::handle<Geom2d_BSplineCurve> ProjLib_ComputeApproxOnPolarSurface::ProjectUsi
             Mults.Init(BC->NbPoles());
             if (BC->IsRational())
             {
-              NCollection_Array1<double> Weights(1, BC->NbPoles());
-              BC->Weights(Weights);
               return new Geom2d_BSplineCurve(Poles2d,
-                                             Weights,
+                                             BC->WeightsArray(),
                                              Knots,
                                              Mults,
                                              BC->Degree(),
@@ -1891,25 +2046,27 @@ occ::handle<Geom2d_BSplineCurve> ProjLib_ComputeApproxOnPolarSurface::ProjectUsi
                 myProjIsDone = true;
               }
               else
+              {
                 break;
+              }
             }
             else
+            {
               break;
+            }
             if (!myProjIsDone)
+            {
               break;
+            }
           }
           if (myProjIsDone)
           {
-            NCollection_Array1<double> Knots(1, BSC->NbKnots());
-            BSC->Knots(Knots);
-            NCollection_Array1<int> Mults(1, BSC->NbKnots());
-            BSC->Multiplicities(Mults);
+            const NCollection_Array1<double>& Knots = BSC->Knots();
+            const NCollection_Array1<int>&    Mults = BSC->Multiplicities();
             if (BSC->IsRational())
             {
-              NCollection_Array1<double> Weights(1, BSC->NbPoles());
-              BSC->Weights(Weights);
               return new Geom2d_BSplineCurve(Poles2d,
-                                             Weights,
+                                             BSC->WeightsArray(),
                                              Knots,
                                              Mults,
                                              BSC->Degree(),
@@ -1940,14 +2097,22 @@ occ::handle<Geom2d_BSplineCurve> ProjLib_ComputeApproxOnPolarSurface::ProjectUsi
                 myProjIsDone = true;
               }
               else
+              {
                 break;
+              }
             }
             else
+            {
               break;
+            }
             if (myProjIsDone)
+            {
               myProjIsDone = false;
+            }
             else
+            {
               break;
+            }
           }
           if (myProjIsDone)
           {
@@ -1958,10 +2123,8 @@ occ::handle<Geom2d_BSplineCurve> ProjLib_ComputeApproxOnPolarSurface::ProjectUsi
             Mults.Init(BC->NbPoles());
             if (BC->IsRational())
             {
-              NCollection_Array1<double> Weights(1, BC->NbPoles());
-              BC->Weights(Weights);
               return new Geom2d_BSplineCurve(Poles2d,
-                                             Weights,
+                                             BC->WeightsArray(),
                                              Knots,
                                              Mults,
                                              BC->Degree(),

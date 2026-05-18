@@ -74,25 +74,45 @@ OSD_SysType OSD_Host::SystemId() const
   uname(&info);
 
   if (!strcmp(info.sysname, "SunOS"))
+  {
     return (OSD_UnixBSD);
+  }
   if (!strcmp(info.sysname, "ULTRIX"))
+  {
     return (OSD_UnixBSD);
+  }
   if (!strcmp(info.sysname, "FreeBSD"))
+  {
     return (OSD_UnixBSD);
+  }
   if (!strncmp(info.sysname, "Linux", 5))
+  {
     return (OSD_LinuxREDHAT);
+  }
   if (!strncmp(info.sysname, "IRIX", 4))
+  {
     return (OSD_UnixSystemV);
+  }
   if (!strncmp(info.sysname, "OSF", 3))
+  {
     return (OSD_OSF);
+  }
   if (!strcmp(info.sysname, "AIX"))
+  {
     return (OSD_Aix);
+  }
   if (!strcmp(info.sysname, "UNIX_System_V"))
+  {
     return (OSD_UnixSystemV);
+  }
   if (!strcmp(info.sysname, "VMS_POSIX"))
+  {
     return (OSD_VMS);
+  }
   if (!strcmp(info.sysname, "Darwin"))
+  {
     return (OSD_MacOs);
+  }
   return (OSD_Unknown);
 }
 
@@ -106,7 +126,9 @@ TCollection_AsciiString OSD_Host::HostName()
 
   status = gethostname(value, 64);
   if (status == -1)
+  {
     myError.SetValue(errno, Iam, "Host Name");
+  }
 
   result = value;
   return (result);
@@ -165,27 +187,49 @@ OSD_OEMType OSD_Host::MachineType()
   uname(&info);
 
   if (!strcmp(info.sysname, "SunOS"))
+  {
     return (OSD_SUN);
+  }
   if (!strcmp(info.sysname, "ULTRIX"))
+  {
     return (OSD_DEC);
+  }
   if (!strncmp(info.sysname, "IRIX", 4))
+  {
     return (OSD_SGI);
+  }
   if (!strcmp(info.sysname, "HP-UX"))
+  {
     return (OSD_HP);
+  }
   if (!strcmp(info.sysname, "UNIX_System_V"))
+  {
     return (OSD_NEC);
+  }
   if (!strcmp(info.sysname, "VMS_POSIX"))
+  {
     return (OSD_VAX);
+  }
   if (!strncmp(info.sysname, "OSF", 3))
+  {
     return (OSD_DEC);
+  }
   if (!strncmp(info.sysname, "Linux", 5))
+  {
     return (OSD_LIN);
+  }
   if (!strcmp(info.sysname, "FreeBSD"))
+  {
     return (OSD_LIN);
+  }
   if (!strncmp(info.sysname, "AIX", 3))
+  {
     return (OSD_AIX);
+  }
   if (!strcmp(info.sysname, "Darwin"))
+  {
     return (OSD_MAC);
+  }
   return (OSD_Unavailable);
 }
 
@@ -219,30 +263,31 @@ int OSD_Host::Error() const
 
   #include <OSD_Host.hxx>
 
+  #include <mutex>
+
 void _osd_wnt_set_error(OSD_Error&, int, ...);
 
-static BOOL                    fInit = FALSE;
 static TCollection_AsciiString hostName;
 static TCollection_AsciiString version;
 static TCollection_AsciiString interAddr;
 static int                     memSize;
+static std::once_flag          THE_HOST_INIT_FLAG;
 
 OSD_Host ::OSD_Host()
 {
   #ifndef OCCT_UWP
-  DWORD          nSize;
-  char           szHostName[MAX_COMPUTERNAME_LENGTH + 1];
-  char*          hostAddr = 0;
-  MEMORYSTATUS   ms;
-  WSADATA        wd;
-  PHOSTENT       phe;
-  IN_ADDR        inAddr;
-  OSVERSIONINFOW osVerInfo;
+  static bool THE_HOST_INIT_SUCCESS = false;
 
-  if (!fInit)
-  {
+  std::call_once(THE_HOST_INIT_FLAG, [&]() {
+    DWORD          nSize = MAX_COMPUTERNAME_LENGTH + 1;
+    char           szHostName[MAX_COMPUTERNAME_LENGTH + 1];
+    char*          hostAddr = 0;
+    MEMORYSTATUS   ms;
+    WSADATA        wd;
+    PHOSTENT       phe;
+    IN_ADDR        inAddr;
+    OSVERSIONINFOW osVerInfo;
 
-    nSize = MAX_COMPUTERNAME_LENGTH + 1;
     ZeroMemory(&osVerInfo, sizeof(OSVERSIONINFOW));
     osVerInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOW);
 
@@ -304,13 +349,12 @@ OSD_Host ::OSD_Host()
       }
       version = aVersion;
 
-      fInit = TRUE;
+      THE_HOST_INIT_SUCCESS = true;
 
     } // end if
+  }); // end call_once
 
-  } // end if
-
-  if (fInit)
+  if (THE_HOST_INIT_SUCCESS)
 
     myName = hostName;
   #endif

@@ -72,7 +72,9 @@ void BRepToIGES_BREntity::SetModel(const occ::handle<IGESData_IGESModel>& model)
   TheModel          = model;
   double unitfactor = TheModel->GlobalSection().UnitValue();
   if (unitfactor != 1.)
+  {
     TheUnitFactor = unitfactor;
+  }
 }
 
 //=================================================================================================
@@ -114,7 +116,9 @@ occ::handle<IGESData_IGESEntity> BRepToIGES_BREntity::TransferShape(
   // int Nb = 1; //szv#4:S4163:12Mar99 not needed
 
   if (start.IsNull())
+  {
     return res;
+  }
 
   if (start.ShapeType() == TopAbs_VERTEX)
   {
@@ -192,7 +196,7 @@ occ::handle<IGESData_IGESEntity> BRepToIGES_BREntity::TransferShape(
 
 //=================================================================================================
 
-void BRepToIGES_BREntity::AddFail(const TopoDS_Shape& start, const char* amess)
+void BRepToIGES_BREntity::AddFail(const TopoDS_Shape& start, const char* const amess)
 {
   occ::handle<TransferBRep_ShapeMapper> Mapper = new TransferBRep_ShapeMapper(start);
   TheMap->AddFail(Mapper, amess);
@@ -200,7 +204,7 @@ void BRepToIGES_BREntity::AddFail(const TopoDS_Shape& start, const char* amess)
 
 //=================================================================================================
 
-void BRepToIGES_BREntity::AddWarning(const TopoDS_Shape& start, const char* amess)
+void BRepToIGES_BREntity::AddWarning(const TopoDS_Shape& start, const char* const amess)
 {
   occ::handle<TransferBRep_ShapeMapper> Mapper = new TransferBRep_ShapeMapper(start);
   TheMap->AddWarning(Mapper, amess);
@@ -208,7 +212,8 @@ void BRepToIGES_BREntity::AddWarning(const TopoDS_Shape& start, const char* ames
 
 //=================================================================================================
 
-void BRepToIGES_BREntity::AddFail(const occ::handle<Standard_Transient>& start, const char* amess)
+void BRepToIGES_BREntity::AddFail(const occ::handle<Standard_Transient>& start,
+                                  const char* const                      amess)
 {
   occ::handle<Transfer_TransientMapper> Mapper = new Transfer_TransientMapper(start);
   TheMap->AddFail(Mapper, amess);
@@ -217,7 +222,7 @@ void BRepToIGES_BREntity::AddFail(const occ::handle<Standard_Transient>& start, 
 //=================================================================================================
 
 void BRepToIGES_BREntity::AddWarning(const occ::handle<Standard_Transient>& start,
-                                     const char*                            amess)
+                                     const char* const                      amess)
 {
   occ::handle<Transfer_TransientMapper> Mapper = new Transfer_TransientMapper(start);
   TheMap->AddWarning(Mapper, amess);
@@ -230,7 +235,9 @@ bool BRepToIGES_BREntity::HasShapeResult(const TopoDS_Shape& start) const
   occ::handle<TransferBRep_ShapeMapper> Mapper = new TransferBRep_ShapeMapper(start);
   DeclareAndCast(Transfer_SimpleBinderOfTransient, binder, TheMap->Find(Mapper));
   if (binder.IsNull())
+  {
     return false;
+  }
   return binder->HasResult();
 }
 
@@ -243,9 +250,13 @@ occ::handle<Standard_Transient> BRepToIGES_BREntity::GetShapeResult(const TopoDS
   occ::handle<TransferBRep_ShapeMapper> Mapper = new TransferBRep_ShapeMapper(start);
   DeclareAndCast(Transfer_SimpleBinderOfTransient, binder, TheMap->Find(Mapper));
   if (binder.IsNull())
+  {
     return res;
+  }
   if (binder->HasResult())
+  {
     res = binder->Result();
+  }
   return res;
 }
 
@@ -267,7 +278,9 @@ bool BRepToIGES_BREntity::HasShapeResult(const occ::handle<Standard_Transient>& 
   occ::handle<Transfer_TransientMapper> Mapper = new Transfer_TransientMapper(start);
   DeclareAndCast(Transfer_SimpleBinderOfTransient, binder, TheMap->Find(Mapper));
   if (binder.IsNull())
+  {
     return false;
+  }
   return binder->HasResult();
 }
 
@@ -281,9 +294,13 @@ occ::handle<Standard_Transient> BRepToIGES_BREntity::GetShapeResult(
   occ::handle<Transfer_TransientMapper> Mapper = new Transfer_TransientMapper(start);
   DeclareAndCast(Transfer_SimpleBinderOfTransient, binder, TheMap->Find(Mapper));
   if (binder.IsNull())
+  {
     return res;
+  }
   if (binder->HasResult())
+  {
     res = binder->Result();
+  }
   return res;
 }
 

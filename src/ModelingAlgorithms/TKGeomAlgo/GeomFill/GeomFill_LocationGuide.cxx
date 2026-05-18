@@ -132,9 +132,13 @@ static void InGoodPeriod(const double Prec, const double Period, double& Current
   Current -= nb * Period;
   Diff = Current - Prec;
   if (Diff > Period / 2)
+  {
     Current -= Period;
+  }
   else if (Diff < -Period / 2)
+  {
     Current += Period;
+  }
 }
 
 //=================================================================================================
@@ -175,14 +179,14 @@ GeomFill_LocationGuide::GeomFill_LocationGuide(
   WithTrans = false;
 }
 
-//==================================================================
-// Function: SetRotation
-// Purpose : init et force la Rotation
-//==================================================================
+//=================================================================================================
+
 void GeomFill_LocationGuide::SetRotation(const double PrecAngle, double& LastAngle)
 {
   if (myCurve.IsNull())
+  {
     throw Standard_ConstructionError("GeomFill_LocationGuide::The path is not set !!");
+  }
 
   // repere fixe
   gp_Ax3 Rep(gp::Origin(), gp::DZ(), gp::DX());
@@ -252,7 +256,9 @@ void GeomFill_LocationGuide::SetRotation(const double PrecAngle, double& LastAng
 
   // JALONNEMENT
   if (uperiodic)
+  {
     UPeriod = Ul - Uf;
+  }
 
   for (ii = 1; ii <= myNbPts; ii++)
   {
@@ -286,18 +292,22 @@ void GeomFill_LocationGuide::SetRotation(const double PrecAngle, double& LastAng
       U = myFirstS + (t - myCurve->FirstParameter()) * ratio;
       mySec->D0(U, Poles->ChangeArray1(), Weights->ChangeArray1());
       if (israt)
+      {
         mySection = new (Geom_BSplineCurve)(Poles->Array1(),
                                             Weights->Array1(),
                                             Knots->Array1(),
                                             Mult->Array1(),
                                             Deg,
                                             mySec->IsUPeriodic());
+      }
       else
+      {
         mySection = new (Geom_BSplineCurve)(Poles->Array1(),
                                             Knots->Array1(),
                                             Mult->Array1(),
                                             Deg,
                                             mySec->IsUPeriodic());
+      }
       S = new (Geom_TrimmedCurve)(mySection, Uf, Ul);
     }
     else
@@ -471,15 +481,23 @@ void GeomFill_LocationGuide::Set(const occ::handle<GeomFill_SectionLaw>& Section
   myLastS   = SLast;
   LastAngle = PrecAngle;
   if (myCurve.IsNull())
+  {
     ratio = 0.;
+  }
   else
+  {
     ratio = (SLast - SFirst) / (myCurve->LastParameter() - myCurve->FirstParameter());
+  }
   mySec = Section;
 
   if (rotat)
+  {
     SetRotation(PrecAngle, LastAngle);
+  }
   else
+  {
     rotation = false;
+  }
 }
 
 //=================================================================================================
@@ -488,7 +506,9 @@ void GeomFill_LocationGuide::EraseRotation()
 {
   rotation = false;
   if (myStatus == GeomFill_ImpossibleContact)
+  {
     myStatus = GeomFill_PipeOk;
+  }
 }
 
 //=================================================================================================
@@ -524,15 +544,15 @@ bool GeomFill_LocationGuide::SetCurve(const occ::handle<Adaptor3d_Curve>& C)
     myStatus = myLaw->ErrorStatus();
 
     if (rotation)
+    {
       SetRotation(myPoles2d->Value(1, 1).X(), LastAngle);
+    }
   }
   return myStatus == GeomFill_PipeOk;
 }
 
-//==================================================================
-// Function: GetCurve
-// Purpose : return the trajectoire
-//==================================================================
+//=================================================================================================
+
 const occ::handle<Adaptor3d_Curve>& GeomFill_LocationGuide::GetCurve() const
 {
   return myCurve;
@@ -548,9 +568,15 @@ void GeomFill_LocationGuide::SetTrsf(const gp_Mat& Transfo)
   Aux -= Trans;
   WithTrans = false; // Au cas ou Trans = I
   for (int ii = 1; ii <= 3 && !WithTrans; ii++)
+  {
     for (int jj = 1; jj <= 3 && !WithTrans; jj++)
+    {
       if (std::abs(Aux.Value(ii, jj)) > 1.e-14)
+      {
         WithTrans = true;
+      }
+    }
+  }
 }
 
 //=================================================================================================
@@ -1200,7 +1226,9 @@ void GeomFill_LocationGuide::Intervals(NCollection_Array1<double>& T, const Geom
 
   GeomLib::FuseIntervals(IntC, IntL, Inter, Precision::PConfusion() * 0.99);
   for (int ii = 1; ii <= Inter.Length(); ii++)
+  {
     T(ii) = Inter(ii);
+  }
 }
 
 //=================================================================================================

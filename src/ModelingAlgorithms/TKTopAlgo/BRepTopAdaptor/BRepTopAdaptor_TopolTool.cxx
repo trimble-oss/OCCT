@@ -78,10 +78,7 @@ void BRepTopAdaptor_TopolTool::Initialize(const occ::handle<Adaptor3d_Surface>& 
   TopoDS_Shape s_wnt = brhs->Face();
   s_wnt.Orientation(TopAbs_FORWARD);
   myFace = TopoDS::Face(s_wnt);
-  if (myFClass2d != nullptr)
-  {
-    delete (BRepTopAdaptor_FClass2d*)myFClass2d;
-  }
+  delete (BRepTopAdaptor_FClass2d*)myFClass2d;
   myFClass2d   = nullptr;
   myNbSamplesU = -1;
   myS          = S;
@@ -179,7 +176,9 @@ TopAbs_State BRepTopAdaptor_TopolTool::Classify(const gp_Pnt2d& P,
                                                 const bool      RecadreOnPeriodic)
 {
   if (myFace.IsNull())
+  {
     return TopAbs_UNKNOWN;
+  }
   if (myFClass2d == nullptr)
   {
     myFClass2d = (void*)new BRepTopAdaptor_FClass2d(myFace, Tol);
@@ -205,11 +204,8 @@ bool BRepTopAdaptor_TopolTool::IsThePointOn(const gp_Pnt2d& P,
 
 void BRepTopAdaptor_TopolTool::Destroy()
 {
-  if (myFClass2d != nullptr)
-  {
-    delete (BRepTopAdaptor_FClass2d*)myFClass2d;
-    myFClass2d = nullptr;
-  }
+  delete (BRepTopAdaptor_FClass2d*)myFClass2d;
+  myFClass2d = nullptr;
 }
 
 //=================================================================================================
@@ -336,7 +332,9 @@ void Analyse(const NCollection_Array2<gp_Pnt>& array2,
         }
       }
       if (locnbch > nbch)
+      {
         nbch = locnbch;
+      }
     }
   }
   myNbSamplesU = nbch + 5;
@@ -409,11 +407,15 @@ void BRepTopAdaptor_TopolTool::ComputeSamplePoints()
       nbsv = myS->NbVKnots();
       nbsv *= myS->VDegree();
       if (nbsv < 4)
+      {
         nbsv = 4;
+      }
       nbsu = myS->NbUKnots();
       nbsu *= myS->UDegree();
       if (nbsu < 4)
+      {
         nbsu = 4;
+      }
     }
     break;
     case GeomAbs_Cylinder:
@@ -425,13 +427,21 @@ void BRepTopAdaptor_TopolTool::ComputeSamplePoints()
       nbsu = (int)(8 * (usup - uinf));
       nbsv = (int)(7 * (vsup - vinf));
       if (nbsu < 5)
+      {
         nbsu = 5;
+      }
       if (nbsv < 5)
+      {
         nbsv = 5;
+      }
       if (nbsu > 30)
+      {
         nbsu = 30; // modif HRT buc60462
+      }
       if (nbsv > 15)
+      {
         nbsv = 15;
+      }
       //-- printf("\n nbsu=%d nbsv=%d\n",nbsu,nbsv);
     }
     break;
@@ -453,9 +463,13 @@ void BRepTopAdaptor_TopolTool::ComputeSamplePoints()
   //--
 
   if (nbsu < 10)
+  {
     nbsu = 10;
+  }
   if (nbsv < 10)
+  {
     nbsv = 10;
+  }
 
   myNbSamplesU = nbsu;
   myNbSamplesV = nbsv;
@@ -465,11 +479,10 @@ void BRepTopAdaptor_TopolTool::ComputeSamplePoints()
   {
     if (typS == GeomAbs_BSplineSurface)
     {
-      const occ::handle<Geom_BSplineSurface>& Bspl = myS->BSpline();
-      int                                     nbup = Bspl->NbUPoles();
-      int                                     nbvp = Bspl->NbVPoles();
-      NCollection_Array2<gp_Pnt>              array2(1, nbup, 1, nbvp);
-      Bspl->Poles(array2);
+      const occ::handle<Geom_BSplineSurface>& Bspl   = myS->BSpline();
+      int                                     nbup   = Bspl->NbUPoles();
+      int                                     nbvp   = Bspl->NbVPoles();
+      const NCollection_Array2<gp_Pnt>&       array2 = Bspl->Poles();
       Analyse(array2, nbup, nbvp, myNbSamplesU, myNbSamplesV);
       nbsu = myNbSamplesU;
       nbsv = myNbSamplesV;
@@ -477,11 +490,10 @@ void BRepTopAdaptor_TopolTool::ComputeSamplePoints()
     }
     else if (typS == GeomAbs_BezierSurface)
     {
-      const occ::handle<Geom_BezierSurface>& Bez  = myS->Bezier();
-      int                                    nbup = Bez->NbUPoles();
-      int                                    nbvp = Bez->NbVPoles();
-      NCollection_Array2<gp_Pnt>             array2(1, nbup, 1, nbvp);
-      Bez->Poles(array2);
+      const occ::handle<Geom_BezierSurface>& Bez    = myS->Bezier();
+      int                                    nbup   = Bez->NbUPoles();
+      int                                    nbvp   = Bez->NbVPoles();
+      const NCollection_Array2<gp_Pnt>&      array2 = Bez->Poles();
       Analyse(array2, nbup, nbvp, myNbSamplesU, myNbSamplesV);
       nbsu = myNbSamplesU;
       nbsv = myNbSamplesV;
@@ -490,9 +502,13 @@ void BRepTopAdaptor_TopolTool::ComputeSamplePoints()
   }
 
   if (nbsu < 10)
+  {
     nbsu = 10;
+  }
   if (nbsv < 10)
+  {
     nbsv = 10;
+  }
 
   myNbSamplesU = nbsu;
   myNbSamplesV = nbsv;
@@ -559,13 +575,21 @@ bool BRepTopAdaptor_TopolTool::DomainIsInfinite()
   vinf = myS->FirstVParameter();
   vsup = myS->LastVParameter();
   if (Precision::IsNegativeInfinite(uinf))
+  {
     return (true);
+  }
   if (Precision::IsPositiveInfinite(usup))
+  {
     return (true);
+  }
   if (Precision::IsNegativeInfinite(vinf))
+  {
     return (true);
+  }
   if (Precision::IsPositiveInfinite(vsup))
+  {
     return (true);
+  }
   return (false);
 }
 
@@ -588,7 +612,9 @@ double BRepTopAdaptor_TopolTool::Tol3d(const occ::handle<Adaptor2d_Curve2d>& C) 
 
   const TopoDS_Edge& edge = brhc->Edge();
   if (edge.IsNull())
+  {
     throw Standard_DomainError("BRepTopAdaptor_TopolTool: arc has no 3d representation");
+  }
   return BRep_Tool::Tolerance(edge);
 }
 
@@ -598,10 +624,14 @@ double BRepTopAdaptor_TopolTool::Tol3d(const occ::handle<Adaptor3d_HVertex>& V) 
 {
   occ::handle<BRepTopAdaptor_HVertex> brhv = occ::down_cast<BRepTopAdaptor_HVertex>(V);
   if (brhv.IsNull())
+  {
     throw Standard_DomainError("BRepTopAdaptor_TopolTool: vertex has no 3d representation");
+  }
   const TopoDS_Vertex& ver = brhv->Vertex();
   if (ver.IsNull())
+  {
     throw Standard_DomainError("BRepTopAdaptor_TopolTool: vertex has no 3d representation");
+  }
   return BRep_Tool::Tolerance(ver);
 }
 
@@ -611,9 +641,13 @@ gp_Pnt BRepTopAdaptor_TopolTool::Pnt(const occ::handle<Adaptor3d_HVertex>& V) co
 {
   occ::handle<BRepTopAdaptor_HVertex> brhv = occ::down_cast<BRepTopAdaptor_HVertex>(V);
   if (brhv.IsNull())
+  {
     throw Standard_DomainError("BRepTopAdaptor_TopolTool: vertex has no 3d representation");
+  }
   const TopoDS_Vertex& ver = brhv->Vertex();
   if (ver.IsNull())
+  {
     throw Standard_DomainError("BRepTopAdaptor_TopolTool: vertex has no 3d representation");
+  }
   return BRep_Tool::Pnt(ver);
 }

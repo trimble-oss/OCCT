@@ -29,9 +29,13 @@ int HLRBRep_BCurveTool::NbSamples(const BRepAdaptor_Curve& C, const double U0, c
   double            nbs      = nbsOther;
 
   if (typC == GeomAbs_Line)
+  {
     nbs = 2;
+  }
   else if (typC == GeomAbs_BezierCurve)
+  {
     nbs = 3 + C.NbPoles();
+  }
   else if (typC == GeomAbs_BSplineCurve)
   {
     nbs = C.NbKnots();
@@ -39,10 +43,14 @@ int HLRBRep_BCurveTool::NbSamples(const BRepAdaptor_Curve& C, const double U0, c
     nbs *= C.LastParameter() - C.FirstParameter();
     nbs /= U1 - U0;
     if (nbs < 2.0)
+    {
       nbs = 2;
+    }
   }
   if (nbs > 50)
+  {
     nbs = 50;
+  }
   return ((int)nbs);
 }
 
@@ -51,9 +59,23 @@ int HLRBRep_BCurveTool::NbSamples(const BRepAdaptor_Curve& C, const double U0, c
 void HLRBRep_BCurveTool::Poles(const BRepAdaptor_Curve& C, NCollection_Array1<gp_Pnt>& T)
 {
   if (C.GetType() == GeomAbs_BezierCurve)
-    C.Bezier()->Poles(T);
+  {
+    occ::handle<Geom_BezierCurve>     aBez      = C.Bezier();
+    const NCollection_Array1<gp_Pnt>& aSrcPoles = aBez->Poles();
+    for (int i = T.Lower(); i <= T.Upper(); i++)
+    {
+      T(i) = aSrcPoles(i);
+    }
+  }
   else if (C.GetType() == GeomAbs_BSplineCurve)
-    C.BSpline()->Poles(T);
+  {
+    occ::handle<Geom_BSplineCurve>    aBSpl     = C.BSpline();
+    const NCollection_Array1<gp_Pnt>& aSrcPoles = aBSpl->Poles();
+    for (int i = T.Lower(); i <= T.Upper(); i++)
+    {
+      T(i) = aSrcPoles(i);
+    }
+  }
 }
 
 //=================================================================================================
@@ -64,15 +86,31 @@ void HLRBRep_BCurveTool::PolesAndWeights(const BRepAdaptor_Curve&    C,
 {
   if (C.GetType() == GeomAbs_BezierCurve)
   {
-    const occ::handle<Geom_BezierCurve> HB = C.Bezier();
-    HB->Poles(T);
-    HB->Weights(W);
+    const occ::handle<Geom_BezierCurve> HB          = C.Bezier();
+    const NCollection_Array1<gp_Pnt>&   aSrcPoles   = HB->Poles();
+    const NCollection_Array1<double>&   aSrcWeights = HB->WeightsArray();
+    for (int i = T.Lower(); i <= T.Upper(); i++)
+    {
+      T(i) = aSrcPoles(i);
+    }
+    for (int i = W.Lower(); i <= W.Upper(); i++)
+    {
+      W(i) = aSrcWeights(i);
+    }
   }
   else if (C.GetType() == GeomAbs_BSplineCurve)
   {
-    const occ::handle<Geom_BSplineCurve> HB = C.BSpline();
-    HB->Poles(T);
-    HB->Weights(W);
+    const occ::handle<Geom_BSplineCurve> HB          = C.BSpline();
+    const NCollection_Array1<gp_Pnt>&    aSrcPoles   = HB->Poles();
+    const NCollection_Array1<double>&    aSrcWeights = HB->WeightsArray();
+    for (int i = T.Lower(); i <= T.Upper(); i++)
+    {
+      T(i) = aSrcPoles(i);
+    }
+    for (int i = W.Lower(); i <= W.Upper(); i++)
+    {
+      W(i) = aSrcWeights(i);
+    }
   }
 }
 

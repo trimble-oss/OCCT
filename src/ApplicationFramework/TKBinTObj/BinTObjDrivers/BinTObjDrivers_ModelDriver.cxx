@@ -35,23 +35,14 @@ BinTObjDrivers_ModelDriver::BinTObjDrivers_ModelDriver(
 {
 }
 
-//=======================================================================
-// function : NewEmpty
-// purpose  : Creates a new attribute
-//=======================================================================
+//=================================================================================================
 
 occ::handle<TDF_Attribute> BinTObjDrivers_ModelDriver::NewEmpty() const
 {
   return new TObj_TModel;
 }
 
-//=======================================================================
-// function : Paste
-// purpose  : Translate the contents of <theSource> and put it
-//           into <theTarget>.
-//           Set CurrentModel of TObj_Assistant into theTarget TObj_TModel
-//           if its GUID and GUID stored in theSource are same
-//=======================================================================
+//=================================================================================================
 
 bool BinTObjDrivers_ModelDriver::Paste(const BinObjMgt_Persistent&       theSource,
                                        const occ::handle<TDF_Attribute>& theTarget,
@@ -59,11 +50,15 @@ bool BinTObjDrivers_ModelDriver::Paste(const BinObjMgt_Persistent&       theSour
 {
   Standard_GUID aGUID;
   if (!(theSource >> aGUID))
+  {
     return false;
+  }
 
   occ::handle<TObj_Model> aCurrentModel = TObj_Assistant::GetCurrentModel();
   if (aCurrentModel.IsNull())
+  {
     return false;
+  }
 
   if (aGUID != aCurrentModel->GetGUID())
   {
@@ -77,12 +72,7 @@ bool BinTObjDrivers_ModelDriver::Paste(const BinObjMgt_Persistent&       theSour
   return true;
 }
 
-//=======================================================================
-// function : Paste
-// purpose  : Translate the contents of <theSource> and put it
-//           into <theTarget>.
-//           a Model is stored as its GUID
-//=======================================================================
+//=================================================================================================
 
 void BinTObjDrivers_ModelDriver::Paste(
   const occ::handle<TDF_Attribute>& theSource,

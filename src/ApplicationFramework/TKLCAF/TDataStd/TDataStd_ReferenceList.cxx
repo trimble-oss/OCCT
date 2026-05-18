@@ -34,10 +34,8 @@ const Standard_GUID& TDataStd_ReferenceList::GetID()
   return TDataStd_ReferenceListID;
 }
 
-//=======================================================================
-// function : SetAttr
-// purpose  : Implements Set functionality
-//=======================================================================
+//=================================================================================================
+
 static occ::handle<TDataStd_ReferenceList> SetAttr(const TDF_Label&     label,
                                                    const Standard_GUID& theGuid)
 {
@@ -65,10 +63,8 @@ occ::handle<TDataStd_ReferenceList> TDataStd_ReferenceList::Set(const TDF_Label&
   return SetAttr(label, GetID());
 }
 
-//=======================================================================
-// function : Set
-// purpose  : Set user defined attribute with specific ID
-//=======================================================================
+//=================================================================================================
+
 occ::handle<TDataStd_ReferenceList> TDataStd_ReferenceList::Set(const TDF_Label&     label,
                                                                 const Standard_GUID& theGuid)
 {
@@ -196,10 +192,8 @@ bool TDataStd_ReferenceList::Remove(const TDF_Label& value)
   return false;
 }
 
-//=======================================================================
-// function : Remove
-// purpose  : Removes a label at the <index> position.
-//=======================================================================
+//=================================================================================================
+
 bool TDataStd_ReferenceList::Remove(const int index)
 {
   int                                   i(1);
@@ -259,7 +253,9 @@ const Standard_GUID& TDataStd_ReferenceList::ID() const
 void TDataStd_ReferenceList::SetID(const Standard_GUID& theGuid)
 {
   if (myID == theGuid)
+  {
     return;
+  }
   Backup();
   myID = theGuid;
 }
@@ -307,17 +303,17 @@ void TDataStd_ReferenceList::Paste(const occ::handle<TDF_Attribute>&       Into,
     if (!L.IsNull())
     {
       if (!RT->HasRelocation(L, rL))
+      {
         rL = L;
+      }
       aList->Append(rL);
     }
   }
   aList->SetID(myID);
 }
 
-//=======================================================================
-// function : References
-// purpose  : Adds the referenced attributes or labels.
-//=======================================================================
+//=================================================================================================
+
 void TDataStd_ReferenceList::References(const occ::handle<TDF_DataSet>& aDataSet) const
 {
   if (!Label().IsImported())
@@ -338,7 +334,7 @@ Standard_OStream& TDataStd_ReferenceList::Dump(Standard_OStream& anOS) const
   char sguid[Standard_GUID_SIZE_ALLOC];
   myID.ToCString(sguid);
   anOS << sguid;
-  anOS << std::endl;
+  anOS << '\n';
   return anOS;
 }
 

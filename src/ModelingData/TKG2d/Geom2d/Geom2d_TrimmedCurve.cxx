@@ -59,13 +59,19 @@ Geom2d_TrimmedCurve::Geom2d_TrimmedCurve(const occ::handle<Geom2d_Curve>& C,
       uTrim2(U2)
 {
   if (C.IsNull())
+  {
     throw Standard_ConstructionError("Geom2d_TrimmedCurve:: C is null");
+  }
   // kill trimmed basis curves
   occ::handle<Geom2d_TrimmedCurve> T = occ::down_cast<Geom2d_TrimmedCurve>(C);
   if (!T.IsNull())
+  {
     basisCurve = occ::down_cast<Geom2d_Curve>(T->BasisCurve()->Copy());
+  }
   else
+  {
     basisCurve = occ::down_cast<Geom2d_Curve>(C->Copy());
+  }
 
   SetTrim(U1, U2, Sense, theAdjustPeriodic);
 }
@@ -96,7 +102,9 @@ void Geom2d_TrimmedCurve::SetTrim(const double U1,
 {
   bool sameSense = true;
   if (U1 == U2)
+  {
     throw Standard_ConstructionError("Geom2d_TrimmedCurve::U1 == U2");
+  }
 
   double Udeb = basisCurve->FirstParameter();
   double Ufin = basisCurve->LastParameter();
@@ -110,11 +118,13 @@ void Geom2d_TrimmedCurve::SetTrim(const double U1,
     uTrim1 = U1;
     uTrim2 = U2;
     if (theAdjustPeriodic)
+    {
       ElCLib::AdjustPeriodic(Udeb,
                              Ufin,
                              std::min(std::abs(uTrim2 - uTrim1) / 2, Precision::PConfusion()),
                              uTrim1,
                              uTrim2);
+    }
   }
   else
   {
@@ -138,7 +148,9 @@ void Geom2d_TrimmedCurve::SetTrim(const double U1,
   }
 
   if (!sameSense)
+  {
     Reverse();
+  }
 }
 
 //=================================================================================================
@@ -181,15 +193,34 @@ double Geom2d_TrimmedCurve::FirstParameter() const
 
 bool Geom2d_TrimmedCurve::IsClosed() const
 {
-  double Dist = Value(FirstParameter()).Distance(Value(LastParameter()));
-  return (Dist <= gp::Resolution());
+  if (basisCurve->IsPeriodic())
+  {
+    const double aPeriod = basisCurve->Period();
+    const double aLength = LastParameter() - FirstParameter();
+    if (aLength > Precision::PConfusion()
+        && std::abs(std::remainder(aLength, aPeriod)) <= Precision::PConfusion())
+    {
+      return true;
+    }
+  }
+  return Value(FirstParameter()).SquareDistance(Value(LastParameter()))
+         <= Precision::Computational();
 }
 
 //=================================================================================================
 
 bool Geom2d_TrimmedCurve::IsPeriodic() const
 {
-  // return basisCurve->IsPeriodic();
+  if (basisCurve->IsPeriodic())
+  {
+    const double aPeriod = basisCurve->Period();
+    const double aLength = LastParameter() - FirstParameter();
+    if (aLength > Precision::PConfusion()
+        && std::abs(std::remainder(aLength, aPeriod)) <= Precision::PConfusion())
+    {
+      return true;
+    }
+  }
   return false;
 }
 
@@ -218,37 +249,37 @@ Pnt2d Geom2d_TrimmedCurve::StartPoint() const
 
 //=================================================================================================
 
-void Geom2d_TrimmedCurve::D0(const double U, Pnt2d& P) const
+gp_Pnt2d Geom2d_TrimmedCurve::EvalD0(const double U) const
 {
-  basisCurve->D0(U, P);
+  return basisCurve->EvalD0(U);
 }
 
 //=================================================================================================
 
-void Geom2d_TrimmedCurve::D1(const double U, Pnt2d& P, Vec2d& V1) const
+Geom2d_Curve::ResD1 Geom2d_TrimmedCurve::EvalD1(const double U) const
 {
-  basisCurve->D1(U, P, V1);
+  return basisCurve->EvalD1(U);
 }
 
 //=================================================================================================
 
-void Geom2d_TrimmedCurve::D2(const double U, Pnt2d& P, Vec2d& V1, Vec2d& V2) const
+Geom2d_Curve::ResD2 Geom2d_TrimmedCurve::EvalD2(const double U) const
 {
-  basisCurve->D2(U, P, V1, V2);
+  return basisCurve->EvalD2(U);
 }
 
 //=================================================================================================
 
-void Geom2d_TrimmedCurve::D3(const double U, Pnt2d& P, Vec2d& V1, Vec2d& V2, Vec2d& V3) const
+Geom2d_Curve::ResD3 Geom2d_TrimmedCurve::EvalD3(const double U) const
 {
-  basisCurve->D3(U, P, V1, V2, V3);
+  return basisCurve->EvalD3(U);
 }
 
 //=================================================================================================
 
-Vec2d Geom2d_TrimmedCurve::DN(const double U, const int N) const
+gp_Vec2d Geom2d_TrimmedCurve::EvalDN(const double U, const int N) const
 {
-  return basisCurve->DN(U, N);
+  return basisCurve->EvalDN(U, N);
 }
 
 //=================================================================================================

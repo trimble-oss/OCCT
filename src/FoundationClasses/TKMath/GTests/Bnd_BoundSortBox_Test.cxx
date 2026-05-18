@@ -75,7 +75,7 @@ protected:
   occ::handle<NCollection_HArray1<Bnd_Box>> myBoxes;
 };
 
-//==================================================================================================
+//=================================================================================================
 
 // Test initialization with set of boxes
 TEST_F(Bnd_BoundSortBoxTest, InitializeWithBoxes)
@@ -95,15 +95,19 @@ TEST_F(Bnd_BoundSortBoxTest, InitializeWithBoxes)
   for (NCollection_List<int>::Iterator it(result); it.More(); it.Next())
   {
     if (it.Value() == 1)
+    {
       foundSmall = true;
+    }
     if (it.Value() == 2)
+    {
       foundLarge = true;
+    }
   }
   EXPECT_TRUE(foundSmall) << "Small box (index 1) should be in the result";
   EXPECT_TRUE(foundLarge) << "Large box (index 2) should be in the result";
 }
 
-//==================================================================================================
+//=================================================================================================
 
 // Test initialization with provided enclosing box
 TEST_F(Bnd_BoundSortBoxTest, InitializeWithEnclosingBox)
@@ -122,15 +126,19 @@ TEST_F(Bnd_BoundSortBoxTest, InitializeWithEnclosingBox)
   for (NCollection_List<int>::Iterator it(result); it.More(); it.Next())
   {
     if (it.Value() == 2)
+    {
       foundLarge = true;
+    }
     if (it.Value() == 3)
+    {
       foundOffset = true;
+    }
   }
   EXPECT_TRUE(foundLarge) << "Large box (index 2) should be in the result";
   EXPECT_TRUE(foundOffset) << "Offset box (index 3) should be in the result";
 }
 
-//==================================================================================================
+//=================================================================================================
 
 // Test initialization with enclosing box and expected count
 TEST_F(Bnd_BoundSortBoxTest, InitializeWithCount)
@@ -153,7 +161,7 @@ TEST_F(Bnd_BoundSortBoxTest, InitializeWithCount)
   EXPECT_EQ(2, result.First()) << "Large box (index 2) should be the only result";
 }
 
-//==================================================================================================
+//=================================================================================================
 
 // Test comparing with a plane
 TEST_F(Bnd_BoundSortBoxTest, CompareWithPlane)
@@ -173,7 +181,7 @@ TEST_F(Bnd_BoundSortBoxTest, CompareWithPlane)
   EXPECT_EQ(2, result.First()) << "Large box (index 2) should be the only result";
 }
 
-//==================================================================================================
+//=================================================================================================
 
 // Test with void boxes
 TEST_F(Bnd_BoundSortBoxTest, VoidBoxes)
@@ -197,7 +205,7 @@ TEST_F(Bnd_BoundSortBoxTest, VoidBoxes)
   EXPECT_EQ(0, void_result.Extent()) << "Expected to find 0 intersections with void box";
 }
 
-//==================================================================================================
+//=================================================================================================
 
 // Test with touching boxes
 TEST_F(Bnd_BoundSortBoxTest, TouchingBoxes)
@@ -222,7 +230,7 @@ TEST_F(Bnd_BoundSortBoxTest, TouchingBoxes)
   EXPECT_EQ(2, result2.Extent()) << "Expected to find 2 intersections";
 }
 
-//==================================================================================================
+//=================================================================================================
 
 // Test with boxes that are far apart
 TEST_F(Bnd_BoundSortBoxTest, DisjointBoxes)
@@ -247,7 +255,7 @@ TEST_F(Bnd_BoundSortBoxTest, DisjointBoxes)
   EXPECT_EQ(1, result.First()) << "Small box (index 1) should be the only result";
 }
 
-//==================================================================================================
+//=================================================================================================
 
 // Test with degenerate boxes (points, lines, planes)
 TEST_F(Bnd_BoundSortBoxTest, DegenerateBoxes)
@@ -284,7 +292,7 @@ TEST_F(Bnd_BoundSortBoxTest, DegenerateBoxes)
   EXPECT_EQ(1, pointResult.First()) << "Point box (index 1) should be the only result";
 }
 
-//==================================================================================================
+//=================================================================================================
 
 // Test BUC60729: Initialize Bnd_BoundSortBox with face boxes from a solid
 // Migrated from QABugs_3.cxx

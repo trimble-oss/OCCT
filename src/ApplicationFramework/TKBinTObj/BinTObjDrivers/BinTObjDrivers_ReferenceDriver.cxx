@@ -33,21 +33,14 @@ BinTObjDrivers_ReferenceDriver::BinTObjDrivers_ReferenceDriver(
 {
 }
 
-//=======================================================================
-// function : NewEmpty
-// purpose  : Creates a new attribute
-//=======================================================================
+//=================================================================================================
 
 occ::handle<TDF_Attribute> BinTObjDrivers_ReferenceDriver::NewEmpty() const
 {
   return new TObj_TReference;
 }
 
-//=======================================================================
-// function : Paste
-// purpose  : Translate the contents of <theSource> and put it
-//           into <theTarget>.
-//=======================================================================
+//=================================================================================================
 
 bool BinTObjDrivers_ReferenceDriver::Paste(const BinObjMgt_Persistent&       theSource,
                                            const occ::handle<TDF_Attribute>& theTarget,
@@ -57,19 +50,25 @@ bool BinTObjDrivers_ReferenceDriver::Paste(const BinObjMgt_Persistent&       the
   TDF_Label             aMasterLabel;
   occ::handle<TDF_Data> aDS = theTarget->Label().Data();
   if (!theSource.GetLabel(aDS, aMasterLabel))
+  {
     return false;
+  }
 
   // isSameDoc flag
   bool isSameDoc = false;
   if (!(theSource >> isSameDoc))
+  {
     return false;
+  }
 
   // DS for referred label
   if (!isSameDoc)
   {
     TCollection_AsciiString aName;
     if (!(theSource >> aName))
+    {
       return false;
+    }
     occ::handle<TObj_Model> aModel = TObj_Assistant::FindModel(aName.ToCString());
     if (aModel.IsNull())
     {
@@ -85,7 +84,9 @@ bool BinTObjDrivers_ReferenceDriver::Paste(const BinObjMgt_Persistent&       the
   // referred label
   TDF_Label aLabel;
   if (!theSource.GetLabel(aDS, aLabel))
+  {
     return false;
+  }
 
   // set reference attribute fields
   occ::handle<TObj_TReference> aTarget = occ::down_cast<TObj_TReference>(theTarget);
@@ -94,13 +95,7 @@ bool BinTObjDrivers_ReferenceDriver::Paste(const BinObjMgt_Persistent&       the
   return !aLabel.IsNull() && !aMasterLabel.IsNull();
 }
 
-//=======================================================================
-// function : Paste
-// purpose  : Translate the contents of <theSource> and put it
-//           into <theTarget>.
-//           Store master and referred labels as entry, the other model referred
-//           as entry in model-container
-//=======================================================================
+//=================================================================================================
 
 void BinTObjDrivers_ReferenceDriver::Paste(
   const occ::handle<TDF_Attribute>& theSource,
@@ -111,7 +106,9 @@ void BinTObjDrivers_ReferenceDriver::Paste(
 
   occ::handle<TObj_Object> aLObject = aSource->Get();
   if (aLObject.IsNull())
+  {
     return;
+  }
 
   // labels
   TDF_Label aLabel       = aLObject->GetLabel();

@@ -29,7 +29,8 @@
 #include <gp_Pnt.hxx>
 #include <NCollection_Array1.hxx>
 #include <TColStd_HPackedMapOfInteger.hxx>
-#include <TColStd_MapIteratorOfPackedMapOfInteger.hxx>
+#include <TColStd_PackedMapOfInteger.hxx>
+#include <NCollection_PackedMapAlgo.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(MeshVS_VectorPrsBuilder, MeshVS_PrsBuilder)
 
@@ -64,9 +65,13 @@ const NCollection_DataMap<int, gp_Vec>& MeshVS_VectorPrsBuilder::GetVectors(
   const bool IsElements) const
 {
   if (IsElements)
+  {
     return myElemVectorMap;
+  }
   else
+  {
     return myNodeVectorMap;
+  }
 }
 
 //=================================================================================================
@@ -75,9 +80,13 @@ void MeshVS_VectorPrsBuilder::SetVectors(const bool                             
                                          const NCollection_DataMap<int, gp_Vec>& theMap)
 {
   if (IsElements)
+  {
     myElemVectorMap = theMap;
+  }
   else
+  {
     myNodeVectorMap = theMap;
+  }
 }
 
 //=================================================================================================
@@ -86,7 +95,9 @@ bool MeshVS_VectorPrsBuilder::HasVectors(const bool IsElement) const
 {
   bool aRes = (myNodeVectorMap.Extent() > 0);
   if (IsElement)
+  {
     aRes = (myElemVectorMap.Extent() > 0);
+  }
   return aRes;
 }
 
@@ -96,11 +107,15 @@ bool MeshVS_VectorPrsBuilder::GetVector(const bool IsElement, const int ID, gp_V
 {
   const NCollection_DataMap<int, gp_Vec>* aMap = &myNodeVectorMap;
   if (IsElement)
+  {
     aMap = &myElemVectorMap;
+  }
 
   bool aRes = aMap->IsBound(ID);
   if (aRes)
+  {
     Vect = aMap->Find(ID);
+  }
 
   return aRes;
 }
@@ -111,13 +126,19 @@ void MeshVS_VectorPrsBuilder::SetVector(const bool IsElement, const int ID, cons
 {
   NCollection_DataMap<int, gp_Vec>* aMap = &myNodeVectorMap;
   if (IsElement)
+  {
     aMap = &myElemVectorMap;
+  }
 
   bool aRes = aMap->IsBound(ID);
   if (aRes)
+  {
     aMap->ChangeFind(ID) = Vect;
+  }
   else
+  {
     aMap->Bind(ID, Vect);
+  }
 }
 
 //=================================================================================================
@@ -128,11 +149,15 @@ void MeshVS_VectorPrsBuilder::GetMinMaxVectorValue(const bool IsElement,
 {
   const NCollection_DataMap<int, gp_Vec>* aMap = &myNodeVectorMap;
   if (IsElement)
+  {
     aMap = &myElemVectorMap;
+  }
 
   NCollection_DataMap<int, gp_Vec>::Iterator anIt(*aMap);
   if (anIt.More())
+  {
     MinValue = MaxValue = anIt.Value().Magnitude();
+  }
 
   double aCurValue;
 
@@ -140,9 +165,13 @@ void MeshVS_VectorPrsBuilder::GetMinMaxVectorValue(const bool IsElement,
   {
     aCurValue = anIt.Value().Magnitude();
     if (MinValue > aCurValue)
+    {
       MinValue = aCurValue;
+    }
     if (MaxValue < aCurValue)
+    {
       MaxValue = aCurValue;
+    }
   }
 }
 
@@ -163,7 +192,9 @@ void MeshVS_VectorPrsBuilder::Build(const occ::handle<Prs3d_Presentation>& Prs,
   occ::handle<MeshVS_DataSource> aSource = GetDataSource();
   if (aSource.IsNull() || aDrawer.IsNull() || !HasVectors(IsElement)
       || (theDisplayMode & GetFlags()) == 0)
+  {
     return;
+  }
 
   int    aMaxFaceNodes;
   double aMaxLen, anArrowPart = 0.1;
@@ -171,7 +202,9 @@ void MeshVS_VectorPrsBuilder::Build(const occ::handle<Prs3d_Presentation>& Prs,
   if (!aDrawer->GetInteger(MeshVS_DA_MaxFaceNodes, aMaxFaceNodes) || aMaxFaceNodes <= 0
       || !aDrawer->GetDouble(MeshVS_DA_VectorMaxLength, aMaxLen) || aMaxLen <= 0
       || !aDrawer->GetDouble(MeshVS_DA_VectorArrowPart, anArrowPart) || anArrowPart <= 0)
+  {
     return;
+  }
 
   MeshVS_Buffer              aCoordsBuf(3 * aMaxFaceNodes * sizeof(double));
   NCollection_Array1<double> aCoords(aCoordsBuf, 1, 3 * aMaxFaceNodes);
@@ -183,7 +216,9 @@ void MeshVS_VectorPrsBuilder::Build(const occ::handle<Prs3d_Presentation>& Prs,
   int                                     aNbVectors = aMap.Extent();
 
   if (aNbVectors <= 0)
+  {
     return;
+  }
 
   // polylines
   int aNbVertices = aNbVectors * NB_VERTICES;
@@ -225,11 +260,13 @@ void MeshVS_VectorPrsBuilder::Build(const occ::handle<Prs3d_Presentation>& Prs,
   {
     occ::handle<TColStd_HPackedMapOfInteger> aHiddenElems = myParentMesh->GetHiddenElems();
     if (!aHiddenElems.IsNull())
-      anIDs.Subtract(aHiddenElems->Map());
+    {
+      NCollection_PackedMapAlgo::Subtract(anIDs, aHiddenElems->Map());
+    }
   }
-  anIDs.Subtract(IDsToExclude);
+  NCollection_PackedMapAlgo::Subtract(anIDs, IDsToExclude);
 
-  TColStd_MapIteratorOfPackedMapOfInteger it(anIDs);
+  TColStd_PackedMapOfInteger::Iterator it(anIDs);
   for (; it.More(); it.Next())
   {
     int aKey = it.Key();
@@ -238,7 +275,9 @@ void MeshVS_VectorPrsBuilder::Build(const occ::handle<Prs3d_Presentation>& Prs,
       aValue = aVec.Magnitude();
 
       if (std::abs(aValue) < Precision::Confusion())
+      {
         continue;
+      }
 
       if (aSource->GetGeom(aKey, IsElement, aCoords, NbNodes, aType))
       {
@@ -251,7 +290,9 @@ void MeshVS_VectorPrsBuilder::Build(const occ::handle<Prs3d_Presentation>& Prs,
         else if (aType == MeshVS_ET_Link || aType == MeshVS_ET_Face || aType == MeshVS_ET_Volume)
         {
           if (IsElement && IsExcludingOn())
+          {
             IDsToExclude.Add(aKey);
+          }
           X = Y = Z = 0;
           for (int i = 1; i <= NbNodes; i++)
           {
@@ -313,7 +354,9 @@ void MeshVS_VectorPrsBuilder::Build(const occ::handle<Prs3d_Presentation>& Prs,
   }
 
   if (!aCustomElements.IsEmpty())
+  {
     CustomBuild(Prs, aCustomElements, IDsToExclude, theDisplayMode);
+  }
 }
 
 //=======================================================================
@@ -347,7 +390,9 @@ void MeshVS_VectorPrsBuilder::DrawVector(
     int aLower = theArrowPoints.Lower(), aUpper = theArrowPoints.Upper();
 
     if (aUpper - aLower < PntNum - 1)
+    {
       return;
+    }
 
     NCollection_Array1<gp_Pnt> anArrowPnt(aLower, aUpper);
     for (int aPntIdx = aLower; aPntIdx < aLower + PntNum; ++aPntIdx)

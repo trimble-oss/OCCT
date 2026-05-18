@@ -22,7 +22,7 @@ IMPLEMENT_STANDARD_RTTIEXT(Units_Quantity, Standard_Transient)
 
 //=================================================================================================
 
-bool Units_Quantity::IsEqual(const char* astring) const
+bool Units_Quantity::IsEqual(const char* const astring) const
 {
   return (Name() == astring);
 }
@@ -32,24 +32,25 @@ bool Units_Quantity::IsEqual(const char* astring) const
 void Units_Quantity::Dump(const int ashift, const int alevel) const
 {
   int index;
-  std::cout << std::endl;
+  std::cout << '\n';
   for (int i = 0; i < ashift; i++)
+  {
     std::cout << "  ";
-  std::cout << Name() << std::endl;
+  }
+  std::cout << Name() << '\n';
   //  thedimensions->Dump(ashift+1);
   if (alevel > 0)
   {
     for (index = 1; index <= theunitssequence->Length(); index++)
+    {
       theunitssequence->Value(index)->Dump(ashift + 1, 0);
+    }
   }
 }
 
-//=======================================================================
-// function : operator ==
-// purpose  :
-//=======================================================================
+//=================================================================================================
 
-bool operator==(const occ::handle<Units_Quantity>& aquantity, const char* astring)
+bool operator==(const occ::handle<Units_Quantity>& aquantity, const char* const astring)
 {
   return aquantity->IsEqual(astring);
 }

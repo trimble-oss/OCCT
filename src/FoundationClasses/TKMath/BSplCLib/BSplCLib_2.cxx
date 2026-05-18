@@ -64,7 +64,9 @@ void BSplCLib::BuildEval(const int                         Degree,
     {
       ip++;
       if (ip > PUpper)
+      {
         ip = PLower;
+      }
       pole[0] = Poles(ip);
       pole += 1;
     }
@@ -76,7 +78,9 @@ void BSplCLib::BuildEval(const int                         Degree,
     {
       ip++;
       if (ip > PUpper)
+      {
         ip = PLower;
+      }
       pole[1] = w = (*Weights)(ip);
       pole[0]     = Poles(ip) * w;
       pole += 2;
@@ -104,9 +108,13 @@ static void PrepareEval(double&                           u,
   // make the knots
   BSplCLib::BuildKnots(Degree, index, Periodic, Knots, Mults, *dc.knots);
   if (Mults == nullptr)
+  {
     index -= Knots.Lower() + Degree;
+  }
   else
+  {
     index = BSplCLib::PoleIndex(Degree, index, Periodic, *Mults);
+  }
 
   // check truly rational
   rational = (Weights != nullptr);
@@ -149,9 +157,13 @@ void BSplCLib::D0(const double                      U,
   PrepareEval(u, index, dim, rational, Degree, Periodic, Poles, Weights, Knots, Mults, dc);
   BSplCLib::Eval(u, Degree, *dc.knots, dim, *dc.poles);
   if (rational)
+  {
     P = dc.poles[0] / dc.poles[1];
+  }
   else
+  {
     P = dc.poles[0];
+  }
 }
 
 //=================================================================================================
@@ -214,9 +226,13 @@ void BSplCLib::D2(const double                      U,
   P  = result[0];
   V1 = result[1];
   if (!rational && (Degree < 2))
+  {
     V2 = 0.;
+  }
   else
+  {
     V2 = result[2];
+  }
 }
 
 //=================================================================================================
@@ -250,13 +266,21 @@ void BSplCLib::D3(const double                      U,
   P  = result[0];
   V1 = result[1];
   if (!rational && (Degree < 2))
+  {
     V2 = 0.;
+  }
   else
+  {
     V2 = result[2];
+  }
   if (!rational && (Degree < 3))
+  {
     V3 = 0.;
+  }
   else
+  {
     V3 = result[3];
+  }
 }
 
 //=================================================================================================
@@ -288,9 +312,13 @@ void BSplCLib::DN(const double                      U,
   else
   {
     if (N > Degree)
+    {
       VN = 0.;
+    }
     else
+    {
       VN = dc.poles[N];
+    }
   }
 }
 
@@ -316,12 +344,20 @@ int BSplCLib::BuildBSpMatrix(const NCollection_Array1<double>& Parameters,
     return 1;
   }
 
-  math_Matrix aBSplineBasis(1, aMaxOrder, 1, aMaxOrder);
+  double      aBasisBuf[aMaxOrder * aMaxOrder];
+  math_Matrix aBSplineBasis(aBasisBuf, 1, aMaxOrder, 1, aMaxOrder);
+
+  // Zero the entire matrix once instead of per-row zero-fill loops.
+  Matrix.Init(0.0);
+  const int aMatLRow  = Matrix.LowerRow();
+  const int aMatNCols = Matrix.ColNumber();
+  double*   aMatData  = &Matrix(aMatLRow, 1);
 
   for (int i = Parameters.Lower(); i <= Parameters.Upper(); i++)
   {
     int       aFirstNonZeroIndex = 0;
-    const int anErrorCode        = BSplCLib::EvalBsplineBasis(ContactOrderArray(i),
+    const int aContactOrder      = ContactOrderArray(i);
+    const int anErrorCode        = BSplCLib::EvalBsplineBasis(aContactOrder,
                                                        anOrder,
                                                        FlatKnots,
                                                        Parameters(i),
@@ -332,19 +368,12 @@ int BSplCLib::BuildBSpMatrix(const NCollection_Array1<double>& Parameters,
       return 2;
     }
 
-    int anIndex = LowerBandWidth + 1 + aFirstNonZeroIndex - i;
-    for (int j = 1; j < anIndex; j++)
+    int           anIndex   = LowerBandWidth + 1 + aFirstNonZeroIndex - i;
+    double*       aRowData  = aMatData + (i - aMatLRow) * aMatNCols;
+    const double* aBasisSrc = aBasisBuf + aContactOrder * aMaxOrder;
+    for (int j = 0; j < anOrder; j++)
     {
-      Matrix.Value(i, j) = 0.0;
-    }
-    for (int j = 1; j <= anOrder; j++)
-    {
-      Matrix.Value(i, anIndex) = aBSplineBasis(ContactOrderArray(i) + 1, j);
-      anIndex += 1;
-    }
-    for (int j = anIndex; j <= aBandWidth; j++)
-    {
-      Matrix.Value(i, j) = 0.0;
+      aRowData[anIndex + j - 1] = aBasisSrc[j];
     }
   }
 
@@ -361,14 +390,20 @@ int BSplCLib::FactorBandedMatrix(math_Matrix& Matrix,
   const int aBandWidth = UpperBandWidth + LowerBandWidth + 1;
   PivotIndexProblem    = 0;
 
-  for (int i = Matrix.LowerRow() + 1; i <= Matrix.UpperRow(); i++)
+  const int aLRow  = Matrix.LowerRow();
+  const int aNCols = Matrix.ColNumber();
+  double*   aData  = &Matrix(aLRow, 1);
+
+  for (int i = aLRow + 1; i <= Matrix.UpperRow(); i++)
   {
     const int aMinIndex = (LowerBandWidth - i + 2 >= 1 ? LowerBandWidth - i + 2 : 1);
+    double*   aRowI     = aData + (i - aLRow) * aNCols;
 
     for (int j = aMinIndex; j <= LowerBandWidth; j++)
     {
-      const int    anIndex = i - LowerBandWidth + j - 1;
-      const double aPivot  = Matrix(anIndex, LowerBandWidth + 1);
+      const int     anIndex = i - LowerBandWidth + j - 1;
+      const double* aRowIdx = aData + (anIndex - aLRow) * aNCols;
+      const double  aPivot  = aRowIdx[LowerBandWidth];
       if (std::abs(aPivot) <= RealSmall())
       {
         PivotIndexProblem = anIndex;
@@ -376,12 +411,12 @@ int BSplCLib::FactorBandedMatrix(math_Matrix& Matrix,
       }
 
       const double anInverse = -1.0 / aPivot;
-      Matrix(i, j)           = Matrix(i, j) * anInverse;
+      aRowI[j - 1]           = aRowI[j - 1] * anInverse;
       const int aMaxIndex    = aBandWidth + anIndex - i;
 
       for (int k = j + 1; k <= aMaxIndex; k++)
       {
-        Matrix(i, k) += Matrix(i, j) * Matrix(anIndex, k + i - anIndex);
+        aRowI[k - 1] += aRowI[j - 1] * aRowIdx[k + i - anIndex - 1];
       }
     }
   }
@@ -448,8 +483,17 @@ int BSplCLib::EvalBsplineBasis(const int                         DerivativeReque
 
   FirstNonZeroBsplineIndex = ii - Order + 1;
 
-  BsplineBasis(1, 1) = 1.0;
-  aLocalRequest      = DerivativeRequest;
+  // Use raw pointers for BsplineBasis and FlatKnots to bypass accessor overhead
+  // (math_Matrix::Value -> math_DoubleTab::Value -> NCollection_Array2::Value ->
+  // NCollection_Array1::at with bounds checks and DYLD stubs in tight loops).
+  const int        aBasisNCols = BsplineBasis.ColNumber();
+  double*          aBasisData  = &BsplineBasis(1, 1);
+  const double*    aKnotsData  = &FlatKnots(FlatKnots.Lower());
+  constexpr double aResolution = gp::Resolution();
+  ii -= FlatKnots.Lower(); // rebase to zero-based indexing into aKnotsData
+
+  aBasisData[0] = 1.0;
+  aLocalRequest = DerivativeRequest;
   if (DerivativeRequest >= Order)
   {
     aLocalRequest = Order - 1;
@@ -457,21 +501,21 @@ int BSplCLib::EvalBsplineBasis(const int                         DerivativeReque
 
   for (int qq = 2; qq <= Order - aLocalRequest; qq++)
   {
-    BsplineBasis(1, qq) = 0.0;
+    aBasisData[qq - 1] = 0.0;
 
     for (int pp = 1; pp <= qq - 1; pp++)
     {
-      const double aScale = FlatKnots(ii + pp) - FlatKnots(ii - qq + pp + 1);
-      if (std::abs(aScale) < gp::Resolution())
+      const double aScale = aKnotsData[ii + pp] - aKnotsData[ii - qq + pp + 1];
+      if (std::abs(aScale) < aResolution)
       {
         return 2;
       }
 
-      const double aFactor = (Parameter - FlatKnots(ii - qq + pp + 1)) / aScale;
-      const double aSaved  = aFactor * BsplineBasis(1, pp);
-      BsplineBasis(1, pp) *= (1.0 - aFactor);
-      BsplineBasis(1, pp) += BsplineBasis(1, qq);
-      BsplineBasis(1, qq) = aSaved;
+      const double aFactor = (Parameter - aKnotsData[ii - qq + pp + 1]) / aScale;
+      const double aSaved  = aFactor * aBasisData[pp - 1];
+      aBasisData[pp - 1] *= (1.0 - aFactor);
+      aBasisData[pp - 1] += aBasisData[qq - 1];
+      aBasisData[qq - 1] = aSaved;
     }
   }
 
@@ -479,37 +523,38 @@ int BSplCLib::EvalBsplineBasis(const int                         DerivativeReque
   {
     for (int pp = 1; pp <= qq - 1; pp++)
     {
-      BsplineBasis(Order - qq + 2, pp) = BsplineBasis(1, pp);
+      aBasisData[(Order - qq + 1) * aBasisNCols + (pp - 1)] = aBasisData[pp - 1];
     }
-    BsplineBasis(1, qq) = 0.0;
+    aBasisData[qq - 1] = 0.0;
 
     for (int ss = Order - aLocalRequest + 1; ss <= qq; ss++)
     {
-      BsplineBasis(Order - ss + 2, qq) = 0.0;
+      aBasisData[(Order - ss + 1) * aBasisNCols + (qq - 1)] = 0.0;
     }
 
     for (int pp = 1; pp <= qq - 1; pp++)
     {
-      const double aScale = FlatKnots(ii + pp) - FlatKnots(ii - qq + pp + 1);
-      if (std::abs(aScale) < gp::Resolution())
+      const double aScale = aKnotsData[ii + pp] - aKnotsData[ii - qq + pp + 1];
+      if (std::abs(aScale) < aResolution)
       {
         return 2;
       }
 
       const double anInverse = 1.0 / aScale;
-      const double aFactor   = (Parameter - FlatKnots(ii - qq + pp + 1)) * anInverse;
-      double       aSaved    = aFactor * BsplineBasis(1, pp);
-      BsplineBasis(1, pp) *= (1.0 - aFactor);
-      BsplineBasis(1, pp) += BsplineBasis(1, qq);
-      BsplineBasis(1, qq)        = aSaved;
+      const double aFactor   = (Parameter - aKnotsData[ii - qq + pp + 1]) * anInverse;
+      double       aSaved    = aFactor * aBasisData[pp - 1];
+      aBasisData[pp - 1] *= (1.0 - aFactor);
+      aBasisData[pp - 1] += aBasisData[qq - 1];
+      aBasisData[qq - 1]         = aSaved;
       const double aLocalInverse = static_cast<double>(qq - 1) * anInverse;
 
       for (int ss = Order - aLocalRequest + 1; ss <= qq; ss++)
       {
-        aSaved = aLocalInverse * BsplineBasis(Order - ss + 2, pp);
-        BsplineBasis(Order - ss + 2, pp) *= -aLocalInverse;
-        BsplineBasis(Order - ss + 2, pp) += BsplineBasis(Order - ss + 2, qq);
-        BsplineBasis(Order - ss + 2, qq) = aSaved;
+        double* aRowS = aBasisData + (Order - ss + 1) * aBasisNCols;
+        aSaved        = aLocalInverse * aRowS[pp - 1];
+        aRowS[pp - 1] *= -aLocalInverse;
+        aRowS[pp - 1] += aRowS[qq - 1];
+        aRowS[qq - 1] = aSaved;
       }
     }
   }

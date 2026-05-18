@@ -49,9 +49,13 @@ bool BRep_TEdge::SameParameter() const
 void BRep_TEdge::SameParameter(const bool S)
 {
   if (S)
+  {
     myFlags |= ParameterMask;
+  }
   else
+  {
     myFlags &= ~ParameterMask;
+  }
 }
 
 //=================================================================================================
@@ -66,9 +70,13 @@ bool BRep_TEdge::SameRange() const
 void BRep_TEdge::SameRange(const bool S)
 {
   if (S)
+  {
     myFlags |= RangeMask;
+  }
   else
+  {
     myFlags &= ~RangeMask;
+  }
 }
 
 //=================================================================================================
@@ -83,9 +91,13 @@ bool BRep_TEdge::Degenerated() const
 void BRep_TEdge::Degenerated(const bool S)
 {
   if (S)
+  {
     myFlags |= DegeneratedMask;
+  }
   else
+  {
     myFlags &= ~DegeneratedMask;
+  }
 }
 
 //=================================================================================================
@@ -100,7 +112,7 @@ occ::handle<TopoDS_TShape> BRep_TEdge::EmptyCopy() const
 
   while (itr.More())
   {
-    // on ne recopie PAS les polygones
+    // do NOT copy polygons
     if (itr.Value()->IsKind(STANDARD_TYPE(BRep_GCurve))
         || itr.Value()->IsKind(STANDARD_TYPE(BRep_CurveOn2Surfaces)))
     {

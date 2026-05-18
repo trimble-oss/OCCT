@@ -27,10 +27,20 @@
 #include <GeomFill_AppSurf.hxx>
 #include <GeomFill_Line.hxx>
 #include <GeomFill_SectionGenerator.hxx>
+#include <gp.hxx>
 #include <gp_Pnt.hxx>
 #include <math_Vector.hxx>
 #include <StdFail_NotDone.hxx>
 #include <AppDef_BSpParLeastSquareOfMyBSplGradientOfBSplineCompute.hxx>
+
+namespace
+{
+bool hasMeaningfulSpan(const double theSpan)
+{
+  const double aResolution = gp::Resolution();
+  return theSpan * theSpan > aResolution * aResolution;
+}
+} // namespace
 
 static void BuildParameters(const AppDef_MultiLine&          theLine,
                             const Approx_ParametrizationType theParT,
@@ -74,8 +84,20 @@ static void BuildParameters(const AppDef_MultiLine&          theLine,
         thePars(i) = thePars(i - 1) + std::sqrt(dist);
       }
     }
-    for (i = firstP; i <= lastP; i++)
-      thePars(i) /= thePars(lastP);
+    if (hasMeaningfulSpan(thePars(lastP)))
+    {
+      for (i = firstP; i <= lastP; i++)
+      {
+        thePars(i) /= thePars(lastP);
+      }
+    }
+    else
+    {
+      for (i = firstP; i <= lastP; i++)
+      {
+        thePars(i) = (double(i) - firstP) / (double(lastP - firstP));
+      }
+    }
   }
   else
   {
@@ -165,7 +187,9 @@ static void BuildPeriodicTangent(const AppDef_MultiLine&           theLine,
 
     math_Vector P2(firstp, lastpt);
     for (i = firstp; i <= lastpt; i++)
+    {
       P2(i) = thePars(i);
+    }
     SQ2.Perform(P2);
 
     const AppParCurves_MultiCurve& C2 = SQ2.BezierValue();
@@ -292,6 +316,7 @@ void GeomAPI_PointsToBSplineSurface::Init(const NCollection_Array2<gp_Pnt>& Poin
                                           const double                      Tol3D,
                                           const bool                        thePeriodic)
 {
+  myIsDone = false;
   int Imin = Points.LowerRow();
   int Imax = Points.UpperRow();
   int Jmin = Points.LowerCol();
@@ -325,7 +350,9 @@ void GeomAPI_PointsToBSplineSurface::Init(const NCollection_Array2<gp_Pnt>& Poin
   int  nbit       = 2;
   bool UseSquares = false;
   if (Tol3D <= 1.e-3)
+  {
     UseSquares = true;
+  }
 
   AppDef_BSplineCompute TheComputer(DegMin, DegMax, Tol3D, Tol2D, nbit, true, ParType, UseSquares);
 
@@ -464,6 +491,7 @@ void GeomAPI_PointsToBSplineSurface::Init(const NCollection_Array2<gp_Pnt>& Poin
                                           const GeomAbs_Shape               Continuity,
                                           const double                      Tol3D)
 {
+  myIsDone = false;
   int Imin = Points.LowerRow();
   int Imax = Points.UpperRow();
   int Jmin = Points.LowerCol();
@@ -471,7 +499,9 @@ void GeomAPI_PointsToBSplineSurface::Init(const NCollection_Array2<gp_Pnt>& Poin
 
   int nbit = 2;
   if (Tol3D <= 1.e-3)
+  {
     nbit = 0;
+  }
 
   // first approximate the U isos:
   int NbPointJ = Jmax - Jmin + 1;
@@ -656,6 +686,7 @@ void GeomAPI_PointsToBSplineSurface::Init(const NCollection_Array2<double>& ZPoi
                                           const GeomAbs_Shape               Continuity,
                                           const double                      Tol3D)
 {
+  myIsDone    = false;
   int    Imin = ZPoints.LowerRow();
   int    Imax = ZPoints.UpperRow();
   int    Jmin = ZPoints.LowerCol();
@@ -668,6 +699,7 @@ void GeomAPI_PointsToBSplineSurface::Init(const NCollection_Array2<double>& ZPoi
   AppDef_MultiLine Line(Jmax - Jmin + 1);
   math_Vector      Param(Jmin, Jmax);
   int              i, j;
+  const int        aVSpan = Jmax - Jmin;
   //  double X, Y;
   length = dY * (Jmax - Jmin);
 
@@ -678,7 +710,7 @@ void GeomAPI_PointsToBSplineSurface::Init(const NCollection_Array2<double>& ZPoi
     {
       MP.SetPoint2d(i, gp_Pnt2d(0.0, ZPoints(i, j)));
     }
-    Param(j) = (double)(j - Jmin) / (double)(Jmax - Jmin);
+    Param(j) = (aVSpan > 0) ? double(j - Jmin) / double(aVSpan) : 0.0;
     Line.SetValue(j, MP);
   }
 
@@ -772,7 +804,8 @@ void GeomAPI_PointsToBSplineSurface::Init(const NCollection_Array2<double>& ZPoi
   int              nbisosu = Imax - Imin + 1;
   AppDef_MultiLine Line2(nbisosu);
   math_Vector      Param2(1, nbisosu);
-  length = dX * (Imax - Imin);
+  const int        aUSpan = nbisosu - 1;
+  length                  = dX * (Imax - Imin);
 
   for (i = 1; i <= nbisosu; i++)
   {
@@ -782,7 +815,7 @@ void GeomAPI_PointsToBSplineSurface::Init(const NCollection_Array2<double>& ZPoi
     {
       MP.SetPoint2d(j, gp_Pnt2d(0.0, Poles(j).Y()));
     }
-    Param2(i) = (double)(i - 1) / (double)(nbisosu - 1);
+    Param2(i) = (aUSpan > 0) ? double(i - 1) / double(aUSpan) : 0.0;
     Line2.SetValue(i, MP);
   }
 

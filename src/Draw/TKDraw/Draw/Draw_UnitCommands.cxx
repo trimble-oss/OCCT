@@ -23,10 +23,8 @@
 #include <Units_UnitSentence.hxx>
 #include <UnitsAPI.hxx>
 
-//=======================================================================
-// function : parsing
-// purpose  : parsing of unit's expression
-//=======================================================================
+//=================================================================================================
+
 static int parsing(Draw_Interpretor& di, int argc, const char** argv)
 {
   if (argc < 2)
@@ -38,7 +36,9 @@ static int parsing(Draw_Interpretor& di, int argc, const char** argv)
   TCollection_AsciiString aStrTok(argv[1]);
   int                     nbIter = 1;
   if (argc > 2)
+  {
     nbIter = Draw::Atoi(argv[2]);
+  }
   UnitsAPI::SetLocalSystem();
   occ::handle<Units_Token> atoken;
   Units_UnitSentence       aUnitSent(aStrTok.ToCString());
@@ -61,10 +61,8 @@ static int parsing(Draw_Interpretor& di, int argc, const char** argv)
   return 0;
 }
 
-//=======================================================================
-// function : unitsdico
-// purpose  : dump dictionary of units
-//=======================================================================
+//=================================================================================================
+
 static int unitsdico(Draw_Interpretor& /* di */, int /*argc*/, const char** /*argv*/)
 {
   UnitsAPI::SetLocalSystem();
@@ -122,7 +120,9 @@ static int unit(Draw_Interpretor& di, int n, const char** a)
     return 0;
   }
   else
+  {
     return 1;
+  }
 }
 
 //=================================================================================================
@@ -131,7 +131,9 @@ void Draw::UnitCommands(Draw_Interpretor& theCommands)
 {
   static bool Done = false;
   if (Done)
+  {
     return;
+  }
   Done = true;
 
   const char* g = "DRAW Unit Commands";

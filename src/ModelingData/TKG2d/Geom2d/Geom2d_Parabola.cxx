@@ -95,7 +95,9 @@ Geom2d_Parabola::Geom2d_Parabola(const Ax2d& D, const Pnt2d& F)
 void Geom2d_Parabola::SetFocal(const double Focal)
 {
   if (Focal < 0.0)
+  {
     throw Standard_ConstructionError();
+  }
   focalLength = Focal;
 }
 
@@ -190,38 +192,47 @@ double Geom2d_Parabola::Parameter() const
 
 //=================================================================================================
 
-void Geom2d_Parabola::D0(const double U, Pnt2d& P) const
+gp_Pnt2d Geom2d_Parabola::EvalD0(const double U) const
 {
-  P = ElCLib::ParabolaValue(U, pos, focalLength);
+  return ElCLib::ParabolaValue(U, pos, focalLength);
 }
 
 //=================================================================================================
 
-void Geom2d_Parabola::D1(const double U, Pnt2d& P, Vec2d& V1) const
+Geom2d_Curve::ResD1 Geom2d_Parabola::EvalD1(const double U) const
 {
-  ElCLib::ParabolaD1(U, pos, focalLength, P, V1);
+  Geom2d_Curve::ResD1 aResult;
+  ElCLib::ParabolaD1(U, pos, focalLength, aResult.Point, aResult.D1);
+  return aResult;
 }
 
 //=================================================================================================
 
-void Geom2d_Parabola::D2(const double U, Pnt2d& P, Vec2d& V1, Vec2d& V2) const
+Geom2d_Curve::ResD2 Geom2d_Parabola::EvalD2(const double U) const
 {
-  ElCLib::ParabolaD2(U, pos, focalLength, P, V1, V2);
+  Geom2d_Curve::ResD2 aResult;
+  ElCLib::ParabolaD2(U, pos, focalLength, aResult.Point, aResult.D1, aResult.D2);
+  return aResult;
 }
 
 //=================================================================================================
 
-void Geom2d_Parabola::D3(const double U, Pnt2d& P, Vec2d& V1, Vec2d& V2, Vec2d& V3) const
+Geom2d_Curve::ResD3 Geom2d_Parabola::EvalD3(const double U) const
 {
-  ElCLib::ParabolaD2(U, pos, focalLength, P, V1, V2);
-  V3.SetCoord(0.0, 0.0);
+  Geom2d_Curve::ResD3 aResult;
+  ElCLib::ParabolaD2(U, pos, focalLength, aResult.Point, aResult.D1, aResult.D2);
+  aResult.D3.SetCoord(0.0, 0.0);
+  return aResult;
 }
 
 //=================================================================================================
 
-Vec2d Geom2d_Parabola::DN(const double U, const int N) const
+gp_Vec2d Geom2d_Parabola::EvalDN(const double U, const int N) const
 {
-  Standard_RangeError_Raise_if(N < 1, " ");
+  if (N < 1)
+  {
+    throw Geom2d_UndefinedDerivative();
+  }
   return ElCLib::ParabolaDN(U, pos, focalLength, N);
 }
 
@@ -238,7 +249,9 @@ void Geom2d_Parabola::Transform(const Trsf2d& T)
 double Geom2d_Parabola::TransformedParameter(const double U, const gp_Trsf2d& T) const
 {
   if (Precision::IsInfinite(U))
+  {
     return U;
+  }
   return U * std::abs(T.ScaleFactor());
 }
 

@@ -13,16 +13,16 @@
 
 #include <StdObject_Shape.hxx>
 
-//=======================================================================
-// function : Import
-// purpose  : Import transient object from the persistent data
-//=======================================================================
+//=================================================================================================
+
 TopoDS_Shape StdObject_Shape::Import() const
 {
   TopoDS_Shape aShape;
 
   if (myTShape)
+  {
     aShape.TShape(myTShape->Import());
+  }
 
   aShape.Location(myLocation.Import());
   aShape.Orientation(static_cast<TopAbs_Orientation>(myOrient));

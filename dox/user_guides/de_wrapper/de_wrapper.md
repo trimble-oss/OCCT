@@ -24,7 +24,7 @@ This guide principally deals with the following OCCT classes:
 
 | CAD format | Extensions | RW support | Thread Safety | Presentation | Package |
 | :--------- | :--------- | :--------- | :----------- | :----------- | :------ |
-| STEP | .stp, .step .stepz | RW | No | BRep, Mesh | DESTEP |
+| STEP | .step, .stp, .stepz | RW | Yes (per-reader) | BRep, Mesh | DESTEP |
 | XCAF | .xbf | RW | Yes | BRep, Mesh | DEXCAF |
 | BREP | .brep | RW | Yes | BRep, Mesh | DEBREP |
 | IGES | .igs, .iges | RW | No | BRep | DEIGES |
@@ -37,6 +37,7 @@ This guide principally deals with the following OCCT classes:
 **Note** :
   * The format names in the first column match the FormatName values used for configuration nodes.
   * The VendorName for all listed CAD formats is "OCC".
+  * For STEP, thread safety requires that each concurrent call uses its own *DESTEP_Parameters* instance rather than relying on the process-wide *Interface_Static* settings. See the @ref occt_user_guides__step "STEP user guide" for details.
 
 @section occt_de_wrapper_3 DE Session Configuration
 
@@ -49,15 +50,15 @@ Working with a DE session requires a DE_Wrapper object to be loaded or created f
 
 Getting the global DE_Wrapping object:
 ~~~~{.cpp}
-Handle(DE_Wrapper) aSession = DE_Wrapper::GlobalWrapper();
+occ::handle<DE_Wrapper> aSession = DE_Wrapper::GlobalWrapper();
 ~~~~
 Creating a local DE_Wrapper:
 ~~~~{.cpp}
-Handle(DE_Wrapper) aSession = new DE_Wrapper();
+occ::handle<DE_Wrapper> aSession = new DE_Wrapper();
 ~~~~
 It is recommended to create a local one-time copy to work with the session, if no global changes are intended.
 ~~~~{.cpp}
-Handle(DE_Wrapper) aOneTimeSession = aSession->Copy();
+occ::handle<DE_Wrapper> aOneTimeSession = aSession->Copy();
 ~~~~
 @subsection occt_de_wrapper_3_2 Configuration resource
 
@@ -96,12 +97,12 @@ There are two options for loading a resource: recursive and global parameters on
 
 Configuring using a resource string:
 ~~~~{.cpp}
-  Handle(DE_Wrapper) aSession = DE_Wrapper::GlobalWrapper();
+  occ::handle<DE_Wrapper> aSession = DE_Wrapper::GlobalWrapper();
   TCollection_AsciiString aString =
     "global.priority.STEP :   OCC DTK\n"
     "global.general.length.unit : 1\n"
     "provider.STEP.OCC.read.precision.val : 0.\n";
-  Standard_Boolean aIsRecursive = Standard_True;
+  bool aIsRecursive = true;
   if (!aSession->Load(aString, aIsRecursive))
   {
     Message::SendFail() << "Error: configuration is incorrect";
@@ -109,9 +110,9 @@ Configuring using a resource string:
 ~~~~
 Configuring using a resource file:
 ~~~~{.cpp}
-  Handle(DE_Wrapper) aSession = DE_Wrapper::GlobalWrapper();
+  occ::handle<DE_Wrapper> aSession = DE_Wrapper::GlobalWrapper();
   TCollection_AsciiString aPathToFile = "";
-  Standard_Boolean aIsRecursive = Standard_True;
+  bool aIsRecursive = true;
   if (!aSession->Load(aPathToFile, aIsRecursive))
   {
     Message::SendFail() << "Error: configuration is incorrect";
@@ -150,23 +151,24 @@ It is possible to filter what vendors or providers to save by providing the corr
 
 Dump to resource string. If the vendors list is empty, saves all vendors. If the providers list is empty, saves all providers of valid vendors.
 ~~~~{.cpp}
-  Handle(DE_Wrapper) aSession = DE_Wrapper::GlobalWrapper();
-  TColStd_ListOfAsciiString aFormats;
-  TColStd_ListOfAsciiString aVendors;
-  aFormats.Appends("STEP");
-  aVendors.Appends("OCC");
-  Standard_Boolean aIsRecursive = Standard_True;
-  TCollection_AsciiString aConf = aSession->aConf->Save(aIsRecursive, aFormats, aVendors);
+  occ::handle<DE_Wrapper> aSession = DE_Wrapper::GlobalWrapper();
+  NCollection_List<TCollection_AsciiString> aFormats;
+  NCollection_List<TCollection_AsciiString> aVendors;
+  aFormats.Append("STEP");
+  aVendors.Append("OCC");
+  bool aIsRecursive = true;
+  TCollection_AsciiString aConfDump =
+    aSession->Save(aIsRecursive, aFormats, aVendors);
 ~~~~
 Configure using a resource file. If the vendors list is empty, saves all vendors. If the providers list is empty, saves all providers of valid vendors.
 ~~~~{.cpp}
-  Handle(DE_Wrapper) aSession = DE_Wrapper::GlobalWrapper();
+  occ::handle<DE_Wrapper> aSession = DE_Wrapper::GlobalWrapper();
   TCollection_AsciiString aPathToFile = "";
-  TColStd_ListOfAsciiString aFormats;
-  TColStd_ListOfAsciiString aVendors;
-  aFormats.Appends("STEP");
-  aVendors.Appends("OCC");
-  Standard_Boolean aIsRecursive = Standard_True;
+  NCollection_List<TCollection_AsciiString> aFormats;
+  NCollection_List<TCollection_AsciiString> aVendors;
+  aFormats.Append("STEP");
+  aVendors.Append("OCC");
+  bool aIsRecursive = true;
   if (!aSession->Save(aPathToFile, aIsRecursive, aFormats,aVendors))
   {
     Message::SendFail() << "Error: configuration is not saved";
@@ -199,8 +201,8 @@ All registered providers are set to the map with information about its vendor an
 
 It is necessary to register only one ConfigurationNode for all needed formats.
 ~~~~{.cpp}
-Handle(DE_Wrapper) aSession = DE_Wrapper::GlobalWrapper();
-Handle(DE_ConfigurationNode) aNode = new DESTEP_ConfigurationNode();
+occ::handle<DE_Wrapper> aSession = DE_Wrapper::GlobalWrapper();
+occ::handle<DE_ConfigurationNode> aNode = new DESTEP_ConfigurationNode();
 aSession->Bind(aNode);
 ~~~~
 @subsubsection occt_de_wrapper_3_3_2 Registering providers. DRAW Sample
@@ -216,11 +218,11 @@ It is possible to change a parameter from code using a smart pointer.
 
 ~~~~{.cpp}
 // global variable
-static Handle(DESTEP_ConfigurationNode) THE_STEP_NODE;
+static occ::handle<DESTEP_ConfigurationNode> THE_STEP_NODE;
 
-static Handle(DE_ConfigurationNode) RegisterStepNode()
+static occ::handle<DE_ConfigurationNode> RegisterStepNode()
 {
-  Handle(DE_Wrapper) aSession = DE_Wrapper::GlobalWrapper();
+  occ::handle<DE_Wrapper> aSession = DE_Wrapper::GlobalWrapper();
   if (!THE_STEP_NODE.IsNull())
   {
     return THE_STEP_NODE;
@@ -246,14 +248,14 @@ If the high priority vendor's provider is not supported, a transfer operation is
 @subsubsection occt_de_wrapper_3_4_1 Priority of Vendors. Code sample
 
 ~~~~{.cpp}
-  Handle(DE_Wrapper) aSession = DE_Wrapper::GlobalWrapper();
+  occ::handle<DE_Wrapper> aSession = DE_Wrapper::GlobalWrapper();
   TCollection_AsciiString aFormat = "STEP";
-  TColStd_ListOfAsciiString aVendors;
-  aVendors.Appends("OCC"); // high priority
-  aVendors.Appends("DTK");
+  NCollection_List<TCollection_AsciiString> aVendors;
+  aVendors.Append("OCC"); // high priority
+  aVendors.Append("DTK");
   // Flag to disable not chosen vendors, in this case configuration is possible
   // otherwise, lower their priority and continue to check ability to transfer
-  Standard_Boolean aToDisable = Standard_True;
+  bool aToDisable = true;
   aSession->ChangePriority(aFormat, aVendors, aToDisable);
 ~~~~
 
@@ -277,7 +279,7 @@ The format of input/output file is automatically determined by its extension or 
 
 Reading STEP file to Shape.
 ~~~~{.cpp}
-  Handle(DE_Wrapper) aSession = DE_Wrapper::GlobalWrapper();
+  occ::handle<DE_Wrapper> aSession = DE_Wrapper::GlobalWrapper();
   TCollection_AsciiString aPathToFile = "example.stp";
   TopoDS_Shape aShRes;
   if (!aSession->Read(aPathToFile, aShRes))
@@ -288,10 +290,10 @@ Reading STEP file to Shape.
 
 Writing Shape to STEP file.
 ~~~~{.cpp}
-  Handle(DE_Wrapper) aSession = DE_Wrapper::GlobalWrapper();
+  occ::handle<DE_Wrapper> aSession = DE_Wrapper::GlobalWrapper();
   TCollection_AsciiString aPathToFile = "example.stp";
   TopoDS_Shape aShFrom = ...;
-  if (!aSession->Write(aPathToFile, aShRes))
+  if (!aSession->Write(aPathToFile, aShFrom))
   {
     Message::SendFail() << "Error: Can't write file";
   }
@@ -299,9 +301,9 @@ Writing Shape to STEP file.
 
 Reading STEP file into XCAF document.
 ~~~~{.cpp}
-  Handle(DE_Wrapper) aSession = DE_Wrapper::GlobalWrapper();
+  occ::handle<DE_Wrapper> aSession = DE_Wrapper::GlobalWrapper();
   TCollection_AsciiString aPathToFile = "example.stp";
-  Handle(TDocStd_Document) aDoc = ...;
+  occ::handle<TDocStd_Document> aDoc = ...;
   if (!aSession->Read(aPathToFile, aDoc))
   {
     Message::SendFail() << "Error: Can't read file";
@@ -310,9 +312,9 @@ Reading STEP file into XCAF document.
 
 Writing XCAF document into STEP.
 ~~~~{.cpp}
-  Handle(DE_Wrapper) aSession = DE_Wrapper::GlobalWrapper();
+  occ::handle<DE_Wrapper> aSession = DE_Wrapper::GlobalWrapper();
   TCollection_AsciiString aPathToFile = "example.stp";
-  Handle(TDocStd_Document) aDoc = ...;
+  occ::handle<TDocStd_Document> aDoc = ...;
   if (!aSession->Write(aPathToFile, aDoc))
   {
     Message::SendFail() << "Error: Can't write file";
@@ -351,9 +353,9 @@ It is possible to read and write CAD files directly from a special provider.
 
 ~~~~{.cpp}
 // Creating or getting node
-Handle(DESTEP_ConfigurationNode) aNode = new DESTEP_ConfigurationNode();
+occ::handle<DESTEP_ConfigurationNode> aNode = new DESTEP_ConfigurationNode();
 // Creating an one-time provider
-Handle(DE_Provider) aProvider = aNode->BuildProvider();
+occ::handle<DE_Provider> aProvider = aNode->BuildProvider();
 // Setting configuration with all parameters
 aProvider->SetNode(aNode);
 if (!aProvider->Read(...))
@@ -374,12 +376,13 @@ It is possible to change the configuration of only one transfer operation. To av
 
 Code sample to configure via transfer.
 ~~~~{.cpp}
-  Handle(DE_Wrapper) aSession = DE_Wrapper::GlobalWrapper()->Copy();
+  occ::handle<DE_Wrapper> aSession = DE_Wrapper::GlobalWrapper()->Copy();
   TCollection_AsciiString aString =
     "global.priority.STEP :   OCC DTK\n"
     "global.general.length.unit : 1\n"
     "provider.STEP.OCC.read.precision.val : 0.\n";
-  if (!aSession->Load(aString, aIsRecursive))
+  bool isRecursive = true;
+  if (!aSession->Load(aString, isRecursive))
   {
     Message::SendFail() << "Error: configuration is incorrect";
   }

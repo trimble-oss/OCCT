@@ -10,8 +10,10 @@ set(OCCT_MathUtils_FILES
   MathUtils_Core.hxx
   MathUtils_Convergence.hxx
   MathUtils_Poly.hxx
+  MathUtils_Random.hxx
   MathUtils_Bracket.hxx
   MathUtils_Gauss.hxx
+  MathUtils_Gauss.cxx
   MathUtils_Deriv.hxx
   MathUtils_LineSearch.hxx
   MathUtils_GaussKronrodWeights.hxx
@@ -20,5 +22,4 @@ set(OCCT_MathUtils_FILES
   MathUtils_FunctorScalar.hxx
   MathUtils_FunctorVector.hxx
   # Documentation
-  README.md
 )

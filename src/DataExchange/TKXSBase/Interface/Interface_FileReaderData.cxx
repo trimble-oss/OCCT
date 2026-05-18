@@ -60,7 +60,9 @@ int Interface_FileReaderData::NbEntities() const
   int nb  = 0;
   int num = 0;
   while ((num = FindNextRecord(num)) > 0)
+  {
     nb++;
+  }
   return nb;
 }
 
@@ -72,7 +74,7 @@ void Interface_FileReaderData::InitParams(const int num)
 }
 
 void Interface_FileReaderData::AddParam(const int /*num*/,
-                                        const char*               aval,
+                                        const char* const         aval,
                                         const Interface_ParamType atype,
                                         const int                 nument)
 {
@@ -102,27 +104,41 @@ void Interface_FileReaderData::SetParam(const int                      num,
 int Interface_FileReaderData::NbParams(const int num) const
 {
   if (num > 1)
+  {
     return (thenumpar(num) - thenumpar(num - 1));
+  }
   else if (num == 1)
+  {
     return thenumpar(num);
+  }
   else
+  {
     return theparams->NbParams();
+  }
 }
 
 occ::handle<Interface_ParamList> Interface_FileReaderData::Params(const int num) const
 {
   if (num == 0)
+  {
     return theparams->Params(0, 0); // complet
+  }
   else if (num == 1)
+  {
     return theparams->Params(0, thenumpar(1));
+  }
   else
+  {
     return theparams->Params(thenumpar(num - 1) + 1, (thenumpar(num) - thenumpar(num - 1)));
+  }
 }
 
 const Interface_FileParameter& Interface_FileReaderData::Param(const int num, const int nump) const
 {
   if (thefic != thenum0)
+  {
     return theparams->Param(thenumpar(num - 1) + nump);
+  }
   if (thenm0 != num)
   {
     thenp0 = thenumpar(num - 1);
@@ -134,7 +150,9 @@ const Interface_FileParameter& Interface_FileReaderData::Param(const int num, co
 Interface_FileParameter& Interface_FileReaderData::ChangeParam(const int num, const int nump)
 {
   if (thefic != thenum0)
+  {
     return theparams->ChangeParam(thenumpar(num - 1) + nump);
+  }
   if (thenm0 != num)
   {
     thenp0 = thenumpar(num - 1);
@@ -272,7 +290,7 @@ void Interface_FileReaderData::BindEntity(const int num, const occ::handle<Stand
 
 void Interface_FileReaderData::Destroy() {}
 
-double Interface_FileReaderData::Fastof(const char* ligne)
+double Interface_FileReaderData::Fastof(const char* const ligne)
 {
   return Strtod(ligne, nullptr);
 }

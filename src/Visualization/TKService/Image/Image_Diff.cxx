@@ -18,7 +18,7 @@
 #include <Image_AlienPixMap.hxx>
 #include <Message.hxx>
 #include <Message_Messenger.hxx>
-#include <TColStd_MapIteratorOfPackedMapOfInteger.hxx>
+#include <TColStd_PackedMapOfInteger.hxx>
 
 #include <cstdlib>
 
@@ -268,7 +268,7 @@ bool Image_Diff::SaveDiffImage(Image_PixMap& theDiffImage) const
     {
       case Image_Format_Gray:
       case Image_Format_Alpha: {
-        for (NCollection_Vector<int>::Iterator aPixelIter(myDiffPixels); aPixelIter.More();
+        for (NCollection_DynamicArray<int>::Iterator aPixelIter(myDiffPixels); aPixelIter.More();
              aPixelIter.Next())
         {
           theDiffImage.ChangeValue<unsigned char>(UnpackY(aPixelIter.Value()),
@@ -282,7 +282,7 @@ bool Image_Diff::SaveDiffImage(Image_PixMap& theDiffImage) const
       case Image_Format_BGR32:
       case Image_Format_RGBA:
       case Image_Format_BGRA: {
-        for (NCollection_Vector<int>::Iterator aPixelIter(myDiffPixels); aPixelIter.More();
+        for (NCollection_DynamicArray<int>::Iterator aPixelIter(myDiffPixels); aPixelIter.More();
              aPixelIter.Next())
         {
           memset(
@@ -293,7 +293,7 @@ bool Image_Diff::SaveDiffImage(Image_PixMap& theDiffImage) const
         break;
       }
       default: {
-        for (NCollection_Vector<int>::Iterator aPixelIter(myDiffPixels); aPixelIter.More();
+        for (NCollection_DynamicArray<int>::Iterator aPixelIter(myDiffPixels); aPixelIter.More();
              aPixelIter.Next())
         {
           theDiffImage.SetPixelColor(UnpackX(aPixelIter.Value()),
@@ -322,7 +322,7 @@ bool Image_Diff::SaveDiffImage(Image_PixMap& theDiffImage) const
     {
       case Image_Format_Gray:
       case Image_Format_Alpha: {
-        for (TColStd_MapIteratorOfPackedMapOfInteger aPixelIter(aGroup->Map()); aPixelIter.More();
+        for (TColStd_PackedMapOfInteger::Iterator aPixelIter(aGroup->Map()); aPixelIter.More();
              aPixelIter.Next())
         {
           int aDiffPixel(aPixelIter.Key());
@@ -336,7 +336,7 @@ bool Image_Diff::SaveDiffImage(Image_PixMap& theDiffImage) const
       case Image_Format_BGR32:
       case Image_Format_RGBA:
       case Image_Format_BGRA: {
-        for (TColStd_MapIteratorOfPackedMapOfInteger aPixelIter(aGroup->Map()); aPixelIter.More();
+        for (TColStd_PackedMapOfInteger::Iterator aPixelIter(aGroup->Map()); aPixelIter.More();
              aPixelIter.Next())
         {
           int aDiffPixel(aPixelIter.Key());
@@ -347,7 +347,7 @@ bool Image_Diff::SaveDiffImage(Image_PixMap& theDiffImage) const
         break;
       }
       default: {
-        for (TColStd_MapIteratorOfPackedMapOfInteger aPixelIter(aGroup->Map()); aPixelIter.More();
+        for (TColStd_PackedMapOfInteger::Iterator aPixelIter(aGroup->Map()); aPixelIter.More();
              aPixelIter.Next())
         {
           int aDiffPixel(aPixelIter.Key());
@@ -462,7 +462,7 @@ int Image_Diff::ignoreBorderEffect()
     }
 
     int aDiffPixel = 0;
-    for (TColStd_MapIteratorOfPackedMapOfInteger aPixelIter(aGroup->Map()); aPixelIter.More();
+    for (TColStd_PackedMapOfInteger::Iterator aPixelIter(aGroup->Map()); aPixelIter.More();
          aPixelIter.Next())
     {
       aDiffPixel    = aPixelIter.Key();

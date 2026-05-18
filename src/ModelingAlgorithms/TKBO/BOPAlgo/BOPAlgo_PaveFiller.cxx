@@ -135,16 +135,10 @@ bool BOPAlgo_PaveFiller::IsPrimary() const
 void BOPAlgo_PaveFiller::Clear()
 {
   BOPAlgo_Algo::Clear();
-  if (myIterator)
-  {
-    delete myIterator;
-    myIterator = nullptr;
-  }
-  if (myDS)
-  {
-    delete myDS;
-    myDS = nullptr;
-  }
+  delete myIterator;
+  myIterator = nullptr;
+  delete myDS;
+  myDS = nullptr;
   myIncreasedSS.Clear();
 }
 
@@ -296,7 +290,9 @@ void BOPAlgo_PaveFiller::PerformInternal(const Message_ProgressRange& theRange)
   // Repeat Intersection with increased vertices
   RepeatIntersection(aPS.Next(aSteps.GetStep(PIOperation_RepeatIntersection)));
   if (HasErrors())
+  {
     return;
+  }
   // Force intersection of edges after increase
   // of the tolerance values of their vertices
   ForceInterfEE(aPS.Next(aSteps.GetStep(PIOperation_ForceInterfEE)));
@@ -370,7 +366,9 @@ void BOPAlgo_PaveFiller::RepeatIntersection(const Message_ProgressRange& theRang
   {
     const BOPDS_ShapeInfo& aSI = myDS->ShapeInfo(i);
     if (aSI.ShapeType() != TopAbs_VERTEX)
+    {
       continue;
+    }
     // Check if the tolerance of the original vertex has been increased
     if (myIncreasedSS.Contains(i))
     {
@@ -381,14 +379,20 @@ void BOPAlgo_PaveFiller::RepeatIntersection(const Message_ProgressRange& theRang
     // Check if the vertex created a new vertex with greater tolerance
     int nVSD;
     if (!myDS->HasShapeSD(i, nVSD))
+    {
       continue;
+    }
 
     if (myIncreasedSS.Contains(nVSD))
+    {
       anExtraInterfMap.Add(i);
+    }
   }
 
   if (anExtraInterfMap.IsEmpty())
+  {
     return;
+  }
 
   // Update iterator of pairs of shapes with interfering boxes
   myIterator->IntersectExt(anExtraInterfMap);
@@ -397,17 +401,23 @@ void BOPAlgo_PaveFiller::RepeatIntersection(const Message_ProgressRange& theRang
 
   PerformVV(aPS.Next());
   if (HasErrors())
+  {
     return;
+  }
   UpdatePaveBlocksWithSDVertices();
 
   PerformVE(aPS.Next());
   if (HasErrors())
+  {
     return;
+  }
   UpdatePaveBlocksWithSDVertices();
 
   PerformVF(aPS.Next());
   if (HasErrors())
+  {
     return;
+  }
 
   UpdatePaveBlocksWithSDVertices();
   UpdateInterfsWithSDVertices();

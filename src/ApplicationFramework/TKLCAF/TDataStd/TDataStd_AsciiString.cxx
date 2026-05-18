@@ -48,10 +48,8 @@ const Standard_GUID& TDataStd_AsciiString::ID() const
   return myID;
 }
 
-//=======================================================================
-// function : SetAttr
-// purpose  : Implements Set functionality
-//=======================================================================
+//=================================================================================================
+
 static occ::handle<TDataStd_AsciiString> SetAttr(const TDF_Label&               label,
                                                  const TCollection_AsciiString& theString,
                                                  const Standard_GUID&           theGuid)
@@ -76,10 +74,7 @@ occ::handle<TDataStd_AsciiString> TDataStd_AsciiString::Set(
   return SetAttr(theLabel, theAsciiString, GetID());
 }
 
-//=======================================================================
-// function : Set
-// purpose  : Set user defined attribute
-//=======================================================================
+//=================================================================================================
 
 occ::handle<TDataStd_AsciiString> TDataStd_AsciiString::Set(
   const TDF_Label&               theLabel,
@@ -94,7 +89,9 @@ occ::handle<TDataStd_AsciiString> TDataStd_AsciiString::Set(
 void TDataStd_AsciiString::Set(const TCollection_AsciiString& theAsciiString)
 {
   if (myString == theAsciiString)
+  {
     return;
+  }
   Backup();
   myString = theAsciiString;
 }
@@ -111,7 +108,9 @@ const TCollection_AsciiString& TDataStd_AsciiString::Get() const
 void TDataStd_AsciiString::SetID(const Standard_GUID& theGuid)
 {
   if (myID == theGuid)
+  {
     return;
+  }
 
   Backup();
   myID = theGuid;
@@ -167,7 +166,7 @@ Standard_OStream& TDataStd_AsciiString::Dump(Standard_OStream& theOS) const
   anOS << " Name=|" << myString << "|";
   char sguid[Standard_GUID_SIZE_ALLOC];
   myID.ToCString(sguid);
-  anOS << sguid << "|" << std::endl;
+  anOS << sguid << "|" << '\n';
   return anOS;
 }
 

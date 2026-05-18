@@ -17,7 +17,7 @@
 #include <GeomInt_WLApprox.hxx>
 #include <Geom_BSplineCurve.hxx>
 #include <NCollection_Sequence.hxx>
-#include <NCollection_Vector.hxx>
+#include <NCollection_DynamicArray.hxx>
 #include <PLib.hxx>
 #include <Precision.hxx>
 #include <NCollection_Array1.hxx>
@@ -328,9 +328,9 @@ void ApproxInt_KnotTools::ComputeKnotInds(const NCollection_LocalArray<double>& 
 
 //=================================================================================================
 
-void ApproxInt_KnotTools::FilterKnots(NCollection_Sequence<int>& theInds,
-                                      const int                  theMinNbPnts,
-                                      NCollection_Vector<int>&   theLKnots)
+void ApproxInt_KnotTools::FilterKnots(NCollection_Sequence<int>&     theInds,
+                                      const int                      theMinNbPnts,
+                                      NCollection_DynamicArray<int>& theLKnots)
 {
   // Maximum number of points per knot interval.
   int aMaxNbPnts = aMaxPntCoeff * theMinNbPnts;
@@ -367,7 +367,9 @@ void ApproxInt_KnotTools::FilterKnots(NCollection_Sequence<int>& theInds,
         for (; anIdx <= theInds.Length(); ++anIdx)
         {
           if (theInds(anIdx) - anIndsPrev >= theMinNbPnts)
+          {
             break;
+          }
         }
         anIdx--;
 
@@ -559,18 +561,30 @@ void ApproxInt_KnotTools::BuildKnots(const NCollection_Array1<gp_Pnt>&   thePnts
                                      const bool                          theApproxU1V1,
                                      const bool                          theApproxU2V2,
                                      const int                           theMinNbPnts,
-                                     NCollection_Vector<int>&            theKnots)
+                                     NCollection_DynamicArray<int>&      theKnots)
 {
   NCollection_Sequence<int> aKnots;
   int                       aDim = 0;
 
   // I: Convert input data to the corresponding format.
   if (theApproxXYZ)
+  {
     aDim += 3;
+  }
   if (theApproxU1V1)
+  {
     aDim += 2;
+  }
   if (theApproxU2V2)
+  {
     aDim += 2;
+  }
+
+  if (aDim == 0 || thePars.Length() < 2)
+  {
+    theKnots.Clear();
+    return;
+  }
 
   NCollection_LocalArray<double> aCoords(thePars.Length() * aDim);
   int                            i, j;
@@ -634,9 +648,16 @@ static double MaxParamRatio(const math_Vector& thePars)
   //
   for (i = thePars.Lower() + 1; i < thePars.Upper(); ++i)
   {
-    double aRat = (thePars(i + 1) - thePars(i)) / (thePars(i) - thePars(i - 1));
-    if (aRat < 1.)
+    double aDenom = thePars(i) - thePars(i - 1);
+    if (std::abs(aDenom) < Precision::Computational())
+    {
+      continue;
+    }
+    double aRat = (thePars(i + 1) - thePars(i)) / aDenom;
+    if (aRat > 0. && aRat < 1.)
+    {
       aRat = 1. / aRat;
+    }
 
     aMaxRatio = std::max(aMaxRatio, aRat);
   }
@@ -654,7 +675,9 @@ Approx_ParametrizationType ApproxInt_KnotTools::DefineParType(
   const bool                         theApproxU2V2)
 {
   if (theLpar - theFpar == 1)
+  {
     return Approx_IsoParametric;
+  }
 
   const int nbp3d = theApproxXYZ ? 1 : 0, nbp2d = (theApproxU1V1 ? 1 : 0) + (theApproxU2V2 ? 1 : 0);
 
@@ -685,11 +708,17 @@ Approx_ParametrizationType ApproxInt_KnotTools::DefineParType(
   for (i = theFpar; i <= theLpar; ++i)
   {
     if (nbp3d != 0 && nbp2d != 0)
+    {
       aTestLine.Value(i, aTabPnt3d, aTabPnt2d);
+    }
     else if (nbp2d != 0)
+    {
       aTestLine.Value(i, aTabPnt2d);
+    }
     else if (nbp3d != 0)
+    {
       aTestLine.Value(i, aTabPnt3d);
+    }
     //
     if (nbp3d > 0)
     {
@@ -716,11 +745,17 @@ Approx_ParametrizationType ApproxInt_KnotTools::DefineParType(
   int aDim = 0;
 
   if (theApproxXYZ)
+  {
     aDim += 3;
+  }
   if (theApproxU1V1)
+  {
     aDim += 2;
+  }
   if (theApproxU2V2)
+  {
     aDim += 2;
+  }
 
   int                            aLength = theLpar - theFpar + 1;
   NCollection_LocalArray<double> aCoords(aLength * aDim);
@@ -787,19 +822,25 @@ Approx_ParametrizationType ApproxInt_KnotTools::DefineParType(
   }
 
   if (aMidCurv <= eps)
+  {
     return aParType;
+  }
 
   double aRat = aMaxCurv / aMidCurv;
 
   if (aRat > aCritRat)
   {
     if (aRat > 5. * aCritRat)
+    {
       aParType = Approx_Centripetal;
+    }
     else
     {
       double aParRat = MaxParamRatio(aPars);
       if (aParRat > aCritParRat)
+      {
         aParType = Approx_Centripetal;
+      }
     }
   }
 

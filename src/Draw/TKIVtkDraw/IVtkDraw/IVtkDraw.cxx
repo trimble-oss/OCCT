@@ -363,7 +363,7 @@ void IVtkDraw::ViewerInit(const IVtkWinParams& theParams)
 
     // Init picker
     GetPicker() = vtkSmartPointer<IVtkTools_ShapePicker>::New();
-    GetPicker()->SetTolerance(0.025f);
+    GetPicker()->SetPixelTolerance(2);
     GetPicker()->SetRenderer(GetRenderer());
 
     GetInteractor()->SetShapePicker(GetPicker());
@@ -716,10 +716,8 @@ static int VtkErase(Draw_Interpretor&, int theArgNum, const char** theArgs)
   return 0;
 }
 
-//================================================================
-// Function : VtkRemove
-// Purpose  : Remove the actor from memory.
-//================================================================
+//=================================================================================================
+
 static int VtkRemove(Draw_Interpretor&, int theArgNum, const char** theArgs)
 {
   if (!GetInteractor() || !GetInteractor()->IsEnabled())
@@ -1200,11 +1198,8 @@ static int VtkSetTransparency(Draw_Interpretor&, int theArgNb, const char** theA
   return 0;
 }
 
-//================================================================
-// Function  : VtkMoveTo
-// Purpose   :
-// Draw args : ivtkmoveto x y
-//================================================================
+//=================================================================================================
+
 static int VtkMoveTo(Draw_Interpretor& theDI, int theArgNum, const char** theArgs)
 {
   if (!GetInteractor() || !GetInteractor()->IsEnabled())

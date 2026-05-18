@@ -79,32 +79,50 @@ const char* StepElement_ElementAspectMember::Name() const
 
 //=================================================================================================
 
-static int CompareNames(const char* name, int& numen)
+static int CompareNames(const char* const name, int& numen)
 {
   int thecase = 0;
   if (!name || name[0] == '\0')
+  {
     thecase = 0;
+  }
   else if (!strcmp(name, aElementVolume))
   {
     thecase = 1;
     numen   = 1;
   }
   else if (!strcmp(name, aVolume3dFace))
+  {
     thecase = 2;
+  }
   else if (!strcmp(name, aVolume2dFace))
+  {
     thecase = 3;
+  }
   else if (!strcmp(name, aVolume3dEdge))
+  {
     thecase = 4;
+  }
   else if (!strcmp(name, aVolume2dEdge))
+  {
     thecase = 5;
+  }
   else if (!strcmp(name, aSurface3dFace))
+  {
     thecase = 6;
+  }
   else if (!strcmp(name, aSurface2dFace))
+  {
     thecase = 7;
+  }
   else if (!strcmp(name, aSurface3dEdge))
+  {
     thecase = 8;
+  }
   else if (!strcmp(name, aSurface2dEdge))
+  {
     thecase = 9;
+  }
   else if (!strcmp(name, aCurveEdge))
   {
     thecase = 10;
@@ -115,18 +133,20 @@ static int CompareNames(const char* name, int& numen)
 
 //=================================================================================================
 
-bool StepElement_ElementAspectMember::SetName(const char* name)
+bool StepElement_ElementAspectMember::SetName(const char* const name)
 {
   int numit = 0;
   mycase    = CompareNames(name, numit);
   if (numit)
+  {
     SetInteger(numit);
+  }
   return (mycase > 0);
 }
 
 //=================================================================================================
 
-bool StepElement_ElementAspectMember::Matches(const char* name) const
+bool StepElement_ElementAspectMember::Matches(const char* const name) const
 {
   int numit   = 0;
   int thecase = CompareNames(name, numit);

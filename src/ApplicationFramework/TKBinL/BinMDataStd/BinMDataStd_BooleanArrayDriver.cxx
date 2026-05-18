@@ -48,9 +48,13 @@ bool BinMDataStd_BooleanArrayDriver::Paste(const BinObjMgt_Persistent&       the
 {
   int aFirstInd, aLastInd;
   if (!(theSource >> aFirstInd >> aLastInd))
+  {
     return false;
+  }
   if (aLastInd < aFirstInd)
+  {
     return false;
+  }
 
   NCollection_Array1<uint8_t> aTargetArray(0, (aLastInd - aFirstInd + 1) >> 3);
   theSource.GetByteArray(&aTargetArray(0), aTargetArray.Length());
@@ -84,7 +88,9 @@ void BinMDataStd_BooleanArrayDriver::Paste(
   const int                          aFirstInd = anAtt->Lower();
   const int                          aLastInd  = anAtt->Upper();
   if (aLastInd < aFirstInd)
+  {
     return;
+  }
   theTarget << aFirstInd << aLastInd;
 
   const occ::handle<NCollection_HArray1<uint8_t>>& bytes = anAtt->InternalArray();
@@ -94,10 +100,12 @@ void BinMDataStd_BooleanArrayDriver::Paste(
   {
     aSourceArray.SetValue(i, bytes->Value(i));
   }
-  uint8_t* aPtr = (uint8_t*)&aSourceArray(lower);
+  uint8_t* aPtr = &aSourceArray(lower);
   theTarget.PutByteArray(aPtr, upper - lower + 1);
 
   // process user defined guid
   if (anAtt->ID() != TDataStd_BooleanArray::GetID())
+  {
     theTarget << anAtt->ID();
+  }
 }

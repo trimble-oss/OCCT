@@ -43,7 +43,7 @@ void IntAna2d_AnaIntersection::Perform(const gp_Circ2d& Circle, const IntAna2d_C
   Conic.Coefficients(A, B, C, D, E, F);
   Conic.NewCoefficients(A, B, C, D, E, F, Axe_rep);
 
-  // Parametre a avec x=Radius std::cos(a)  et y=Radius std::sin(a)
+  // Parameter a with x=Radius*cos(a) and y=Radius*sin(a)
 
   pss  = B * radius_P2;
   pcc  = A * radius_P2 - pss; // COS ^2
@@ -56,7 +56,7 @@ void IntAna2d_AnaIntersection::Perform(const gp_Circ2d& Circle, const IntAna2d_C
 
   if (!Sol.IsDone())
   {
-    std::cout << "\n\nmath_TrigonometricFunctionRoots -> NotDone\n\n" << std::endl;
+    std::cout << "\n\nmath_TrigonometricFunctionRoots -> NotDone\n\n" << '\n';
     done = false;
     return;
   }
@@ -76,7 +76,9 @@ void IntAna2d_AnaIntersection::Perform(const gp_Circ2d& Circle, const IntAna2d_C
       ty = radius * std::sin(S);
       Coord_Ancien_Repere(tx, ty, Axe_rep);
       if (!CIsDirect)
+      {
         S = M_PI + M_PI - S;
+      }
       lpnt[i - 1].SetValue(tx, ty, S);
     }
     Traitement_Points_Confondus(nbp, lpnt);

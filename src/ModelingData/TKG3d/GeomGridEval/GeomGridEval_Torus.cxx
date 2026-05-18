@@ -17,7 +17,7 @@
 
 #include <cmath>
 
-//==================================================================================================
+//=================================================================================================
 
 GeomGridEval_Torus::Data GeomGridEval_Torus::extractData() const
 {
@@ -43,7 +43,7 @@ GeomGridEval_Torus::Data GeomGridEval_Torus::extractData() const
           aTorus.MinorRadius()};
 }
 
-//==================================================================================================
+//=================================================================================================
 
 GeomGridEval_Torus::UContext GeomGridEval_Torus::computeUContext(const Data& theData, double theU)
 {
@@ -60,7 +60,7 @@ GeomGridEval_Torus::UContext GeomGridEval_Torus::computeUContext(const Data& the
           -sinU * theData.XZ + cosU * theData.YZ}; // dDirUZ
 }
 
-//==================================================================================================
+//=================================================================================================
 
 gp_Pnt GeomGridEval_Torus::computeD0(const Data& theData, const UContext& theUCtx, double theV)
 {
@@ -76,7 +76,7 @@ gp_Pnt GeomGridEval_Torus::computeD0(const Data& theData, const UContext& theUCt
                 theData.CZ + K * theUCtx.dirUZ + theData.MinorRadius * sinV * theData.ZZ);
 }
 
-//==================================================================================================
+//=================================================================================================
 
 GeomGridEval::SurfD1 GeomGridEval_Torus::computeD1(const Data&     theData,
                                                    const UContext& theUCtx,
@@ -107,7 +107,7 @@ GeomGridEval::SurfD1 GeomGridEval_Torus::computeD1(const Data&     theData,
           gp_Vec(dV1, dV2, dV3)};
 }
 
-//==================================================================================================
+//=================================================================================================
 
 GeomGridEval::SurfD2 GeomGridEval_Torus::computeD2(const Data&     theData,
                                                    const UContext& theUCtx,
@@ -159,7 +159,7 @@ GeomGridEval::SurfD2 GeomGridEval_Torus::computeD2(const Data&     theData,
           gp_Vec(d2UV1, d2UV2, d2UV3)};
 }
 
-//==================================================================================================
+//=================================================================================================
 
 GeomGridEval::SurfD3 GeomGridEval_Torus::computeD3(const Data&     theData,
                                                    const UContext& theUCtx,
@@ -251,7 +251,7 @@ GeomGridEval::SurfD3 GeomGridEval_Torus::computeD3(const Data&     theData,
           gp_Vec(d3UVV1, d3UVV2, d3UVV3)};
 }
 
-//==================================================================================================
+//=================================================================================================
 
 gp_Vec GeomGridEval_Torus::computeDN(const Data&     theData,
                                      const UContext& theUCtx,
@@ -383,7 +383,7 @@ gp_Vec GeomGridEval_Torus::computeDN(const Data&     theData,
   return gp_Vec(resX, resY, resZ);
 }
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array2<gp_Pnt> GeomGridEval_Torus::EvaluateGrid(
   const NCollection_Array1<double>& theUParams,
@@ -394,8 +394,8 @@ NCollection_Array2<gp_Pnt> GeomGridEval_Torus::EvaluateGrid(
     return NCollection_Array2<gp_Pnt>();
   }
 
-  const int aNbU = theUParams.Size();
-  const int aNbV = theVParams.Size();
+  const int aNbU = theUParams.Length();
+  const int aNbV = theVParams.Length();
 
   NCollection_Array2<gp_Pnt> aResult(1, aNbU, 1, aNbV);
   const Data                 aData = extractData();
@@ -414,7 +414,7 @@ NCollection_Array2<gp_Pnt> GeomGridEval_Torus::EvaluateGrid(
   return aResult;
 }
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array2<GeomGridEval::SurfD1> GeomGridEval_Torus::EvaluateGridD1(
   const NCollection_Array1<double>& theUParams,
@@ -425,8 +425,8 @@ NCollection_Array2<GeomGridEval::SurfD1> GeomGridEval_Torus::EvaluateGridD1(
     return NCollection_Array2<GeomGridEval::SurfD1>();
   }
 
-  const int aNbU = theUParams.Size();
-  const int aNbV = theVParams.Size();
+  const int aNbU = theUParams.Length();
+  const int aNbV = theVParams.Length();
 
   NCollection_Array2<GeomGridEval::SurfD1> aResult(1, aNbU, 1, aNbV);
   const Data                               aData = extractData();
@@ -445,7 +445,7 @@ NCollection_Array2<GeomGridEval::SurfD1> GeomGridEval_Torus::EvaluateGridD1(
   return aResult;
 }
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array2<GeomGridEval::SurfD2> GeomGridEval_Torus::EvaluateGridD2(
   const NCollection_Array1<double>& theUParams,
@@ -456,8 +456,8 @@ NCollection_Array2<GeomGridEval::SurfD2> GeomGridEval_Torus::EvaluateGridD2(
     return NCollection_Array2<GeomGridEval::SurfD2>();
   }
 
-  const int aNbU = theUParams.Size();
-  const int aNbV = theVParams.Size();
+  const int aNbU = theUParams.Length();
+  const int aNbV = theVParams.Length();
 
   NCollection_Array2<GeomGridEval::SurfD2> aResult(1, aNbU, 1, aNbV);
   const Data                               aData = extractData();
@@ -476,7 +476,7 @@ NCollection_Array2<GeomGridEval::SurfD2> GeomGridEval_Torus::EvaluateGridD2(
   return aResult;
 }
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array2<GeomGridEval::SurfD3> GeomGridEval_Torus::EvaluateGridD3(
   const NCollection_Array1<double>& theUParams,
@@ -487,8 +487,8 @@ NCollection_Array2<GeomGridEval::SurfD3> GeomGridEval_Torus::EvaluateGridD3(
     return NCollection_Array2<GeomGridEval::SurfD3>();
   }
 
-  const int aNbU = theUParams.Size();
-  const int aNbV = theVParams.Size();
+  const int aNbU = theUParams.Length();
+  const int aNbV = theVParams.Length();
 
   NCollection_Array2<GeomGridEval::SurfD3> aResult(1, aNbU, 1, aNbV);
   const Data                               aData = extractData();
@@ -507,7 +507,7 @@ NCollection_Array2<GeomGridEval::SurfD3> GeomGridEval_Torus::EvaluateGridD3(
   return aResult;
 }
 
-//==================================================================================================
+//=================================================================================================
 
 NCollection_Array2<gp_Vec> GeomGridEval_Torus::EvaluateGridDN(
   const NCollection_Array1<double>& theUParams,
@@ -521,8 +521,8 @@ NCollection_Array2<gp_Vec> GeomGridEval_Torus::EvaluateGridDN(
     return NCollection_Array2<gp_Vec>();
   }
 
-  const int aNbU = theUParams.Size();
-  const int aNbV = theVParams.Size();
+  const int aNbU = theUParams.Length();
+  const int aNbV = theVParams.Length();
 
   NCollection_Array2<gp_Vec> aResult(1, aNbU, 1, aNbV);
   const Data                 aData = extractData();
@@ -537,123 +537,6 @@ NCollection_Array2<gp_Vec> GeomGridEval_Torus::EvaluateGridDN(
       const double v = theVParams.Value(theVParams.Lower() + iV - 1);
       aResult.SetValue(iU, iV, computeDN(aData, aUCtx, v, theNU, theNV));
     }
-  }
-  return aResult;
-}
-
-//==================================================================================================
-
-NCollection_Array1<gp_Pnt> GeomGridEval_Torus::EvaluatePoints(
-  const NCollection_Array1<gp_Pnt2d>& theUVPairs) const
-{
-  if (myGeom.IsNull() || theUVPairs.IsEmpty())
-  {
-    return NCollection_Array1<gp_Pnt>();
-  }
-
-  const int                  aNbPts = theUVPairs.Size();
-  NCollection_Array1<gp_Pnt> aResult(1, aNbPts);
-  const Data                 aData = extractData();
-
-  for (int iPt = 1; iPt <= aNbPts; ++iPt)
-  {
-    const gp_Pnt2d& aUV   = theUVPairs.Value(theUVPairs.Lower() + iPt - 1);
-    const UContext  aUCtx = computeUContext(aData, aUV.X());
-    aResult.SetValue(iPt, computeD0(aData, aUCtx, aUV.Y()));
-  }
-  return aResult;
-}
-
-//==================================================================================================
-
-NCollection_Array1<GeomGridEval::SurfD1> GeomGridEval_Torus::EvaluatePointsD1(
-  const NCollection_Array1<gp_Pnt2d>& theUVPairs) const
-{
-  if (myGeom.IsNull() || theUVPairs.IsEmpty())
-  {
-    return NCollection_Array1<GeomGridEval::SurfD1>();
-  }
-
-  const int                                aNbPts = theUVPairs.Size();
-  NCollection_Array1<GeomGridEval::SurfD1> aResult(1, aNbPts);
-  const Data                               aData = extractData();
-
-  for (int iPt = 1; iPt <= aNbPts; ++iPt)
-  {
-    const gp_Pnt2d& aUV   = theUVPairs.Value(theUVPairs.Lower() + iPt - 1);
-    const UContext  aUCtx = computeUContext(aData, aUV.X());
-    aResult.SetValue(iPt, computeD1(aData, aUCtx, aUV.Y()));
-  }
-  return aResult;
-}
-
-//==================================================================================================
-
-NCollection_Array1<GeomGridEval::SurfD2> GeomGridEval_Torus::EvaluatePointsD2(
-  const NCollection_Array1<gp_Pnt2d>& theUVPairs) const
-{
-  if (myGeom.IsNull() || theUVPairs.IsEmpty())
-  {
-    return NCollection_Array1<GeomGridEval::SurfD2>();
-  }
-
-  const int                                aNbPts = theUVPairs.Size();
-  NCollection_Array1<GeomGridEval::SurfD2> aResult(1, aNbPts);
-  const Data                               aData = extractData();
-
-  for (int iPt = 1; iPt <= aNbPts; ++iPt)
-  {
-    const gp_Pnt2d& aUV   = theUVPairs.Value(theUVPairs.Lower() + iPt - 1);
-    const UContext  aUCtx = computeUContext(aData, aUV.X());
-    aResult.SetValue(iPt, computeD2(aData, aUCtx, aUV.Y()));
-  }
-  return aResult;
-}
-
-//==================================================================================================
-
-NCollection_Array1<GeomGridEval::SurfD3> GeomGridEval_Torus::EvaluatePointsD3(
-  const NCollection_Array1<gp_Pnt2d>& theUVPairs) const
-{
-  if (myGeom.IsNull() || theUVPairs.IsEmpty())
-  {
-    return NCollection_Array1<GeomGridEval::SurfD3>();
-  }
-
-  const int                                aNbPts = theUVPairs.Size();
-  NCollection_Array1<GeomGridEval::SurfD3> aResult(1, aNbPts);
-  const Data                               aData = extractData();
-
-  for (int iPt = 1; iPt <= aNbPts; ++iPt)
-  {
-    const gp_Pnt2d& aUV   = theUVPairs.Value(theUVPairs.Lower() + iPt - 1);
-    const UContext  aUCtx = computeUContext(aData, aUV.X());
-    aResult.SetValue(iPt, computeD3(aData, aUCtx, aUV.Y()));
-  }
-  return aResult;
-}
-
-//==================================================================================================
-
-NCollection_Array1<gp_Vec> GeomGridEval_Torus::EvaluatePointsDN(
-  const NCollection_Array1<gp_Pnt2d>& theUVPairs,
-  int                                 theNU,
-  int                                 theNV) const
-{
-  if (myGeom.IsNull() || theUVPairs.IsEmpty() || theNU < 0 || theNV < 0 || (theNU + theNV) < 1)
-  {
-    return NCollection_Array1<gp_Vec>();
-  }
-
-  const int                  aNbPts = theUVPairs.Size();
-  NCollection_Array1<gp_Vec> aResult(1, aNbPts);
-  const Data                 aData = extractData();
-
-  for (int iPt = 1; iPt <= aNbPts; ++iPt)
-  {
-    const gp_Pnt2d& aUV   = theUVPairs.Value(theUVPairs.Lower() + iPt - 1);
-    const UContext  aUCtx = computeUContext(aData, aUV.X());
-    aResult.SetValue(iPt, computeDN(aData, aUCtx, aUV.Y(), theNU, theNV));
   }
   return aResult;
 }

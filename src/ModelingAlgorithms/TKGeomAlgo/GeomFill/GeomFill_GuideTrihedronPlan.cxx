@@ -55,9 +55,13 @@ static void InGoodPeriod(const double Prec, const double Period, double& Current
   Current -= nb * Period;
   Diff = Current - Prec;
   if (Diff > Period / 2)
+  {
     Current -= Period;
+  }
   else if (Diff < -Period / 2)
+  {
     Current += Period;
+  }
 }
 
 //=================================================================================================
@@ -186,32 +190,27 @@ void GeomFill_GuideTrihedronPlan::Init()
   } // for_ii
 }
 
-//=======================================================================
-// function : SetCurve
-// purpose  : calculation of trihedron
-//=======================================================================
+//=================================================================================================
+
 bool GeomFill_GuideTrihedronPlan::SetCurve(const occ::handle<Adaptor3d_Curve>& C)
 {
   myCurve = C;
   if (!myCurve.IsNull())
+  {
     Init();
+  }
   return true;
 }
 
-//=======================================================================
-// function : Guide
-// purpose  : calculation of trihedron
-//=======================================================================
+//=================================================================================================
 
 occ::handle<Adaptor3d_Curve> GeomFill_GuideTrihedronPlan::Guide() const
 {
   return myGuide;
 }
 
-//=======================================================================
-// function : D0
-// purpose  : calculation of trihedron
-//=======================================================================
+//=================================================================================================
+
 bool GeomFill_GuideTrihedronPlan::D0(const double Param,
                                      gp_Vec&      Tangent,
                                      gp_Vec&      Normal,
@@ -498,7 +497,9 @@ bool GeomFill_GuideTrihedronPlan::IsConstant() const
     double Angle;
     Angle = myCurve->Line().Angle(myGuide->Line());
     if ((Angle < 1.e-12) || ((2 * M_PI - Angle) < 1.e-12))
+    {
       return true;
+    }
   }
 
   return false;

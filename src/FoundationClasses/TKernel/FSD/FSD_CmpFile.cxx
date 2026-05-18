@@ -18,7 +18,7 @@
 #include <Storage_StreamTypeMismatchError.hxx>
 #include <Storage_StreamWriteError.hxx>
 
-static const char* MAGICNUMBER = "CMPFILE";
+static const char* const MAGICNUMBER = "CMPFILE";
 
 IMPLEMENT_STANDARD_RTTIEXT(FSD_CmpFile, FSD_File)
 
@@ -120,10 +120,7 @@ Storage_Error FSD_CmpFile::Open(const TCollection_AsciiString& aName, const Stor
   return result;
 }
 
-//=======================================================================
-// function : MagicNumber
-// purpose  : ------------------ PROTECTED
-//=======================================================================
+//=================================================================================================
 
 const char* FSD_CmpFile::MagicNumber()
 {
@@ -224,7 +221,9 @@ Storage_Error FSD_CmpFile::BeginWriteInfoSection()
   myStream << FSD_CmpFile::MagicNumber() << '\n';
   myStream << "BEGIN_INFO_SECTION\n";
   if (myStream.bad())
+  {
     throw Storage_StreamWriteError();
+  }
 
   return Storage_VSOk;
 }
@@ -257,7 +256,9 @@ void FSD_CmpFile::WritePersistentObjectHeader(const int aRef, const int aType)
 {
   myStream << "\n#" << aRef << "%" << aType << " ";
   if (myStream.bad())
+  {
     throw Storage_StreamWriteError();
+  }
 }
 
 //=================================================================================================
@@ -265,7 +266,9 @@ void FSD_CmpFile::WritePersistentObjectHeader(const int aRef, const int aType)
 void FSD_CmpFile::BeginWritePersistentObjectData()
 {
   if (myStream.bad())
+  {
     throw Storage_StreamWriteError();
+  }
 }
 
 //=================================================================================================
@@ -273,7 +276,9 @@ void FSD_CmpFile::BeginWritePersistentObjectData()
 void FSD_CmpFile::BeginWriteObjectData()
 {
   if (myStream.bad())
+  {
     throw Storage_StreamWriteError();
+  }
 }
 
 //=================================================================================================
@@ -281,7 +286,9 @@ void FSD_CmpFile::BeginWriteObjectData()
 void FSD_CmpFile::EndWriteObjectData()
 {
   if (myStream.bad())
+  {
     throw Storage_StreamWriteError();
+  }
 }
 
 //=================================================================================================
@@ -289,7 +296,9 @@ void FSD_CmpFile::EndWriteObjectData()
 void FSD_CmpFile::EndWritePersistentObjectData()
 {
   if (myStream.bad())
+  {
     throw Storage_StreamWriteError();
+  }
 }
 
 //=================================================================================================
@@ -310,7 +319,9 @@ void FSD_CmpFile::ReadPersistentObjectHeader(int& aRef, int& aType)
   }
 
   if (!(myStream >> aRef))
+  {
     throw Storage_StreamTypeMismatchError();
+  }
 
   myStream.get(c);
 
@@ -324,7 +335,9 @@ void FSD_CmpFile::ReadPersistentObjectHeader(int& aRef, int& aType)
   }
 
   if (!(myStream >> aType))
+  {
     throw Storage_StreamTypeMismatchError();
+  }
   //  std::cout << "REF:" << aRef << " TYPE:"<< aType << std::endl;
 }
 

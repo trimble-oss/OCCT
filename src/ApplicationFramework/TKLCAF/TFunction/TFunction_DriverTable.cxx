@@ -31,7 +31,9 @@ static occ::handle<TFunction_DriverTable> DT;
 occ::handle<TFunction_DriverTable> TFunction_DriverTable::Get()
 {
   if (DT.IsNull())
+  {
     DT = new TFunction_DriverTable;
+  }
   return DT;
 }
 
@@ -39,17 +41,16 @@ occ::handle<TFunction_DriverTable> TFunction_DriverTable::Get()
 
 TFunction_DriverTable::TFunction_DriverTable() = default;
 
-//=======================================================================
-// function : AddDriver
-// purpose  : Adds a driver to the DriverTable
-//=======================================================================
+//=================================================================================================
 
 bool TFunction_DriverTable::AddDriver(const Standard_GUID&                 guid,
                                       const occ::handle<TFunction_Driver>& driver,
                                       const int                            thread)
 {
   if (thread == 0)
+  {
     return myDrivers.Bind(guid, driver);
+  }
   else if (thread > 0)
   {
     if (myThreadDrivers.IsNull())
@@ -91,16 +92,17 @@ bool TFunction_DriverTable::AddDriver(const Standard_GUID&                 guid,
 bool TFunction_DriverTable::HasDriver(const Standard_GUID& guid, const int thread) const
 {
   if (thread == 0)
+  {
     return myDrivers.IsBound(guid);
+  }
   else if (thread > 0 && !myThreadDrivers.IsNull() && myThreadDrivers->Upper() >= thread)
+  {
     return myThreadDrivers->Value(thread).IsBound(guid);
+  }
   return false;
 }
 
-//=======================================================================
-// function : FindDriver
-// purpose  : Returns the driver if find
-//=======================================================================
+//=================================================================================================
 
 bool TFunction_DriverTable::FindDriver(const Standard_GUID&           guid,
                                        occ::handle<TFunction_Driver>& driver,
@@ -141,17 +143,18 @@ Standard_OStream& TFunction_DriverTable::Dump(Standard_OStream& anOS) const
   return anOS;
 }
 
-//=======================================================================
-// function : RemoveDriver
-// purpose  : Removes a driver from the DriverTable
-//=======================================================================
+//=================================================================================================
 
 bool TFunction_DriverTable::RemoveDriver(const Standard_GUID& guid, const int thread)
 {
   if (thread == 0)
+  {
     return myDrivers.UnBind(guid);
+  }
   else if (thread > 0 && !myThreadDrivers.IsNull() && myThreadDrivers->Upper() >= thread)
+  {
     myThreadDrivers->ChangeValue(thread).UnBind(guid);
+  }
   return false;
 }
 
@@ -161,5 +164,7 @@ void TFunction_DriverTable::Clear()
 {
   myDrivers.Clear();
   if (!myThreadDrivers.IsNull())
+  {
     myThreadDrivers.Nullify();
+  }
 }

@@ -43,13 +43,17 @@ occ::handle<Geom_Curve> ShapeCustom_Curve::ConvertToPeriodic(const bool   substi
   occ::handle<Geom_Curve>        newCurve;
   occ::handle<Geom_BSplineCurve> BSpl = occ::down_cast<Geom_BSplineCurve>(myCurve);
   if (BSpl.IsNull())
+  {
     return newCurve;
+  }
 
   // PTV 13.02.02: check if curve closed with tolerance
   bool closed = ShapeAnalysis_Curve::IsClosed(myCurve, preci);
 
   if (!closed)
+  {
     return newCurve;
+  }
 
   bool converted = false; //: p6
 
@@ -60,17 +64,11 @@ occ::handle<Geom_Curve> ShapeCustom_Curve::ConvertToPeriodic(const bool   substi
     if (BSpl->Multiplicity(1) == BSpl->Degree() + 1
         && BSpl->Multiplicity(BSpl->NbKnots()) == BSpl->Degree() + 1)
     {
-      int                        nbPoles = BSpl->NbPoles();
-      NCollection_Array1<gp_Pnt> oldPoles(1, nbPoles);
-      NCollection_Array1<double> oldWeights(1, nbPoles);
-      int                        nbKnots = BSpl->NbKnots();
-      NCollection_Array1<double> oldKnots(1, nbKnots);
-      NCollection_Array1<int>    oldMults(1, nbKnots);
-
-      BSpl->Poles(oldPoles);
-      BSpl->Weights(oldWeights);
-      BSpl->Knots(oldKnots);
-      BSpl->Multiplicities(oldMults);
+      const NCollection_Array1<gp_Pnt>& oldPoles   = BSpl->Poles();
+      const NCollection_Array1<double>& oldWeights = BSpl->WeightsArray();
+      int                               nbKnots    = BSpl->NbKnots();
+      const NCollection_Array1<double>& oldKnots   = BSpl->Knots();
+      const NCollection_Array1<int>&    oldMults   = BSpl->Multiplicities();
 
       NCollection_Array1<double> newKnots(1, nbKnots + 2);
       NCollection_Array1<int>    newMults(1, nbKnots + 2);
@@ -96,7 +94,9 @@ occ::handle<Geom_Curve> ShapeCustom_Curve::ConvertToPeriodic(const bool   substi
     }
     else if (BSpl->Multiplicity(1) > BSpl->Degree()
              || BSpl->Multiplicity(BSpl->NbKnots()) > BSpl->Degree() + 1)
+    {
       set = false;
+    }
     if (set)
     {
       BSpl->SetPeriodic(); // make periodic
@@ -108,9 +108,13 @@ occ::handle<Geom_Curve> ShapeCustom_Curve::ConvertToPeriodic(const bool   substi
             << std::endl;
 #endif
   if (!converted)
+  {
     return newCurve;
+  }
   newCurve = BSpl;
   if (substitute)
+  {
     myCurve = newCurve;
+  }
   return newCurve;
 }

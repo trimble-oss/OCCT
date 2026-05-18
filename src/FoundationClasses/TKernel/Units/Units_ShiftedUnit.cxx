@@ -27,8 +27,8 @@ IMPLEMENT_STANDARD_RTTIEXT(Units_ShiftedUnit, Units_Unit)
 
 //=================================================================================================
 
-Units_ShiftedUnit::Units_ShiftedUnit(const char*                        aname,
-                                     const char*                        asymbol,
+Units_ShiftedUnit::Units_ShiftedUnit(const char* const                  aname,
+                                     const char* const                  asymbol,
                                      const double                       avalue,
                                      const double                       amove,
                                      const occ::handle<Units_Quantity>& aquantity)
@@ -39,7 +39,7 @@ Units_ShiftedUnit::Units_ShiftedUnit(const char*                        aname,
 
 //=================================================================================================
 
-Units_ShiftedUnit::Units_ShiftedUnit(const char* aname, const char* asymbol)
+Units_ShiftedUnit::Units_ShiftedUnit(const char* const aname, const char* const asymbol)
     : Units_Unit(aname, asymbol),
       themove(0.0)
 {
@@ -47,7 +47,7 @@ Units_ShiftedUnit::Units_ShiftedUnit(const char* aname, const char* asymbol)
 
 //=================================================================================================
 
-Units_ShiftedUnit::Units_ShiftedUnit(const char* aname)
+Units_ShiftedUnit::Units_ShiftedUnit(const char* const aname)
     : Units_Unit(aname),
       themove(0.0)
 {
@@ -94,9 +94,11 @@ void Units_ShiftedUnit::Dump(const int, const int) const
   {
     string = thesymbolssequence->Value(index)->String();
     if (index != 1)
+    {
       std::cout << " or ";
+    }
     std::cout << "\"" << string.ToCString() << "\"";
   }
   std::cout << "		Name:  " << Name().ToCString() << "		(= *" << thevalue << " SI + "
-            << themove << ")" << std::endl;
+            << themove << ")" << '\n';
 }

@@ -67,8 +67,11 @@ void BRepCheck_Vertex::InContext(const TopoDS_Shape& S)
 {
   occ::handle<NCollection_Shared<NCollection_List<BRepCheck_Status>>> aHList;
   {
-    std::unique_lock<std::mutex> aLock =
-      myMutex ? std::unique_lock<std::mutex>(*myMutex) : std::unique_lock<std::mutex>();
+    std::unique_lock<std::mutex> aLock(myMutex, std::defer_lock);
+    if (myIsParallel)
+    {
+      aLock.lock();
+    }
     if (myMap.IsBound(S))
     {
       return;
@@ -356,7 +359,9 @@ double BRepCheck_Vertex::Tolerance()
     if (pr->IsPointOnCurve())
     {
       if (!pr->Curve().IsNull())
+      {
         Controlp = pr->Curve()->Value(pr->Parameter());
+      }
     }
     else if (pr->IsPointOnCurveOnSurface())
     {

@@ -19,6 +19,8 @@
 #include <Geom_BSplineCurve.hxx>
 #include <Geom_Circle.hxx>
 #include <Geom_Curve.hxx>
+#include <GeomEval_RepSurfaceDesc.hxx>
+#include <GeomEval_RepUtils.pxx>
 #include <Geom_Geometry.hxx>
 #include "Geom_RevolutionUtils.pxx"
 #include <Geom_SurfaceOfRevolution.hxx>
@@ -36,6 +38,7 @@
 #include <gp_XYZ.hxx>
 #include <Precision.hxx>
 #include <Standard_NotImplemented.hxx>
+#include <Standard_ProgramError.hxx>
 #include <Standard_RangeError.hxx>
 #include <Standard_Type.hxx>
 
@@ -62,10 +65,20 @@ typedef gp_XYZ                   XYZ;
 
 //=================================================================================================
 
+void Geom_SurfaceOfRevolution::SetEvalRepresentation(
+  const occ::handle<GeomEval_RepSurfaceDesc::Base>& theDesc)
+{
+  GeomEval_RepUtils::ValidateSurfaceDesc(theDesc, this);
+  myEvalRep = theDesc;
+}
+
+//=================================================================================================
+
 occ::handle<Geom_Geometry> Geom_SurfaceOfRevolution::Copy() const
 {
-
-  return new Geom_SurfaceOfRevolution(basisCurve, Axis());
+  occ::handle<Geom_SurfaceOfRevolution> aCopy = new Geom_SurfaceOfRevolution(basisCurve, Axis());
+  aCopy->myEvalRep                            = GeomEval_RepUtils::CloneSurfaceDesc(myEvalRep);
+  return aCopy;
 }
 
 //=================================================================================================
@@ -81,6 +94,7 @@ Geom_SurfaceOfRevolution::Geom_SurfaceOfRevolution(const occ::handle<Geom_Curve>
 
 void Geom_SurfaceOfRevolution::UReverse()
 {
+  ClearEvalRepresentation();
   direction.Reverse();
 }
 
@@ -96,7 +110,7 @@ double Geom_SurfaceOfRevolution::UReversedParameter(const double U) const
 
 void Geom_SurfaceOfRevolution::VReverse()
 {
-
+  ClearEvalRepresentation();
   basisCurve->Reverse();
 }
 
@@ -176,6 +190,7 @@ bool Geom_SurfaceOfRevolution::IsVPeriodic() const
 
 void Geom_SurfaceOfRevolution::SetAxis(const Ax1& A1)
 {
+  ClearEvalRepresentation();
   direction = A1.Direction();
   loc       = A1.Location();
 }
@@ -184,6 +199,7 @@ void Geom_SurfaceOfRevolution::SetAxis(const Ax1& A1)
 
 void Geom_SurfaceOfRevolution::SetDirection(const Dir& V)
 {
+  ClearEvalRepresentation();
   direction = V;
 }
 
@@ -191,6 +207,7 @@ void Geom_SurfaceOfRevolution::SetDirection(const Dir& V)
 
 void Geom_SurfaceOfRevolution::SetBasisCurve(const occ::handle<Geom_Curve>& C)
 {
+  ClearEvalRepresentation();
   basisCurve = occ::down_cast<Geom_Curve>(C->Copy());
   smooth     = C->Continuity();
 }
@@ -199,6 +216,7 @@ void Geom_SurfaceOfRevolution::SetBasisCurve(const occ::handle<Geom_Curve>& C)
 
 void Geom_SurfaceOfRevolution::SetLocation(const Pnt& P)
 {
+  ClearEvalRepresentation();
   loc = P;
 }
 
@@ -215,69 +233,130 @@ void Geom_SurfaceOfRevolution::Bounds(double& U1, double& U2, double& V1, double
 
 //=================================================================================================
 
-void Geom_SurfaceOfRevolution::D0(const double U, const double V, Pnt& P) const
+gp_Pnt Geom_SurfaceOfRevolution::EvalD0(const double U, const double V) const
 {
-  Geom_RevolutionUtils::D0(U, V, *basisCurve, gp_Ax1(loc, direction), P);
+  gp_Pnt aEvalRepResult;
+  if (GeomEval_RepUtils::TryEvalSurfaceD0(myEvalRep, U, V, aEvalRepResult))
+  {
+    return aEvalRepResult;
+  }
+
+  const gp_Pnt aBasisD0 = basisCurve->EvalD0(V);
+  gp_Pnt       aP;
+  Geom_RevolutionUtils::CalculateD0(aBasisD0, U, gp_Ax1(loc, direction), aP);
+  return aP;
 }
 
 //=================================================================================================
 
-void Geom_SurfaceOfRevolution::D1(const double U, const double V, Pnt& P, Vec& D1U, Vec& D1V) const
+Geom_Surface::ResD1 Geom_SurfaceOfRevolution::EvalD1(const double U, const double V) const
 {
-  Geom_RevolutionUtils::D1(U, V, *basisCurve, gp_Ax1(loc, direction), P, D1U, D1V);
+  Geom_Surface::ResD1 aEvalRepResult;
+  if (GeomEval_RepUtils::TryEvalSurfaceD1(myEvalRep, U, V, aEvalRepResult))
+  {
+    return aEvalRepResult;
+  }
+
+  const Geom_Curve::ResD1 aBasisD1 = basisCurve->EvalD1(V);
+  Geom_Surface::ResD1     aResult;
+  Geom_RevolutionUtils::CalculateD1(aBasisD1.Point,
+                                    aBasisD1.D1,
+                                    U,
+                                    gp_Ax1(loc, direction),
+                                    aResult.Point,
+                                    aResult.D1U,
+                                    aResult.D1V);
+  return aResult;
 }
 
 //=================================================================================================
 
-void Geom_SurfaceOfRevolution::D2(const double U,
-                                  const double V,
-                                  Pnt&         P,
-                                  Vec&         D1U,
-                                  Vec&         D1V,
-                                  Vec&         D2U,
-                                  Vec&         D2V,
-                                  Vec&         D2UV) const
+Geom_Surface::ResD2 Geom_SurfaceOfRevolution::EvalD2(const double U, const double V) const
 {
-  Geom_RevolutionUtils::D2(U, V, *basisCurve, gp_Ax1(loc, direction), P, D1U, D1V, D2U, D2V, D2UV);
+  Geom_Surface::ResD2 aEvalRepResult;
+  if (GeomEval_RepUtils::TryEvalSurfaceD2(myEvalRep, U, V, aEvalRepResult))
+  {
+    return aEvalRepResult;
+  }
+
+  const Geom_Curve::ResD2 aBasisD2 = basisCurve->EvalD2(V);
+  Geom_Surface::ResD2     aResult;
+  Geom_RevolutionUtils::CalculateD2(aBasisD2.Point,
+                                    aBasisD2.D1,
+                                    aBasisD2.D2,
+                                    U,
+                                    gp_Ax1(loc, direction),
+                                    aResult.Point,
+                                    aResult.D1U,
+                                    aResult.D1V,
+                                    aResult.D2U,
+                                    aResult.D2V,
+                                    aResult.D2UV);
+  return aResult;
 }
 
 //=================================================================================================
 
-void Geom_SurfaceOfRevolution::D3(const double U,
-                                  const double V,
-                                  Pnt&         P,
-                                  Vec&         D1U,
-                                  Vec&         D1V,
-                                  Vec&         D2U,
-                                  Vec&         D2V,
-                                  Vec&         D2UV,
-                                  Vec&         D3U,
-                                  Vec&         D3V,
-                                  Vec&         D3UUV,
-                                  Vec&         D3UVV) const
+Geom_Surface::ResD3 Geom_SurfaceOfRevolution::EvalD3(const double U, const double V) const
 {
-  Geom_RevolutionUtils::D3(U,
-                           V,
-                           *basisCurve,
-                           gp_Ax1(loc, direction),
-                           P,
-                           D1U,
-                           D1V,
-                           D2U,
-                           D2V,
-                           D2UV,
-                           D3U,
-                           D3V,
-                           D3UUV,
-                           D3UVV);
+  Geom_Surface::ResD3 aEvalRepResult;
+  if (GeomEval_RepUtils::TryEvalSurfaceD3(myEvalRep, U, V, aEvalRepResult))
+  {
+    return aEvalRepResult;
+  }
+
+  const Geom_Curve::ResD3 aBasisD3 = basisCurve->EvalD3(V);
+  Geom_Surface::ResD3     aResult;
+  Geom_RevolutionUtils::CalculateD3(aBasisD3.Point,
+                                    aBasisD3.D1,
+                                    aBasisD3.D2,
+                                    aBasisD3.D3,
+                                    U,
+                                    gp_Ax1(loc, direction),
+                                    aResult.Point,
+                                    aResult.D1U,
+                                    aResult.D1V,
+                                    aResult.D2U,
+                                    aResult.D2V,
+                                    aResult.D2UV,
+                                    aResult.D3U,
+                                    aResult.D3V,
+                                    aResult.D3UUV,
+                                    aResult.D3UVV);
+  return aResult;
 }
 
 //=================================================================================================
 
-Vec Geom_SurfaceOfRevolution::DN(const double U, const double V, const int Nu, const int Nv) const
+gp_Vec Geom_SurfaceOfRevolution::EvalDN(const double U,
+                                        const double V,
+                                        const int    Nu,
+                                        const int    Nv) const
 {
-  Standard_RangeError_Raise_if(Nu + Nv < 1 || Nu < 0 || Nv < 0, " ");
-  return Geom_RevolutionUtils::DN(U, V, *basisCurve, gp_Ax1(loc, direction), Nu, Nv);
+  if (Nu + Nv < 1 || Nu < 0 || Nv < 0)
+  {
+    throw Geom_UndefinedDerivative();
+  }
+  gp_Vec aEvalRepResult;
+  if (GeomEval_RepUtils::TryEvalSurfaceDN(myEvalRep, U, V, Nu, Nv, aEvalRepResult))
+  {
+    return aEvalRepResult;
+  }
+  gp_Vec aCurvePtOrDN;
+  if (Nu == 0)
+  {
+    aCurvePtOrDN = basisCurve->EvalDN(V, Nv);
+  }
+  else if (Nv == 0)
+  {
+    const gp_Pnt aD0 = basisCurve->EvalD0(V);
+    aCurvePtOrDN     = gp_Vec(aD0.XYZ() - loc.XYZ());
+  }
+  else
+  {
+    aCurvePtOrDN = basisCurve->EvalDN(V, Nv);
+  }
+  return Geom_RevolutionUtils::CalculateDN(aCurvePtOrDN, U, gp_Ax1(loc, direction), Nu, Nv);
 }
 
 //=================================================================================================
@@ -322,10 +401,14 @@ occ::handle<Geom_Curve> Geom_SurfaceOfRevolution::VIso(const double V) const
       Rep      = gp_Ax2(C, direction, D);
     }
     else
+    {
       Rep = gp_Ax2(C, direction);
+    }
   }
   else
+  {
     Rep = gp_Ax2(Pc, direction);
+  }
 
   Circ = new Geom_Circle(Rep, Rad);
   return Circ;
@@ -335,11 +418,14 @@ occ::handle<Geom_Curve> Geom_SurfaceOfRevolution::VIso(const double V) const
 
 void Geom_SurfaceOfRevolution::Transform(const Trsf& T)
 {
+  ClearEvalRepresentation();
   loc.Transform(T);
   direction.Transform(T);
   basisCurve->Transform(T);
   if (T.ScaleFactor() * T.HVectorialPart().Determinant() < 0.)
+  {
     UReverse();
+  }
 }
 
 //=================================================================================================

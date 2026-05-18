@@ -57,14 +57,11 @@ static int NbPOnV(const occ::handle<Adaptor3d_Surface>& S)
 void IntPatch_Polyhedron::Destroy()
 {
   gp_Pnt* CMyPnts = (gp_Pnt*)C_MyPnts;
-  if (C_MyPnts)
-    delete[] CMyPnts;
+  delete[] CMyPnts;
   double* CMyU = (double*)C_MyU;
-  if (C_MyU)
-    delete[] CMyU;
+  delete[] CMyU;
   double* CMyV = (double*)C_MyV;
-  if (C_MyV)
-    delete[] CMyV;
+  delete[] CMyV;
   C_MyPnts = C_MyU = C_MyV = nullptr;
 }
 
@@ -77,10 +74,10 @@ IntPatch_Polyhedron::IntPatch_Polyhedron(const occ::handle<Adaptor3d_Surface>& S
       C_MyPnts(nullptr),
       C_MyU(nullptr),
       C_MyV(nullptr),
-      UMinSingular(IntPatch_HInterTool::SingularOnVMin(Surface)),
-      UMaxSingular(IntPatch_HInterTool::SingularOnVMin(Surface)),
+      UMinSingular(IntPatch_HInterTool::SingularOnUMin(Surface)),
+      UMaxSingular(IntPatch_HInterTool::SingularOnUMax(Surface)),
       VMinSingular(IntPatch_HInterTool::SingularOnVMin(Surface)),
-      VMaxSingular(IntPatch_HInterTool::SingularOnVMin(Surface))
+      VMaxSingular(IntPatch_HInterTool::SingularOnVMax(Surface))
 {
   const int t       = (nbdeltaU + 1) * (nbdeltaV + 1) + 1;
   gp_Pnt*   CMyPnts = new gp_Pnt[t];
@@ -111,8 +108,7 @@ IntPatch_Polyhedron::IntPatch_Polyhedron(const occ::handle<Adaptor3d_Surface>& S
   }
 
   // Use grid evaluator for batch point evaluation
-  GeomGridEval_Surface anEval;
-  anEval.Initialize(*Surface);
+  GeomGridEval_Surface       anEval(*Surface);
   NCollection_Array2<gp_Pnt> aGridPnts = anEval.EvaluateGrid(aUParams, aVParams);
 
   // Copy to internal arrays and build bounding box
@@ -129,8 +125,8 @@ IntPatch_Polyhedron::IntPatch_Polyhedron(const occ::handle<Adaptor3d_Surface>& S
     }
   }
 
-  // Compute max deflection using batch evaluation
-  double tol = PolyUtils::ComputeMaxDeflection(anEval, *this, NbTriangles());
+  // Compute max deflection using surface adaptor
+  double tol = PolyUtils::ComputeMaxDeflection(*Surface, *this, NbTriangles());
   tol *= DEFLECTION_COEFF;
 
   DeflectionOverEstimation(tol);
@@ -143,15 +139,15 @@ IntPatch_Polyhedron::IntPatch_Polyhedron(const occ::handle<Adaptor3d_Surface>& S
                                          const int                             nbu,
                                          const int                             nbv)
     : TheDeflection(Epsilon(100.)),
-      nbdeltaU(nbu),
-      nbdeltaV(nbv),
+      nbdeltaU(nbu < 1 ? 1 : nbu),
+      nbdeltaV(nbv < 1 ? 1 : nbv),
       C_MyPnts(nullptr),
       C_MyU(nullptr),
       C_MyV(nullptr),
-      UMinSingular(IntPatch_HInterTool::SingularOnVMin(Surface)),
-      UMaxSingular(IntPatch_HInterTool::SingularOnVMin(Surface)),
+      UMinSingular(IntPatch_HInterTool::SingularOnUMin(Surface)),
+      UMaxSingular(IntPatch_HInterTool::SingularOnUMax(Surface)),
       VMinSingular(IntPatch_HInterTool::SingularOnVMin(Surface)),
-      VMaxSingular(IntPatch_HInterTool::SingularOnVMin(Surface))
+      VMaxSingular(IntPatch_HInterTool::SingularOnVMax(Surface))
 {
   const int t       = (nbdeltaU + 1) * (nbdeltaV + 1) + 1;
   gp_Pnt*   CMyPnts = new gp_Pnt[t];
@@ -182,8 +178,7 @@ IntPatch_Polyhedron::IntPatch_Polyhedron(const occ::handle<Adaptor3d_Surface>& S
   }
 
   // Use grid evaluator for batch point evaluation
-  GeomGridEval_Surface anEval;
-  anEval.Initialize(*Surface);
+  GeomGridEval_Surface       anEval(*Surface);
   NCollection_Array2<gp_Pnt> aGridPnts = anEval.EvaluateGrid(aUParams, aVParams);
 
   // Copy to internal arrays and build bounding box
@@ -200,8 +195,8 @@ IntPatch_Polyhedron::IntPatch_Polyhedron(const occ::handle<Adaptor3d_Surface>& S
     }
   }
 
-  // Compute max deflection using batch evaluation
-  double tol = PolyUtils::ComputeMaxDeflection(anEval, *this, NbTriangles());
+  // Compute max deflection using surface adaptor
+  double tol = PolyUtils::ComputeMaxDeflection(*Surface, *this, NbTriangles());
   tol *= DEFLECTION_COEFF;
 
   DeflectionOverEstimation(tol);
@@ -324,13 +319,19 @@ int IntPatch_Polyhedron::TriConnex(const int Triang,
     colE = (Pedge - 1) - (ligE * nbdeltaVp1);
     // Horizontal
     if (ligP == ligE)
+    {
       typE = 1;
-    // Vertical
+      // Vertical
+    }
     else if (colP == colE)
+    {
       typE = 2;
-    // Oblique
+      // Oblique
+    }
     else
+    {
       typE = 3;
+    }
   }
   else
   {
@@ -426,9 +427,13 @@ int IntPatch_Polyhedron::TriConnex(const int Triang,
       linT = (1 > ligP) ? 1 : ligP;                   //--linT=Max(1, ligP);
       colT = (1 > (colP + colP)) ? 1 : (colP + colP); //--colT=Max(1, colP+colP);
       if (ligP == 0)
+      {
         linO = ligP + 1;
+      }
       else
+      {
         linO = ligP - 1;
+      }
       colO = colP;
     }
     else
@@ -538,7 +543,7 @@ int IntPatch_Polyhedron::TriConnex(const int Triang,
   //-- Alors on retourne OtherP a 0
   //-- et Tricon = Triangle
   //--
-  if (Point(Pivot).SquareDistance(Point(Pedge)) <= LONGUEUR_MINI_EDGE_TRIANGLE)
+  if (Pedge != 0 && Point(Pivot).SquareDistance(Point(Pedge)) <= LONGUEUR_MINI_EDGE_TRIANGLE)
   {
     OtherP = 0;
     TriCon = Triang;
@@ -547,7 +552,7 @@ int IntPatch_Polyhedron::TriConnex(const int Triang,
 #endif
     return (TriCon);
   }
-  if (Point(OtherP).SquareDistance(Point(Pedge)) <= LONGUEUR_MINI_EDGE_TRIANGLE)
+  if (Pedge != 0 && Point(OtherP).SquareDistance(Point(Pedge)) <= LONGUEUR_MINI_EDGE_TRIANGLE)
   {
 #if MSG_DEBUG
     std::cout << " Probleme ds IntCurveSurface_Polyhedron : OtherP et PEdge Confondus "

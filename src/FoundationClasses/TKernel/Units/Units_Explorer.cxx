@@ -48,7 +48,7 @@ Units_Explorer::Units_Explorer(const occ::handle<Units_UnitsDictionary>& aunitsd
 //=================================================================================================
 
 Units_Explorer::Units_Explorer(const occ::handle<Units_UnitsSystem>& aunitssystem,
-                               const char*                           aquantity)
+                               const char* const                     aquantity)
 {
   Init(aunitssystem, aquantity);
 }
@@ -56,7 +56,7 @@ Units_Explorer::Units_Explorer(const occ::handle<Units_UnitsSystem>& aunitssyste
 //=================================================================================================
 
 Units_Explorer::Units_Explorer(const occ::handle<Units_UnitsDictionary>& aunitsdictionary,
-                               const char*                               aquantity)
+                               const char* const                         aquantity)
 {
   Init(aunitsdictionary, aquantity);
 }
@@ -69,7 +69,9 @@ void Units_Explorer::Init(const occ::handle<Units_UnitsSystem>& aunitssystem)
   thequantitiessequence  = aunitssystem->QuantitiesSequence();
   theactiveunitssequence = aunitssystem->ActiveUnitsSequence();
   if (MoreQuantity())
+  {
     theunitssequence = thequantitiessequence->Value(thecurrentquantity)->Sequence();
+  }
   thecurrentunit = 1;
 }
 
@@ -87,13 +89,16 @@ void Units_Explorer::Init(const occ::handle<Units_UnitsDictionary>& aunitsdictio
   }
 
   if (MoreQuantity())
+  {
     theunitssequence = thequantitiessequence->Value(thecurrentquantity)->Sequence();
+  }
   thecurrentunit = 1;
 }
 
 //=================================================================================================
 
-void Units_Explorer::Init(const occ::handle<Units_UnitsSystem>& aunitssystem, const char* aquantity)
+void Units_Explorer::Init(const occ::handle<Units_UnitsSystem>& aunitssystem,
+                          const char* const                     aquantity)
 {
   int index;
   thecurrentquantity     = 0;
@@ -118,7 +123,7 @@ void Units_Explorer::Init(const occ::handle<Units_UnitsSystem>& aunitssystem, co
 //=================================================================================================
 
 void Units_Explorer::Init(const occ::handle<Units_UnitsDictionary>& aunitsdictionary,
-                          const char*                               aquantity)
+                          const char* const                         aquantity)
 {
   occ::handle<Units_Quantity> quantity;
   int                         index;
@@ -161,7 +166,9 @@ void Units_Explorer::NextQuantity()
   thecurrentquantity++;
   thecurrentunit = 1;
   if (MoreQuantity())
+  {
     theunitssequence = thequantitiessequence->Value(thecurrentquantity)->Sequence();
+  }
 }
 
 //=================================================================================================

@@ -14,6 +14,7 @@
 #ifndef _Geom2d_OffsetCurveUtils_HeaderFile
 #define _Geom2d_OffsetCurveUtils_HeaderFile
 
+#include <Geom2d_Curve.hxx>
 #include <gp.hxx>
 #include <gp_Dir2d.hxx>
 #include <gp_Pnt2d.hxx>
@@ -280,7 +281,8 @@ inline bool CalculateD3(gp_Pnt2d&       theValue,
 
 //! Adjusts derivatives at singular points where the first derivative is nearly zero.
 //! Uses Taylor series approximation to find a valid tangent direction.
-//! @tparam CurveType type supporting D0, DN methods (Geom2d_Curve or adaptor)
+//! Uses EvalDN/EvalD0 to avoid exceptions.
+//! @tparam CurveType type supporting EvalD0, EvalDN methods (Geom2d_Curve or adaptor)
 //! @param[in] theCurve basis curve for derivative evaluation
 //! @param[in] theMaxDerivative maximum derivative order to compute (3 or 4)
 //! @param[in] theU parameter value
@@ -288,7 +290,8 @@ inline bool CalculateD3(gp_Pnt2d&       theValue,
 //! @param[in,out] theD2 second derivative (will be adjusted)
 //! @param[in,out] theD3 third derivative (will be adjusted)
 //! @param[in,out] theD4 fourth derivative (will be adjusted if theMaxDerivative >= 4)
-//! @return true if direction change detected
+//! @param[out] theIsDirectionChange true if direction change detected
+//! @return true if evaluation succeeded, false if any evaluation failed
 template <typename CurveType>
 bool AdjustDerivative(const CurveType& theCurve,
                       int              theMaxDerivative,
@@ -296,15 +299,16 @@ bool AdjustDerivative(const CurveType& theCurve,
                       gp_Vec2d&        theD1,
                       gp_Vec2d&        theD2,
                       gp_Vec2d&        theD3,
-                      gp_Vec2d&        theD4)
+                      gp_Vec2d&        theD4,
+                      bool&            theIsDirectionChange)
 {
   static const double aTol           = gp::Resolution();
   static const double aMinStep       = 1e-7;
   static const int    aMaxDerivOrder = 3;
 
-  bool         isDirectionChange = false;
-  const double anUinfium         = theCurve.FirstParameter();
-  const double anUsupremum       = theCurve.LastParameter();
+  theIsDirectionChange     = false;
+  const double anUinfium   = theCurve.FirstParameter();
+  const double anUsupremum = theCurve.LastParameter();
 
   static const double DivisionFactor = 1.e-3;
   double              du;
@@ -325,7 +329,7 @@ bool AdjustDerivative(const CurveType& theCurve,
 
   do
   {
-    V = theCurve.DN(theU, ++anIndex);
+    V = theCurve.EvalDN(theU, ++anIndex);
   } while ((V.SquareMagnitude() <= aTol) && anIndex < aMaxDerivOrder);
 
   double u;
@@ -339,22 +343,24 @@ bool AdjustDerivative(const CurveType& theCurve,
     u = theU - aDelta;
   }
 
-  gp_Pnt2d P1, P2;
-  theCurve.D0(std::min(theU, u), P1);
-  theCurve.D0(std::max(theU, u), P2);
+  gp_Pnt2d aP1;
+  gp_Pnt2d aP2;
+  aP1 = theCurve.EvalD0(std::min(theU, u));
+  aP2 = theCurve.EvalD0(std::max(theU, u));
 
-  gp_Vec2d V1(P1, P2);
-  isDirectionChange  = V.Dot(V1) < 0.0;
-  const double aSign = isDirectionChange ? -1.0 : 1.0;
+  gp_Vec2d V1(aP1, aP2);
+  theIsDirectionChange = V.Dot(V1) < 0.0;
+  const double aSign   = theIsDirectionChange ? -1.0 : 1.0;
 
   theD1               = V * aSign;
   gp_Vec2d* aDeriv[3] = {&theD2, &theD3, &theD4};
   for (int i = 1; i < theMaxDerivative; i++)
   {
-    *(aDeriv[i - 1]) = theCurve.DN(theU, anIndex + i) * aSign;
+    const gp_Vec2d aDN = theCurve.EvalDN(theU, anIndex + i);
+    *(aDeriv[i - 1])   = aDN * aSign;
   }
 
-  return isDirectionChange;
+  return true;
 }
 
 //! Template function for D0 evaluation of 2D offset curve.
@@ -372,9 +378,9 @@ bool EvaluateD0(double                theU,
                 double                theOffset,
                 gp_Pnt2d&             theValue)
 {
-  gp_Vec2d aD1;
-  theBasisCurve->D1(theU, theValue, aD1);
-  return CalculateD0(theValue, aD1, theOffset);
+  const Geom2d_Curve::ResD1 aD1 = theBasisCurve->EvalD1(theU);
+  theValue                      = aD1.Point;
+  return CalculateD0(theValue, aD1.D1, theOffset);
 }
 
 //! Template function for D1 evaluation of 2D offset curve.
@@ -394,9 +400,10 @@ bool EvaluateD1(double                theU,
                 gp_Pnt2d&             theValue,
                 gp_Vec2d&             theD1)
 {
-  gp_Vec2d aD2;
-  theBasisCurve->D2(theU, theValue, theD1, aD2);
-  return CalculateD1(theValue, theD1, aD2, theOffset);
+  const Geom2d_Curve::ResD2 aD2 = theBasisCurve->EvalD2(theU);
+  theValue                      = aD2.Point;
+  theD1                         = aD2.D1;
+  return CalculateD1(theValue, theD1, aD2.D2, theOffset);
 }
 
 //! Template function for D2 evaluation of 2D offset curve.
@@ -419,14 +426,18 @@ bool EvaluateD2(double                theU,
                 gp_Vec2d&             theD1,
                 gp_Vec2d&             theD2)
 {
-  gp_Vec2d aD3;
-  theBasisCurve->D3(theU, theValue, theD1, theD2, aD3);
+  const Geom2d_Curve::ResD3 aD3Result = theBasisCurve->EvalD3(theU);
+  theValue                            = aD3Result.Point;
+  theD1                               = aD3Result.D1;
+  theD2                               = aD3Result.D2;
+  gp_Vec2d aD3                        = aD3Result.D3;
 
   bool isDirectionChange = false;
   if (theD1.SquareMagnitude() <= gp::Resolution())
   {
     gp_Vec2d aDummyD4;
-    isDirectionChange = AdjustDerivative(*theBasisCurve, 3, theU, theD1, theD2, aD3, aDummyD4);
+    if (!AdjustDerivative(*theBasisCurve, 3, theU, theD1, theD2, aD3, aDummyD4, isDirectionChange))
+      return false;
   }
 
   return CalculateD2(theValue, theD1, theD2, aD3, isDirectionChange, theOffset);
@@ -454,13 +465,19 @@ bool EvaluateD3(double                theU,
                 gp_Vec2d&             theD2,
                 gp_Vec2d&             theD3)
 {
-  theBasisCurve->D3(theU, theValue, theD1, theD2, theD3);
-  gp_Vec2d aD4 = theBasisCurve->DN(theU, 4);
+  const Geom2d_Curve::ResD3 aD3Result = theBasisCurve->EvalD3(theU);
+  theValue                            = aD3Result.Point;
+  theD1                               = aD3Result.D1;
+  theD2                               = aD3Result.D2;
+  theD3                               = aD3Result.D3;
+
+  gp_Vec2d aD4 = theBasisCurve->EvalDN(theU, 4);
 
   bool isDirectionChange = false;
   if (theD1.SquareMagnitude() <= gp::Resolution())
   {
-    isDirectionChange = AdjustDerivative(*theBasisCurve, 4, theU, theD1, theD2, theD3, aD4);
+    if (!AdjustDerivative(*theBasisCurve, 4, theU, theD1, theD2, theD3, aD4, isDirectionChange))
+      return false;
   }
 
   return CalculateD3(theValue, theD1, theD2, theD3, aD4, isDirectionChange, theOffset);
@@ -495,10 +512,11 @@ bool EvaluateDN(double                theU,
       return EvaluateD2(theU, theBasisCurve, theOffset, aPnt, aDummy, theDN);
     case 3:
       return EvaluateD3(theU, theBasisCurve, theOffset, aPnt, aDummy, aDummy, theDN);
-    default:
+    default: {
       // For derivatives > 3, return basis curve derivative (no offset contribution)
-      theDN = theBasisCurve->DN(theU, theN);
+      theDN = theBasisCurve->EvalDN(theU, theN);
       return true;
+    }
   }
 }
 

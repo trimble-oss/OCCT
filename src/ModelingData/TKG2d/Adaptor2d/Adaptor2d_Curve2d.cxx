@@ -22,8 +22,7 @@
 #include <gp_Hypr2d.hxx>
 #include <gp_Lin2d.hxx>
 #include <gp_Parab2d.hxx>
-#include <gp_Pnt2d.hxx>
-#include <gp_Vec2d.hxx>
+#include <Standard_Failure.hxx>
 #include <Standard_NotImplemented.hxx>
 
 IMPLEMENT_STANDARD_RTTIEXT(Adaptor2d_Curve2d, Standard_Transient)
@@ -259,4 +258,47 @@ occ::handle<Geom2d_BSplineCurve> Adaptor2d_Curve2d::BSpline() const
 int Adaptor2d_Curve2d::NbSamples() const
 {
   return 20;
+}
+
+//=================================================================================================
+
+gp_Pnt2d Adaptor2d_Curve2d::EvalD0(const double theU) const
+{
+  gp_Pnt2d aP;
+  D0(theU, aP);
+  return aP;
+}
+
+//=================================================================================================
+
+Geom2d_Curve::ResD1 Adaptor2d_Curve2d::EvalD1(const double theU) const
+{
+  Geom2d_Curve::ResD1 aResult;
+  D1(theU, aResult.Point, aResult.D1);
+  return aResult;
+}
+
+//=================================================================================================
+
+Geom2d_Curve::ResD2 Adaptor2d_Curve2d::EvalD2(const double theU) const
+{
+  Geom2d_Curve::ResD2 aResult;
+  D2(theU, aResult.Point, aResult.D1, aResult.D2);
+  return aResult;
+}
+
+//=================================================================================================
+
+Geom2d_Curve::ResD3 Adaptor2d_Curve2d::EvalD3(const double theU) const
+{
+  Geom2d_Curve::ResD3 aResult;
+  D3(theU, aResult.Point, aResult.D1, aResult.D2, aResult.D3);
+  return aResult;
+}
+
+//=================================================================================================
+
+gp_Vec2d Adaptor2d_Curve2d::EvalDN(const double theU, const int theN) const
+{
+  return DN(theU, theN);
 }
