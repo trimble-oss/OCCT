@@ -183,6 +183,7 @@ class OpenCascadeConan(ConanFile):
 
         # TrimbleTech, 2023-12-28
         tc.cache_variables["BUILD_MODULE_Draw"] = "OFF"
+        tc.cache_variables["BUILD_VERSIONED_OUTPUT_NAMES"] = False
         #tc.cache_variables["BUILD_MODULE_Visualization"] = "OFF"
         tc.cache_variables["BUILD_MODULE_DETools"] = "OFF"
         tc.cache_variables["USE_FREETYPE"] = False
