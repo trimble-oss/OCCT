@@ -133,7 +133,16 @@ if (EXECUTABLE_PROJECT)
   endif()
 else()
   add_library (${PROJECT_NAME} ${USED_SRCFILES} ${USED_INCFILES} ${USED_RCFILE} ${RESOURCE_FILES} ${${PROJECT_NAME}_MOC_FILES})
-  set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${PROJECT_NAME}-${OCC_VERSION_MAJOR}${OCC_VERSION_MINOR}${OCC_VERSION_MAINTENANCE})
+
+  # smr: include version string to output name on nugets but not on conan
+  set (_occt_output_name "${PROJECT_NAME}")
+  if (BUILD_VERSIONED_OUTPUT_NAMES)
+    get_property (_occt_ver_major GLOBAL PROPERTY OCC_VERSION_MAJOR)
+    get_property (_occt_ver_minor GLOBAL PROPERTY OCC_VERSION_MINOR)
+    get_property (_occt_ver_maintenance GLOBAL PROPERTY OCC_VERSION_MAINTENANCE)
+    set (_occt_output_name "${PROJECT_NAME}-${_occt_ver_major}${_occt_ver_minor}${_occt_ver_maintenance}")
+    set_target_properties (${PROJECT_NAME} PROPERTIES OUTPUT_NAME "${_occt_output_name}")
+  endif()
 
   if (MSVC AND BUILD_SHARED_LIBS)
     if (BUILD_FORCE_RelWithDebInfo)
@@ -142,11 +151,11 @@ else()
       set (aReleasePdbConf)
     endif()
     if (BUILD_SHARED_LIBS)
-      install (FILES  ${CMAKE_BINARY_DIR}/${OS_WITH_BIT}/${COMPILER}/bin\${OCCT_INSTALL_BIN_LETTER}/${PROJECT_NAME}-${OCC_VERSION_MAJOR}${OCC_VERSION_MINOR}${OCC_VERSION_MAINTENANCE}.pdb
+      install (FILES  ${CMAKE_BINARY_DIR}/${OS_WITH_BIT}/${COMPILER}/bin\${OCCT_INSTALL_BIN_LETTER}/${_occt_output_name}.pdb
              CONFIGURATIONS Debug ${aReleasePdbConf} RelWithDebInfo
              DESTINATION "${INSTALL_DIR_BIN}\${OCCT_INSTALL_BIN_LETTER}")
     else()
-      install (FILES  ${CMAKE_BINARY_DIR}/${OS_WITH_BIT}/${COMPILER}/lib\${OCCT_INSTALL_BIN_LETTER}/${PROJECT_NAME}.pdb
+      install (FILES  ${CMAKE_BINARY_DIR}/${OS_WITH_BIT}/${COMPILER}/lib\${OCCT_INSTALL_BIN_LETTER}/${_occt_output_name}.pdb
              CONFIGURATIONS Debug ${aReleasePdbConf} RelWithDebInfo
              DESTINATION "${INSTALL_DIR_LIB}\${OCCT_INSTALL_BIN_LETTER}")
     endif()

@@ -9,8 +9,8 @@ RMDIR /S /Q BuildDll-142
 
 cd Nugetter
 
-MSBuild ../BuildDll-142/ALL_BUILD.vcxproj /p:Configuration=Debug /p:Platform=x64
-MSBuild ../BuildDll-142/ALL_BUILD.vcxproj /p:Configuration=RelWithDebInfo /p:Platform=x64
+MSBuild ../BuildDll-142/ALL_BUILD.vcxproj /p:Configuration=Debug /p:Platform=x64 /m
+MSBuild ../BuildDll-142/ALL_BUILD.vcxproj /p:Configuration=RelWithDebInfo /p:Platform=x64 /m
 
 REM INCREASE LOCAL PACKAGE NUMBER
 set /p Build=<ver.txt

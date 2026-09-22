@@ -49,6 +49,11 @@ set (BUILD_INCLUDE_SYMLINK_DESCR
 OFF - using a reference file with direct include to the origin,
 ON - symbolic link to the origin file are created")
 
+set (BUILD_VERSIONED_OUTPUT_NAMES_DESCR
+"Append -{major}{minor}{maintenance} to library output names
+(e.g. TKernel.dll becomes TKernel-793.dll). Used by the Tekla NuGet layout.
+Leave OFF for Conan and other consumers that expect unversioned library names.")
+
 # install variables
 set (INSTALL_DIR_DESCR
 "The place where built OCCT libraries, headers, test cases (INSTALL_TEST_CASES variable),
