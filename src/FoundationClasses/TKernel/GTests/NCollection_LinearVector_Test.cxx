@@ -17,6 +17,19 @@
 #include <gtest/gtest.h>
 #include <algorithm>
 #include <string>
+#include <type_traits>
+#include <utility>
+
+template <typename TheVector, typename = void>
+struct HasToArray1 : std::false_type
+{
+};
+
+template <typename TheVector>
+struct HasToArray1<TheVector, std::void_t<decltype(std::declval<TheVector&>().ToArray1())>>
+    : std::true_type
+{
+};
 
 // Helper struct for testing non-trivial types with move semantics.
 struct MoveOnly
@@ -396,16 +409,16 @@ TEST(NCollection_LinearVectorTest, EraseRange_NonTrivial_HeapBuffers)
   NCollection_LinearVector<TCollection_AsciiString> aVec;
   for (int i = 0; i < 6; ++i)
   {
-    TCollection_AsciiString aEntry("payload-with-heap-allocation-");
+    TCollection_AsciiString aEntry("heap-backed-entry-");
     aEntry += TCollection_AsciiString(i);
     aVec.Append(std::move(aEntry));
   }
 
   aVec.Erase(1, 4);
   ASSERT_EQ(3u, aVec.Size());
-  EXPECT_STREQ("payload-with-heap-allocation-0", aVec(0).ToCString());
-  EXPECT_STREQ("payload-with-heap-allocation-4", aVec(1).ToCString());
-  EXPECT_STREQ("payload-with-heap-allocation-5", aVec(2).ToCString());
+  EXPECT_STREQ("heap-backed-entry-0", aVec(0).ToCString());
+  EXPECT_STREQ("heap-backed-entry-4", aVec(1).ToCString());
+  EXPECT_STREQ("heap-backed-entry-5", aVec(2).ToCString());
 }
 
 TEST(NCollection_LinearVectorTest, InsertBefore)
@@ -516,6 +529,11 @@ TEST(NCollection_LinearVectorTest, STLAlgorithms)
   EXPECT_EQ(30, aVec(0));
   EXPECT_EQ(20, aVec(1));
   EXPECT_EQ(10, aVec(2));
+
+  const NCollection_LinearVector<int>& aConstVec = aVec;
+  const auto anFound = std::find(aConstVec.cbegin(), aConstVec.cend(), 20);
+  ASSERT_NE(aConstVec.cend(), anFound);
+  EXPECT_EQ(20, *anFound);
 }
 
 TEST(NCollection_LinearVectorTest, TrivialTypeGrowth)
@@ -801,4 +819,103 @@ TEST(NCollection_LinearVectorTest, OcctApiCoverage)
   aVec.Clear();
   EXPECT_TRUE(aVec.IsEmpty());
   EXPECT_EQ(0u, aVec.Size());
+}
+
+// ============ ToArray1 span tests ============
+
+static_assert(HasToArray1<NCollection_LinearVector<int>>::value,
+              "Mutable NCollection_LinearVector should expose mutable Array1 view");
+static_assert(HasToArray1<const NCollection_LinearVector<int>>::value,
+              "Const NCollection_LinearVector should expose read-only Array1 view");
+static_assert(std::is_same_v<decltype(std::declval<NCollection_LinearVector<int>&>().ToArray1()),
+                             NCollection_Array1<int>>,
+              "Mutable NCollection_LinearVector should expose mutable Array1 view");
+static_assert(
+  std::is_same_v<decltype(std::declval<const NCollection_LinearVector<int>&>().ToArray1()),
+                 NCollection_Array1<int>>,
+  "Const NCollection_LinearVector should expose shared Array1 view");
+
+// Verify that ToArray1() returns an Array1 sharing the same memory buffer.
+TEST(NCollection_LinearVectorTest, ToArray1_SamePointer)
+{
+  NCollection_LinearVector<int> aVec;
+  for (int i = 0; i < 10; ++i)
+  {
+    aVec.Append(i * 10);
+  }
+
+  NCollection_Array1<int> aArr = aVec.ToArray1();
+  EXPECT_EQ(10u, aArr.Size());
+
+  // Same memory -- pointer equality
+  EXPECT_EQ(aVec.Data(), &aArr[0]);
+}
+
+// Verify that modifications through ToArray1() are reflected in the source.
+TEST(NCollection_LinearVectorTest, ToArray1_ModifyReflectsInSource)
+{
+  NCollection_LinearVector<int> aVec;
+  aVec.Append(1);
+  aVec.Append(2);
+  aVec.Append(3);
+  aVec.Append(4);
+  aVec.Append(5);
+
+  NCollection_Array1<int> aArr = aVec.ToArray1();
+  aArr[0]                      = 99;
+  aArr[4]                      = 77;
+
+  EXPECT_EQ(99, aVec[0]);
+  EXPECT_EQ(2, aVec[1]);
+  EXPECT_EQ(77, aVec[4]);
+}
+
+// Verify that ToArray1() on an empty vector produces a zero-size Array1.
+TEST(NCollection_LinearVectorTest, ToArray1_EmptyVector)
+{
+  NCollection_LinearVector<int> aEmpty;
+  NCollection_Array1<int>       aArr = aEmpty.ToArray1();
+
+  EXPECT_EQ(0u, aArr.Size());
+  EXPECT_TRUE(aArr.IsEmpty());
+}
+
+// Reading through ToArray1() returns correct values without copying.
+TEST(NCollection_LinearVectorTest, ToArray1_ReadThrough)
+{
+  NCollection_LinearVector<int> aVec;
+  for (int i = 0; i < 7; ++i)
+  {
+    aVec.Append(i * 11);
+  }
+
+  const NCollection_Array1<int> aArr = aVec.ToArray1();
+  for (int i = 0; i < 7; ++i)
+  {
+    EXPECT_EQ(i * 11, aArr[i]);
+  }
+}
+
+// Verify that ToArray1() works with non-trivial types (span, not a copy).
+TEST(NCollection_LinearVectorTest, ToArray1_NonTrivial)
+{
+  NCollection_LinearVector<std::string> aVec;
+  aVec.Append("alpha");
+  aVec.Append("beta");
+  aVec.Append("gamma");
+
+  NCollection_Array1<std::string> aArr = aVec.ToArray1();
+  EXPECT_EQ(3u, aArr.Size());
+
+  // Same memory
+  EXPECT_EQ(&aVec[0], &aArr[0]);
+
+  // Reading through returns correct values
+  EXPECT_EQ("alpha", aArr[0]);
+  EXPECT_EQ("beta", aArr[1]);
+  EXPECT_EQ("gamma", aArr[2]);
+
+  // Modify through Array1 and check vector
+  aArr[1] = "modified";
+  EXPECT_EQ("modified", aVec[1]);
 }

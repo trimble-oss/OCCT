@@ -124,6 +124,14 @@ public:
                                       : myAspectsSet->Aspect()->InteriorColorRGBA();
   }
 
+  //! Return back interior color taking into account highlight and distinguish flags.
+  const NCollection_Vec4<float>& BackInteriorColor() const
+  {
+    return !myHighlightStyle.IsNull()              ? myHighlightStyle->ColorRGBA()
+           : myAspectsSet->Aspect()->Distinguish() ? myAspectsSet->Aspect()->BackInteriorColorRGBA()
+                                                   : myAspectsSet->Aspect()->InteriorColorRGBA();
+  }
+
   //! Return text color taking into account highlight flag.
   const NCollection_Vec4<float>& TextColor() const
   {
@@ -173,7 +181,7 @@ public:
   //! @param[in] theElement  the element to check
   //! @param[in] theGroup    the group containing the element
   //! @return True if element can be rendered
-  bool ShouldRender(const OpenGl_Element* theElement, const OpenGl_Group* theGroup);
+  Standard_EXPORT bool ShouldRender(const OpenGl_Element* theElement, const OpenGl_Group* theGroup);
 
   //! Return the number of skipped transparent elements within active OpenGl_RenderFilter_OpaqueOnly
   //! filter.

@@ -109,6 +109,8 @@ BlendFunc_EvolRad::BlendFunc_EvolRad(const occ::handle<Adaptor3d_Surface>& S1,
       tcurv(C),
       istangent(true),
       xval(1, 4),
+      invnormtg(0.0),
+      dinvnormtg(0.0),
       E(1, 4),
       DEDX(1, 4, 1, 4),
       DEDT(1, 4),
@@ -196,13 +198,7 @@ bool BlendFunc_EvolRad::ComputeValues(const math_Vector& X,
                                       const bool         byParam,
                                       const double       Param)
 {
-  // static declaration to avoid systematic realloc
-
-  static gp_Vec d3u1, d3v1, d3uuv1, d3uvv1, d3u2, d3v2, d3uuv2, d3uvv2;
-  static gp_Vec d1gui, d2gui, d3gui;
-  static gp_Pnt ptgui;
-  static double invnormtg, dinvnormtg;
-  double        T = Param, aux;
+  double T = Param, aux;
 
   // Case of implicit parameter
   if (!byParam)

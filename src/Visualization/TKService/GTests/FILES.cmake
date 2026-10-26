@@ -4,8 +4,13 @@ set(OCCT_TKService_GTests_FILES_LOCATION "${CMAKE_CURRENT_LIST_DIR}")
 set(OCCT_TKService_GTests_FILES
   Aspect_GridParams_Test.cxx
   Aspect_Grid_Bounds_Test.cxx
+  Font_FontMgr_Test.cxx
+  Font_FTFont_Test.cxx
+  Font_GlyphOutline_Test.cxx
+  Font_UnicodeSubset_Test.cxx
   Graphic3d_Aspects_Test.cxx
   Graphic3d_BndBox_Test.cxx
   Graphic3d_Flipper_Test.cxx
+  Graphic3d_ShaderManager_Test.cxx
   Image_VideoRecorder_Test.cxx
 )

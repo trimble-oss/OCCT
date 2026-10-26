@@ -196,7 +196,7 @@ static bool KPartCircle(
   const double                                                              Alt,
   TopoDS_Shape&                                                             myShape,
   NCollection_IndexedDataMap<TopoDS_Shape, NCollection_List<TopoDS_Shape>>& myMap,
-  bool&                                                                     myIsDone)
+  bool&                                                                     theIsDone)
 {
   TopoDS_Edge E;
   for (TopExp_Explorer anEdgeIter(mySpine, TopAbs_EDGE); anEdgeIter.More(); anEdgeIter.Next())
@@ -260,8 +260,8 @@ static bool KPartCircle(
       }
       else
       {
-        myIsDone = false;
-        return false;
+        theIsDone = false;
+        return true;
       }
     }
     else
@@ -298,7 +298,7 @@ static bool KPartCircle(
     TopoDS_Edge myEdge = TopoDS::Edge(myShape);
     myShape            = BRepLib_MakeWire(myEdge);
 
-    myIsDone = true;
+    theIsDone = true;
     return true;
   }
 
@@ -437,7 +437,7 @@ const NCollection_List<TopoDS_Shape>& BRepFill_OffsetWire::GeneratedShapes(
   }
   else
   {
-    static NCollection_List<TopoDS_Shape> Empty;
+    static const NCollection_List<TopoDS_Shape> Empty;
     return Empty;
   }
 }
@@ -1485,7 +1485,7 @@ void BRepFill_OffsetWire::MakeWires()
     End     = false;
     MVE.ChangeFromKey(CV).RemoveFirst();
 
-    if (myIsOpenResult && MVE.FindFromKey(CV).IsEmpty())
+    if (MVE.FindFromKey(CV).IsEmpty())
     {
       MVE.RemoveKey(CV);
     }
@@ -1540,7 +1540,7 @@ void BRepFill_OffsetWire::MakeWires()
           CE = TopoDS::Edge(MVE.FindFromKey(CV).First());
           MVE.ChangeFromKey(CV).RemoveFirst();
         }
-        else if (myIsOpenResult)
+        else
         { // CV was a vertex with one edge
           End = true;
         }
@@ -1860,7 +1860,7 @@ void BRepFill_OffsetWire::FixHoles()
       else if (Dist <= MaxTol)
       {
         // Creating new edge from Vl to Vf
-        TopoDS_Edge NewEdge = BRepLib_MakeEdge(Vf, Vl);
+        TopoDS_Edge NewEdge = BRepLib_MakeEdge(Vl, Vf);
         BB.Add(Base, NewEdge);
         Base.Closed(true);
       }

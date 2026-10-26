@@ -357,7 +357,7 @@ bool AIS_TextLabel::calculateLabelParams(const gp_Pnt& thePosition,
   occ::handle<Prs3d_TextAspect>    anAsp = myDrawer->TextAspect();
   const Graphic3d_RenderingParams& aRendParams =
     GetContext()->CurrentViewer()->DefaultRenderingParams();
-  Font_FTFontParams aFontParams;
+  Font_FTFont::Params aFontParams;
   aFontParams.PointSize   = (unsigned int)anAsp->Height();
   aFontParams.Resolution  = aRendParams.Resolution;
   aFontParams.FontHinting = aRendParams.FontHinting;
@@ -370,8 +370,8 @@ bool AIS_TextLabel::calculateLabelParams(const gp_Pnt& thePosition,
     return false;
   }
 
-  const NCollection_String aText(myText.ToExtString());
-  Font_Rect                aBndBox =
+  const TCollection_UtfString<char> aText(myText.ToExtString());
+  Font_Rect                         aBndBox =
     aFont->BoundingBox(aText, anAsp->HorizontalJustification(), anAsp->VerticalJustification());
   theWidth  = std::abs(aBndBox.Width());
   theHeight = std::abs(aBndBox.Height());

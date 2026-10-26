@@ -44,10 +44,6 @@
 #include <Standard_ProgramError.hxx>
 #include <TopOpeBRepDS_EdgeVertexInterference.hxx>
 
-#ifdef OCCT_DEBUG
-Standard_EXPORT bool TopOpeBRepBuild_GetcontextNOSG();
-#endif
-
 #define M_FORWARD(st) (st == TopAbs_FORWARD)
 #define M_REVERSED(st) (st == TopAbs_REVERSED)
 #define M_INTERNAL(st) (st == TopAbs_INTERNAL)
@@ -291,16 +287,6 @@ void debfillp2(const int i)
 }
 #endif
 
-// Standard_IMPORT extern bool GLOBAL_faces2d;
-extern bool GLOBAL_faces2d;
-
-// Standard_IMPORT extern bool GLOBAL_IEtoMERGE; // xpu240498
-Standard_IMPORT bool GLOBAL_IEtoMERGE; // xpu240498
-// Standard_IMPORT extern int GLOBAL_issp;
-extern int GLOBAL_issp;
-// Standard_IMPORT extern int GLOBAL_hassd;
-Standard_IMPORT int GLOBAL_hassd;
-
 static bool FUN_isonbound(const occ::handle<TopOpeBRepDS_HDataStructure>& HDS,
                           const occ::handle<TopOpeBRepDS_Interference>&   I)
 {
@@ -381,9 +367,9 @@ void TopOpeBRepBuild_Builder::GFillPointTopologyPVS(const TopoDS_Shape&         
   }
 #endif
 
-  bool isspin = (GLOBAL_issp == TheIN), isspou = (GLOBAL_issp == TheOUT),
-       isspon = (GLOBAL_issp == TheON);
-  if (isSE && (GLOBAL_issp == 0))
+  bool isspin = (mySplitSectionState == TheIN), isspou = (mySplitSectionState == TheOUT),
+       isspon = (mySplitSectionState == TheON);
+  if (isSE && (mySplitSectionState == 0))
   {
     return; // splits done in process ProcessSectionEdges
   }
@@ -705,7 +691,7 @@ void TopOpeBRepBuild_Builder::GFillPointTopologyPVS(const TopoDS_Shape&         
       }
       else
       {
-        if (GLOBAL_faces2d)
+        if (myFaces2d)
         {                                      // split 2d
           bool has2d3d = (n2d > 0 && n3d > 0); // JYL300998
           // JYL300998 : traitement correct de cto 100 K1 e27 (chanceux auparavant, schema d'I faux)
@@ -857,17 +843,10 @@ void TopOpeBRepBuild_Builder::GFillPointTopologyPVS(const TopoDS_Shape&         
   {
     ori = TopAbs::Complement(ori);
   }
-#ifdef OCCT_DEBUG
-  if (!TopOpeBRepBuild_GetcontextNOSG())
+  if (!samegeom)
   {
-#endif
-    if (!samegeom)
-    {
-      ori = TopAbs::Complement(ori);
-    }
-#ifdef OCCT_DEBUG
+    ori = TopAbs::Complement(ori);
   }
-#endif
 
   bool lesmemes = E.IsEqual(myEdgeReference);
   if (!lesmemes)

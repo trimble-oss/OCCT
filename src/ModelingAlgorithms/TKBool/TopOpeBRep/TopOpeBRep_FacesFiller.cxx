@@ -25,7 +25,6 @@
 #include <TopOpeBRep.hxx>
 #include <TopOpeBRep_FacesFiller.hxx>
 #include <TopOpeBRep_FacesIntersector.hxx>
-#include <TopOpeBRep_FFDumper.hxx>
 #include <TopOpeBRep_LineInter.hxx>
 #include <TopOpeBRep_PointClassifier.hxx>
 #include <TopOpeBRep_VPointInter.hxx>
@@ -92,21 +91,20 @@ TopOpeBRep_FacesFiller::TopOpeBRep_FacesFiller()
     : myPShapeClassifier(nullptr)
 {
   myexF1 = myexF2 = 0;
-#ifdef OCCT_DEBUG
-  myHFFD = new TopOpeBRep_FFDumper(this);
-#endif
+  myCurrentLine   = nullptr;
+  myLastVPind     = 0;
 }
 
 //=================================================================================================
 
-TopOpeBRepTool_PShapeClassifier TopOpeBRep_FacesFiller::PShapeClassifier() const
+TopOpeBRepTool_ShapeClassifier* TopOpeBRep_FacesFiller::PShapeClassifier() const
 {
   return myPShapeClassifier;
 }
 
 //=================================================================================================
 
-void TopOpeBRep_FacesFiller::SetPShapeClassifier(const TopOpeBRepTool_PShapeClassifier& PSC)
+void TopOpeBRep_FacesFiller::SetPShapeClassifier(TopOpeBRepTool_ShapeClassifier* const& PSC)
 {
   myPShapeClassifier = PSC;
 }
@@ -136,7 +134,6 @@ void TopOpeBRep_FacesFiller::Insert(const TopoDS_Shape&                         
   myFacesIntersector->InitLine();
   for (; myFacesIntersector->MoreLine(); myFacesIntersector->NextLine())
     myFacesIntersector->CurrentLine().SetTraceIndex(exF1, exF2);
-  myHFFD->Init(this);
 #endif
 
   bool samdom = myFacesIntersector->SameDomain();
@@ -718,17 +715,17 @@ const TopOpeBRepDS_Transition& TopOpeBRep_FacesFiller::FaceFaceTransition(const 
   return T;
 }
 
-TopOpeBRep_PFacesIntersector TopOpeBRep_FacesFiller::PFacesIntersectorDummy() const
+TopOpeBRep_FacesIntersector* TopOpeBRep_FacesFiller::PFacesIntersectorDummy() const
 {
   return myFacesIntersector;
 }
 
-TopOpeBRepDS_PDataStructure TopOpeBRep_FacesFiller::PDataStructureDummy() const
+TopOpeBRepDS_DataStructure* TopOpeBRep_FacesFiller::PDataStructureDummy() const
 {
   return myDS;
 }
 
-TopOpeBRep_PLineInter TopOpeBRep_FacesFiller::PLineInterDummy() const
+TopOpeBRep_LineInter* TopOpeBRep_FacesFiller::PLineInterDummy() const
 {
   return myLine;
 }

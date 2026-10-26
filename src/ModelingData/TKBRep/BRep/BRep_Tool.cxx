@@ -14,6 +14,7 @@
 // Alternatively, this file may be used under the terms of Open CASCADE
 // commercial license or contractual agreement.
 
+#include <algorithm>
 #include <BRep_Curve3D.hxx>
 #include <BRep_CurveOnClosedSurface.hxx>
 #include <BRep_CurveOnSurface.hxx>
@@ -28,7 +29,6 @@
 #include <ElSLib.hxx>
 #include <Geom2d_Curve.hxx>
 #include <Geom2d_TrimmedCurve.hxx>
-#include <Geom2dAdaptor.hxx>
 #include <Geom_Curve.hxx>
 #include <Geom_OffsetSurface.hxx>
 #include <Geom_Plane.hxx>
@@ -36,7 +36,6 @@
 #include <Geom_Surface.hxx>
 #include <Geom_TrimmedCurve.hxx>
 #include <GeomAdaptor_Curve.hxx>
-#include <GeomAdaptor_Surface.hxx>
 #include <GeomProjLib.hxx>
 #include <gp_Pnt.hxx>
 #include <gp_Pnt2d.hxx>
@@ -46,7 +45,6 @@
 #include <Poly_PolygonOnTriangulation.hxx>
 #include <Poly_Triangulation.hxx>
 #include <Precision.hxx>
-#include <ProjLib_ProjectedCurve.hxx>
 #include <Standard_NoSuchObject.hxx>
 #include <Standard_NullObject.hxx>
 #include <TopExp.hxx>
@@ -64,6 +62,40 @@
 
 // modified by NIZNHY-PKV Fri Oct 17 14:13:29 2008f
 static bool IsPlane(const occ::handle<Geom_Surface>& aS);
+
+namespace
+{
+//=================================================================================================
+
+//! Checks trim range against the effective basis curve.
+//! @param[in] theCurve curve to check
+//! @param[in] theFirst first trim parameter
+//! @param[in] theLast last trim parameter
+//! @return true if the trim range is valid
+bool isValidTrimRange(const occ::handle<Geom_Curve>& theCurve,
+                      const double                   theFirst,
+                      const double                   theLast)
+{
+  const double aTrimFirst = std::min(theFirst, theLast);
+  const double aTrimLast  = std::max(theFirst, theLast);
+  if (!(aTrimFirst < aTrimLast))
+  {
+    return false;
+  }
+
+  // Unwrap nested trims.
+  occ::handle<Geom_Curve> aBasisCurve = theCurve;
+  for (occ::handle<Geom_TrimmedCurve> aTrim = occ::down_cast<Geom_TrimmedCurve>(aBasisCurve);
+       !aTrim.IsNull();
+       aTrim = occ::down_cast<Geom_TrimmedCurve>(aBasisCurve))
+  {
+    aBasisCurve = aTrim->BasisCurve();
+  }
+  return aBasisCurve->IsPeriodic()
+         || (aBasisCurve->FirstParameter() - aTrimFirst <= Precision::PConfusion()
+             && aTrimLast - aBasisCurve->LastParameter() <= Precision::PConfusion());
+}
+} // namespace
 
 // modified by NIZNHY-PKV Fri Oct 17 14:13:33 2008t
 //
@@ -427,20 +459,22 @@ occ::handle<Geom2d_Curve> BRep_Tool::CurveOnPlane(const TopoDS_Edge&            
     l                    = C3D->TransformedParameter(l, aTrsf);
   }
 
-  // Perform projection
-  occ::handle<Geom_Curve> ProjOnPlane =
-    GeomProjLib::ProjectOnPlane(new Geom_TrimmedCurve(C3D, f, l, true, false),
-                                GP,
-                                GP->Position().Direction(),
-                                true);
+  if (!isValidTrimRange(C3D, f, l))
+  {
+    return nullPCurve;
+  }
 
-  occ::handle<GeomAdaptor_Surface> HS = new GeomAdaptor_Surface(GP);
-  occ::handle<GeomAdaptor_Curve>   HC = new GeomAdaptor_Curve(ProjOnPlane);
+  const occ::handle<Geom_TrimmedCurve> aTrimmedCurve =
+    new Geom_TrimmedCurve(C3D, f, l, true, false);
+  const occ::handle<Geom_Curve> aProjected = GeomProjLib::ProjectOnPlane(
+    aTrimmedCurve,
+    GP,
+    GP->Position().Direction(),
+    true,
+    std::min(Precision::Approximation(), 0.5 * BRep_Tool::Tolerance(E)));
+  occ::handle<Geom2d_Curve> pc = GeomProjLib::Curve2d(aProjected, f, l, GP);
 
-  ProjLib_ProjectedCurve    Proj(HS, HC);
-  occ::handle<Geom2d_Curve> pc = Geom2dAdaptor::MakeCurve(Proj);
-
-  if (pc->DynamicType() == STANDARD_TYPE(Geom2d_TrimmedCurve))
+  if (!pc.IsNull() && pc->DynamicType() == STANDARD_TYPE(Geom2d_TrimmedCurve))
   {
     occ::handle<Geom2d_TrimmedCurve> TC = occ::down_cast<Geom2d_TrimmedCurve>(pc);
     pc                                  = TC->BasisCurve();

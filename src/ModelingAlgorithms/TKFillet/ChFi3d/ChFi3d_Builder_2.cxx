@@ -70,6 +70,9 @@
 #include <TopoDS_Vertex.hxx>
 #include <TopOpeBRepBuild_HBuilder.hxx>
 #include <TopOpeBRepDS_HDataStructure.hxx>
+#include <TopOpeBRepDS_Point.hxx>
+
+#include <algorithm>
 
 namespace
 {
@@ -79,6 +82,11 @@ namespace
 static inline occ::handle<Geom2d_Curve> getCurveOnSurface(const TopoDS_Edge& theEdge,
                                                           const TopoDS_Face& theFace)
 {
+  if (theEdge.IsNull() || theFace.IsNull())
+  {
+    return occ::handle<Geom2d_Curve>();
+  }
+
   double aFirstParam = 0.;
   double aLastParam  = 0.;
   return BRep_Tool::CurveOnSurface(theEdge, theFace, aFirstParam, aLastParam);
@@ -110,6 +118,13 @@ static void ChFi3d_CoupeParPlan(const ChFiDS_CommonPoint&         compoint1,
                                 double&                           Parfin,
                                 bool&                             plane)
 {
+  // A collapsed section does not define a stable cutting plane.
+  // Its boundary is built from the two surface parameters.
+  if (compoint1.Point().IsEqual(compoint2.Point(), tol3d))
+  {
+    plane = false;
+    return;
+  }
   plane = true;
   if (compoint1.IsOnArc() && compoint2.IsOnArc())
   {
@@ -1189,6 +1204,10 @@ bool ChFi3d_Builder::StartSol(
   const TopOpeBRepDS_DataStructure& DStr = myDS->ChangeDS();
   TopoDS_Face                       Fref = !HSref.IsNull() ? HSref->Face() : TopoDS_Face();
   TopoDS_Face                       F    = TopoDS::Face(DStr.Shape(SD->Index(ons)));
+  if (F.IsNull())
+  {
+    return false;
+  }
 
   const ChFiDS_CommonPoint& aCommonPoint = SD->Vertex(isfirst, ons);
   HSBis.Nullify();
@@ -1209,8 +1228,12 @@ bool ChFi3d_Builder::StartSol(
       if (isExtend && !aCommonPoint.Point().IsEqual(CPbis.Point(), 0))
       {
         //  the state is preserved and False is returned (extension by the expected plane).
-        HS->Initialize(F);
         aPCurve = SD->Interference(ons).PCurveOnFace();
+        if (aPCurve.IsNull())
+        {
+          return false;
+        }
+        HS->Initialize(F);
         // The 2nd point is given by its trace on the support surface
         RecS = false;
         pons = aPCurve->Value(tns);
@@ -1225,6 +1248,10 @@ bool ChFi3d_Builder::StartSol(
     // eventually the support face and(or) the reference face.
     const TopoDS_Vertex VCP = aCommonPoint.Vertex();
     const TopoDS_Edge   EHC = HC->Edge();
+    if (VCP.IsNull() || EHC.IsNull() || Fref.IsNull() || HSref.IsNull() || HCref.IsNull())
+    {
+      return false;
+    }
     // One starts by searching in Fref another edge referencing VCP.
     TopoDS_Edge newedge;
     TopoDS_Edge edgereg;
@@ -1330,9 +1357,12 @@ bool ChFi3d_Builder::StartSol(
     }
     else
     {
-      HS->Initialize(Fv);
-      W = BRep_Tool::Parameter(VCP, newedge);
-      HCref->Initialize(newedge, Fref);
+      const occ::handle<Geom2d_Curve> aRefPCurve = getCurveOnSurface(newedge, Fref);
+      if (aRefPCurve.IsNull())
+      {
+        return false;
+      }
+
       TopoDS_Face newface = Fv;
       newface.Orientation(TopAbs_FORWARD);
       for (TopExp_Explorer ex(newface, TopAbs_EDGE); ex.More(); ex.Next())
@@ -1343,6 +1373,14 @@ bool ChFi3d_Builder::StartSol(
           break;
         }
       }
+      const occ::handle<Geom2d_Curve> aNewPCurve = getCurveOnSurface(newedge, Fv);
+      if (aNewPCurve.IsNull())
+      {
+        return false;
+      }
+      HS->Initialize(Fv);
+      W = BRep_Tool::Parameter(VCP, newedge);
+      HCref->Initialize(newedge, Fref);
       HC->Initialize(newedge, Fv);
       pons = HC->Value(W);
     }
@@ -1363,28 +1401,52 @@ bool ChFi3d_Builder::StartSol(
   if (aCommonPoint.IsOnArc())
   {
     const TopoDS_Edge& anArcEdge = aCommonPoint.Arc();
+    if (anArcEdge.IsNull())
+    {
+      return false;
+    }
 
     // Lambda to avoid code duplication.
-    // Sets HS, W, aPCurve and pons to default return values.
-    auto prepareDefaultReturn = [&]() {
-      HS->Initialize(F);
-      W       = aCommonPoint.ParameterOnArc();
+    // Attempts to set HS, W, aPCurve and pons to default return values.
+    auto prepareDefaultReturn = [&]() -> bool {
       aPCurve = getCurveOnSurface(anArcEdge, F);
-      pons    = aPCurve->Value(W);
+      if (aPCurve.IsNull())
+      {
+        return false;
+      }
+      HS->Initialize(F);
+      W    = aCommonPoint.ParameterOnArc();
+      pons = aPCurve->Value(W);
+      return true;
     };
 
     if (decroch)
     {
-      HS->Initialize(Fref);
-      W       = aCommonPoint.ParameterOnArc();
+      if (Fref.IsNull())
+      {
+        prepareDefaultReturn();
+        return false;
+      }
       aPCurve = getCurveOnSurface(anArcEdge, Fref);
-      pons    = aPCurve->Value(W);
-      RecS    = true;
+      if (aPCurve.IsNull())
+      {
+        prepareDefaultReturn();
+        return false;
+      }
+      HS->Initialize(Fref);
+      W    = aCommonPoint.ParameterOnArc();
+      pons = aPCurve->Value(W);
+      RecS = true;
       return true;
     }
 
     if (SearchFace(Spine, aCommonPoint, F, Fv))
     {
+      if (Fv.IsNull())
+      {
+        prepareDefaultReturn();
+        return false;
+      }
       HS->Initialize(Fv);
       RecS = true;
       if (aCommonPoint.IsVertex())
@@ -1420,10 +1482,20 @@ bool ChFi3d_Builder::StartSol(
         if (isTangentToArc(aCommonPoint, 0.1))
         {
           aPCurve = getCurveOnSurface(aCommonPoint.Arc(), F);
-          HSBis   = new BRepAdaptor_Surface(F);
-          PBis    = aPCurve->Value(aCommonPoint.ParameterOnArc());
+          if (aPCurve.IsNull())
+          {
+            prepareDefaultReturn();
+            return false;
+          }
+          HSBis = new BRepAdaptor_Surface(F);
+          PBis  = aPCurve->Value(aCommonPoint.ParameterOnArc());
         }
 
+        if (newedge.IsNull())
+        {
+          prepareDefaultReturn();
+          return false;
+        }
         aPCurve = getCurveOnSurface(newedge, Fv);
       }
       else
@@ -1432,6 +1504,11 @@ bool ChFi3d_Builder::StartSol(
         newedge.Reverse();
         Fv.Orientation(TopAbs_FORWARD);
         aPCurve = getCurveOnSurface(newedge, Fv);
+      }
+      if (aPCurve.IsNull())
+      {
+        prepareDefaultReturn();
+        return false;
       }
       pons = aPCurve->Value(aCommonPoint.ParameterOnArc());
       return true;
@@ -1452,6 +1529,11 @@ bool ChFi3d_Builder::StartSol(
       }
       if (c1obstacle)
       {
+        if (HSref.IsNull() || HCref.IsNull())
+        {
+          prepareDefaultReturn();
+          return false;
+        }
         HS->Initialize(Fv);
         HSref->Initialize(F);
         W  = aCommonPoint.ParameterOnArc();
@@ -1763,6 +1845,33 @@ static bool IsFree(const TopoDS_Shape& E, const ChFiDS_Map& EFMap)
   return true;
 }
 
+namespace
+{
+
+//==================================================================================================
+
+// Shares a generated point at a collapsed section, retaining source vertex identities.
+static int sectionEndPointIndex(const ChFiDS_CommonPoint&   theFirst,
+                                const ChFiDS_CommonPoint&   theSecond,
+                                const int                   theFirstIndex,
+                                TopOpeBRepDS_DataStructure& theDS,
+                                const double                theTolerance)
+{
+  if (!theFirst.IsVertex() && !theSecond.IsVertex()
+      && theFirst.Point().IsEqual(theSecond.Point(), theTolerance))
+  {
+    TopOpeBRepDS_Point& aPoint = theDS.ChangePoint(theFirstIndex);
+    aPoint.Tolerance(std::max(aPoint.Tolerance(),
+                              aPoint.Point().Distance(theSecond.Point()) + theSecond.Tolerance()));
+    return theFirstIndex;
+  }
+  return ChFi3d_IndexPointInDS(theSecond, theDS);
+}
+
+} // namespace
+
+//==================================================================================================
+
 static void ChFi3d_MakeExtremities(occ::handle<ChFiDS_Stripe>& Stripe,
                                    TopOpeBRepDS_DataStructure& DStr,
                                    const ChFiDS_Map&           EFMap,
@@ -1799,7 +1908,8 @@ static void ChFi3d_MakeExtremities(occ::handle<ChFiDS_Stripe>& Stripe,
       Stripe->ChangeFirstCurve(DStr.AddCurve(Crv));
       Stripe->ChangeFirstParameters(Pardeb, Parfin);
       Stripe->ChangeIndexFirstPointOnS1(ChFi3d_IndexPointInDS(SDF->VertexFirstOnS1(), DStr));
-      Stripe->ChangeIndexFirstPointOnS2(ChFi3d_IndexPointInDS(SDF->VertexFirstOnS2(), DStr));
+      Stripe->ChangeIndexFirstPointOnS2(
+        sectionEndPointIndex(CV1, CV2, Stripe->IndexFirstPointOnS1(), DStr, tol3d));
       int ICurv = Stripe->FirstCurve();
       Stripe->ChangeLastParameters(Pardeb, Parfin);
       Stripe->ChangeLastCurve(ICurv);
@@ -1916,7 +2026,8 @@ static void ChFi3d_MakeExtremities(occ::handle<ChFiDS_Stripe>& Stripe,
       Stripe->ChangeFirstCurve(DStr.AddCurve(Crv));
       Stripe->ChangeFirstParameters(Pardeb, Parfin);
       Stripe->ChangeIndexFirstPointOnS1(ChFi3d_IndexPointInDS(SDdeb->VertexFirstOnS1(), DStr));
-      Stripe->ChangeIndexFirstPointOnS2(ChFi3d_IndexPointInDS(SDdeb->VertexFirstOnS2(), DStr));
+      Stripe->ChangeIndexFirstPointOnS2(
+        sectionEndPointIndex(cpdeb1, cpdeb2, Stripe->IndexFirstPointOnS1(), DStr, tol3d));
       if (cpdeb1.IsOnArc())
       {
         ChFi3d_EnlargeBox(cpdeb1.Arc(), EFMap(cpdeb1.Arc()), cpdeb1.ParameterOnArc(), b1);
@@ -2007,7 +2118,8 @@ static void ChFi3d_MakeExtremities(occ::handle<ChFiDS_Stripe>& Stripe,
       Stripe->ChangeLastCurve(DStr.AddCurve(Crv));
       Stripe->ChangeLastParameters(Pardeb, Parfin);
       Stripe->ChangeIndexLastPointOnS1(ChFi3d_IndexPointInDS(SDfin->VertexLastOnS1(), DStr));
-      Stripe->ChangeIndexLastPointOnS2(ChFi3d_IndexPointInDS(SDfin->VertexLastOnS2(), DStr));
+      Stripe->ChangeIndexLastPointOnS2(
+        sectionEndPointIndex(cpfin1, cpfin2, Stripe->IndexLastPointOnS1(), DStr, tol3d));
       if (cpfin1.IsOnArc())
       {
         ChFi3d_EnlargeBox(cpfin1.Arc(), EFMap(cpfin1.Arc()), cpfin1.ParameterOnArc(), b1);

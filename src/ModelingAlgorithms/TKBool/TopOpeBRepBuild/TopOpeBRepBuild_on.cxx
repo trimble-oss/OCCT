@@ -20,9 +20,6 @@
 #include <TopOpeBRepBuild_WireEdgeSet.hxx>
 #include <TopOpeBRepDS_CurveIterator.hxx>
 
-// Standard_IMPORT extern bool GLOBAL_faces2d;
-extern bool GLOBAL_faces2d;
-
 //=================================================================================================
 
 void TopOpeBRepBuild_Builder::GFillONPartsWES(const TopoDS_Shape&                   FOR,
@@ -31,20 +28,21 @@ void TopOpeBRepBuild_Builder::GFillONPartsWES(const TopoDS_Shape&               
                                               TopOpeBRepBuild_WireEdgeSet&          WES)
 {
   TopOpeBRepBuild_BuilderON BON;
-  if (GLOBAL_faces2d)
+  if (myFaces2d)
   {
     BON.Perform2d(this,
                   FOR,
-                  (TopOpeBRepBuild_PGTopo)&G,
-                  (TopOpeBRepTool_Plos)&LSclass,
-                  (TopOpeBRepBuild_PWireEdgeSet)&WES);
+                  const_cast<TopOpeBRepBuild_GTopo*>(&G),
+                  (NCollection_List<TopoDS_Shape>*)&LSclass,
+                  (TopOpeBRepBuild_WireEdgeSet*)&WES,
+                  myDS2d);
   }
   else
   {
     BON.Perform(this,
                 FOR,
-                (TopOpeBRepBuild_PGTopo)&G,
-                (TopOpeBRepTool_Plos)&LSclass,
-                (TopOpeBRepBuild_PWireEdgeSet)&WES);
+                const_cast<TopOpeBRepBuild_GTopo*>(&G),
+                (NCollection_List<TopoDS_Shape>*)&LSclass,
+                (TopOpeBRepBuild_WireEdgeSet*)&WES);
   }
 }

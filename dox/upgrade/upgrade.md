@@ -7,7 +7,7 @@ Upgrade from older OCCT versions  {#occt__upgrade}
 
 This document provides technical details on changes made in particular versions of OCCT. It can help to upgrade user applications based on previous versions of OCCT to newer ones.
 
-@ref upgrade_occt800 "SEEK TO THE LAST CHAPTER (UPGRADE TO 8.0.0)"
+@ref upgrade_occt810 "SEEK TO THE LAST CHAPTER (UPGRADE TO 8.1.0)"
 
 @subsection upgrade_intro_precautions Precautions
 
@@ -1672,10 +1672,10 @@ TColStd_Array1OfReal anArr;                                    NCollection_Array
 TColgp_SequenceOfPnt aSeq;                                     NCollection_Sequence<gp_Pnt> aSeq;
 ~~~~
 
-Two package typedef wrappers have been removed entirely (no backward-compatible aliases): `TColGeom` and `TColGeom2d`. Replace with `NCollection_Array1<occ::handle<Geom_Curve>>` and the equivalent `Geom2d_*` form:
+The `TColGeom_*` and `TColGeom2d_*` collection typedefs have been deprecated (backward-compatible aliases are preserved with deprecation warnings). They will be removed in a future release. Replace them with the corresponding `NCollection_*` template instantiations, such as `NCollection_Array1<occ::handle<Geom_Curve>>`:
 
 ~~~~{.cpp}
-// Before (removed)                                           // After
+// Before (deprecated)                                        // After
 #include <TColGeom_Array1OfCurve.hxx>                          #include <NCollection_Array1.hxx>
 TColGeom_Array1OfCurve aCurves;                                #include <Geom_Curve.hxx>
                                                                NCollection_Array1<occ::handle<Geom_Curve>> aCurves;
@@ -1736,17 +1736,6 @@ A new `GeomBndLib` package provides geometry-aware bounding boxes for all standa
 @subsection upgrade_800_extremapc Point-to-curve extrema: ExtremaPC
 
 The new `ExtremaPC` package provides point-to-curve extrema computation with per-geometry specialized evaluators (`ExtremaPC_Line`, `ExtremaPC_Circle`, `ExtremaPC_Ellipse`, `ExtremaPC_Hyperbola`, `ExtremaPC_BezierCurve`, `ExtremaPC_BSplineCurve`, `ExtremaPC_OffsetCurve`) and an `ExtremaPC_Curve` aggregator dispatcher.
-
-@subsection upgrade_800_brepgraph BRepGraph- graph-based BRep representation
-
-OCCT 8.0.0 introduces a new graph-based representation of topology and BRep geometry as an alternative to the linked `TopoDS_Shape` data structure. The foundation is split across two layers:
-
-- `BRepGraph` (public)- typed `BRepGraph_NodeId` identifiers, multiple Views (`TopoView`, `RefsView`, `CacheView`, `BuilderView`), bidirectional parent/child explorers (`BRepGraph_ChildExplorer`, `BRepGraph_ParentExplorer`, `BRepGraph_WireExplorer`), iterators (`BRepGraph_DefsIterator`, `BRepGraph_RefsIterator`, `BRepGraph_RelatedIterator`, `BRepGraph_CacheKindIterator`, `BRepGraph_LayerIterator`), extensible Layer/Cache system, mutation guards (`BRepGraph_MutGuard`), history tracking (`BRepGraph_History`), deduplication (`BRepGraph_Deduplicate`), compaction (`BRepGraph_Compact`), deep copy (`BRepGraph_Copy`), and validation (`BRepGraph_Validate`).
-- `BRepGraphInc` (internal)- incidence-table storage with `BRepGraphInc_Populate` (`TopoDS_Shape` -> graph) and `BRepGraphInc_Reconstruct` (graph -> `TopoDS_Shape`) roundtrip conversion.
-
-`BRepGraph_Tool` is the centralized geometry-access API (analogue of `BRep_Tool`). `BRepGraph_Builder` allows programmatic graph construction without an input `TopoDS_Shape`.
-
-The graph representation is additive in 8.0.0- existing `TopoDS_Shape` code continues to work unchanged. Application code that wants to opt in can use `BRepGraphInc_Populate` and `BRepGraphInc_Reconstruct` to convert in either direction.
 
 @subsection upgrade_800_topods TopoDS_TShape redesign
 
@@ -1940,3 +1929,39 @@ Deprecated (still compiles with warnings):
 | OCCT math wrappers (`ACos`, `Sin`, `Sqrt`, `Min`, `Max`, ...) | `std::` equivalents in `<cmath>` / `<algorithm>` |
 | `Transfer_TransferDeadLoop` exception | Status-flag-based dead-loop detection |
 | `AIS_InteractiveContext` immediate-mode rendering methods | Retained-mode pipeline |
+
+@section upgrade_occt810 Upgrade to OCCT 8.1.0
+
+@subsection upgrade_810_brepfont BRep font and text conversion
+
+Use `StdPrs_BRepFont` to create TopoDS glyph and text shapes. The construction algorithms are
+provided by the `BRepFont` package in `TKV3d`.
+
+| Deprecated interface | Recommended replacement |
+| --- | --- |
+| `Font_BRepFont` | `StdPrs_BRepFont` |
+| `Font_BRepTextBuilder::Perform()`, `StdPrs_BRepTextBuilder::Perform()` | `StdPrs_BRepFont::RenderText()` |
+| `Font_FTFontParams` | Aggregate `Font_FTFont::Params` |
+| `StdPrs_BRepFont::SetCompositeCurveMode()` | Set `ToConcatenateContours` in `GlyphOptions` or `TextOptions` per call |
+| `StdPrs_BRepFont::FTFont()` | Use font setters, such as `SetSingleStrokeFont()`, or a separate `Font_FTFont` for low-level operations |
+| `Font_FTFont::renderGlyphOutline()` | `LoadGlyphOutline()`: owned outline in design units, instead of a borrowed outline in pixel units |
+
+These interfaces remain available for compatibility. The composite-curve setting applies only
+to calls without explicit options. Protected dimension helpers also retain deprecated overloads;
+use the new overloads with a font and text plan to reuse prepared layout.
+
+**Threading:** rendering synchronizes shared font and glyph-cache state internally.
+Configuration changes and access through the deprecated `FTFont()` handle require caller
+synchronization. `FTFont()` first detaches the backend from other cached wrappers. Backend
+reinitialization refreshes model-space metrics on the next wrapper operation. `Mutex()` is a
+caller lock for multi-call operations; font methods do not acquire it internally. Completed
+text plans retain their regions and layout after font changes or release.
+
+**Fallback setting:** replace assignments to `Font_FontMgr::ToUseUnicodeSubsetFallback()` with
+`Font_FontMgr::SetUseUnicodeSubsetFallback()`. The getter now returns a value.
+
+**Output:** `RenderText()` skips glyphs that cannot be rendered and returns the remaining geometry.
+Outlines with the FreeType overlap flag produce separate faces without a Boolean union.
+`Font_FTFont::GlyphImage()` returns tightly packed, top-down alpha coverage for bitmap glyphs.
+For custom conversion, pass a `Font_GlyphOutline` through `BRepFont_Regularizer`, then use
+`BRepFont_Builder`.

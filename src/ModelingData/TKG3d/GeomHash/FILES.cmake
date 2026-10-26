@@ -2,6 +2,10 @@
 set(OCCT_GeomHash_FILES_LOCATION "${CMAKE_CURRENT_LIST_DIR}")
 
 set(OCCT_GeomHash_FILES
+  GeomHash_CanonicalHashStream.hxx
+  GeomHash_GeometryAppender.hxx
+  GeomHash_MeshAppender.hxx
+
   # Foundational Hashers
   GeomHash_PointHasher.pxx
   GeomHash_DirectionHasher.pxx
@@ -35,4 +39,14 @@ set(OCCT_GeomHash_FILES
   GeomHash_OffsetCurveHasher.pxx
   GeomHash_CurveHasher.hxx
   GeomHash_CurveHasher.cxx
+
+  # Mesh Hashers
+  GeomHash_TriangulationHasher.hxx
+  GeomHash_TriangulationHasher.cxx
+  GeomHash_Polygon3DHasher.hxx
+  GeomHash_Polygon3DHasher.cxx
+  GeomHash_Polygon2DHasher.hxx
+  GeomHash_Polygon2DHasher.cxx
+  GeomHash_PolygonOnTriHasher.hxx
+  GeomHash_PolygonOnTriHasher.cxx
 )
